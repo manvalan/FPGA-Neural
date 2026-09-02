@@ -89,15 +89,17 @@ not** plug into this controller without a rewrite.
   RTL change needed.
 - TSOP-44/48 package — hand-solderable-adjacent, real distributor
   listings (DigiKey, Mouser) at time of writing.
-- **Address bus note:** the chip is 4M×16 words (8&nbsp;MB total,
-  needs a real 22-bit word address, A0&ndash;A21). The current RTL's
-  `ADDR_WIDTH=22` is a **byte** address (4&nbsp;MiB space) that
-  `int8_memory_access.v` right-shifts by 1 (`addr >> 1`) into a word
-  address before it reaches `psram_controller` — so only **21**
-  word-address bits are actually driven today. Wire all 22 chip
-  address balls, but the chip's topmost line (A21) stays unused/tied
-  low until `ADDR_WIDTH` is widened to 23 to use the chip's full
-  8&nbsp;MB instead of today's 4&nbsp;MiB. Free headroom, not a defect.
+- **Address bus (2026-09-02: full addressing, all 22 chip lines
+  wired):** the chip is 4M×16 words (8&nbsp;MB total), needing a
+  real 22-bit word address, A0&ndash;A21. `ADDR_WIDTH` is now **23**
+  bits across every module (`rtl/neuron_memory.v`,
+  `rtl/psram_controller.v`, etc. — bumped from the earlier 22-bit/
+  4&nbsp;MiB default specifically to reach the full chip).
+  `int8_memory_access.v` right-shifts the 23-bit **byte** address by
+  1 (`addr >> 1`) into a 22-bit **word** address before it reaches
+  `psram_controller` — that 22-bit word address maps exactly onto
+  the chip's real A0&ndash;A21, with nothing left unconnected. Full
+  8&nbsp;MB is addressable today, not deferred.
 
 **Fallback: ISSI IS61WV6416DBLL / IS61WV102416BLL** (true async
 SRAM, not pseudo-SRAM) — electrically drop-in on the same
@@ -214,7 +216,7 @@ Before schematic capture, someone needs to:
 
 | Signal group | Port(s) | Count | Target bank (TBD) |
 |---|---|---|---|
-| PSRAM address | `psram_a[21:0]` | 22 | one bank |
+| PSRAM address | `psram_a[21:0]` (port is `[22:0]`, bit 22 always 0 post-shift — see §3) | 22 | one bank |
 | PSRAM data | `psram_dq[15:0]` | 16 | same or adjacent bank |
 | PSRAM control | `psram_ce_n/oe_n/we_n/lb_n/ub_n/zz_n` | 6 | same bank as above |
 | Application SPI | `sclk/mosi/miso/cs_n` | 4 | any bank, NOT the config-SPI bank (§6) |
@@ -244,9 +246,12 @@ sizes are decided.
 
 ## 9. Open items before schematic capture
 
-- [ ] Decide real PSRAM density needed (drives whether `ADDR_WIDTH`
-      stays 22 or can shrink, and whether the fallback true-SRAM
-      part in §3 is sufficient instead of the pseudo-SRAM)
+- [x] `ADDR_WIDTH` set to 23 (full 8&nbsp;MB) across all RTL modules
+      and testbenches, matching the recommended part's real capacity
+      (2026-09-02) — see §3.
+- [ ] If the fallback true-SRAM part in §3 is used instead (smaller
+      density), decide whether to shrink `ADDR_WIDTH` back down to
+      match it or keep 23 with the extra range simply unused.
 - [ ] Real `.lpf` pin assignment (§7) and a synthesis run against it
       (current benchmark results all use auto-placed I/O)
 - [ ] Confirm PSRAM/SPI signal integrity at whatever clock is

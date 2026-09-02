@@ -25,7 +25,7 @@
 
 module tb;
 
-    localparam ADDR_WIDTH = 22;
+    localparam ADDR_WIDTH = 23;
     localparam DATA_WIDTH = 8;
     localparam N_WIDTH    = 4;
     localparam N_LAYERS   = 4;

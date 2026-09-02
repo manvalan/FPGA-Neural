@@ -1,5 +1,5 @@
 $date
-	Wed Sep  2 20:13:54 2026
+	Wed Sep  2 20:58:00 2026
 $end
 $version
 	Icarus Verilog
@@ -13,35 +13,35 @@ $var wire 1 " seq_busy $end
 $var wire 1 # ram_wr $end
 $var wire 8 $ ram_wdata [7:0] $end
 $var wire 1 % ram_req $end
-$var wire 22 & ram_addr [21:0] $end
-$var wire 22 ' nm_x_base [21:0] $end
-$var wire 22 ( nm_w_base [21:0] $end
+$var wire 23 & ram_addr [22:0] $end
+$var wire 23 ' nm_x_base [22:0] $end
+$var wire 23 ( nm_w_base [22:0] $end
 $var wire 1 ) nm_start $end
 $var wire 16 * nm_n_neurons [15:0] $end
 $var wire 16 + nm_n_inputs [15:0] $end
-$var wire 22 , nm_bias_addr [21:0] $end
+$var wire 23 , nm_bias_addr [22:0] $end
 $var wire 2 - nm_activation [1:0] $end
 $var parameter 32 . ADDR_WIDTH $end
-$var parameter 22 / BUF_A_BASE $end
-$var parameter 22 0 BUF_B_BASE $end
+$var parameter 23 / BUF_A_BASE $end
+$var parameter 23 0 BUF_B_BASE $end
 $var real 1 1 CLK_PERIOD $end
 $var parameter 32 2 DATA_WIDTH $end
-$var parameter 22 3 L0_BIAS_ADDR $end
-$var parameter 22 4 L0_W_BASE $end
-$var parameter 22 5 L1_BIAS_ADDR $end
-$var parameter 22 6 L1_W_BASE $end
+$var parameter 23 3 L0_BIAS_ADDR $end
+$var parameter 23 4 L0_W_BASE $end
+$var parameter 23 5 L1_BIAS_ADDR $end
+$var parameter 23 6 L1_W_BASE $end
 $var parameter 32 7 N_LAYERS $end
 $var parameter 32 8 N_WIDTH $end
 $var parameter 1 9 RAM_IDLE $end
 $var parameter 1 : RAM_WAIT $end
-$var parameter 22 ; TABLE_BASE $end
-$var parameter 22 < X_BASE $end
-$var reg 22 = buf_a_base [21:0] $end
-$var reg 22 > buf_b_base [21:0] $end
+$var parameter 23 ; TABLE_BASE $end
+$var parameter 23 < X_BASE $end
+$var reg 23 = buf_a_base [22:0] $end
+$var reg 23 > buf_b_base [22:0] $end
 $var reg 1 ? clk $end
 $var reg 1 @ nm_busy $end
 $var reg 1 A nm_done $end
-$var reg 22 B ram_addr_latched [21:0] $end
+$var reg 23 B ram_addr_latched [22:0] $end
 $var reg 8 C ram_rdata [7:0] $end
 $var reg 1 D ram_ready $end
 $var reg 1 E ram_state $end
@@ -52,8 +52,8 @@ $var reg 8 I run_num_layers [7:0] $end
 $var reg 1 J run_start $end
 $var reg 1 K seq_busy_dropped_early $end
 $var reg 32 L staged_y [31:0] $end
-$var reg 22 M table_base [21:0] $end
-$var reg 22 N x_base [21:0] $end
+$var reg 23 M table_base [22:0] $end
+$var reg 23 N x_base [22:0] $end
 $var reg 32 O y_bus [31:0] $end
 $var integer 32 P errors [31:0] $end
 $var integer 32 Q errors_before [31:0] $end
@@ -61,8 +61,8 @@ $var integer 32 R i [31:0] $end
 $var integer 32 S nm_delay [31:0] $end
 $var integer 32 T seq_done_count [31:0] $end
 $scope module u_dut $end
-$var wire 22 U buf_a_base [21:0] $end
-$var wire 22 V buf_b_base [21:0] $end
+$var wire 23 U buf_a_base [22:0] $end
+$var wire 23 V buf_b_base [22:0] $end
 $var wire 1 ? clk $end
 $var wire 1 @ nm_busy $end
 $var wire 1 A nm_done $end
@@ -71,8 +71,8 @@ $var wire 1 D ram_ready $end
 $var wire 1 H rst $end
 $var wire 8 X run_num_layers [7:0] $end
 $var wire 1 J run_start $end
-$var wire 22 Y table_base [21:0] $end
-$var wire 22 Z x_base [21:0] $end
+$var wire 23 Y table_base [22:0] $end
+$var wire 23 Z x_base [22:0] $end
 $var wire 32 [ y_bus [31:0] $end
 $var parameter 32 \ ADDR_WIDTH $end
 $var parameter 32 ] DATA_WIDTH $end
@@ -90,19 +90,19 @@ $var reg 24 h bias_addr_acc [23:0] $end
 $var reg 3 i copy_idx [2:0] $end
 $var reg 1 j cur_sel $end
 $var reg 4 k desc_byte_idx [3:0] $end
-$var reg 22 l desc_table_addr [21:0] $end
+$var reg 23 l desc_table_addr [22:0] $end
 $var reg 8 m layer_idx [7:0] $end
 $var reg 16 n n_inputs_acc [15:0] $end
 $var reg 16 o n_neurons_acc [15:0] $end
 $var reg 2 p nm_activation [1:0] $end
-$var reg 22 q nm_bias_addr [21:0] $end
+$var reg 23 q nm_bias_addr [22:0] $end
 $var reg 16 r nm_n_inputs [15:0] $end
 $var reg 16 s nm_n_neurons [15:0] $end
 $var reg 1 ) nm_start $end
-$var reg 22 t nm_w_base [21:0] $end
-$var reg 22 u nm_x_base [21:0] $end
+$var reg 23 t nm_w_base [22:0] $end
+$var reg 23 u nm_x_base [22:0] $end
 $var reg 8 v num_layers_reg [7:0] $end
-$var reg 22 w ram_addr [21:0] $end
+$var reg 23 w ram_addr [22:0] $end
 $var reg 1 % ram_req $end
 $var reg 8 x ram_wdata [7:0] $end
 $var reg 1 # ram_wr $end
@@ -136,7 +136,7 @@ b101 `
 b100 _
 b100 ^
 b1000 ]
-b10110 \
+b10111 \
 b10000 <
 b100000000 ;
 1:
@@ -151,7 +151,7 @@ b1000 2
 r12.5 1
 b1100000000 0
 b1000000000 /
-b10110 .
+b10111 .
 $end
 #0
 $dumpvars
@@ -345,15 +345,15 @@ b10 |
 #168750
 0E
 1D
-bx000000 C
-bx000000 W
+bx0000000 C
+bx0000000 W
 1?
 #175000
 0?
 #181250
 b1 y
 b1 k
-bx0000000000000000000000 z
+bx00000000000000000000000 z
 0D
 1?
 #187500
@@ -384,7 +384,7 @@ b10000 W
 #231250
 b1 y
 b10 k
-bx0000000001000000000000 z
+bx00000000001000000000000 z
 0D
 1?
 #237500
@@ -437,15 +437,15 @@ b100000011 B
 #318750
 0E
 1D
-bx000000 C
-bx000000 W
+bx0000000 C
+bx0000000 W
 1?
 #325000
 0?
 #331250
 b1 y
 b100 k
-bx0000000000000000000000 h
+bx00000000000000000000000 h
 0D
 1?
 #337500
@@ -476,7 +476,7 @@ b100000 W
 #381250
 b1 y
 b101 k
-bx0000000010000000000000 h
+bx00000000010000000000000 h
 0D
 1?
 #387500
@@ -799,8 +799,8 @@ b100001011 B
 #906250
 0E
 1D
-bx000000 C
-bx000000 W
+bx0000000 C
+bx0000000 W
 1?
 #912500
 0?
@@ -838,7 +838,7 @@ b110000 W
 0D
 b1 y
 b10 k
-bx0000000011000000000000 z
+bx00000000011000000000000 z
 1?
 #975000
 0?
@@ -890,8 +890,8 @@ b100001110 B
 #1056250
 0E
 1D
-bx000000 C
-bx000000 W
+bx0000000 C
+bx0000000 W
 1?
 #1062500
 0?
@@ -929,7 +929,7 @@ b1000000 W
 0D
 b1 y
 b101 k
-bx0000000100000000000000 h
+bx00000000100000000000000 h
 1?
 #1125000
 0?
@@ -1372,8 +1372,8 @@ b11 X
 #1818750
 0E
 1D
-bx000000 C
-bx000000 W
+bx0000000 C
+bx0000000 W
 1?
 #1825000
 0J
@@ -1411,7 +1411,7 @@ b10000 W
 #1881250
 b1 y
 b10 k
-bx0000000001000000000000 z
+bx00000000001000000000000 z
 0D
 1?
 #1887500
@@ -1464,8 +1464,8 @@ b100000011 B
 #1968750
 0E
 1D
-bx000000 C
-bx000000 W
+bx0000000 C
+bx0000000 W
 1?
 #1975000
 0?
@@ -1502,7 +1502,7 @@ b100000 W
 #2031250
 b1 y
 b101 k
-bx0000000010000000000000 h
+bx00000000010000000000000 h
 0D
 1?
 #2037500

@@ -1,5 +1,5 @@
 $date
-	Wed Sep  2 12:33:48 2026
+	Wed Sep  2 20:58:44 2026
 $end
 $version
 	Icarus Verilog
@@ -15,14 +15,14 @@ $var wire 1 $ psram_ub_n $end
 $var wire 1 % psram_oe_n $end
 $var wire 1 & psram_lb_n $end
 $var wire 1 ' psram_ce_n $end
-$var wire 22 ( psram_a [21:0] $end
+$var wire 23 ( psram_a [22:0] $end
 $var wire 1 ) mem_ready $end
 $var wire 16 * mem_rdata [15:0] $end
 $var parameter 32 + ADDR_WIDTH $end
 $var real 1 , CLK_PERIOD $end
 $var parameter 32 - DATA_WIDTH $end
 $var reg 1 . clk $end
-$var reg 22 / mem_addr [21:0] $end
+$var reg 23 / mem_addr [22:0] $end
 $var reg 1 0 mem_lb_n $end
 $var reg 1 1 mem_req $end
 $var reg 1 2 mem_ub_n $end
@@ -34,7 +34,7 @@ $var integer 32 7 stress_addr [31:0] $end
 $var integer 32 8 stress_i [31:0] $end
 $scope module dut $end
 $var wire 1 . clk $end
-$var wire 22 9 mem_addr [21:0] $end
+$var wire 23 9 mem_addr [22:0] $end
 $var wire 1 0 mem_lb_n $end
 $var wire 1 1 mem_req $end
 $var wire 1 2 mem_ub_n $end
@@ -53,14 +53,14 @@ $var parameter 3 C STATE_INIT $end
 $var parameter 3 D STATE_READ $end
 $var parameter 3 E STATE_WRITE $end
 $var parameter 3 F STATE_WRITE_WAIT $end
-$var reg 22 G address_reg [21:0] $end
+$var reg 23 G address_reg [22:0] $end
 $var reg 14 H counter [13:0] $end
 $var reg 1 I dq_oe $end
 $var reg 16 J dq_out [15:0] $end
 $var reg 1 K lb_reg $end
 $var reg 16 L mem_rdata [15:0] $end
 $var reg 1 ) mem_ready $end
-$var reg 22 M psram_a [21:0] $end
+$var reg 23 M psram_a [22:0] $end
 $var reg 1 ' psram_ce_n $end
 $var reg 1 & psram_lb_n $end
 $var reg 1 % psram_oe_n $end
@@ -73,7 +73,7 @@ $var reg 16 P wdata_reg [15:0] $end
 $var reg 1 Q wr_reg $end
 $upscope $end
 $scope module memory $end
-$var wire 22 R a [21:0] $end
+$var wire 23 R a [22:0] $end
 $var wire 1 ' ce_n $end
 $var wire 1 . clk $end
 $var wire 16 S dq [15:0] $end
@@ -100,7 +100,7 @@ $var real 1 b TWC_NS $end
 $var real 1 c TWPH_NS $end
 $var real 1 d TWP_NS $end
 $var real 1 e TWR_NS $end
-$var reg 22 f active_addr [21:0] $end
+$var reg 23 f active_addr [22:0] $end
 $var reg 16 g active_wdata [15:0] $end
 $var reg 1 h dq_oe $end
 $var reg 16 i dq_out [15:0] $end
@@ -118,20 +118,20 @@ $var real 1 t oe_low_time $end
 $var real 1 u powerup_time $end
 $var real 1 v we_high_time $end
 $var real 1 w we_low_time $end
-$scope begin $unm_blk_23 $end
+$scope begin $unm_blk_41 $end
 $var real 1 x access_time $end
 $upscope $end
-$scope begin $unm_blk_35 $end
+$scope begin $unm_blk_53 $end
 $var real 1 y data_setup $end
 $var real 1 z write_width $end
 $upscope $end
 $upscope $end
 $scope task read_word $end
-$var reg 22 { addr [21:0] $end
+$var reg 23 { addr [22:0] $end
 $var reg 16 | expected [15:0] $end
 $upscope $end
 $scope task write_word $end
-$var reg 22 } addr [21:0] $end
+$var reg 23 } addr [22:0] $end
 $var reg 16 ~ data [15:0] $end
 $var reg 1 !" lb $end
 $var reg 1 "" ub $end
@@ -157,7 +157,7 @@ r70 X
 r70 W
 b100000000000000 V
 b10000 U
-b10110 T
+b10111 T
 b100 F
 b11 E
 b10 D
@@ -167,11 +167,11 @@ b10111011100000 A
 b10000 @
 b1110 ?
 b1010000 >
-b10110 =
+b10111 =
 b110 <
 b10000 -
 r12.5 ,
-b10110 +
+b10111 +
 $end
 #0
 $dumpvars

@@ -2,7 +2,7 @@
 
 module tb;
 
-    localparam ADDR_WIDTH = 22;
+    localparam ADDR_WIDTH = 23;
     localparam CLK_PERIOD = 12.5;
 
     reg clk;

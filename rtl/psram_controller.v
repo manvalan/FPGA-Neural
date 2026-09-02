@@ -1,5 +1,5 @@
 module psram_controller #(
-    parameter ADDR_WIDTH   = 22,
+    parameter ADDR_WIDTH   = 23,
     parameter DATA_WIDTH   = 16,
     parameter CLK_FREQ_MHZ = 80
 )(

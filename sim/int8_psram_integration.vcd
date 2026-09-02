@@ -1,5 +1,5 @@
 $date
-	Wed Sep  2 12:45:33 2026
+	Wed Sep  2 20:58:55 2026
 $end
 $version
 	Icarus Verilog
@@ -22,10 +22,10 @@ $var wire 1 + psram_mem_req $end
 $var wire 1 , psram_mem_ready $end
 $var wire 16 - psram_mem_rdata [15:0] $end
 $var wire 1 . psram_mem_lb_n $end
-$var wire 22 / psram_mem_addr [21:0] $end
+$var wire 23 / psram_mem_addr [22:0] $end
 $var wire 1 0 psram_lb_n $end
 $var wire 1 1 psram_ce_n $end
-$var wire 22 2 psram_a [21:0] $end
+$var wire 23 2 psram_a [22:0] $end
 $var wire 1 3 mem_wr $end
 $var wire 16 4 mem_wdata [15:0] $end
 $var wire 1 5 mem_ub_n $end
@@ -33,11 +33,11 @@ $var wire 1 6 mem_req $end
 $var wire 1 7 mem_ready $end
 $var wire 16 8 mem_rdata [15:0] $end
 $var wire 1 9 mem_lb_n $end
-$var wire 22 : mem_addr [21:0] $end
+$var wire 23 : mem_addr [22:0] $end
 $var parameter 32 ; ADDR_WIDTH $end
 $var real 1 < CLK_PERIOD $end
 $var parameter 32 = DATA_WIDTH $end
-$var reg 22 > addr [21:0] $end
+$var reg 23 > addr [22:0] $end
 $var reg 1 ? clk $end
 $var reg 1 @ req $end
 $var reg 1 A rst $end
@@ -47,7 +47,7 @@ $var reg 1 D wr $end
 $var integer 32 E i [31:0] $end
 $var integer 32 F test_addr [31:0] $end
 $scope module int8_access $end
-$var wire 22 G addr [21:0] $end
+$var wire 23 G addr [22:0] $end
 $var wire 1 ? clk $end
 $var wire 1 @ req $end
 $var wire 1 A rst $end
@@ -58,8 +58,8 @@ $var wire 16 I mem_rdata [15:0] $end
 $var parameter 32 J ADDR_WIDTH $end
 $var parameter 2 K STATE_IDLE $end
 $var parameter 2 L STATE_WAIT $end
-$var reg 22 M addr_reg [21:0] $end
-$var reg 22 N mem_addr [21:0] $end
+$var reg 23 M addr_reg [22:0] $end
+$var reg 23 N mem_addr [22:0] $end
 $var reg 1 9 mem_lb_n $end
 $var reg 1 6 mem_req $end
 $var reg 1 5 mem_ub_n $end
@@ -70,7 +70,7 @@ $var reg 1 " ready $end
 $var reg 2 Q state [1:0] $end
 $upscope $end
 $scope module memory_if $end
-$var wire 22 R addr [21:0] $end
+$var wire 23 R addr [22:0] $end
 $var wire 1 ? clk $end
 $var wire 1 9 lb_n $end
 $var wire 1 6 req $end
@@ -84,7 +84,7 @@ $var parameter 32 U ADDR_WIDTH $end
 $var parameter 32 V DATA_WIDTH $end
 $var parameter 2 W STATE_IDLE $end
 $var parameter 2 X STATE_WAIT $end
-$var reg 22 Y mem_addr [21:0] $end
+$var reg 23 Y mem_addr [22:0] $end
 $var reg 1 . mem_lb_n $end
 $var reg 1 + mem_req $end
 $var reg 1 * mem_ub_n $end
@@ -103,7 +103,7 @@ $var wire 1 & ub_n $end
 $var wire 1 ' oe_n $end
 $var wire 1 0 lb_n $end
 $var wire 1 1 ce_n $end
-$var wire 22 ^ a [21:0] $end
+$var wire 23 ^ a [22:0] $end
 $var parameter 32 _ ADDR_WIDTH $end
 $var parameter 32 ` DATA_WIDTH $end
 $var parameter 32 a DEPTH $end
@@ -122,7 +122,7 @@ $var real 1 m TWC_NS $end
 $var real 1 n TWPH_NS $end
 $var real 1 o TWP_NS $end
 $var real 1 p TWR_NS $end
-$var reg 22 q active_addr [21:0] $end
+$var reg 23 q active_addr [22:0] $end
 $var reg 16 r active_wdata [15:0] $end
 $var reg 1 s dq_oe $end
 $var reg 16 t dq_out [15:0] $end
@@ -140,17 +140,17 @@ $var real 1 !" oe_low_time $end
 $var real 1 "" powerup_time $end
 $var real 1 #" we_high_time $end
 $var real 1 $" we_low_time $end
-$scope begin $unm_blk_59 $end
+$scope begin $unm_blk_23 $end
 $var real 1 %" access_time $end
 $upscope $end
-$scope begin $unm_blk_71 $end
+$scope begin $unm_blk_35 $end
 $var real 1 &" data_setup $end
 $var real 1 '" write_width $end
 $upscope $end
 $upscope $end
 $scope module psram_ctrl $end
 $var wire 1 ? clk $end
-$var wire 22 (" mem_addr [21:0] $end
+$var wire 23 (" mem_addr [22:0] $end
 $var wire 1 . mem_lb_n $end
 $var wire 1 + mem_req $end
 $var wire 1 * mem_ub_n $end
@@ -169,14 +169,14 @@ $var parameter 3 2" STATE_INIT $end
 $var parameter 3 3" STATE_READ $end
 $var parameter 3 4" STATE_WRITE $end
 $var parameter 3 5" STATE_WRITE_WAIT $end
-$var reg 22 6" address_reg [21:0] $end
+$var reg 23 6" address_reg [22:0] $end
 $var reg 14 7" counter [13:0] $end
 $var reg 1 8" dq_oe $end
 $var reg 16 9" dq_out [15:0] $end
 $var reg 1 :" lb_reg $end
 $var reg 16 ;" mem_rdata [15:0] $end
 $var reg 1 , mem_ready $end
-$var reg 22 <" psram_a [21:0] $end
+$var reg 23 <" psram_a [22:0] $end
 $var reg 1 1 psram_ce_n $end
 $var reg 1 0 psram_lb_n $end
 $var reg 1 ' psram_oe_n $end
@@ -189,11 +189,11 @@ $var reg 16 ?" wdata_reg [15:0] $end
 $var reg 1 @" wr_reg $end
 $upscope $end
 $scope task read_byte $end
-$var reg 22 A" byte_addr [21:0] $end
+$var reg 23 A" byte_addr [22:0] $end
 $var reg 8 B" expected [7:0] $end
 $upscope $end
 $scope task write_byte $end
-$var reg 22 C" byte_addr [21:0] $end
+$var reg 23 C" byte_addr [22:0] $end
 $var reg 8 D" data [7:0] $end
 $upscope $end
 $upscope $end
@@ -209,7 +209,7 @@ b10111011100000 0"
 b10000 /"
 b1110 ."
 b1010000 -"
-b10110 ,"
+b10111 ,"
 b110 +"
 r0 p
 r46 o
@@ -228,17 +228,17 @@ r70 c
 r70 b
 b100000000000000 a
 b10000 `
-b10110 _
+b10111 _
 b1 X
 b0 W
 b10000 V
-b10110 U
+b10111 U
 b1 L
 b0 K
-b10110 J
+b10111 J
 b10000 =
 r12.5 <
-b10110 ;
+b10111 ;
 $end
 #0
 $dumpvars

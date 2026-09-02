@@ -17,7 +17,7 @@
 // ================================================================
 
 module spi_neuron_top #(
-    parameter ADDR_WIDTH     = 22,
+    parameter ADDR_WIDTH     = 23,
     parameter DATA_WIDTH     = 8,
     parameter N_INPUTS       = 32,
     parameter N_NEURONS      = 1,

@@ -1,5 +1,5 @@
 module memory_model #(
-    parameter ADDR_WIDTH   = 22,
+    parameter ADDR_WIDTH   = 23,
     parameter DATA_WIDTH   = 16,
     parameter DEPTH        = 4096,
     parameter READ_LATENCY = 2

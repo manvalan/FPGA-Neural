@@ -2,7 +2,7 @@
 
 module memory_interface_tb;
 
-    parameter ADDR_WIDTH = 22;
+    parameter ADDR_WIDTH = 23;
     parameter DATA_WIDTH = 16;
 
     reg clk;

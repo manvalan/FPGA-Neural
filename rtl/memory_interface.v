@@ -1,5 +1,5 @@
 module memory_interface #(
-    parameter ADDR_WIDTH = 22,
+    parameter ADDR_WIDTH = 23,
     parameter DATA_WIDTH = 16
 )(
     input  wire                   clk,

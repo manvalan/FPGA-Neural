@@ -1,5 +1,5 @@
 $date
-	Wed Sep  2 20:14:10 2026
+	Wed Sep  2 20:58:13 2026
 $end
 $version
 	Icarus Verilog
@@ -21,12 +21,12 @@ $var wire 1 * psram_mem_ready $end
 $var wire 16 + psram_mem_rdata [15:0] $end
 $var wire 1 , psram_lb_n $end
 $var wire 1 - psram_ce_n $end
-$var wire 22 . psram_a [21:0] $end
+$var wire 23 . psram_a [22:0] $end
 $var wire 1 / neuron_mem_wr $end
 $var wire 8 0 neuron_mem_wdata [7:0] $end
 $var wire 1 1 neuron_mem_req $end
 $var wire 8 2 neuron_mem_rdata [7:0] $end
-$var wire 22 3 neuron_mem_addr [21:0] $end
+$var wire 23 3 neuron_mem_addr [22:0] $end
 $var wire 1 4 memory_ready $end
 $var wire 16 5 memory_rdata [15:0] $end
 $var wire 1 6 memory_mem_wr $end
@@ -34,13 +34,13 @@ $var wire 16 7 memory_mem_wdata [15:0] $end
 $var wire 1 8 memory_mem_ub_n $end
 $var wire 1 9 memory_mem_req $end
 $var wire 1 : memory_mem_lb_n $end
-$var wire 22 ; memory_mem_addr [21:0] $end
+$var wire 23 ; memory_mem_addr [22:0] $end
 $var wire 1 < master_wr $end
 $var wire 16 = master_wdata [15:0] $end
 $var wire 1 > master_ub_n $end
 $var wire 1 ? master_req $end
 $var wire 1 @ master_lb_n $end
-$var wire 22 A master_addr [21:0] $end
+$var wire 23 A master_addr [22:0] $end
 $var wire 1 B done $end
 $var wire 1 C busy $end
 $var parameter 32 D ADDR_WIDTH $end
@@ -48,21 +48,21 @@ $var real 1 E CLK_PERIOD $end
 $var parameter 32 F DATA_WIDTH $end
 $var parameter 32 G N_INPUTS $end
 $var parameter 32 H N_NEURONS $end
-$var reg 22 I bias_addr [21:0] $end
+$var reg 23 I bias_addr [22:0] $end
 $var reg 1 J clk $end
 $var reg 1 K rst $end
 $var reg 1 L start $end
-$var reg 22 M tb_mem_addr [21:0] $end
+$var reg 23 M tb_mem_addr [22:0] $end
 $var reg 1 N tb_mem_lb_n $end
 $var reg 1 O tb_mem_req $end
 $var reg 1 P tb_mem_ub_n $end
 $var reg 16 Q tb_mem_wdata [15:0] $end
 $var reg 1 R tb_mem_wr $end
 $var reg 1 S use_neuron_master $end
-$var reg 22 T w_base [21:0] $end
-$var reg 22 U x_base [21:0] $end
+$var reg 23 T w_base [22:0] $end
+$var reg 23 U x_base [22:0] $end
 $scope module u_memory_if $end
-$var wire 22 V addr [21:0] $end
+$var wire 23 V addr [22:0] $end
 $var wire 1 J clk $end
 $var wire 1 @ lb_n $end
 $var wire 1 ? req $end
@@ -76,7 +76,7 @@ $var parameter 32 Y ADDR_WIDTH $end
 $var parameter 32 Z DATA_WIDTH $end
 $var parameter 2 [ STATE_IDLE $end
 $var parameter 2 \ STATE_WAIT $end
-$var reg 22 ] mem_addr [21:0] $end
+$var reg 23 ] mem_addr [22:0] $end
 $var reg 1 : mem_lb_n $end
 $var reg 1 9 mem_req $end
 $var reg 1 8 mem_ub_n $end
@@ -88,9 +88,9 @@ $var reg 2 ` state [1:0] $end
 $upscope $end
 $scope module u_neuron $end
 $var wire 2 a activation [1:0] $end
-$var wire 22 b bias_addr [21:0] $end
+$var wire 23 b bias_addr [22:0] $end
 $var wire 1 J clk $end
-$var wire 22 c mem_addr [21:0] $end
+$var wire 23 c mem_addr [22:0] $end
 $var wire 8 d mem_rdata [7:0] $end
 $var wire 1 ! mem_ready $end
 $var wire 1 1 mem_req $end
@@ -100,8 +100,8 @@ $var wire 16 f n_inputs_real [15:0] $end
 $var wire 16 g n_neurons_real [15:0] $end
 $var wire 1 K rst $end
 $var wire 1 L start $end
-$var wire 22 h w_base [21:0] $end
-$var wire 22 i x_base [21:0] $end
+$var wire 23 h w_base [22:0] $end
+$var wire 23 i x_base [22:0] $end
 $var wire 24 j y_bus [23:0] $end
 $var wire 256 k x_bus [255:0] $end
 $var wire 256 l w_bus [255:0] $end
@@ -116,7 +116,7 @@ $var wire 1 t access_mem_ub_n $end
 $var wire 1 u access_mem_req $end
 $var wire 16 v access_mem_rdata [15:0] $end
 $var wire 1 w access_mem_lb_n $end
-$var wire 22 x access_mem_addr [21:0] $end
+$var wire 23 x access_mem_addr [22:0] $end
 $var parameter 32 y ACC_WIDTH $end
 $var parameter 32 z ADDR_WIDTH $end
 $var parameter 32 { DATA_WIDTH $end
@@ -130,11 +130,11 @@ $var parameter 4 $" STATE_READ_W $end
 $var parameter 4 %" STATE_READ_X $end
 $var parameter 4 &" STATE_START_N $end
 $var parameter 4 '" STATE_WAIT_N $end
-$var reg 22 (" access_addr [21:0] $end
+$var reg 23 (" access_addr [22:0] $end
 $var reg 1 )" access_req $end
 $var reg 8 *" access_wdata [7:0] $end
 $var reg 1 +" access_wr $end
-$var reg 22 ," bias_group_addr [21:0] $end
+$var reg 23 ," bias_group_addr [22:0] $end
 $var reg 8 -" bias_reg [7:0] $end
 $var reg 1 C busy $end
 $var reg 1 B done $end
@@ -142,7 +142,7 @@ $var reg 6 ." index [5:0] $end
 $var reg 2 /" neuron_index [1:0] $end
 $var reg 1 0" neuron_start $end
 $var reg 4 1" state [3:0] $end
-$var reg 22 2" w_group_base [21:0] $end
+$var reg 23 2" w_group_base [22:0] $end
 $var integer 32 3" rst_i [31:0] $end
 $scope begin GEN_BUS[0] $end
 $var parameter 2 4" i $end
@@ -250,7 +250,7 @@ $scope begin GEN_Y_BUS[2] $end
 $var parameter 3 V" j $end
 $upscope $end
 $scope module u_mem $end
-$var wire 22 W" addr [21:0] $end
+$var wire 23 W" addr [22:0] $end
 $var wire 1 J clk $end
 $var wire 16 X" mem_rdata [15:0] $end
 $var wire 1 ! mem_ready $end
@@ -261,8 +261,8 @@ $var wire 1 +" wr $end
 $var parameter 32 Z" ADDR_WIDTH $end
 $var parameter 2 [" STATE_IDLE $end
 $var parameter 2 \" STATE_WAIT $end
-$var reg 22 ]" addr_reg [21:0] $end
-$var reg 22 ^" mem_addr [21:0] $end
+$var reg 23 ]" addr_reg [22:0] $end
+$var reg 23 ^" mem_addr [22:0] $end
 $var reg 1 w mem_lb_n $end
 $var reg 1 u mem_req $end
 $var reg 1 t mem_ub_n $end
@@ -487,7 +487,7 @@ $var wire 1 ( ub_n $end
 $var wire 1 ) oe_n $end
 $var wire 1 , lb_n $end
 $var wire 1 - ce_n $end
-$var wire 22 '$ a [21:0] $end
+$var wire 23 '$ a [22:0] $end
 $var parameter 32 ($ ADDR_WIDTH $end
 $var parameter 32 )$ DATA_WIDTH $end
 $var parameter 32 *$ DEPTH $end
@@ -506,7 +506,7 @@ $var real 1 6$ TWC_NS $end
 $var real 1 7$ TWPH_NS $end
 $var real 1 8$ TWP_NS $end
 $var real 1 9$ TWR_NS $end
-$var reg 22 :$ active_addr [21:0] $end
+$var reg 23 :$ active_addr [22:0] $end
 $var reg 16 ;$ active_wdata [15:0] $end
 $var reg 1 <$ dq_oe $end
 $var reg 16 =$ dq_out [15:0] $end
@@ -534,7 +534,7 @@ $upscope $end
 $upscope $end
 $scope module u_psram_ctrl $end
 $var wire 1 J clk $end
-$var wire 22 O$ mem_addr [21:0] $end
+$var wire 23 O$ mem_addr [22:0] $end
 $var wire 1 : mem_lb_n $end
 $var wire 1 9 mem_req $end
 $var wire 1 8 mem_ub_n $end
@@ -553,14 +553,14 @@ $var parameter 3 Y$ STATE_INIT $end
 $var parameter 3 Z$ STATE_READ $end
 $var parameter 3 [$ STATE_WRITE $end
 $var parameter 3 \$ STATE_WRITE_WAIT $end
-$var reg 22 ]$ address_reg [21:0] $end
+$var reg 23 ]$ address_reg [22:0] $end
 $var reg 14 ^$ counter [13:0] $end
 $var reg 1 _$ dq_oe $end
 $var reg 16 `$ dq_out [15:0] $end
 $var reg 1 a$ lb_reg $end
 $var reg 16 b$ mem_rdata [15:0] $end
 $var reg 1 * mem_ready $end
-$var reg 22 c$ psram_a [21:0] $end
+$var reg 23 c$ psram_a [22:0] $end
 $var reg 1 - psram_ce_n $end
 $var reg 1 , psram_lb_n $end
 $var reg 1 ) psram_oe_n $end
@@ -576,17 +576,17 @@ $scope task preload_bias_3 $end
 $var reg 8 h$ b0 [7:0] $end
 $var reg 8 i$ b1 [7:0] $end
 $var reg 8 j$ b2 [7:0] $end
-$var reg 22 k$ base [21:0] $end
+$var reg 23 k$ base [22:0] $end
 $upscope $end
 $scope task preload_weights_n $end
-$var reg 22 l$ base [21:0] $end
-$var reg 22 m$ neuron_base [21:0] $end
+$var reg 23 l$ base [22:0] $end
+$var reg 23 m$ neuron_base [22:0] $end
 $var reg 8 n$ value [7:0] $end
 $var integer 32 o$ k [31:0] $end
 $var integer 32 p$ n [31:0] $end
 $upscope $end
 $scope task preload_x $end
-$var reg 22 q$ base [21:0] $end
+$var reg 23 q$ base [22:0] $end
 $var integer 32 r$ k [31:0] $end
 $upscope $end
 $scope task run_and_check $end
@@ -596,7 +596,7 @@ $var reg 8 u$ expected2 [7:0] $end
 $var integer 32 v$ errors_local [31:0] $end
 $upscope $end
 $scope task tb_write_word $end
-$var reg 22 w$ addr_i [21:0] $end
+$var reg 23 w$ addr_i [22:0] $end
 $var reg 16 x$ data_i [15:0] $end
 $upscope $end
 $upscope $end
@@ -612,7 +612,7 @@ b10111011100000 W$
 b10000 V$
 b1110 U$
 b1010000 T$
-b10110 S$
+b10111 S$
 b110 R$
 r0 9$
 r46 8$
@@ -631,7 +631,7 @@ r70 ,$
 r70 +$
 b100000000000000 *$
 b10000 )$
-b10110 ($
+b10111 ($
 b0 %$
 b10 $$
 b1 #$
@@ -696,7 +696,7 @@ b0 n"
 b100000 m"
 b1 \"
 b0 ["
-b10110 Z"
+b10111 Z"
 b10 V"
 b1 U"
 b0 T"
@@ -743,17 +743,17 @@ b11 ~
 b100000 }
 b10 |
 b1000 {
-b10110 z
+b10111 z
 b100000 y
 b1 \
 b0 [
 b10000 Z
-b10110 Y
+b10111 Y
 b11 H
 b100000 G
 b10000 F
 r12.5 E
-b10110 D
+b10111 D
 $end
 #0
 $dumpvars

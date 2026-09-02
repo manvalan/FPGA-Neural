@@ -1,5 +1,5 @@
 module int8_memory_access #(
-    parameter ADDR_WIDTH = 22
+    parameter ADDR_WIDTH = 23
 )(
     input  wire                  clk,
     input  wire                  rst,

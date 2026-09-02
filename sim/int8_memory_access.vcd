@@ -1,5 +1,5 @@
 $date
-	Wed Sep  2 12:39:25 2026
+	Wed Sep  2 20:58:26 2026
 $end
 $version
 	Icarus Verilog
@@ -17,10 +17,10 @@ $var wire 16 & mem_wdata [15:0] $end
 $var wire 1 ' mem_ub_n $end
 $var wire 1 ( mem_req $end
 $var wire 1 ) mem_lb_n $end
-$var wire 22 * mem_addr [21:0] $end
+$var wire 23 * mem_addr [22:0] $end
 $var parameter 32 + ADDR_WIDTH $end
 $var real 1 , CLK_PERIOD $end
-$var reg 22 - addr [21:0] $end
+$var reg 23 - addr [22:0] $end
 $var reg 1 . clk $end
 $var reg 16 / model_rdata [15:0] $end
 $var reg 1 0 model_ready $end
@@ -30,7 +30,7 @@ $var reg 8 3 wdata [7:0] $end
 $var reg 1 4 wr $end
 $var integer 32 5 i [31:0] $end
 $scope module dut $end
-$var wire 22 6 addr [21:0] $end
+$var wire 23 6 addr [22:0] $end
 $var wire 1 . clk $end
 $var wire 16 7 mem_rdata [15:0] $end
 $var wire 1 " mem_ready $end
@@ -41,8 +41,8 @@ $var wire 1 4 wr $end
 $var parameter 32 9 ADDR_WIDTH $end
 $var parameter 2 : STATE_IDLE $end
 $var parameter 2 ; STATE_WAIT $end
-$var reg 22 < addr_reg [21:0] $end
-$var reg 22 = mem_addr [21:0] $end
+$var reg 23 < addr_reg [22:0] $end
+$var reg 23 = mem_addr [22:0] $end
 $var reg 1 ) mem_lb_n $end
 $var reg 1 ( mem_req $end
 $var reg 1 ' mem_ub_n $end
@@ -53,11 +53,11 @@ $var reg 1 # ready $end
 $var reg 2 @ state [1:0] $end
 $upscope $end
 $scope task read_byte $end
-$var reg 22 A byte_addr [21:0] $end
+$var reg 23 A byte_addr [22:0] $end
 $var reg 8 B expected [7:0] $end
 $upscope $end
 $scope task write_byte $end
-$var reg 22 C byte_addr [21:0] $end
+$var reg 23 C byte_addr [22:0] $end
 $var reg 8 D data [7:0] $end
 $upscope $end
 $upscope $end
@@ -66,9 +66,9 @@ $comment Show the parameter values. $end
 $dumpall
 b1 ;
 b0 :
-b10110 9
+b10111 9
 r12.5 ,
-b10110 +
+b10111 +
 $end
 #0
 $dumpvars

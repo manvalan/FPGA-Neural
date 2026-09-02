@@ -45,7 +45,7 @@
 // ================================================================
 
 module layer_sequencer #(
-    parameter ADDR_WIDTH = 22,
+    parameter ADDR_WIDTH = 23,
     parameter DATA_WIDTH = 8,
     parameter N_WIDTH    = 256,   // = neuron_memory's N_INPUTS = N_NEURONS
     parameter N_LAYERS   = 4
@@ -314,7 +314,7 @@ module layer_sequencer #(
                                 cur_sel         <= write_sel;
                                 write_sel       <= ~write_sel;
                                 layer_idx       <= layer_idx + 8'd1;
-                                desc_table_addr <= desc_table_addr + 22'd11;
+                                desc_table_addr <= desc_table_addr + 11;
                                 desc_byte_idx   <= 4'd0;
 
                                 state <= ST_READ_DESC;

@@ -400,9 +400,10 @@ here). The FPGA is always SPI slave. One command per CS-low period;
 byte 0 of every transaction is the opcode.
 
 **Multi-byte fields** are big-endian (most significant byte first).
-Byte addresses are `ADDR_WIDTH`-bit (22 bits today, from
-`rtl/neuron_memory.v`), carried in a 3-byte field with the top 2 bits
-reserved as 0.
+Byte addresses are `ADDR_WIDTH`-bit (23 bits today, from
+`rtl/neuron_memory.v` — sized for a full 8 MiB PSRAM, see
+`docs/FPGA-Neural-Hardware-Design.md` §3), carried in a 3-byte field
+with the top bit reserved as 0.
 
 **Length is explicit**, not CS-edge-delimited: `WRITE_RAM`/`READ_RAM`
 carry a 2-byte length field, so the SPI controller only needs a byte
