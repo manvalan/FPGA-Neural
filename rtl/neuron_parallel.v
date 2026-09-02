@@ -1,9 +1,8 @@
 module neuron_parallel #(
-    parameter DATA_WIDTH = 16,
-    parameter FRAC_BITS  = 8,
-    parameter N_INPUTS   = 64,
+    parameter DATA_WIDTH = 8,
+    parameter N_INPUTS   = 32,
     parameter PARALLEL   = 8,
-    parameter ACC_WIDTH  = 40
+    parameter ACC_WIDTH  = 32
 )(
     input clk,
     input rst,
@@ -31,23 +30,25 @@ module neuron_parallel #(
 
     wire signed [ACC_WIDTH-1:0] acc_next;
 
-    wire signed [DATA_WIDTH-1:0] bias_ext_small;
     wire signed [ACC_WIDTH-1:0] bias_ext;
-
     wire signed [ACC_WIDTH-1:0] final_acc;
-    wire signed [ACC_WIDTH-1:0] final_value;
 
     assign x_group =
-        x_bus[group_index*PARALLEL*DATA_WIDTH
-              +: PARALLEL*DATA_WIDTH];
+        x_bus[
+            group_index*PARALLEL*DATA_WIDTH
+            +: PARALLEL*DATA_WIDTH
+        ];
 
     assign w_group =
-        w_bus[group_index*PARALLEL*DATA_WIDTH
-              +: PARALLEL*DATA_WIDTH];
+        w_bus[
+            group_index*PARALLEL*DATA_WIDTH
+            +: PARALLEL*DATA_WIDTH
+        ];
 
     mac8 #(
         .DATA_WIDTH(DATA_WIDTH),
-        .ACC_WIDTH(ACC_WIDTH)
+        .ACC_WIDTH(ACC_WIDTH),
+        .PARALLEL(PARALLEL)
     ) u_mac8 (
         .x_bus(x_group),
         .w_bus(w_group),
@@ -55,17 +56,12 @@ module neuron_parallel #(
         .acc_out(acc_next)
     );
 
-    assign bias_ext_small = bias;
-
+    // Sign extension INT8 -> INT32
     assign bias_ext =
-        {{(ACC_WIDTH-DATA_WIDTH){bias_ext_small[DATA_WIDTH-1]}},
-         bias_ext_small};
+        {{(ACC_WIDTH-DATA_WIDTH){bias[DATA_WIDTH-1]}}, bias};
 
-    assign final_acc =
-        acc_next + (bias_ext <<< FRAC_BITS);
-
-    assign final_value =
-        final_acc >>> FRAC_BITS;
+    // Accumulazione finale + bias
+    assign final_acc = acc_next + bias_ext;
 
     always @(posedge clk) begin
 
@@ -93,14 +89,18 @@ module neuron_parallel #(
 
                     acc <= final_acc;
 
-                    if (final_value <= 0) begin
+                    // ReLU
+                    if (final_acc <= 0) begin
                         y <= 0;
                     end
-                    else if (final_value > 32767) begin
-                        y <= 16'sh7FFF;
+
+                    // Saturazione INT32 -> INT8
+                    else if (final_acc > 127) begin
+                        y <= 8'sd127;
                     end
+
                     else begin
-                        y <= final_value[DATA_WIDTH-1:0];
+                        y <= final_acc[DATA_WIDTH-1:0];
                     end
 
                     busy <= 0;

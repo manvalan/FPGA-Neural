@@ -1,6 +1,5 @@
 module layer #(
     parameter DATA_WIDTH = 16,
-    parameter FRAC_BITS  = 8,
     parameter N_INPUTS   = 64,
     parameter N_NEURONS  = 8,
     parameter PARALLEL   = 8,
@@ -36,7 +35,6 @@ module layer #(
 
             neuron_parallel #(
                 .DATA_WIDTH(DATA_WIDTH),
-                .FRAC_BITS(FRAC_BITS),
                 .N_INPUTS(N_INPUTS),
                 .PARALLEL(PARALLEL),
                 .ACC_WIDTH(ACC_WIDTH)

@@ -2,12 +2,11 @@
 
 module tb;
 
-    parameter DATA_WIDTH = 16;
-    parameter FRAC_BITS  = 8;
-    parameter N_INPUTS   = 32;
+    parameter DATA_WIDTH = 8;
+    parameter N_INPUTS   = 256;
     parameter N_NEURONS  = 4;
-    parameter PARALLEL   = 8;
-    parameter ACC_WIDTH  = 40;
+    parameter PARALLEL   = 32;
+    parameter ACC_WIDTH  = 32;
 
     reg clk;
     reg rst;
@@ -21,20 +20,17 @@ module tb;
     reg signed [DATA_WIDTH*N_NEURONS-1:0]
         bias_bus;
 
-    wire signed [DATA_WIDTH*N_NEURONS-1:0]
-        y_bus;
+    wire signed [DATA_WIDTH*N_NEURONS-1:0] y_bus;
 
     wire busy;
     wire done;
 
     integer i;
-    integer n;
     integer errors;
     integer expected;
 
     layer #(
         .DATA_WIDTH(DATA_WIDTH),
-        .FRAC_BITS(FRAC_BITS),
         .N_INPUTS(N_INPUTS),
         .N_NEURONS(N_NEURONS),
         .PARALLEL(PARALLEL),
@@ -55,13 +51,6 @@ module tb;
         clk = 0;
         forever #5 clk = ~clk;
     end
-
-    function signed [15:0] q8_8;
-        input real value;
-        begin
-            q8_8 = $rtoi(value * 256.0);
-        end
-    endfunction
 
     task run_layer;
         begin
@@ -94,107 +83,81 @@ module tb;
         rst = 0;
 
         /*
-         * All inputs = 1.0
-         */
-        for (i = 0; i < N_INPUTS; i = i + 1)
-            x_bus[i*DATA_WIDTH +: DATA_WIDTH] = q8_8(1.0);
+ * Tutti gli input = 1
+ */
+for (i = 0; i < N_INPUTS; i = i + 1)
+    x_bus[i*DATA_WIDTH +: DATA_WIDTH] = 8'sd1;
 
-        /*
-         * Neuron 0: weight = 1.0
-         * result = N_INPUTS
-         */
-        for (i = 0; i < N_INPUTS; i = i + 1)
-            weights_bus[
-                0*N_INPUTS*DATA_WIDTH +
-                i*DATA_WIDTH +:
-                DATA_WIDTH
-            ] = q8_8(1.0);
+/*
+ * N0:
+ * primi 32 pesi = 1
+ * restanti 224 = 0
+ *
+ * Risultato = 32
+ *
+ * Questo verifica che l'accumulatore
+ * attraversi correttamente tutti gli 8 gruppi.
+ */
+for (i = 0; i < N_INPUTS; i = i + 1)
+    weights_bus[
+        0*N_INPUTS*DATA_WIDTH +
+        i*DATA_WIDTH +:
+        DATA_WIDTH
+    ] = (i < 32) ? 8'sd1 : 8'sd0;
 
-        /*
-         * Neuron 1: weight = 0.5
-         * result = N_INPUTS / 2
-         */
-        if (N_NEURONS > 1)
-            for (i = 0; i < N_INPUTS; i = i + 1)
-                weights_bus[
-                    1*N_INPUTS*DATA_WIDTH +
-                    i*DATA_WIDTH +:
-                    DATA_WIDTH
-                ] = q8_8(0.5);
+/*
+ * N1:
+ * tutti i 256 pesi = 0
+ * bias = 10
+ *
+ * Risultato = 10
+ */
+for (i = 0; i < N_INPUTS; i = i + 1)
+    weights_bus[
+        1*N_INPUTS*DATA_WIDTH +
+        i*DATA_WIDTH +:
+        DATA_WIDTH
+    ] = 8'sd0;
 
-        /*
-         * Neuron 2: weight = -0.5
-         * ReLU -> 0
-         */
-        if (N_NEURONS > 2)
-            for (i = 0; i < N_INPUTS; i = i + 1)
-                weights_bus[
-                    2*N_INPUTS*DATA_WIDTH +
-                    i*DATA_WIDTH +:
-                    DATA_WIDTH
-                ] = q8_8(-0.5);
+bias_bus[1*DATA_WIDTH +: DATA_WIDTH] = 8'sd10;
 
-        /*
-         * Neuron 3: weight = 2.0
-         * Large positive result -> saturation
-         */
-        if (N_NEURONS > 3)
-            for (i = 0; i < N_INPUTS; i = i + 1)
-                weights_bus[
-                    3*N_INPUTS*DATA_WIDTH +
-                    i*DATA_WIDTH +:
-                    DATA_WIDTH
-                ] = q8_8(2.0);
+/*
+ * N2:
+ * tutti i pesi = -1
+ *
+ * Risultato = -256
+ * ReLU -> 0
+ */
+for (i = 0; i < N_INPUTS; i = i + 1)
+    weights_bus[
+        2*N_INPUTS*DATA_WIDTH +
+        i*DATA_WIDTH +:
+        DATA_WIDTH
+    ] = -8'sd1;
 
-        /*
-         * Neuron 4: zero weights + bias +1
-         */
-        if (N_NEURONS > 4)
-            bias_bus[4*DATA_WIDTH +: DATA_WIDTH] = q8_8(1.0);
-
-        /*
-         * Neuron 5: zero weights + bias -1
-         * ReLU -> 0
-         */
-        if (N_NEURONS > 5)
-            bias_bus[5*DATA_WIDTH +: DATA_WIDTH] = q8_8(-1.0);
-
-        /*
-         * Neuron 6: weight 1.0 + bias -1.0
-         * result = N_INPUTS - 1
-         */
-        if (N_NEURONS > 6) begin
-            for (i = 0; i < N_INPUTS; i = i + 1)
-                weights_bus[
-                    6*N_INPUTS*DATA_WIDTH +
-                    i*DATA_WIDTH +:
-                    DATA_WIDTH
-                ] = q8_8(1.0);
-
-            bias_bus[6*DATA_WIDTH +: DATA_WIDTH] = q8_8(-1.0);
-        end
-
-        /*
-         * Neuron 7: weight 0.25 + bias 1
-         * result = N_INPUTS/4 + 1
-         */
-        if (N_NEURONS > 7) begin
-            for (i = 0; i < N_INPUTS; i = i + 1)
-                weights_bus[
-                    7*N_INPUTS*DATA_WIDTH +
-                    i*DATA_WIDTH +:
-                    DATA_WIDTH
-                ] = q8_8(0.25);
-
-            bias_bus[7*DATA_WIDTH +: DATA_WIDTH] = q8_8(1.0);
-        end
+/*
+ * N3:
+ * primi 32 pesi = 4
+ * restanti = 0
+ *
+ * Risultato = 128
+ * Saturazione INT8 -> 127
+ */
+for (i = 0; i < N_INPUTS; i = i + 1)
+    weights_bus[
+        3*N_INPUTS*DATA_WIDTH +
+        i*DATA_WIDTH +:
+        DATA_WIDTH
+    ] = (i < 32) ? 8'sd4 : 8'sd0;
 
         $display("");
         $display("========================================");
-        $display("PARAMETRIC LAYER TEST");
+        $display("INT8 / INT32 PARAMETRIC LAYER TEST");
         $display("N_INPUTS  = %0d", N_INPUTS);
         $display("N_NEURONS = %0d", N_NEURONS);
         $display("PARALLEL  = %0d", PARALLEL);
+        $display("DATA_WIDTH = %0d", DATA_WIDTH);
+        $display("ACC_WIDTH  = %0d", ACC_WIDTH);
         $display("========================================");
 
         run_layer;
@@ -202,40 +165,45 @@ module tb;
         /*
          * Neuron 0
          */
-        expected = N_INPUTS * 256;
+        expected = 32;
 
-        if (y_bus[0*16 +: 16] !== expected[15:0]) begin
+        if ($signed(y_bus[0*DATA_WIDTH +: DATA_WIDTH]) !== expected) begin
             $display("FAIL N0: got %0d expected %0d",
-                     y_bus[0*16 +: 16], expected);
+                     $signed(y_bus[0*DATA_WIDTH +: DATA_WIDTH]),
+                     expected);
             errors = errors + 1;
         end
         else
-            $display("PASS N0: %0d", y_bus[0*16 +: 16]);
+            $display("PASS N0: %0d", $signed(y_bus[0*DATA_WIDTH +: DATA_WIDTH]));
 
         /*
          * Neuron 1
          */
         if (N_NEURONS > 1) begin
-            expected = (N_INPUTS * 128);
 
-            if (y_bus[1*16 +: 16] !== expected[15:0]) begin
+            expected = 10;
+
+            if ($signed(y_bus[1*DATA_WIDTH +: DATA_WIDTH]) !== expected) begin
                 $display("FAIL N1: got %0d expected %0d",
-                         y_bus[1*16 +: 16], expected);
+                         $signed(y_bus[1*DATA_WIDTH +: DATA_WIDTH]),
+                         expected);
                 errors = errors + 1;
             end
             else
-                $display("PASS N1: %0d", y_bus[1*16 +: 16]);
+                $display("PASS N1: %0d",
+                         $signed(y_bus[1*DATA_WIDTH +: DATA_WIDTH]));
         end
 
         /*
          * Neuron 2
          */
         if (N_NEURONS > 2) begin
+
             expected = 0;
 
-            if (y_bus[2*16 +: 16] !== 16'sd0) begin
+            if ($signed(y_bus[2*DATA_WIDTH +: DATA_WIDTH]) !== 0) begin
                 $display("FAIL N2: got %0d expected 0",
-                         y_bus[2*16 +: 16]);
+                         $signed(y_bus[2*DATA_WIDTH +: DATA_WIDTH]));
                 errors = errors + 1;
             end
             else
@@ -243,86 +211,24 @@ module tb;
         end
 
         /*
-        * Neuron 3:
-        * weight = 2.0
-        * result = N_INPUTS * 2.0
-        *
-        * Saturation only occurs when result > 127.996...
-        */
+         * Neuron 3
+         *
+         * 32 * 4 = 128
+         * INT8 positive saturation -> 127
+         */
         if (N_NEURONS > 3) begin
 
-            expected = N_INPUTS * 2 * 256;
+            expected = 127;
 
-        if (expected > 32767)
-            expected = 32767;
-
-        if (y_bus[3*16 +: 16] !== expected[15:0]) begin
-            $display("FAIL N3: got %0d expected %0d",
-                 y_bus[3*16 +: 16], expected);
-            errors = errors + 1;
-        end
-        else begin
-            if (expected == 32767)
-                $display("PASS N3: %0d (saturation)", y_bus[3*16 +: 16]);
-            else
-                $display("PASS N3: %0d", y_bus[3*16 +: 16]);
-        end
-    end
-
-        /*
-         * Neuron 4
-         */
-        if (N_NEURONS > 4) begin
-            if (y_bus[4*16 +: 16] !== 16'sd256) begin
-                $display("FAIL N4: got %0d expected 256",
-                         y_bus[4*16 +: 16]);
+            if ($signed(y_bus[3*DATA_WIDTH +: DATA_WIDTH]) !== expected) begin
+                $display("FAIL N3: got %0d expected %0d",
+                         $signed(y_bus[3*DATA_WIDTH +: DATA_WIDTH]),
+                         expected);
                 errors = errors + 1;
             end
             else
-                $display("PASS N4: 256 (bias)");
-        end
-
-        /*
-         * Neuron 5
-         */
-        if (N_NEURONS > 5) begin
-            if (y_bus[5*16 +: 16] !== 16'sd0) begin
-                $display("FAIL N5: got %0d expected 0",
-                         y_bus[5*16 +: 16]);
-                errors = errors + 1;
-            end
-            else
-                $display("PASS N5: 0 (negative bias + ReLU)");
-        end
-
-        /*
-         * Neuron 6
-         */
-        if (N_NEURONS > 6) begin
-            expected = (N_INPUTS - 1) * 256;
-
-            if (y_bus[6*16 +: 16] !== expected[15:0]) begin
-                $display("FAIL N6: got %0d expected %0d",
-                         y_bus[6*16 +: 16], expected);
-                errors = errors + 1;
-            end
-            else
-                $display("PASS N6: %0d", y_bus[6*16 +: 16]);
-        end
-
-        /*
-         * Neuron 7
-         */
-        if (N_NEURONS > 7) begin
-            expected = (N_INPUTS / 4 + 1) * 256;
-
-            if (y_bus[7*16 +: 16] !== expected[15:0]) begin
-                $display("FAIL N7: got %0d expected %0d",
-                         y_bus[7*16 +: 16], expected);
-                errors = errors + 1;
-            end
-            else
-                $display("PASS N7: %0d", y_bus[7*16 +: 16]);
+                $display("PASS N3: %0d (saturation)",
+                         $signed(y_bus[3*DATA_WIDTH +: DATA_WIDTH]));
         end
 
         if (busy !== 0) begin
@@ -339,9 +245,9 @@ module tb;
         $display("========================================");
 
         if (errors == 0)
-            $display("PARAMETRIC TEST PASSED");
+            $display("INT8 PARAMETRIC TEST PASSED");
         else
-            $display("PARAMETRIC TEST FAILED: %0d errors", errors);
+            $display("INT8 PARAMETRIC TEST FAILED: %0d errors", errors);
 
         $display("========================================");
         $display("");
