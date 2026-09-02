@@ -416,10 +416,11 @@ counter, not CS-edge detection mid-transfer.
 | 0x01 | WRITE_RAM | addr(3B) + len(2B) + `len` data bytes | — | Write a block into PSRAM (X, weights, bias, network params) |
 | 0x02 | READ_RAM | addr(3B) + len(2B) | `len` data bytes | Read a block back from PSRAM |
 | 0x0F | RESET | — | — | Synchronous reset pulse to the compute engine (`neuron_memory`) and clears the STATUS latch below. Does **not** erase PSRAM contents. Kept as a distinct opcode from NOP. |
-| 0x10 | SET_BASE | sel(1B) + addr(3B) | — | Sets `x_base`(sel=0) / `w_base`(sel=1) / `bias_addr`(sel=2) |
-| 0x20 | START | — | — | Pulses `start`; ignored (no-op) if `busy=1` |
-| 0x21 | STATUS | — | 1 byte | bit0=`busy` (live), bit1=`done` (**sticky, clear-on-read**), bits7:2 reserved=0 |
+| 0x10 | SET_BASE | sel(1B) + addr(3B) | — | Sets `x_base`(sel=0) / `w_base`(sel=1) / `bias_addr`(sel=2) / `table_base`(sel=3) / `buf_a_base`(sel=4) / `buf_b_base`(sel=5) |
+| 0x20 | START | — | — | Pulses `start` on `neuron_memory` directly (single-layer/manual path); ignored (no-op) if the engine is busy in any form (single-layer or a RUN_NETWORK job) |
+| 0x21 | STATUS | — | 1 byte | bit0=`busy` (live, OR of the single-layer and RUN_NETWORK busy signals), bit1=`done` (**sticky, clear-on-read**; latches on the *final* layer's completion for a RUN_NETWORK job, not each intermediate layer), bits7:2 reserved=0 |
 | 0x22 | READ_OUTPUT | — | `N_NEURONS` bytes | `y_bus`, neuron-major (byte 0 = neuron 0) |
+| 0x23 | RUN_NETWORK | num_layers(1B) | — | Phase 5: pulses `layer_sequencer`'s `run_start` to chain `num_layers` (1..N_LAYERS) runs of `neuron_memory` using the descriptor table at `table_base` and the ping-pong buffers at `buf_a_base`/`buf_b_base`; layer 0 reads from `x_base`. Ignored (no-op) if the engine is already busy. |
 | 0x30 | READ_CONFIG | — | 8 bytes | Hardware config record, see below |
 
 **Why STATUS.done is sticky / clear-on-read:** in `rtl/neuron_memory.v`
@@ -459,10 +460,22 @@ poll STATUS           -> 0x21           (until done bit set; clears on this read
 READ_OUTPUT           -> 0x22
 ```
 
+**RUN_NETWORK (Phase 5) example session:**
+
+```text
+WRITE_RAM (layer descriptor table) -> 0x01 ...   (N_LAYERS entries of w_base(3B)+bias_addr(3B), MSB-first)
+WRITE_RAM (weights/biases per layer, X for layer 0) -> 0x01 ...
+SET_BASE (X/TABLE/BUF_A/BUF_B)     -> 0x10 x4
+RUN_NETWORK(num_layers)            -> 0x23 <num_layers>
+poll STATUS                        -> 0x21   (until done bit set; clears on this read)
+READ_OUTPUT                        -> 0x22   (final layer's y_bus)
+```
+
 Not yet decided / explicitly out of scope for v1: Dual SPI framing,
 a CRC/checksum on transfers (SPI is assumed reliable for a
-board-level trace in v1), and multi-layer sequencing commands (that
-belongs to Phase 5, once intermediate buffers exist).
+board-level trace in v1). Multi-layer sequencing itself (RUN_NETWORK,
+opcode 0x23) is implemented per `rtl/layer_sequencer.v` and the table
+above.
 
 ---
 
@@ -790,6 +803,36 @@ Implement:
 - layer sequencing;
 - configurable activation functions.
 
+- [x] `layer_sequencer.v`: chains up to `N_LAYERS` runs of a single, reused `neuron_memory` instance, reading each layer's `w_base`/`bias_addr` from a host-written descriptor table and ping-ponging each layer's output between two RAM buffers (layer 0 reads the external `x_base`; layer k>0 reads the buffer layer k-1 wrote)
+- [x] `mem_arbiter.v`: extended to a third port (Port C, priority B > C > A) for the sequencer's own RAM master access
+- [x] `spi_engine.v`: `RUN_NETWORK` opcode (0x23) + `SET_BASE` selectors for `table_base`/`buf_a_base`/`buf_b_base`; `STATUS.busy`/`STATUS.done` extended to track the sequencer (`seq_busy`/`seq_done`) as well as `neuron_memory` directly, so `done` latches on the *last* layer only, not each intermediate one — see §8.1
+- [x] `spi_neuron_top.v`: instantiates the sequencer and muxes `neuron_memory`'s control inputs between it (while `seq_busy`) and `spi_engine`'s direct-drive path (legacy single-layer mode)
+- [x] Testbenches: `sim/layer_sequencer_tb.v` (2-layer run: descriptor table, ping-pong addressing verified by address not just value, byte-exact output-buffer copy, `seq_busy` held across the layer boundary, `seq_done` fires exactly once); `sim/spi_engine_tb.v` gained tests K/L (new `SET_BASE` selectors, `RUN_NETWORK` accept/busy-ignore gating, `STATUS` semantics) — both use a mocked `neuron_memory`, same pattern as Phase 4's `spi_engine_tb.v`
+- [ ] Configurable activation functions (not started — `neuron_parallel.v` still has ReLU hardwired)
+- [ ] Real-toolchain (Yosys + nextpnr-ecp5) synthesis/Fmax check of the extended `spi_neuron_top.v`
+- [x] `sim/spi_neuron_top_runnetwork_tb.v`: real end-to-end test, `RUN_NETWORK` driven purely over simulated SPI against the real `neuron_memory` + PSRAM chain (N_INPUTS=N_NEURONS=4, PARALLEL=2, 2 layers, hand-computed expected output verified via both `READ_OUTPUT` and a `READ_RAM` of `buf_b_base`, plus `buf_a_base`'s intermediate layer-0 output) — all PASS, and confirms the mux correctly hands `neuron_memory` back to the legacy single-layer `START` path afterward
+
+**Bug found and fixed while writing the above test (2026-09-02):** a real race
+in the STATUS.done sticky/clear-on-read mechanism (§8.1), present since Phase 4
+and not specific to RUN_NETWORK — it only needed continuous STATUS polling
+racing a `done` transition to surface, which the new end-to-end test's
+`wait_done` polling loop finally did. `tx_byte`'s `OP_STATUS` case read
+`status_done_sticky`/`busy` **live/combinationally** for the whole `ST_RESP`
+window, while the sticky bit was cleared unconditionally on any STATUS read
+(`status_read_now`). If `done_event` landed while a STATUS response byte was
+already mid-transmission, the byte actually shifted out to the host could
+still be the stale pre-done value while the engine simultaneously treated the
+read as having delivered `done` and cleared it — silently dropping the
+transition forever, hanging any host polling STATUS in a tight loop. Fixed in
+`rtl/spi_engine.v` by latching a `status_snapshot` register once, at
+`OP_STATUS` opcode-accept time, and gating the sticky clear on
+`status_snapshot[1]` (i.e. only clear if the byte actually transmitted showed
+`done=1`) instead of clearing unconditionally on every STATUS read. A
+`done_event` that arrives too late for one snapshot is now reported on the
+next poll instead of being lost. All existing testbenches (`spi_slave_tb.v`,
+`spi_engine_tb.v`, `spi_neuron_top_tb.v`, `layer_sequencer_tb.v`) still pass
+unchanged.
+
 ## Phase 6 — Host Software
 
 Develop host-side drivers for:
@@ -881,7 +924,7 @@ The FPGA becomes a dedicated neural-computation peripheral, analogous to other h
 | Dedicated RAM architecture | - Design |
 | SPI interface | Planned |
 | Dual SPI | Future |
-| Multi-layer engine | Planned |
+| Multi-layer engine | - RTL + unit tests + real end-to-end (simulated SPI) done, not yet on real toolchain |
 | Linux host driver | Planned |
 | ESP32 host driver | Planned |
 | Hardware training | Future |

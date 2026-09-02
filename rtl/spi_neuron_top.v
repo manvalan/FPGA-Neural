@@ -24,7 +24,8 @@ module spi_neuron_top #(
     parameter PARALLEL       = 8,
     parameter ACC_WIDTH      = 32,
     parameter MEM_DATA_WIDTH = 16,
-    parameter CLK_FREQ_MHZ   = 80
+    parameter CLK_FREQ_MHZ   = 80,
+    parameter N_LAYERS       = 4    // Phase 5: RUN_NETWORK, requires N_INPUTS==N_NEURONS
 )(
     input wire clk,
     input wire rst,
@@ -97,6 +98,16 @@ module spi_neuron_top #(
 
     wire nm_soft_rst;
 
+    // Phase 5: layer_sequencer control/status, driven by spi_engine's
+    // RUN_NETWORK opcode.
+    wire [ADDR_WIDTH-1:0] table_base;
+    wire [ADDR_WIDTH-1:0] buf_a_base;
+    wire [ADDR_WIDTH-1:0] buf_b_base;
+    wire                  run_start;
+    wire [7:0]             run_num_layers;
+    wire                   seq_busy;
+    wire                   seq_done;
+
     spi_engine #(
         .ADDR_WIDTH(ADDR_WIDTH),
         .DATA_WIDTH(DATA_WIDTH),
@@ -119,8 +130,66 @@ module spi_neuron_top #(
         .nm_start(nm_start), .nm_busy(nm_busy), .nm_done(nm_done),
         .y_bus(y_bus),
 
-        .nm_soft_rst(nm_soft_rst)
+        .nm_soft_rst(nm_soft_rst),
+
+        .table_base(table_base), .buf_a_base(buf_a_base), .buf_b_base(buf_b_base),
+        .run_start(run_start), .run_num_layers(run_num_layers),
+        .seq_busy(seq_busy), .seq_done(seq_done)
     );
+
+    // ============================================================
+    // LAYER SEQUENCER (Phase 5: RUN_NETWORK)
+    //
+    // Requires N_INPUTS == N_NEURONS (both equal N_WIDTH below) --
+    // see rtl/layer_sequencer.v header for why. neuron_memory is
+    // shared with the legacy single-layer path: the two mux_nm_*
+    // wires below select which master drives it, based on seq_busy.
+    // ============================================================
+
+    wire [ADDR_WIDTH-1:0] seq_nm_x_base;
+    wire [ADDR_WIDTH-1:0] seq_nm_w_base;
+    wire [ADDR_WIDTH-1:0] seq_nm_bias_addr;
+    wire                  seq_nm_start;
+
+    wire                   seq_ram_req;
+    wire                   seq_ram_wr;
+    wire [ADDR_WIDTH-1:0]  seq_ram_addr;
+    wire signed [7:0]      seq_ram_wdata;
+    wire signed [7:0]      seq_ram_rdata;
+    wire                   seq_ram_ready;
+
+    layer_sequencer #(
+        .ADDR_WIDTH(ADDR_WIDTH),
+        .DATA_WIDTH(DATA_WIDTH),
+        .N_WIDTH(N_NEURONS),
+        .N_LAYERS(N_LAYERS)
+    ) u_layer_sequencer (
+        .clk(clk), .rst(rst),
+
+        .run_start(run_start), .run_num_layers(run_num_layers),
+        .seq_busy(seq_busy), .seq_done(seq_done),
+
+        .x_base(x_base), .table_base(table_base),
+        .buf_a_base(buf_a_base), .buf_b_base(buf_b_base),
+
+        .nm_x_base(seq_nm_x_base), .nm_w_base(seq_nm_w_base),
+        .nm_bias_addr(seq_nm_bias_addr), .nm_start(seq_nm_start),
+
+        .nm_busy(nm_busy), .nm_done(nm_done),
+        .y_bus(y_bus),
+
+        .ram_req(seq_ram_req), .ram_wr(seq_ram_wr),
+        .ram_addr(seq_ram_addr), .ram_wdata(seq_ram_wdata),
+        .ram_rdata(seq_ram_rdata), .ram_ready(seq_ram_ready)
+    );
+
+    // neuron_memory master mux: the sequencer owns it for the whole
+    // duration of a RUN_NETWORK job (seq_busy), otherwise spi_engine
+    // drives it directly (legacy single-layer SET_BASE/START path).
+    wire [ADDR_WIDTH-1:0] mux_nm_x_base    = seq_busy ? seq_nm_x_base    : x_base;
+    wire [ADDR_WIDTH-1:0] mux_nm_w_base    = seq_busy ? seq_nm_w_base    : w_base;
+    wire [ADDR_WIDTH-1:0] mux_nm_bias_addr = seq_busy ? seq_nm_bias_addr : bias_addr;
+    wire                  mux_nm_start     = seq_busy ? seq_nm_start    : nm_start;
 
     // ============================================================
     // NEURON MEMORY
@@ -146,13 +215,13 @@ module spi_neuron_top #(
         .ACC_WIDTH(ACC_WIDTH)
     ) u_neuron_memory (
         .clk(clk), .rst(nm_rst),
-        .start(nm_start),
+        .start(mux_nm_start),
 
         .mem_req(nm_ram_req), .mem_wr(nm_ram_wr),
         .mem_addr(nm_ram_addr), .mem_wdata(nm_ram_wdata),
         .mem_rdata(nm_ram_rdata), .mem_ready(nm_ram_ready),
 
-        .x_base(x_base), .w_base(w_base), .bias_addr(bias_addr),
+        .x_base(mux_nm_x_base), .w_base(mux_nm_w_base), .bias_addr(mux_nm_bias_addr),
 
         .y_bus(y_bus), .busy(nm_busy), .done(nm_done)
     );
@@ -180,6 +249,10 @@ module spi_neuron_top #(
         .b_req(nm_ram_req), .b_wr(nm_ram_wr),
         .b_addr(nm_ram_addr), .b_wdata(nm_ram_wdata),
         .b_rdata(nm_ram_rdata), .b_ready(nm_ram_ready),
+
+        .c_req(seq_ram_req), .c_wr(seq_ram_wr),
+        .c_addr(seq_ram_addr), .c_wdata(seq_ram_wdata),
+        .c_rdata(seq_ram_rdata), .c_ready(seq_ram_ready),
 
         .m_req(arb_req), .m_wr(arb_wr),
         .m_addr(arb_addr), .m_wdata(arb_wdata),

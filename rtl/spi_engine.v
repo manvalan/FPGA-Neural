@@ -79,7 +79,21 @@ module spi_engine #(
 
     input  wire signed [DATA_WIDTH*N_NEURONS-1:0] y_bus,
 
-    output reg                   nm_soft_rst
+    output reg                   nm_soft_rst,
+
+    // ------------------------------------------------------------
+    // layer_sequencer control (Phase 5: RUN_NETWORK opcode)
+    // ------------------------------------------------------------
+
+    output reg  [ADDR_WIDTH-1:0] table_base,
+    output reg  [ADDR_WIDTH-1:0] buf_a_base,
+    output reg  [ADDR_WIDTH-1:0] buf_b_base,
+
+    output reg                   run_start,      // one-cycle pulse
+    output reg  [7:0]            run_num_layers,
+
+    input  wire                  seq_busy,
+    input  wire                  seq_done        // one-cycle pulse
 );
 
     // ============================================================
@@ -94,12 +108,16 @@ module spi_engine #(
     localparam OP_START       = 8'h20;
     localparam OP_STATUS      = 8'h21;
     localparam OP_READ_OUTPUT = 8'h22;
+    localparam OP_RUN_NETWORK = 8'h23;
     localparam OP_READ_CONFIG = 8'h30;
 
     // SET_BASE selector values
-    localparam SEL_X_BASE    = 8'h00;
-    localparam SEL_W_BASE    = 8'h01;
-    localparam SEL_BIAS_ADDR = 8'h02;
+    localparam SEL_X_BASE     = 8'h00;
+    localparam SEL_W_BASE     = 8'h01;
+    localparam SEL_BIAS_ADDR  = 8'h02;
+    localparam SEL_TABLE_BASE = 8'h03;
+    localparam SEL_BUF_A_BASE = 8'h04;
+    localparam SEL_BUF_B_BASE = 8'h05;
 
     // ============================================================
     // STATES
@@ -117,6 +135,7 @@ module spi_engine #(
     localparam ST_READ_DATA    = 4'd9;
     localparam ST_RESP         = 4'd10; // STATUS / READ_OUTPUT / READ_CONFIG
     localparam ST_IGNORE       = 4'd11;
+    localparam ST_RUNNET       = 4'd12; // RUN_NETWORK: 1 payload byte (num_layers)
 
     reg [3:0] state;
     reg [7:0] opcode;
@@ -148,16 +167,43 @@ module spi_engine #(
 
     reg status_done_sticky;
 
+    // net_mode: set while a RUN_NETWORK (multi-layer) job is in
+    // flight (from the accepted opcode until layer_sequencer's
+    // final seq_done), so STATUS.done latches on the sequencer's
+    // seq_done rather than on each intermediate per-layer nm_done
+    // pulse -- see done_event below.
+    reg net_mode;
+
+    wire busy_all   = nm_busy | seq_busy;
+    wire done_event = net_mode ? seq_done : nm_done;
+
     wire status_read_now = (state == ST_RESP) && (opcode == OP_STATUS) && rx_valid;
+
+    // status_snapshot: the STATUS byte is latched once, when the
+    // OP_STATUS opcode itself is accepted (ST_OPCODE, below), not
+    // read live/combinationally throughout ST_RESP. Without this,
+    // a done_event landing WHILE a STATUS response byte is already
+    // mid-transmission races the clear-on-read logic: the host can
+    // end up shifting out a stale pre-done byte while this engine
+    // simultaneously treats the sticky bit as "delivered" and
+    // clears it -- silently dropping the done transition forever
+    // (found via sim/spi_neuron_top_runnetwork_tb.v: a done_event
+    // landing mid-poll during continuous STATUS polling reproduces
+    // this every time). Freezing the byte at opcode-accept time and
+    // gating the clear on what was ACTUALLY snapshotted (below)
+    // closes the race: a done_event that lands too late to make it
+    // into this snapshot is simply reported on the next poll
+    // instead of being lost.
+    reg [7:0] status_snapshot;
 
     always @(posedge clk) begin
         if (rst) begin
             status_done_sticky <= 1'b0;
         end else if (nm_soft_rst) begin
             status_done_sticky <= 1'b0;
-        end else if (nm_done) begin
+        end else if (done_event) begin
             status_done_sticky <= 1'b1;
-        end else if (status_read_now) begin
+        end else if (status_read_now && status_snapshot[1]) begin
             status_done_sticky <= 1'b0;
         end
     end
@@ -181,7 +227,7 @@ module spi_engine #(
             ST_RESP: begin
                 case (opcode)
 
-                    OP_STATUS: tx_byte_comb = {6'b0, status_done_sticky, nm_busy};
+                    OP_STATUS: tx_byte_comb = status_snapshot;
 
                     OP_READ_OUTPUT: begin
                         if (resp_index < N_NEURONS)
@@ -236,6 +282,7 @@ module spi_engine #(
             cur_read_byte  <= 8'h00;
             resp_index     <= 4'd0;
             resp_len       <= 4'd0;
+            status_snapshot <= 8'h00;
 
             ram_req        <= 1'b0;
             ram_wr         <= 1'b0;
@@ -249,6 +296,13 @@ module spi_engine #(
             nm_start       <= 1'b0;
             nm_soft_rst    <= 1'b0;
 
+            table_base     <= {ADDR_WIDTH{1'b0}};
+            buf_a_base     <= {ADDR_WIDTH{1'b0}};
+            buf_b_base     <= {ADDR_WIDTH{1'b0}};
+            run_start      <= 1'b0;
+            run_num_layers <= 8'h00;
+            net_mode       <= 1'b0;
+
         end else begin
 
             // --------------------------------------------------
@@ -257,6 +311,11 @@ module spi_engine #(
             ram_req     <= 1'b0;
             nm_start    <= 1'b0;
             nm_soft_rst <= 1'b0;
+            run_start   <= 1'b0;
+
+            if (seq_done) begin
+                net_mode <= 1'b0;
+            end
 
             if (cs_end) begin
 
@@ -292,20 +351,26 @@ module spi_engine #(
                                 end
 
                                 OP_START: begin
-                                    if (!nm_busy)
+                                    if (!busy_all)
                                         nm_start <= 1'b1;
                                     state <= ST_IGNORE;
                                 end
 
+                                OP_RUN_NETWORK: begin
+                                    state <= ST_RUNNET;
+                                end
+
                                 OP_RESET: begin
                                     nm_soft_rst <= 1'b1;
+                                    net_mode    <= 1'b0;
                                     state       <= ST_IGNORE;
                                 end
 
                                 OP_STATUS: begin
-                                    resp_index <= 4'd0;
-                                    resp_len   <= 4'd1;
-                                    state      <= ST_RESP;
+                                    resp_index     <= 4'd0;
+                                    resp_len       <= 4'd1;
+                                    status_snapshot <= {6'b0, status_done_sticky, busy_all};
+                                    state          <= ST_RESP;
                                 end
 
                                 OP_READ_OUTPUT: begin
@@ -364,9 +429,12 @@ module spi_engine #(
                                 if (opcode == OP_SET_BASE) begin
 
                                     case (len_acc[7:0])
-                                        SEL_X_BASE:    x_base    <= {addr_acc[15:0], rx_byte};
-                                        SEL_W_BASE:    w_base    <= {addr_acc[15:0], rx_byte};
-                                        SEL_BIAS_ADDR: bias_addr <= {addr_acc[15:0], rx_byte};
+                                        SEL_X_BASE:     x_base     <= {addr_acc[15:0], rx_byte};
+                                        SEL_W_BASE:     w_base     <= {addr_acc[15:0], rx_byte};
+                                        SEL_BIAS_ADDR:  bias_addr  <= {addr_acc[15:0], rx_byte};
+                                        SEL_TABLE_BASE: table_base <= {addr_acc[15:0], rx_byte};
+                                        SEL_BUF_A_BASE: buf_a_base <= {addr_acc[15:0], rx_byte};
+                                        SEL_BUF_B_BASE: buf_b_base <= {addr_acc[15:0], rx_byte};
                                         default: ; // reserved selector: ignored
                                     endcase
 
@@ -508,6 +576,29 @@ module spi_engine #(
                                 state <= ST_IGNORE;
                             else
                                 state <= ST_READ_ISSUE;
+
+                        end
+
+                    end
+
+                    // =============================================
+                    // RUN_NETWORK: 1 payload byte (num_layers),
+                    // then pulse run_start for layer_sequencer.
+                    // No-op (ignored, like OP_START) if the compute
+                    // engine is already busy in any form.
+                    // =============================================
+
+                    ST_RUNNET: begin
+
+                        if (rx_valid) begin
+
+                            if (!busy_all) begin
+                                run_start      <= 1'b1;
+                                run_num_layers <= rx_byte;
+                                net_mode       <= 1'b1;
+                            end
+
+                            state <= ST_IGNORE;
 
                         end
 

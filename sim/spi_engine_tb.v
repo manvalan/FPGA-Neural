@@ -21,6 +21,9 @@
 //   H: NOP (no side effects)
 //   I: WRITE_RAM with more MOSI bytes than len (extra bytes ignored)
 //   J: back-to-back transactions (state resets cleanly via cs_end)
+//   K: SET_BASE for TABLE/BUF_A/BUF_B (Phase 5)
+//   L: RUN_NETWORK (Phase 5: accepted/ignored gating, STATUS.busy
+//      following seq_busy, STATUS.done latching on seq_done only)
 // ================================================================
 
 module tb;
@@ -93,6 +96,22 @@ module tb;
 
     wire nm_soft_rst;
 
+    // Phase 5 layer_sequencer ports: this testbench only exercises
+    // spi_engine's legacy single-layer path, so seq_busy/seq_done
+    // are tied off (must be driven, not left floating -- a floating
+    // input here would make busy_all/done_event unknown ('x') and
+    // silently break the existing OP_START/STATUS tests below).
+    // table_base/buf_a_base/buf_b_base/run_start/run_num_layers are
+    // outputs and are left unconnected on purpose.
+    reg seq_busy = 1'b0;
+    reg seq_done = 1'b0;
+
+    wire [ADDR_WIDTH-1:0] table_base;
+    wire [ADDR_WIDTH-1:0] buf_a_base;
+    wire [ADDR_WIDTH-1:0] buf_b_base;
+    wire                  run_start;
+    wire [7:0]             run_num_layers;
+
     spi_engine #(
         .ADDR_WIDTH(ADDR_WIDTH),
         .DATA_WIDTH(DATA_WIDTH),
@@ -114,7 +133,11 @@ module tb;
         .nm_start(nm_start), .nm_busy(nm_busy), .nm_done(nm_done),
         .y_bus(y_bus),
 
-        .nm_soft_rst(nm_soft_rst)
+        .nm_soft_rst(nm_soft_rst),
+
+        .table_base(table_base), .buf_a_base(buf_a_base), .buf_b_base(buf_b_base),
+        .run_start(run_start), .run_num_layers(run_num_layers),
+        .seq_busy(seq_busy), .seq_done(seq_done)
     );
 
     // ============================================================
@@ -234,10 +257,12 @@ module tb;
 
     reg nm_start_seen;
     reg nm_soft_rst_seen;
+    reg run_start_seen;
 
     always @(posedge clk) begin
         if (nm_start)    nm_start_seen    <= 1'b1;
         if (nm_soft_rst) nm_soft_rst_seen <= 1'b1;
+        if (run_start)   run_start_seen   <= 1'b1;
     end
 
     reg [7:0] rx_tmp;
@@ -518,6 +543,86 @@ module tb;
         if (w_base !== 22'h000006) begin $display("  FAIL: w_base after back-to-back = 0x%06x", w_base); errors = errors + 1; end
 
         report("TEST J: back-to-back transactions");
+
+        // --------------------------------------------------------
+        // TEST K: SET_BASE for TABLE / BUF_A / BUF_B (Phase 5)
+        // --------------------------------------------------------
+
+        errors_before = errors;
+
+        set_base(8'h03, 22'h000301); // TABLE_BASE
+        set_base(8'h04, 22'h000401); // BUF_A_BASE
+        set_base(8'h05, 22'h000501); // BUF_B_BASE
+
+        clk_wait(2);
+
+        if (table_base !== 22'h000301) begin $display("  FAIL: table_base = 0x%06x", table_base); errors = errors + 1; end
+        if (buf_a_base !== 22'h000401) begin $display("  FAIL: buf_a_base = 0x%06x", buf_a_base); errors = errors + 1; end
+        if (buf_b_base !== 22'h000501) begin $display("  FAIL: buf_b_base = 0x%06x", buf_b_base); errors = errors + 1; end
+
+        report("TEST K: SET_BASE (TABLE/BUF_A/BUF_B)");
+
+        // --------------------------------------------------------
+        // TEST L: RUN_NETWORK (Phase 5)
+        //   - accepted when idle: pulses run_start, captures
+        //     run_num_layers, and STATUS.busy tracks seq_busy
+        //     (independent of nm_busy) until seq_done.
+        //   - ignored (no run_start) if the engine is already busy
+        //     in any form (nm_busy or seq_busy).
+        //   - STATUS.done latches only on seq_done while a
+        //     RUN_NETWORK job is in flight, not on an intermediate
+        //     nm_done pulse (the sequencer's own per-layer nm_done).
+        // --------------------------------------------------------
+
+        errors_before = errors;
+
+        // -- accepted when idle --
+        run_start_seen = 1'b0;
+        spi_begin(HB);
+        spi_xfer_byte(8'h23, HB, rx_tmp); // RUN_NETWORK
+        spi_xfer_byte(8'h02, HB, rx_tmp); // num_layers = 2
+        spi_end(HB);
+        clk_wait(4);
+
+        if (!run_start_seen) begin $display("  FAIL: run_start not pulsed while idle"); errors = errors + 1; end
+        if (run_num_layers !== 8'h02) begin $display("  FAIL: run_num_layers = %0d, expected 2", run_num_layers); errors = errors + 1; end
+
+        // -- STATUS.busy follows seq_busy even while nm_busy=0 (the
+        //    gaps between layers, e.g. descriptor read/output copy) --
+        seq_busy = 1'b1;
+        read_status(rx_tmp);
+        if (rx_tmp[0] !== 1'b1) begin $display("  FAIL: busy bit not set from seq_busy alone"); errors = errors + 1; end
+
+        // -- ignored while seq_busy (a RUN_NETWORK job in flight) --
+        run_start_seen = 1'b0;
+        spi_begin(HB);
+        spi_xfer_byte(8'h23, HB, rx_tmp); // RUN_NETWORK
+        spi_xfer_byte(8'h03, HB, rx_tmp); // num_layers = 3 (must be ignored)
+        spi_end(HB);
+        clk_wait(4);
+
+        if (run_start_seen) begin $display("  FAIL: run_start pulsed while seq_busy (should be ignored)"); errors = errors + 1; end
+        if (run_num_layers !== 8'h02) begin $display("  FAIL: run_num_layers changed to %0d while busy (should stay 2)", run_num_layers); errors = errors + 1; end
+
+        // -- an intermediate nm_done pulse (sequencer's per-layer
+        //    completion) must NOT set STATUS.done while net_mode
+        //    (i.e. seq_busy) is active --
+        @(negedge clk); nm_done = 1'b1; @(negedge clk); nm_done = 1'b0;
+        clk_wait(4);
+        read_status(rx_tmp);
+        if (rx_tmp[1] !== 1'b0) begin $display("  FAIL: done bit set by an intermediate nm_done during RUN_NETWORK"); errors = errors + 1; end
+
+        // -- the sequencer's own seq_done (final layer) DOES latch
+        //    STATUS.done, and busy drops once seq_busy deasserts --
+        @(negedge clk); seq_busy = 1'b0; seq_done = 1'b1;
+        @(negedge clk); seq_done = 1'b0;
+        clk_wait(4);
+
+        read_status(rx_tmp);
+        if (rx_tmp[0] !== 1'b0) begin $display("  FAIL: busy bit still set after seq_busy/seq_done"); errors = errors + 1; end
+        if (rx_tmp[1] !== 1'b1) begin $display("  FAIL: done bit not set by seq_done"); errors = errors + 1; end
+
+        report("TEST L: RUN_NETWORK");
 
         // --------------------------------------------------------
         // SUMMARY
