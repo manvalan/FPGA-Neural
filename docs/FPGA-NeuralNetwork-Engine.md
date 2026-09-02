@@ -600,25 +600,32 @@ including configurations where the number of inputs is not an exact multiple of 
 - [x] Degenerate config, PARALLEL > N_INPUTS (4×8)
 - [x] Sweep testbench: `sim/parameter_sweep_tb.v`
 
-**Findings (current RTL behavior, not yet fixed):**
+**Findings — FIXED (2026-09-02):**
 
-- `neuron_parallel.v` computes `GROUPS = N_INPUTS / PARALLEL` with
-  integer division. When `N_INPUTS` is **not** an exact multiple of
-  `PARALLEL`, only the first `GROUPS * PARALLEL` inputs are ever read
-  by the accumulator — the remainder is silently dropped (no error,
-  no warning). Confirmed for 30×8 → only 24 of 30 inputs summed, and
-  20×16 → only 16 of 20 inputs summed.
+- `neuron_parallel.v` computed `GROUPS = N_INPUTS / PARALLEL` with
+  integer division. When `N_INPUTS` was **not** an exact multiple of
+  `PARALLEL`, only the first `GROUPS * PARALLEL` inputs were ever
+  read by the accumulator — the remainder was silently dropped (no
+  error, no warning). Confirmed for 30×8 → only 24 of 30 inputs
+  summed, and 20×16 → only 16 of 20 inputs summed.
 - If `PARALLEL > N_INPUTS`, `GROUPS = 0` and the controller's
-  `group_index == GROUPS-1` terminal condition is never satisfied:
-  the neuron enters `busy` and never asserts `done` (confirmed hang,
-  500-cycle watchdog in the sweep bench). This is a design
-  constraint (`PARALLEL` must not exceed `N_INPUTS`, and should
-  divide it exactly) that is not currently guarded in RTL.
-- Action: either enforce `N_INPUTS % PARALLEL == 0` and
-  `PARALLEL <= N_INPUTS` at the caller/config level, or extend
-  `neuron_parallel.v` to handle a partial final group. Not addressed
-  in this phase — core datapath left untouched per current project
-  policy; tracked here for Phase 3/7.
+  `group_index == GROUPS-1` terminal condition was never satisfied:
+  the neuron entered `busy` and never asserted `done` (confirmed
+  hang, 500-cycle watchdog in the sweep bench).
+- Both share the same root cause (`N_INPUTS % PARALLEL != 0`,
+  degenerate `PARALLEL > N_INPUTS` included) and both are now
+  rejected at **elaboration time**, in simulation and synthesis
+  alike, by a `generate` guard added to `neuron_parallel.v`
+  (instantiates a deliberately undefined module when the parameter
+  combination is invalid — zero cost, zero behavior change for any
+  valid configuration). The validated datapath itself
+  (mac8/mac_unit/accumulation/ReLU/saturation) was **not** modified.
+  See `sim/neuron_parallel_guard_negative_nonmultiple_tb.v` and
+  `sim/neuron_parallel_guard_negative_degenerate_tb.v` for the
+  negative-test proof, and `sim/parameter_sweep_tb.v` for the
+  updated positive sweep (now valid-configs-only, including
+  `PARALLEL=2` and `PARALLEL=4`, the two best-performing values from
+  `docs/FPGA-Neural-Datapatch-Benchmark.md`).
 
 ## Phase 3 — Memory Architecture
 

@@ -70,3 +70,43 @@
 - 2026-09-02T01:15 — [FASE 8] — Rigenerato artefatto tracciato sim/parameter_sweep_sim + sim/parameter_sweep.vcd per coerenza con la convenzione del repo.
 - 2026-09-02T01:16 — [FASE 8] — Nessuna modifica a rtl/neuron_parallel.v in questa fase (core di calcolo non toccato, come da policy di progetto). I due limiti trovati (troncamento su non-multiplo, hang su PARALLEL>N_INPUTS) sono documentati come "Findings" nella Fase 2 della roadmap (docs/FPGA-NeuralNetwork-Engine.md) e proposti come azione futura per Fase 3/7, non risolti ora.
 - 2026-09-02T01:18 — [FASE 8] — Aggiornato docs/FPGA-NeuralNetwork-Engine.md, sezione "## Phase 2 — Parameter Sweep": aggiunta checklist di completamento e sezione "Findings" con i due limiti documentati sopra.
+
+## Fase: Fix dei findings di Fase 2 (guardia elaboration-time) (2026-09-02)
+
+- 2026-09-02T02:00 — [FASE 9] — Utente chiede se i due finding di Fase 2 (troncamento su N_INPUTS non multiplo di PARALLEL; hang su PARALLEL>N_INPUTS) siano errori da correggere o si possano lasciare, segnalando che dai benchmark PARALLEL=2 dà i risultati migliori (PARALLEL=4 leggermente meno) — vedi docs/FPGA-Neural-Datapatch-Benchmark.md.
+- 2026-09-02T02:02 — [FASE 9] — Letto docs/FPGA-Neural-Datapatch-Benchmark.md, tabella comparativa (§13, N_INPUTS=256, N_NEURONS=4): PARALLEL=16 FAIL (52.13 MHz), PARALLEL=8 FAIL (61.71 MHz), PARALLEL=4 FAIL (75.01 MHz), PARALLEL=2 PASS (87.88 MHz, unico sopra 80 MHz). Confermato che N_INPUTS e PARALLEL sono parametri Verilog fissati in fase di sintesi (non registri configurabili via SPI a runtime): il rischio dei due finding è quindi "errore di chi istanzia il modulo per un certo layer", non un rischio da campo/runtime.
+- 2026-09-02T02:05 — [FASE 9] — Analisi di rischio comunicata all'utente: Finding 2 (hang, PARALLEL>N_INPUTS) trascurabile con PARALLEL reale=2/4 (richiederebbe un layer con 1-3 input, non realistico). Finding 1 (troncamento silenzioso) più concreto: con PARALLEL=2 basta un N_INPUTS dispari per perdere silenziosamente l'ultimo input, senza segnalazione — proposta una guardia a elaboration-time (nessuna modifica al datapath validato).
+- 2026-09-02T02:10 — [FASE 9] — Proposta dettagliata verificata isolatamente PRIMA di toccare l'RTL: creato in scratchpad un modulo di test con blocco `generate` che istanzia un modulo indefinito `neuron_parallel_requires_N_INPUTS_multiple_of_PARALLEL` quando `N_INPUTS % PARALLEL != 0`. Compilato con Icarus (`iverilog -g2012`) sia con parametri validi (32/8, exit=0, nessun errore) sia invalidi (30/8, exit=1, errore "Unknown module type: neuron_parallel_requires_N_INPUTS_multiple_of_PARALLEL"). Idioma confermato portabile (standard Verilog generate + elaborazione modulo, non system task da simulazione tipo $error/$fatal che i tool di sintesi spesso ignorano).
+- 2026-09-02T02:15 — [FASE 9] — Presentata la proposta all'utente (unica modifica prevista: blocco `generate` in rtl/neuron_parallel.v, nessun'altra riga toccata) e chiesta conferma esplicita prima di modificare il core "validato/non riscrivere" secondo la policy di progetto stabilita a inizio sessione.
+- 2026-09-02T02:20 — [FASE 9] — Utente autorizza ESPLICITAMENTE e SOLO per questa modifica a toccare ciò che era dichiarato fisso ("core is correct, don't touch/rewrite"), con richiesta di annotazione dettagliata nel log (questa sezione).
+- 2026-09-02T02:22 — [FASE 9] — MODIFICA A rtl/neuron_parallel.v: inserito blocco `generate` subito prima di `localparam GROUPS = N_INPUTS / PARALLEL;`:
+  ```verilog
+  generate
+      if (N_INPUTS % PARALLEL != 0) begin : PARAMETER_ERROR_N_INPUTS_NOT_MULTIPLE_OF_PARALLEL
+          neuron_parallel_requires_N_INPUTS_multiple_of_PARALLEL invalid_parameter_combination();
+      end
+  endgenerate
+  ```
+  Nessun'altra riga del file toccata. Il datapath di calcolo (mac8, accumulo, bias, ReLU, saturazione) è invariato. Per configurazioni valide (N_INPUTS%PARALLEL==0) il ramo generate non viene mai elaborato: zero impatto.
+- 2026-09-02T02:25 — [FASE 9] — REGRESSIONE COMPLETA post-modifica, per verificare che nessuna configurazione valida esistente sia stata rotta. Compilato ed eseguito con `iverilog -g2012 -o <tmp> rtl/*.v [sim/psram_model.v] sim/<tb>.v` + `vvp`:
+  - int8_memory_access_tb: PASS (non usa neuron_parallel, invariato)
+  - layer_tb: PASS - ALL 8 NEURONS (N_INPUTS=32 PARALLEL=8, esatto)
+  - memory_interface_tb: PASS (non usa neuron_parallel, invariato)
+  - neuron_parallel_tb: PASS - ALL TESTS PASSED (N_INPUTS=32 PARALLEL=8, esatto)
+  - parametric_tb: PASS (N_INPUTS=256 PARALLEL=32, esatto)
+  - psram_controller_tb: PASS (non usa neuron_parallel, invariato)
+  - int8_psram_integration_tb: PASS (non usa neuron_parallel, invariato)
+  - neuron_memory_tb: PASS, tutti e 5 i test (N_INPUTS=32 PARALLEL=8, esatto)
+  Nessuna regressione: tutte le configurazioni preesistenti erano già multipli esatti, quindi il ramo `generate` della guardia non si attiva mai per esse.
+- 2026-09-02T02:30 — [FASE 9] — Creati due test NEGATIVI dedicati (devono FALLIRE la compilazione per definizione, quello è il test):
+  - sim/neuron_parallel_guard_negative_nonmultiple_tb.v: istanzia neuron_parallel con N_INPUTS=30, PARALLEL=8 (il caso di troncamento del Finding 1).
+  - sim/neuron_parallel_guard_negative_degenerate_tb.v: istanzia neuron_parallel con N_INPUTS=4, PARALLEL=8 (il caso di hang/Finding 2).
+  Ogni file contiene nell'header il comando esatto di verifica e l'errore atteso, per poter essere ri-eseguito manualmente in futuro come regressione "negativa" (nessun binario/vcd generabile per questi, dato che l'elaborazione fallisce sempre by design).
+- 2026-09-02T02:32 — [FASE 9] — Eseguita verifica di entrambi i test negativi: `iverilog -g2012 -o <tmp> rtl/*.v sim/neuron_parallel_guard_negative_nonmultiple_tb.v` -> exit=1, errore "Unknown module type: neuron_parallel_requires_N_INPUTS_multiple_of_PARALLEL" a rtl/neuron_parallel.v:45. Stesso esito identico per la variante degenerate_tb.v. Confermato: la guardia scatta per ENTRAMBI i finding con lo stesso, unico controllo (`N_INPUTS % PARALLEL != 0` intercetta sia il troncamento sia il caso degenere PARALLEL>N_INPUTS, perché quest'ultimo implica resto non nullo salvo N_INPUTS=0).
+- 2026-09-02T02:40 — [FASE 9] — Riscritto sim/parameter_sweep_tb.v: rimosse le CONFIG B, C, E (non più compilabili per design, la loro copertura "negativa" è ora nei due file dedicati sopra). Aggiunte due nuove config valide allineate ai risultati reali del benchmark ECP5:
+  - CONFIG F: N_INPUTS=32 PARALLEL=2 (GROUPS=16) — configurazione a timing migliore (87.88 MHz, unica PASS a 80MHz nel benchmark).
+  - CONFIG G: N_INPUTS=32 PARALLEL=4 (GROUPS=8) — seconda scelta per timing.
+  Mantenute CONFIG A (32/8) e D (64/32) come sanity check di regressione. Rimosso il watchdog a ciclo (non più necessario: la guardia elimina la possibilità di hang per qualunque config che compili).
+- 2026-09-02T02:42 — [FASE 9] — Compilato ed eseguito sim/parameter_sweep_tb.v aggiornato: TUTTE E 4 LE CONFIG PASSANO (A: y=32, D: y=64, F: y=32 con PARALLEL=2, G: y=32 con PARALLEL=4). Rigenerati gli artefatti tracciati sim/parameter_sweep_sim e sim/parameter_sweep.vcd.
+- 2026-09-02T02:45 — [FASE 9] — Aggiornato docs/FPGA-NeuralNetwork-Engine.md, sezione "## Phase 2 — Parameter Sweep": la sezione "Findings" è stata aggiornata da "non ancora risolti" a "FIXED (2026-09-02)", con descrizione della guardia, riferimento ai due test negativi e al nuovo sweep positivo con PARALLEL=2/4.
+- 2026-09-02T02:46 — [FASE 9] — CONCLUSIONE: entrambi i finding di Fase 2 sono ora chiusi tramite un'unica guardia a elaboration-time in rtl/neuron_parallel.v, verificata sia in positivo (nessuna regressione sulle config valide esistenti + nuove config F/G con PARALLEL=2/4) sia in negativo (entrambi i casi patologici falliscono ora la compilazione con un errore esplicito invece di produrre un risultato silenziosamente errato o un hang). Modifica autorizzata esplicitamente dall'utente in deroga alla policy "core non toccare", limitata a questo unico blocco generate.

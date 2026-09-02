@@ -17,6 +17,35 @@ module neuron_parallel #(
     output reg done
 );
 
+    // ============================================================
+    // PARAMETER GUARD
+    //
+    // PARALLEL must evenly divide N_INPUTS. If it does not:
+    //
+    //   - GROUPS = N_INPUTS / PARALLEL truncates (integer division),
+    //     and the remainder inputs are silently never read by the
+    //     accumulator: WRONG result, no error, no warning.
+    //
+    //   - If PARALLEL > N_INPUTS, GROUPS = 0 and the controller's
+    //     terminal condition (group_index == GROUPS-1) is never
+    //     satisfied: the neuron hangs forever (busy stays high,
+    //     done is never asserted).
+    //
+    // Both failure modes were confirmed empirically in
+    // sim/parameter_sweep_tb.v (Phase 2 of the roadmap). Rather than
+    // changing the validated datapath, this forces an elaboration-
+    // time failure in BOTH simulation and synthesis by instantiating
+    // a deliberately undefined module when the condition is
+    // violated. When N_INPUTS % PARALLEL == 0 this generate branch
+    // is never elaborated, so valid configurations are unaffected.
+    // ============================================================
+
+    generate
+        if (N_INPUTS % PARALLEL != 0) begin : PARAMETER_ERROR_N_INPUTS_NOT_MULTIPLE_OF_PARALLEL
+            neuron_parallel_requires_N_INPUTS_multiple_of_PARALLEL invalid_parameter_combination();
+        end
+    endgenerate
+
     localparam GROUPS = N_INPUTS / PARALLEL;
     localparam GROUP_INDEX_WIDTH =
         (GROUPS <= 1) ? 1 : $clog2(GROUPS);
