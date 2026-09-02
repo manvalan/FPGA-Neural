@@ -1,10 +1,31 @@
 `timescale 1ns/1ps
 
+// ================================================================
+// PHASE 3 - NEURON_MEMORY MULTI-NEURON TEST
+//
+// neuron_memory.v originally only handled N_NEURONS=1. It now
+// loops over N_NEURONS, reading X once (shared) and re-reading W
+// and bias per neuron from memory (neuron-major layout, same
+// convention as layer.v's weights_bus/bias_bus), reusing a single
+// neuron_parallel instance. This bench validates that loop end to
+// end through the full memory stack (memory_interface + PSRAM
+// controller + PSRAM model), not just the RTL in isolation.
+//
+// N_NEURONS = 3, N_INPUTS = 32:
+//   X shared, all inputs = 1
+//   Neuron 0: W=1,  bias=0  -> 32
+//   Neuron 1: W=2,  bias=0  -> 64
+//   Neuron 2: W=-1, bias=0  -> -32 -> ReLU -> 0
+// ================================================================
+
 module tb;
 
     localparam ADDR_WIDTH = 22;
     localparam DATA_WIDTH = 16;
     localparam CLK_PERIOD = 12.5; // 80 MHz
+
+    localparam N_NEURONS = 3;
+    localparam N_INPUTS  = 32;
 
     // ============================================================
     // CLOCK / RESET
@@ -28,7 +49,7 @@ module tb;
     reg [ADDR_WIDTH-1:0] w_base;
     reg [ADDR_WIDTH-1:0] bias_addr;
 
-    wire signed [7:0] y;
+    wire signed [DATA_WIDTH/2*N_NEURONS-1:0] y_bus;
     wire busy;
     wire done;
 
@@ -74,7 +95,7 @@ module tb;
     wire                   master_lb_n;
     wire                   master_ub_n;
 
-        // ============================================================
+    // ============================================================
     // MEMORY INTERFACE
     // ============================================================
 
@@ -223,14 +244,14 @@ module tb;
     );
 
     // ============================================================
-    // NEURON MEMORY
+    // NEURON MEMORY (N_NEURONS = 3)
     // ============================================================
 
     neuron_memory #(
         .ADDR_WIDTH(ADDR_WIDTH),
         .DATA_WIDTH(8),
-        .N_INPUTS(32),
-        .N_NEURONS(1),
+        .N_INPUTS(N_INPUTS),
+        .N_NEURONS(N_NEURONS),
         .PARALLEL(8),
         .ACC_WIDTH(32)
     ) u_neuron (
@@ -250,19 +271,13 @@ module tb;
         .w_base(w_base),
         .bias_addr(bias_addr),
 
-        .y_bus(y),
+        .y_bus(y_bus),
         .busy(busy),
         .done(done)
     );
 
     // ============================================================
     // TB WORD WRITE
-    //
-    // Directly through:
-    //
-    // TB -> memory_interface -> psram_controller -> PSRAM
-    //
-    // No force.
     // ============================================================
 
     task tb_write_word;
@@ -294,22 +309,47 @@ module tb;
     endtask
 
     // ============================================================
-    // PRELOAD 32 INT8 VALUES
+    // PRELOAD X (shared, all 32 inputs = 1)
+    // ============================================================
+
+    task preload_x;
+
+        input [ADDR_WIDTH-1:0] base;
+
+        integer k;
+
+        begin
+
+            for (k = 0; k < N_INPUTS; k = k + 2) begin
+                tb_write_word((base >> 1) + (k >> 1), {8'sd1, 8'sd1});
+            end
+
+        end
+
+    endtask
+
+    // ============================================================
+    // PRELOAD WEIGHTS FOR ONE NEURON
     //
-    // Two INT8 values per PSRAM word.
+    // Neuron n's weights live at w_base + n*N_INPUTS bytes
+    // (neuron-major layout, same as layer.v's weights_bus).
     // ============================================================
 
-    task preload_vector;
+    task preload_weights_n;
 
         input [ADDR_WIDTH-1:0] base;
+        input integer n;
         input signed [7:0] value;
 
         integer k;
+        reg [ADDR_WIDTH-1:0] neuron_base;
 
         begin
 
-            for (k = 0; k < 32; k = k + 2) begin
-                tb_write_word( (base >> 1) + (k >> 1), {value, value} );
+            neuron_base = base + n * N_INPUTS;
+
+            for (k = 0; k < N_INPUTS; k = k + 2) begin
+                tb_write_word((neuron_base >> 1) + (k >> 1), {value, value});
             end
 
         end
@@ -317,123 +357,71 @@ module tb;
     endtask
 
     // ============================================================
-    // PRELOAD WEIGHTS
+    // PRELOAD BIAS FOR ALL 3 NEURONS
+    //
+    // Bias is 1 byte per neuron, contiguous: bias_addr + n.
+    // Packs b0/b1 into one word, b2 alone into the next.
     // ============================================================
 
-    task preload_weights;
+    task preload_bias_3;
 
         input [ADDR_WIDTH-1:0] base;
-        input signed [7:0] value;
-
-        integer k;
-
-        begin
-
-            for (k = 0; k < 32; k = k + 2) begin
-
-                tb_write_word( (base >> 1) + (k >> 1), {value, value} );
-
-            end
-
-        end
-
-    endtask
-
-    task preload_x_pattern;
-
-    input [ADDR_WIDTH-1:0] base;
-
-    integer k;
-    reg signed [7:0] v0;
-    reg signed [7:0] v1;
-
-    begin
-
-        for (k = 0; k < 32; k = k + 2) begin
-
-            v0 = k + 1;
-            v1 = k + 2;
-
-            tb_write_word(
-                (base >> 1) + (k >> 1),
-                {v1, v0}
-            );
-
-        end
-
-    end
-
-endtask
-
-    // ============================================================
-    // PRELOAD BIAS
-    // ============================================================
-
-    task preload_bias;
-
-        input [ADDR_WIDTH-1:0] addr_i;
-        input signed [7:0] value;
+        input signed [7:0] b0;
+        input signed [7:0] b1;
+        input signed [7:0] b2;
 
         begin
 
-            // Bias address is a BYTE address.
-            // Write a full word containing bias in low byte.
-
-            tb_write_word(
-                addr_i >> 1,
-                {8'h00, value}
-            );
+            tb_write_word(base >> 1, {b1, b0});
+            tb_write_word((base >> 1) + 1, {8'h00, b2});
 
         end
 
     endtask
 
     // ============================================================
-    // RUN NEURON
+    // RUN NEURON MEMORY AND CHECK ALL N_NEURONS OUTPUTS
     // ============================================================
 
-    task run_neuron;
+    task run_and_check;
 
-        input signed [7:0] expected;
-        input [127:0] test_name;
+        input signed [7:0] expected0;
+        input signed [7:0] expected1;
+        input signed [7:0] expected2;
+
+        integer errors_local;
 
         begin
+
+            errors_local = 0;
 
             @(posedge clk);
-
             start <= 1'b1;
 
             @(posedge clk);
-
             start <= 1'b0;
 
             wait (done);
 
-            if (y !== expected) begin
+            $display("");
+            $display("Neuron 0 = %0d   expected = %0d", $signed(y_bus[0*8 +: 8]), expected0);
+            $display("Neuron 1 = %0d   expected = %0d", $signed(y_bus[1*8 +: 8]), expected1);
+            $display("Neuron 2 = %0d   expected = %0d", $signed(y_bus[2*8 +: 8]), expected2);
 
-                $display("");
-                $display("FAIL %s", test_name);
-                $display(
-                    "  got      = %0d (0x%02x)",
-                    y,
-                    y
-                );
-                $display(
-                    "  expected = %0d (0x%02x)",
-                    expected,
-                    expected
-                );
-                $fatal;
+            if ($signed(y_bus[0*8 +: 8]) !== expected0) errors_local = errors_local + 1;
+            if ($signed(y_bus[1*8 +: 8]) !== expected1) errors_local = errors_local + 1;
+            if ($signed(y_bus[2*8 +: 8]) !== expected2) errors_local = errors_local + 1;
 
+            if (busy !== 1'b0) begin
+                $display("FAIL: busy still active after done");
+                errors_local = errors_local + 1;
+            end
+
+            if (errors_local == 0) begin
+                $display("PASS - MULTI-NEURON (N_NEURONS=%0d)", N_NEURONS);
             end else begin
-
-                $display(
-                    "PASS %-16s y=%0d (0x%02x)",
-                    test_name,
-                    y,
-                    y
-                );
-
+                $display("FAIL - MULTI-NEURON: %0d mismatches", errors_local);
+                $fatal;
             end
 
             @(posedge clk);
@@ -446,13 +434,7 @@ endtask
     // TEST
     // ============================================================
 
-    integer i;
-
     initial begin
-
-        // --------------------------------------------------------
-        // Initial values
-        // --------------------------------------------------------
 
         start = 1'b0;
 
@@ -471,11 +453,7 @@ endtask
 
         rst = 1'b1;
 
-        // --------------------------------------------------------
-        // VCD
-        // --------------------------------------------------------
-
-        $dumpfile("sim/neuron_memory.vcd");
+        $dumpfile("sim/neuron_memory_multi.vcd");
         $dumpvars(0, tb);
 
         repeat (5)
@@ -483,200 +461,44 @@ endtask
 
         rst = 1'b0;
 
-        // --------------------------------------------------------
-        // Wait PSRAM initialization
-        // --------------------------------------------------------
-
         wait (u_psram_ctrl.state == u_psram_ctrl.STATE_IDLE);
 
         $display("");
         $display("========================================");
-        $display("NEURON MEMORY END-TO-END TEST");
+        $display("NEURON MEMORY MULTI-NEURON TEST (N_NEURONS=%0d)", N_NEURONS);
         $display("========================================");
         $display("");
 
-        // ========================================================
-        // PRELOAD PHASE
+        // --------------------------------------------------------
+        // PRELOAD
         //
-        // TB is the ONLY memory master.
-        // ========================================================
+        // X shared = 1 (all 32 inputs)
+        // Neuron 0: W=1,  bias=0  -> 32
+        // Neuron 1: W=2,  bias=0  -> 64
+        // Neuron 2: W=-1, bias=0  -> -32 -> ReLU -> 0
+        // --------------------------------------------------------
 
-        $display("PRELOAD: X = 1..32");
-        preload_x_pattern(
-            x_base
-        );
+        $display("PRELOAD: X = 1 (shared)");
+        preload_x(x_base);
 
-        $display("PRELOAD: W = 1");
-        preload_weights(
-            w_base,
-            8'sd1
-        );
+        $display("PRELOAD: W0 = 1, W1 = 2, W2 = -1");
+        preload_weights_n(w_base, 0, 8'sd1);
+        preload_weights_n(w_base, 1, 8'sd2);
+        preload_weights_n(w_base, 2, -8'sd1);
 
-        $display("PRELOAD: BIAS = 0");
-        preload_bias(
-            bias_addr,
-            8'sd0
-        );
-
-        // ========================================================
-        // HAND OVER MEMORY BUS
-        //
-        // From this point neuron_memory is the only master.
-        // ========================================================
+        $display("PRELOAD: bias0 = 0, bias1 = 0, bias2 = 0");
+        preload_bias_3(bias_addr, 8'sd0, 8'sd0, 8'sd0);
 
         use_neuron_master = 1'b1;
 
         $display("");
         $display("MEMORY MASTER -> neuron_memory");
-        $display("");
 
-        // ========================================================
-        // TEST 0 - PATTERN
-        //
-        // X = 1..32
-        // W = 1
-        // BIAS = 0
-        //
-        // SUM = 1 + 2 + ... + 32 = 528
-        // Output saturates to 127.
-        // ========================================================
-
-        run_neuron(
-            8'sd127,
-            "PATTERN X=1..32"
-        );
-
-        // ========================================================
-        // RESTORE ORIGINAL VECTOR
-        //
-        // X = 1
-        // W = 1
-        // BIAS = 0
-        // ========================================================
-
-        use_neuron_master = 1'b0;
-
-        preload_vector(
-            x_base,
-            8'sd1
-        );
-
-        preload_weights(
-            w_base,
-            8'sd1
-        );
-
-        preload_bias(
-            bias_addr,
-            8'sd0
-        );
-
-        use_neuron_master = 1'b1;
-
-        // ========================================================
-        // TEST 1
-        //
-        // 32 * 1 * 1 + 0 = 32
-        // ========================================================
-
-        run_neuron(
-            8'sd32,
-            "SUM=32"
-        );
-
-        // ========================================================
-        // TEST 2
-        //
-        // 32 * 1 * 4 = 128
-        // Saturated to 127.
-        //
-        // We must return control to TB to modify weights.
-        // ========================================================
-
-        use_neuron_master = 1'b0;
-
-        preload_weights(
-            w_base,
-            8'sd4
-        );
-
-        preload_bias(
-            bias_addr,
-            8'sd0
-        );
-
-        use_neuron_master = 1'b1;
-
-        run_neuron(
-            8'sd127,
-            "SATURATION"
-        );
-
-        // ========================================================
-        // TEST 3
-        //
-        // 32 * 1 * (-1) = -32
-        // ReLU -> 0
-        // ========================================================
-
-        use_neuron_master = 1'b0;
-
-        preload_weights(
-            w_base,
-            -8'sd1
-        );
-
-        preload_bias(
-            bias_addr,
-            8'sd0
-        );
-
-        use_neuron_master = 1'b1;
-
-        run_neuron(
-            8'sd0,
-            "RELU"
-        );
-
-        // ========================================================
-        // TEST 4
-        //
-        // 32 * 1 * 1 + 10 = 42
-        // ========================================================
-
-        use_neuron_master = 1'b0;
-
-        preload_weights(
-            w_base,
-            8'sd1
-        );
-
-        preload_bias(
-            bias_addr,
-            8'sd10
-        );
-
-        use_neuron_master = 1'b1;
-
-        run_neuron(
-            8'sd42,
-            "BIAS=10"
-        );
-
-        // ========================================================
-        // FINAL
-        // ========================================================
+        run_and_check(8'sd32, 8'sd64, 8'sd0);
 
         $display("");
         $display("========================================");
-        $display("NEURON MEMORY TEST PASSED");
-        $display("========================================");
-        $display("PSRAM -> INT8 -> NEURON : PASS");
-        $display("PATTERN X=1..32         : PASS");
-        $display("SUM                    : PASS");
-        $display("BIAS                   : PASS");
-        $display("ReLU                   : PASS");
-        $display("SATURATION             : PASS");
+        $display("NEURON MEMORY MULTI-NEURON TEST PASSED");
         $display("========================================");
         $display("");
 

@@ -639,6 +639,27 @@ Define:
 - memory addressing;
 - bandwidth requirements.
 
+- [x] `neuron_memory.v`: single-neuron memory integration (N_NEURONS=1)
+- [x] `neuron_memory.v`: multi-neuron memory integration (N_NEURONS>1)
+- [ ] Intermediate/multi-layer buffers (deferred to Phase 5)
+- [ ] Bandwidth analysis against PSRAM timing (deferred to Phase 7)
+
+**Multi-neuron design (2026-09-02):** `neuron_memory.v` now takes an
+`N_NEURONS` parameter and loops over neurons in memory: `X` is read
+once (shared input vector), and for each neuron in turn `W` and
+`bias` are re-read from PSRAM and fed to a single, reused
+`neuron_parallel` instance — memory-bound by design, one neuron
+computed at a time, no change to the validated compute datapath.
+Addressing follows the same neuron-major convention as `layer.v`:
+neuron `n`'s weights live at `w_base + n*N_INPUTS` bytes, its bias at
+`bias_addr + n`. Output is now `y_bus` (packed, `DATA_WIDTH*N_NEURONS`
+bits, neuron-major), replacing the old single-neuron `y` port.
+Validated end to end through the full memory stack
+(`memory_interface` + `psram_controller` + `psram_model`) in
+`sim/neuron_memory_multi_tb.v` (N_NEURONS=3: scale, larger value,
+ReLU). `sim/neuron_memory_tb.v` (N_NEURONS=1) still passes unchanged,
+confirming backward compatibility.
+
 ## Phase 4 — SPI Interface
 
 Implement:

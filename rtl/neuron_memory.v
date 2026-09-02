@@ -4,6 +4,7 @@ module neuron_memory #(
     parameter ADDR_WIDTH = 22,
     parameter DATA_WIDTH = 8,
     parameter N_INPUTS   = 32,
+    parameter N_NEURONS  = 1,
     parameter PARALLEL   = 8,
     parameter ACC_WIDTH  = 32
 )(
@@ -35,9 +36,13 @@ module neuron_memory #(
 
     // ------------------------------------------------------------
     // Result
+    //
+    // One INT8 output per neuron, packed neuron-major (same
+    // convention as layer.v's y_bus): neuron n occupies
+    // y_bus[n*DATA_WIDTH +: DATA_WIDTH].
     // ------------------------------------------------------------
 
-    output reg signed [7:0]       y,
+    output wire signed [DATA_WIDTH*N_NEURONS-1:0] y_bus,
     output reg                    busy,
     output reg                    done
 );
@@ -56,6 +61,28 @@ module neuron_memory #(
     reg [3:0] state;
 
     reg [$clog2(N_INPUTS+1)-1:0] index;
+
+    // ============================================================
+    // NEURON LOOP (Phase 3: multi-neuron memory integration)
+    //
+    // X is shared and read once per layer invocation. W and bias
+    // are re-read from memory for each neuron in turn and fed to a
+    // single, reused neuron_parallel instance (memory-bound design:
+    // one neuron computed at a time). w_group_base/bias_group_addr
+    // track the current neuron's base address and are advanced by
+    // N_INPUTS / 1 byte respectively between neurons, following the
+    // same neuron-major layout as layer.v's weights_bus/bias_bus.
+    // ============================================================
+
+    localparam NEURON_INDEX_WIDTH =
+        (N_NEURONS <= 1) ? 1 : $clog2(N_NEURONS);
+
+    reg [NEURON_INDEX_WIDTH-1:0] neuron_index;
+
+    reg [ADDR_WIDTH-1:0] w_group_base;
+    reg [ADDR_WIDTH-1:0] bias_group_addr;
+
+    reg signed [7:0] y_reg [0:N_NEURONS-1];
 
     // ============================================================
     // LOCAL MEMORY ARRAYS
@@ -80,6 +107,16 @@ module neuron_memory #(
 
             assign x_bus[i*DATA_WIDTH +: DATA_WIDTH] = x_mem[i];
             assign w_bus[i*DATA_WIDTH +: DATA_WIDTH] = w_mem[i];
+
+        end
+    endgenerate
+
+    genvar j;
+
+    generate
+        for (j = 0; j < N_NEURONS; j = j + 1) begin : GEN_Y_BUS
+
+            assign y_bus[j*DATA_WIDTH +: DATA_WIDTH] = y_reg[j];
 
         end
     endgenerate
@@ -191,6 +228,8 @@ module neuron_memory #(
 
     reg neuron_start;
 
+    integer rst_i;
+
     wire signed [7:0] neuron_y;
     wire              neuron_busy;
     wire              neuron_done;
@@ -225,6 +264,10 @@ module neuron_memory #(
             state <= STATE_IDLE;
             index <= 0;
 
+            neuron_index    <= 0;
+            w_group_base    <= 0;
+            bias_group_addr <= 0;
+
             bias_reg <= 0;
 
             access_req   <= 1'b0;
@@ -234,7 +277,9 @@ module neuron_memory #(
 
             neuron_start <= 1'b0;
 
-            y    <= 0;
+            for (rst_i = 0; rst_i < N_NEURONS; rst_i = rst_i + 1)
+                y_reg[rst_i] <= 0;
+
             busy <= 1'b0;
             done <= 1'b0;
 
@@ -263,6 +308,10 @@ module neuron_memory #(
                         busy  <= 1'b1;
                         index <= 0;
 
+                        neuron_index    <= 0;
+                        w_group_base    <= w_base;
+                        bias_group_addr <= bias_addr;
+
                         // First X byte
                         access_addr <= x_base;
                         access_wr   <= 1'b0;
@@ -288,7 +337,7 @@ module neuron_memory #(
 
                             index <= 0;
 
-                            access_addr <= w_base;
+                            access_addr <= w_group_base;
                             access_wr   <= 1'b0;
                             access_req  <= 1'b1;
 
@@ -319,7 +368,7 @@ module neuron_memory #(
 
                         if (index == N_INPUTS-1) begin
 
-                            access_addr <= bias_addr;
+                            access_addr <= bias_group_addr;
                             access_wr   <= 1'b0;
                             access_req  <= 1'b1;
 
@@ -329,7 +378,7 @@ module neuron_memory #(
 
                             index <= index + 1'b1;
 
-                            access_addr <= w_base + index + 1'b1;
+                            access_addr <= w_group_base + index + 1'b1;
                             access_req  <= 1'b1;
 
                         end
@@ -374,11 +423,34 @@ module neuron_memory #(
 
                     if (neuron_done) begin
 
-                        y    <= neuron_y;
-                        busy <= 1'b0;
-                        done <= 1'b1;
+                        y_reg[neuron_index] <= neuron_y;
 
-                        state <= STATE_IDLE;
+                        if (neuron_index == N_NEURONS-1) begin
+
+                            // Last neuron of the layer: done.
+                            busy <= 1'b0;
+                            done <= 1'b1;
+
+                            state <= STATE_IDLE;
+
+                        end else begin
+
+                            // Advance to the next neuron: X stays
+                            // in x_mem (shared), reload W and bias
+                            // for neuron_index+1 from memory.
+                            neuron_index    <= neuron_index + 1'b1;
+                            w_group_base    <= w_group_base + N_INPUTS;
+                            bias_group_addr <= bias_group_addr + 1'b1;
+
+                            index <= 0;
+
+                            access_addr <= w_group_base + N_INPUTS;
+                            access_wr   <= 1'b0;
+                            access_req  <= 1'b1;
+
+                            state <= STATE_READ_W;
+
+                        end
 
                     end
 
