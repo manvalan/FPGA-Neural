@@ -383,6 +383,87 @@ WAIT FOR DONE
 READ OUTPUT
 ```
 
+## 8.1 SPI Protocol v1 (draft, 2026-09-02)
+
+Concrete opcode-level draft of the section above, written before any
+Phase 4 RTL. Opcode values and the exact set of commands are
+illustrative/example at this stage, not frozen — the framing rules
+(MSB-first, explicit length, sticky STATUS.done) and the two
+decisions already made (explicit length field over CS-delimited
+streaming; a runtime READ_CONFIG command) are the parts intended to
+stick; the opcode table itself is expected to be revised as Phase 4
+RTL work starts.
+
+**Physical layer:** SPI Mode 0 (CPOL=0, CPHA=0), MSB-first, single
+SPI for v1 (Dual SPI is a future extension per §8, not addressed
+here). The FPGA is always SPI slave. One command per CS-low period;
+byte 0 of every transaction is the opcode.
+
+**Multi-byte fields** are big-endian (most significant byte first).
+Byte addresses are `ADDR_WIDTH`-bit (22 bits today, from
+`rtl/neuron_memory.v`), carried in a 3-byte field with the top 2 bits
+reserved as 0.
+
+**Length is explicit**, not CS-edge-delimited: `WRITE_RAM`/`READ_RAM`
+carry a 2-byte length field, so the SPI controller only needs a byte
+counter, not CS-edge detection mid-transfer.
+
+### Opcode table
+
+| Opcode | Name | Payload (host → FPGA) | Response (FPGA → host) | Function |
+|---|---|---|---|---|
+| 0x00 | NOP | — | — | No operation (idle/dummy clocking) |
+| 0x01 | WRITE_RAM | addr(3B) + len(2B) + `len` data bytes | — | Write a block into PSRAM (X, weights, bias, network params) |
+| 0x02 | READ_RAM | addr(3B) + len(2B) | `len` data bytes | Read a block back from PSRAM |
+| 0x0F | RESET | — | — | Synchronous reset pulse to the compute engine (`neuron_memory`) and clears the STATUS latch below. Does **not** erase PSRAM contents. Kept as a distinct opcode from NOP. |
+| 0x10 | SET_BASE | sel(1B) + addr(3B) | — | Sets `x_base`(sel=0) / `w_base`(sel=1) / `bias_addr`(sel=2) |
+| 0x20 | START | — | — | Pulses `start`; ignored (no-op) if `busy=1` |
+| 0x21 | STATUS | — | 1 byte | bit0=`busy` (live), bit1=`done` (**sticky, clear-on-read**), bits7:2 reserved=0 |
+| 0x22 | READ_OUTPUT | — | `N_NEURONS` bytes | `y_bus`, neuron-major (byte 0 = neuron 0) |
+| 0x30 | READ_CONFIG | — | 8 bytes | Hardware config record, see below |
+
+**Why STATUS.done is sticky / clear-on-read:** in `rtl/neuron_memory.v`
+`done` is a single-cycle pulse (asserted for exactly one clock in
+`STATE_WAIT_N`, deasserted the next cycle). A host polling over SPI
+— orders of magnitude slower than the FPGA clock — would almost
+certainly miss a raw one-cycle pulse. The SPI register bank must
+therefore latch `done` into a sticky bit on the pulse, and clear it
+when the host issues `STATUS` (or `RESET`), not sample the raw
+`neuron_memory.done` signal directly. `busy` has no such problem
+(it is level-held for the whole computation) and can be read live.
+
+**READ_CONFIG payload** (fixed 8 bytes, lets one host firmware build
+work across different bitstreams without recompiling):
+
+| Byte(s) | Field | Source |
+|---|---|---|
+| 0 | `ADDR_WIDTH` (bits) | `neuron_memory.ADDR_WIDTH` |
+| 1–2 | `N_INPUTS` (16-bit BE) | `neuron_memory.N_INPUTS` |
+| 3 | `N_NEURONS` | `neuron_memory.N_NEURONS` |
+| 4 | `PARALLEL` | `neuron_memory.PARALLEL` |
+| 5 | `DATA_WIDTH` (bits) | `neuron_memory.DATA_WIDTH` |
+| 6–7 | protocol version (16-bit BE) | `0x0001` for this spec |
+
+**Example session** (fills in the conceptual sequence above with
+concrete opcodes):
+
+```text
+RESET                 -> 0x0F
+READ_CONFIG           -> 0x30           (host learns N_INPUTS/N_NEURONS/...)
+WRITE_RAM (weights)   -> 0x01 ...
+WRITE_RAM (biases)    -> 0x01 ...
+SET_BASE (X/W/BIAS)   -> 0x10 x3
+WRITE_RAM (input X)   -> 0x01 ...
+START                 -> 0x20
+poll STATUS           -> 0x21           (until done bit set; clears on this read)
+READ_OUTPUT           -> 0x22
+```
+
+Not yet decided / explicitly out of scope for v1: Dual SPI framing,
+a CRC/checksum on transfers (SPI is assumed reliable for a
+board-level trace in v1), and multi-layer sequencing commands (that
+belongs to Phase 5, once intermediate buffers exist).
+
 ---
 
 # 9. Dedicated FPGA RAM
@@ -670,6 +751,12 @@ Implement:
 - configuration protocol;
 - input/output protocol;
 - status and control.
+
+- [x] Protocol/opcode set drafted — see §8.1 SPI Protocol v1
+- [ ] SPI controller RTL (physical layer: shift register, CS/clock sync)
+- [ ] Register bank RTL (SET_BASE, sticky STATUS, READ_CONFIG constants)
+- [ ] RAM access passthrough RTL (WRITE_RAM/READ_RAM -> memory_interface)
+- [ ] Testbench (SPI master BFM + full stack, mirroring neuron_memory_tb.v style)
 
 ## Phase 5 — Multi-Layer Network
 
