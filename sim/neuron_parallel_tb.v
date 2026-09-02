@@ -2,11 +2,10 @@
 
 module tb;
 
-    parameter DATA_WIDTH = 16;
-    parameter FRAC_BITS  = 8;
-    parameter N_INPUTS   = 64;
+    parameter DATA_WIDTH = 8;
+    parameter N_INPUTS   = 32;
     parameter PARALLEL   = 8;
-    parameter ACC_WIDTH  = 40;
+    parameter ACC_WIDTH  = 32;
 
     reg clk;
     reg rst;
@@ -25,7 +24,6 @@ module tb;
 
     neuron_parallel #(
         .DATA_WIDTH(DATA_WIDTH),
-        .FRAC_BITS(FRAC_BITS),
         .N_INPUTS(N_INPUTS),
         .PARALLEL(PARALLEL),
         .ACC_WIDTH(ACC_WIDTH)
@@ -46,16 +44,6 @@ module tb;
         clk = 0;
         forever #5 clk = ~clk;
     end
-
-    // ------------------------------------------------------------
-    // Helper: convert real value to Q8.8
-    // ------------------------------------------------------------
-    function signed [15:0] q8_8;
-        input real value;
-        begin
-            q8_8 = $rtoi(value * 256.0);
-        end
-    endfunction
 
     // ------------------------------------------------------------
     // Start neuron and wait for completion
@@ -79,14 +67,13 @@ module tb;
     //
     // Diverse vector:
     //
-    // x0 = 1.5   w0 = 2.0   -> 3.0
-    // x1 = 2.0   w1 = -1.0  -> -2.0
-    // x2 = 0.5   w2 = 0.25  -> 0.125
+    // x0 = 3   w0 = 2   -> 6
+    // x1 = 4   w1 = -1  -> -4
+    // x2 = 2   w2 = 1   -> 2
     //
-    // bias = 0.609375
+    // bias = 1
     //
-    // total = 1.734375
-    // Q8.8 = 444
+    // total = 6 - 4 + 2 + 1 = 5
     // ------------------------------------------------------------
     task test_1;
         begin
@@ -95,23 +82,23 @@ module tb;
 
             x_bus = 0;
             w_bus = 0;
-            bias  = q8_8(0.609375);
+            bias  = 8'sd1;
 
-            x_bus[0*16 +: 16] = q8_8(1.5);
-            w_bus[0*16 +: 16] = q8_8(2.0);
+            x_bus[0*DATA_WIDTH +: DATA_WIDTH] = 8'sd3;
+            w_bus[0*DATA_WIDTH +: DATA_WIDTH] = 8'sd2;
 
-            x_bus[1*16 +: 16] = q8_8(2.0);
-            w_bus[1*16 +: 16] = q8_8(-1.0);
+            x_bus[1*DATA_WIDTH +: DATA_WIDTH] = 8'sd4;
+            w_bus[1*DATA_WIDTH +: DATA_WIDTH] = -8'sd1;
 
-            x_bus[2*16 +: 16] = q8_8(0.5);
-            w_bus[2*16 +: 16] = q8_8(0.25);
+            x_bus[2*DATA_WIDTH +: DATA_WIDTH] = 8'sd2;
+            w_bus[2*DATA_WIDTH +: DATA_WIDTH] = 8'sd1;
 
             run_neuron;
 
             $display("RTL      = %0d", y);
-            $display("EXPECTED = 444");
+            $display("EXPECTED = 5");
 
-            if (y !== 16'sd444) begin
+            if (y !== 8'sd5) begin
                 $display("FAIL - TEST 1");
                 errors = errors + 1;
             end
@@ -137,8 +124,8 @@ module tb;
             bias  = 0;
 
             for (i = 0; i < N_INPUTS; i = i + 1) begin
-                x_bus[i*16 +: 16] = q8_8(1.0);
-                w_bus[i*16 +: 16] = q8_8(-1.0);
+                x_bus[i*DATA_WIDTH +: DATA_WIDTH] = 8'sd1;
+                w_bus[i*DATA_WIDTH +: DATA_WIDTH] = -8'sd1;
             end
 
             run_neuron;
@@ -146,7 +133,7 @@ module tb;
             $display("RTL      = %0d", y);
             $display("EXPECTED = 0");
 
-            if (y !== 16'sd0) begin
+            if (y !== 8'sd0) begin
                 $display("FAIL - TEST 2");
                 errors = errors + 1;
             end
@@ -160,7 +147,7 @@ module tb;
     // TEST 3
     //
     // Large positive result.
-    // Must saturate to +32767.
+    // Must saturate to +127 (INT8).
     // ------------------------------------------------------------
     task test_3;
         begin
@@ -172,16 +159,16 @@ module tb;
             bias  = 0;
 
             for (i = 0; i < N_INPUTS; i = i + 1) begin
-                x_bus[i*16 +: 16] = q8_8(127.0);
-                w_bus[i*16 +: 16] = q8_8(2.0);
+                x_bus[i*DATA_WIDTH +: DATA_WIDTH] = 8'sd100;
+                w_bus[i*DATA_WIDTH +: DATA_WIDTH] = 8'sd2;
             end
 
             run_neuron;
 
             $display("RTL      = %0d", y);
-            $display("EXPECTED = 32767");
+            $display("EXPECTED = 127");
 
-            if (y !== 16'sd32767) begin
+            if (y !== 8'sd127) begin
                 $display("FAIL - TEST 3");
                 errors = errors + 1;
             end
@@ -196,12 +183,12 @@ module tb;
     //
     // Mixed positive/negative products.
     //
-    // 32 x (+1)
-    // 32 x (-1)
-    // sum = 0
-    // bias = -1
+    // 16 x (2 * 1)  = 32
+    // 16 x (-1 * 1) = -16
+    // sum = 16
+    // bias = -16
     //
-    // ReLU -> 0
+    // total = 0 -> ReLU boundary -> 0
     // ------------------------------------------------------------
     task test_4;
         begin
@@ -210,16 +197,16 @@ module tb;
 
             x_bus = 0;
             w_bus = 0;
-            bias  = q8_8(-1.0);
+            bias  = -8'sd16;
 
             for (i = 0; i < N_INPUTS; i = i + 1) begin
                 if ((i % 2) == 0) begin
-                    x_bus[i*16 +: 16] = q8_8(2.0);
-                    w_bus[i*16 +: 16] = q8_8(0.5);
+                    x_bus[i*DATA_WIDTH +: DATA_WIDTH] = 8'sd2;
+                    w_bus[i*DATA_WIDTH +: DATA_WIDTH] = 8'sd1;
                 end
                 else begin
-                    x_bus[i*16 +: 16] = q8_8(-1.0);
-                    w_bus[i*16 +: 16] = q8_8(1.0);
+                    x_bus[i*DATA_WIDTH +: DATA_WIDTH] = -8'sd1;
+                    w_bus[i*DATA_WIDTH +: DATA_WIDTH] = 8'sd1;
                 end
             end
 
@@ -228,7 +215,7 @@ module tb;
             $display("RTL      = %0d", y);
             $display("EXPECTED = 0");
 
-            if (y !== 16'sd0) begin
+            if (y !== 8'sd0) begin
                 $display("FAIL - TEST 4");
                 errors = errors + 1;
             end
@@ -259,7 +246,7 @@ module tb;
 
         $display("");
         $display("==============================");
-        $display("NEURON_PARALLEL TESTBENCH");
+        $display("NEURON_PARALLEL TESTBENCH (INT8)");
         $display("==============================");
 
         test_1;

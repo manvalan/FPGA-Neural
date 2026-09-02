@@ -1,1175 +1,1666 @@
 $date
-	Wed Sep  2 09:14:02 2026
+	Wed Sep  2 14:15:53 2026
 $end
 $version
 	Icarus Verilog
 $end
 $timescale
-	1s
+	1ps
 $end
 $scope module tb $end
-$var wire 128 ! y_bus [127:0] $end
+$var wire 64 ! y_bus [63:0] $end
 $var wire 1 " done $end
 $var wire 1 # busy $end
 $var parameter 32 $ ACC_WIDTH $end
 $var parameter 32 % DATA_WIDTH $end
-$var parameter 32 & FRAC_BITS $end
-$var parameter 32 ' N_INPUTS $end
-$var parameter 32 ( N_NEURONS $end
-$var parameter 32 ) PARALLEL $end
-$var reg 128 * bias_bus [127:0] $end
-$var reg 1 + clk $end
-$var reg 1 , rst $end
-$var reg 1 - start $end
-$var reg 8192 . weights_bus [8191:0] $end
-$var reg 1024 / x_bus [1023:0] $end
-$var integer 32 0 errors [31:0] $end
-$var integer 32 1 i [31:0] $end
-$scope function q8_8 $end
-$var real 1 2 value $end
-$upscope $end
+$var parameter 32 & N_INPUTS $end
+$var parameter 32 ' N_NEURONS $end
+$var parameter 32 ( PARALLEL $end
+$var reg 64 ) bias_bus [63:0] $end
+$var reg 1 * clk $end
+$var reg 1 + rst $end
+$var reg 1 , start $end
+$var reg 2048 - weights_bus [2047:0] $end
+$var reg 256 . x_bus [255:0] $end
+$var integer 32 / errors [31:0] $end
+$var integer 32 0 i [31:0] $end
 $scope module dut $end
-$var wire 128 3 bias_bus [127:0] $end
-$var wire 1 + clk $end
-$var wire 1 , rst $end
-$var wire 1 - start $end
-$var wire 8192 4 weights_bus [8191:0] $end
-$var wire 1024 5 x_bus [1023:0] $end
-$var wire 128 6 y_bus [127:0] $end
-$var wire 8 7 neuron_done [7:0] $end
-$var wire 8 8 neuron_busy [7:0] $end
+$var wire 64 1 bias_bus [63:0] $end
+$var wire 1 * clk $end
+$var wire 1 + rst $end
+$var wire 1 , start $end
+$var wire 2048 2 weights_bus [2047:0] $end
+$var wire 256 3 x_bus [255:0] $end
+$var wire 64 4 y_bus [63:0] $end
+$var wire 8 5 neuron_done [7:0] $end
+$var wire 8 6 neuron_busy [7:0] $end
 $var wire 1 " done $end
 $var wire 1 # busy $end
-$var parameter 32 9 ACC_WIDTH $end
-$var parameter 32 : DATA_WIDTH $end
-$var parameter 32 ; FRAC_BITS $end
-$var parameter 32 < N_INPUTS $end
-$var parameter 32 = N_NEURONS $end
-$var parameter 32 > PARALLEL $end
+$var parameter 32 7 ACC_WIDTH $end
+$var parameter 32 8 DATA_WIDTH $end
+$var parameter 32 9 N_INPUTS $end
+$var parameter 32 : N_NEURONS $end
+$var parameter 32 ; PARALLEL $end
 $scope begin GEN_NEURON[0] $end
-$var parameter 2 ? n $end
+$var parameter 2 < n $end
 $scope module u_neuron $end
-$var wire 16 @ bias [15:0] $end
-$var wire 16 A bias_ext_small [15:0] $end
-$var wire 1 + clk $end
-$var wire 1 , rst $end
-$var wire 1 - start $end
-$var wire 1024 B w_bus [1023:0] $end
-$var wire 1024 C x_bus [1023:0] $end
-$var wire 128 D x_group [127:0] $end
-$var wire 128 E w_group [127:0] $end
-$var wire 40 F final_value [39:0] $end
-$var wire 40 G final_acc [39:0] $end
-$var wire 40 H bias_ext [39:0] $end
-$var wire 40 I acc_next [39:0] $end
-$var parameter 32 J ACC_WIDTH $end
-$var parameter 32 K DATA_WIDTH $end
-$var parameter 32 L FRAC_BITS $end
-$var parameter 32 M GROUPS $end
-$var parameter 32 N GROUP_INDEX_WIDTH $end
-$var parameter 32 O N_INPUTS $end
-$var parameter 32 P PARALLEL $end
-$var reg 40 Q acc [39:0] $end
-$var reg 1 R busy $end
-$var reg 1 S done $end
-$var reg 3 T group_index [2:0] $end
-$var reg 16 U y [15:0] $end
+$var wire 8 = bias [7:0] $end
+$var wire 1 * clk $end
+$var wire 1 + rst $end
+$var wire 1 , start $end
+$var wire 256 > w_bus [255:0] $end
+$var wire 256 ? x_bus [255:0] $end
+$var wire 64 @ x_group [63:0] $end
+$var wire 64 A w_group [63:0] $end
+$var wire 32 B final_acc [31:0] $end
+$var wire 32 C bias_ext [31:0] $end
+$var wire 32 D acc_next [31:0] $end
+$var parameter 32 E ACC_WIDTH $end
+$var parameter 32 F DATA_WIDTH $end
+$var parameter 32 G GROUPS $end
+$var parameter 32 H GROUP_INDEX_WIDTH $end
+$var parameter 32 I N_INPUTS $end
+$var parameter 32 J PARALLEL $end
+$var reg 32 K acc [31:0] $end
+$var reg 1 L busy $end
+$var reg 1 M done $end
+$var reg 2 N group_index [1:0] $end
+$var reg 8 O y [7:0] $end
 $scope module u_mac8 $end
-$var wire 40 V acc_in [39:0] $end
-$var wire 128 W w_bus [127:0] $end
-$var wire 128 X x_bus [127:0] $end
-$var wire 40 Y sum [39:0] $end
-$var wire 40 Z s5 [39:0] $end
-$var wire 40 [ s4 [39:0] $end
-$var wire 40 \ s3 [39:0] $end
-$var wire 40 ] s2 [39:0] $end
-$var wire 40 ^ s1 [39:0] $end
-$var wire 40 _ s0 [39:0] $end
-$var wire 40 ` m7 [39:0] $end
-$var wire 40 a m6 [39:0] $end
-$var wire 40 b m5 [39:0] $end
-$var wire 40 c m4 [39:0] $end
-$var wire 40 d m3 [39:0] $end
-$var wire 40 e m2 [39:0] $end
-$var wire 40 f m1 [39:0] $end
-$var wire 40 g m0 [39:0] $end
-$var wire 40 h acc_out [39:0] $end
+$var wire 32 P acc_in [31:0] $end
+$var wire 64 Q w_bus [63:0] $end
+$var wire 64 R x_bus [63:0] $end
+$var wire 32 S acc_out [31:0] $end
+$var parameter 32 T ACC_WIDTH $end
+$var parameter 32 U DATA_WIDTH $end
+$var parameter 32 V PARALLEL $end
+$var parameter 32 W TREE_LEVELS $end
+$scope begin GEN_MAC[0] $end
+$var parameter 2 X i $end
+$scope module u_mac $end
+$var wire 32 Y acc_in [31:0] $end
+$var wire 8 Z w [7:0] $end
+$var wire 8 [ x [7:0] $end
+$var wire 32 \ product_ext [31:0] $end
+$var wire 16 ] product [15:0] $end
+$var wire 32 ^ acc_out [31:0] $end
+$var parameter 32 _ ACC_WIDTH $end
+$var parameter 32 ` DATA_WIDTH $end
+$var parameter 64 a PROD_WIDTH $end
+$upscope $end
+$upscope $end
+$scope begin GEN_MAC[1] $end
+$var parameter 2 b i $end
+$scope module u_mac $end
+$var wire 32 c acc_in [31:0] $end
+$var wire 8 d w [7:0] $end
+$var wire 8 e x [7:0] $end
+$var wire 32 f product_ext [31:0] $end
+$var wire 16 g product [15:0] $end
+$var wire 32 h acc_out [31:0] $end
 $var parameter 32 i ACC_WIDTH $end
 $var parameter 32 j DATA_WIDTH $end
-$scope module mac0 $end
-$var wire 40 k acc_in [39:0] $end
-$var wire 16 l w [15:0] $end
-$var wire 16 m x [15:0] $end
-$var wire 40 n product_ext [39:0] $end
-$var wire 32 o product [31:0] $end
-$var wire 40 p acc_out [39:0] $end
-$var parameter 32 q ACC_WIDTH $end
-$var parameter 32 r DATA_WIDTH $end
-$var parameter 64 s PROD_WIDTH $end
+$var parameter 64 k PROD_WIDTH $end
 $upscope $end
-$scope module mac1 $end
-$var wire 40 t acc_in [39:0] $end
-$var wire 16 u w [15:0] $end
-$var wire 16 v x [15:0] $end
-$var wire 40 w product_ext [39:0] $end
-$var wire 32 x product [31:0] $end
-$var wire 40 y acc_out [39:0] $end
-$var parameter 32 z ACC_WIDTH $end
-$var parameter 32 { DATA_WIDTH $end
-$var parameter 64 | PROD_WIDTH $end
 $upscope $end
-$scope module mac2 $end
-$var wire 40 } acc_in [39:0] $end
-$var wire 16 ~ w [15:0] $end
-$var wire 16 !" x [15:0] $end
-$var wire 40 "" product_ext [39:0] $end
-$var wire 32 #" product [31:0] $end
-$var wire 40 $" acc_out [39:0] $end
-$var parameter 32 %" ACC_WIDTH $end
-$var parameter 32 &" DATA_WIDTH $end
-$var parameter 64 '" PROD_WIDTH $end
+$scope begin GEN_MAC[2] $end
+$var parameter 3 l i $end
+$scope module u_mac $end
+$var wire 32 m acc_in [31:0] $end
+$var wire 8 n w [7:0] $end
+$var wire 8 o x [7:0] $end
+$var wire 32 p product_ext [31:0] $end
+$var wire 16 q product [15:0] $end
+$var wire 32 r acc_out [31:0] $end
+$var parameter 32 s ACC_WIDTH $end
+$var parameter 32 t DATA_WIDTH $end
+$var parameter 64 u PROD_WIDTH $end
 $upscope $end
-$scope module mac3 $end
-$var wire 40 (" acc_in [39:0] $end
-$var wire 16 )" w [15:0] $end
-$var wire 16 *" x [15:0] $end
-$var wire 40 +" product_ext [39:0] $end
-$var wire 32 ," product [31:0] $end
-$var wire 40 -" acc_out [39:0] $end
-$var parameter 32 ." ACC_WIDTH $end
-$var parameter 32 /" DATA_WIDTH $end
-$var parameter 64 0" PROD_WIDTH $end
 $upscope $end
-$scope module mac4 $end
-$var wire 40 1" acc_in [39:0] $end
-$var wire 16 2" w [15:0] $end
-$var wire 16 3" x [15:0] $end
-$var wire 40 4" product_ext [39:0] $end
-$var wire 32 5" product [31:0] $end
-$var wire 40 6" acc_out [39:0] $end
-$var parameter 32 7" ACC_WIDTH $end
-$var parameter 32 8" DATA_WIDTH $end
-$var parameter 64 9" PROD_WIDTH $end
+$scope begin GEN_MAC[3] $end
+$var parameter 3 v i $end
+$scope module u_mac $end
+$var wire 32 w acc_in [31:0] $end
+$var wire 8 x w [7:0] $end
+$var wire 8 y x [7:0] $end
+$var wire 32 z product_ext [31:0] $end
+$var wire 16 { product [15:0] $end
+$var wire 32 | acc_out [31:0] $end
+$var parameter 32 } ACC_WIDTH $end
+$var parameter 32 ~ DATA_WIDTH $end
+$var parameter 64 !" PROD_WIDTH $end
 $upscope $end
-$scope module mac5 $end
-$var wire 40 :" acc_in [39:0] $end
-$var wire 16 ;" w [15:0] $end
-$var wire 16 <" x [15:0] $end
-$var wire 40 =" product_ext [39:0] $end
-$var wire 32 >" product [31:0] $end
-$var wire 40 ?" acc_out [39:0] $end
-$var parameter 32 @" ACC_WIDTH $end
-$var parameter 32 A" DATA_WIDTH $end
-$var parameter 64 B" PROD_WIDTH $end
 $upscope $end
-$scope module mac6 $end
-$var wire 40 C" acc_in [39:0] $end
-$var wire 16 D" w [15:0] $end
-$var wire 16 E" x [15:0] $end
-$var wire 40 F" product_ext [39:0] $end
-$var wire 32 G" product [31:0] $end
-$var wire 40 H" acc_out [39:0] $end
-$var parameter 32 I" ACC_WIDTH $end
-$var parameter 32 J" DATA_WIDTH $end
-$var parameter 64 K" PROD_WIDTH $end
+$scope begin GEN_MAC[4] $end
+$var parameter 4 "" i $end
+$scope module u_mac $end
+$var wire 32 #" acc_in [31:0] $end
+$var wire 8 $" w [7:0] $end
+$var wire 8 %" x [7:0] $end
+$var wire 32 &" product_ext [31:0] $end
+$var wire 16 '" product [15:0] $end
+$var wire 32 (" acc_out [31:0] $end
+$var parameter 32 )" ACC_WIDTH $end
+$var parameter 32 *" DATA_WIDTH $end
+$var parameter 64 +" PROD_WIDTH $end
 $upscope $end
-$scope module mac7 $end
-$var wire 40 L" acc_in [39:0] $end
-$var wire 16 M" w [15:0] $end
-$var wire 16 N" x [15:0] $end
-$var wire 40 O" product_ext [39:0] $end
-$var wire 32 P" product [31:0] $end
-$var wire 40 Q" acc_out [39:0] $end
-$var parameter 32 R" ACC_WIDTH $end
-$var parameter 32 S" DATA_WIDTH $end
-$var parameter 64 T" PROD_WIDTH $end
+$upscope $end
+$scope begin GEN_MAC[5] $end
+$var parameter 4 ," i $end
+$scope module u_mac $end
+$var wire 32 -" acc_in [31:0] $end
+$var wire 8 ." w [7:0] $end
+$var wire 8 /" x [7:0] $end
+$var wire 32 0" product_ext [31:0] $end
+$var wire 16 1" product [15:0] $end
+$var wire 32 2" acc_out [31:0] $end
+$var parameter 32 3" ACC_WIDTH $end
+$var parameter 32 4" DATA_WIDTH $end
+$var parameter 64 5" PROD_WIDTH $end
+$upscope $end
+$upscope $end
+$scope begin GEN_MAC[6] $end
+$var parameter 4 6" i $end
+$scope module u_mac $end
+$var wire 32 7" acc_in [31:0] $end
+$var wire 8 8" w [7:0] $end
+$var wire 8 9" x [7:0] $end
+$var wire 32 :" product_ext [31:0] $end
+$var wire 16 ;" product [15:0] $end
+$var wire 32 <" acc_out [31:0] $end
+$var parameter 32 =" ACC_WIDTH $end
+$var parameter 32 >" DATA_WIDTH $end
+$var parameter 64 ?" PROD_WIDTH $end
+$upscope $end
+$upscope $end
+$scope begin GEN_MAC[7] $end
+$var parameter 4 @" i $end
+$scope module u_mac $end
+$var wire 32 A" acc_in [31:0] $end
+$var wire 8 B" w [7:0] $end
+$var wire 8 C" x [7:0] $end
+$var wire 32 D" product_ext [31:0] $end
+$var wire 16 E" product [15:0] $end
+$var wire 32 F" acc_out [31:0] $end
+$var parameter 32 G" ACC_WIDTH $end
+$var parameter 32 H" DATA_WIDTH $end
+$var parameter 64 I" PROD_WIDTH $end
+$upscope $end
+$upscope $end
+$scope begin GEN_TREE_INPUT[0] $end
+$var parameter 2 J" i $end
+$upscope $end
+$scope begin GEN_TREE_INPUT[1] $end
+$var parameter 2 K" i $end
+$upscope $end
+$scope begin GEN_TREE_INPUT[2] $end
+$var parameter 3 L" i $end
+$upscope $end
+$scope begin GEN_TREE_INPUT[3] $end
+$var parameter 3 M" i $end
+$upscope $end
+$scope begin GEN_TREE_INPUT[4] $end
+$var parameter 4 N" i $end
+$upscope $end
+$scope begin GEN_TREE_INPUT[5] $end
+$var parameter 4 O" i $end
+$upscope $end
+$scope begin GEN_TREE_INPUT[6] $end
+$var parameter 4 P" i $end
+$upscope $end
+$scope begin GEN_TREE_INPUT[7] $end
+$var parameter 4 Q" i $end
+$upscope $end
+$scope begin GEN_TREE_LEVEL[0] $end
+$var parameter 2 R" level $end
+$scope begin GEN_TREE_NODE[0] $end
+$var parameter 2 S" node $end
+$upscope $end
+$scope begin GEN_TREE_NODE[1] $end
+$var parameter 2 T" node $end
+$upscope $end
+$scope begin GEN_TREE_NODE[2] $end
+$var parameter 3 U" node $end
+$upscope $end
+$scope begin GEN_TREE_NODE[3] $end
+$var parameter 3 V" node $end
+$upscope $end
+$upscope $end
+$scope begin GEN_TREE_LEVEL[1] $end
+$var parameter 2 W" level $end
+$scope begin GEN_TREE_NODE[0] $end
+$var parameter 2 X" node $end
+$upscope $end
+$scope begin GEN_TREE_NODE[1] $end
+$var parameter 2 Y" node $end
+$upscope $end
+$upscope $end
+$scope begin GEN_TREE_LEVEL[2] $end
+$var parameter 3 Z" level $end
+$scope begin GEN_TREE_NODE[0] $end
+$var parameter 2 [" node $end
+$upscope $end
 $upscope $end
 $upscope $end
 $upscope $end
 $upscope $end
 $scope begin GEN_NEURON[1] $end
-$var parameter 2 U" n $end
+$var parameter 2 \" n $end
 $scope module u_neuron $end
-$var wire 16 V" bias [15:0] $end
-$var wire 16 W" bias_ext_small [15:0] $end
-$var wire 1 + clk $end
-$var wire 1 , rst $end
-$var wire 1 - start $end
-$var wire 1024 X" w_bus [1023:0] $end
-$var wire 1024 Y" x_bus [1023:0] $end
-$var wire 128 Z" x_group [127:0] $end
-$var wire 128 [" w_group [127:0] $end
-$var wire 40 \" final_value [39:0] $end
-$var wire 40 ]" final_acc [39:0] $end
-$var wire 40 ^" bias_ext [39:0] $end
-$var wire 40 _" acc_next [39:0] $end
-$var parameter 32 `" ACC_WIDTH $end
-$var parameter 32 a" DATA_WIDTH $end
-$var parameter 32 b" FRAC_BITS $end
-$var parameter 32 c" GROUPS $end
-$var parameter 32 d" GROUP_INDEX_WIDTH $end
-$var parameter 32 e" N_INPUTS $end
-$var parameter 32 f" PARALLEL $end
-$var reg 40 g" acc [39:0] $end
-$var reg 1 h" busy $end
-$var reg 1 i" done $end
-$var reg 3 j" group_index [2:0] $end
-$var reg 16 k" y [15:0] $end
+$var wire 8 ]" bias [7:0] $end
+$var wire 1 * clk $end
+$var wire 1 + rst $end
+$var wire 1 , start $end
+$var wire 256 ^" w_bus [255:0] $end
+$var wire 256 _" x_bus [255:0] $end
+$var wire 64 `" x_group [63:0] $end
+$var wire 64 a" w_group [63:0] $end
+$var wire 32 b" final_acc [31:0] $end
+$var wire 32 c" bias_ext [31:0] $end
+$var wire 32 d" acc_next [31:0] $end
+$var parameter 32 e" ACC_WIDTH $end
+$var parameter 32 f" DATA_WIDTH $end
+$var parameter 32 g" GROUPS $end
+$var parameter 32 h" GROUP_INDEX_WIDTH $end
+$var parameter 32 i" N_INPUTS $end
+$var parameter 32 j" PARALLEL $end
+$var reg 32 k" acc [31:0] $end
+$var reg 1 l" busy $end
+$var reg 1 m" done $end
+$var reg 2 n" group_index [1:0] $end
+$var reg 8 o" y [7:0] $end
 $scope module u_mac8 $end
-$var wire 40 l" acc_in [39:0] $end
-$var wire 128 m" w_bus [127:0] $end
-$var wire 128 n" x_bus [127:0] $end
-$var wire 40 o" sum [39:0] $end
-$var wire 40 p" s5 [39:0] $end
-$var wire 40 q" s4 [39:0] $end
-$var wire 40 r" s3 [39:0] $end
-$var wire 40 s" s2 [39:0] $end
-$var wire 40 t" s1 [39:0] $end
-$var wire 40 u" s0 [39:0] $end
-$var wire 40 v" m7 [39:0] $end
-$var wire 40 w" m6 [39:0] $end
-$var wire 40 x" m5 [39:0] $end
-$var wire 40 y" m4 [39:0] $end
-$var wire 40 z" m3 [39:0] $end
-$var wire 40 {" m2 [39:0] $end
-$var wire 40 |" m1 [39:0] $end
-$var wire 40 }" m0 [39:0] $end
-$var wire 40 ~" acc_out [39:0] $end
+$var wire 32 p" acc_in [31:0] $end
+$var wire 64 q" w_bus [63:0] $end
+$var wire 64 r" x_bus [63:0] $end
+$var wire 32 s" acc_out [31:0] $end
+$var parameter 32 t" ACC_WIDTH $end
+$var parameter 32 u" DATA_WIDTH $end
+$var parameter 32 v" PARALLEL $end
+$var parameter 32 w" TREE_LEVELS $end
+$scope begin GEN_MAC[0] $end
+$var parameter 2 x" i $end
+$scope module u_mac $end
+$var wire 32 y" acc_in [31:0] $end
+$var wire 8 z" w [7:0] $end
+$var wire 8 {" x [7:0] $end
+$var wire 32 |" product_ext [31:0] $end
+$var wire 16 }" product [15:0] $end
+$var wire 32 ~" acc_out [31:0] $end
 $var parameter 32 !# ACC_WIDTH $end
 $var parameter 32 "# DATA_WIDTH $end
-$scope module mac0 $end
-$var wire 40 ## acc_in [39:0] $end
-$var wire 16 $# w [15:0] $end
-$var wire 16 %# x [15:0] $end
-$var wire 40 &# product_ext [39:0] $end
-$var wire 32 '# product [31:0] $end
-$var wire 40 (# acc_out [39:0] $end
-$var parameter 32 )# ACC_WIDTH $end
-$var parameter 32 *# DATA_WIDTH $end
-$var parameter 64 +# PROD_WIDTH $end
+$var parameter 64 ## PROD_WIDTH $end
 $upscope $end
-$scope module mac1 $end
-$var wire 40 ,# acc_in [39:0] $end
-$var wire 16 -# w [15:0] $end
-$var wire 16 .# x [15:0] $end
-$var wire 40 /# product_ext [39:0] $end
-$var wire 32 0# product [31:0] $end
-$var wire 40 1# acc_out [39:0] $end
-$var parameter 32 2# ACC_WIDTH $end
-$var parameter 32 3# DATA_WIDTH $end
-$var parameter 64 4# PROD_WIDTH $end
 $upscope $end
-$scope module mac2 $end
-$var wire 40 5# acc_in [39:0] $end
-$var wire 16 6# w [15:0] $end
-$var wire 16 7# x [15:0] $end
-$var wire 40 8# product_ext [39:0] $end
-$var wire 32 9# product [31:0] $end
-$var wire 40 :# acc_out [39:0] $end
-$var parameter 32 ;# ACC_WIDTH $end
-$var parameter 32 <# DATA_WIDTH $end
-$var parameter 64 =# PROD_WIDTH $end
+$scope begin GEN_MAC[1] $end
+$var parameter 2 $# i $end
+$scope module u_mac $end
+$var wire 32 %# acc_in [31:0] $end
+$var wire 8 &# w [7:0] $end
+$var wire 8 '# x [7:0] $end
+$var wire 32 (# product_ext [31:0] $end
+$var wire 16 )# product [15:0] $end
+$var wire 32 *# acc_out [31:0] $end
+$var parameter 32 +# ACC_WIDTH $end
+$var parameter 32 ,# DATA_WIDTH $end
+$var parameter 64 -# PROD_WIDTH $end
 $upscope $end
-$scope module mac3 $end
-$var wire 40 ># acc_in [39:0] $end
-$var wire 16 ?# w [15:0] $end
-$var wire 16 @# x [15:0] $end
-$var wire 40 A# product_ext [39:0] $end
-$var wire 32 B# product [31:0] $end
-$var wire 40 C# acc_out [39:0] $end
-$var parameter 32 D# ACC_WIDTH $end
-$var parameter 32 E# DATA_WIDTH $end
-$var parameter 64 F# PROD_WIDTH $end
 $upscope $end
-$scope module mac4 $end
-$var wire 40 G# acc_in [39:0] $end
-$var wire 16 H# w [15:0] $end
-$var wire 16 I# x [15:0] $end
-$var wire 40 J# product_ext [39:0] $end
-$var wire 32 K# product [31:0] $end
-$var wire 40 L# acc_out [39:0] $end
-$var parameter 32 M# ACC_WIDTH $end
-$var parameter 32 N# DATA_WIDTH $end
-$var parameter 64 O# PROD_WIDTH $end
+$scope begin GEN_MAC[2] $end
+$var parameter 3 .# i $end
+$scope module u_mac $end
+$var wire 32 /# acc_in [31:0] $end
+$var wire 8 0# w [7:0] $end
+$var wire 8 1# x [7:0] $end
+$var wire 32 2# product_ext [31:0] $end
+$var wire 16 3# product [15:0] $end
+$var wire 32 4# acc_out [31:0] $end
+$var parameter 32 5# ACC_WIDTH $end
+$var parameter 32 6# DATA_WIDTH $end
+$var parameter 64 7# PROD_WIDTH $end
 $upscope $end
-$scope module mac5 $end
-$var wire 40 P# acc_in [39:0] $end
-$var wire 16 Q# w [15:0] $end
-$var wire 16 R# x [15:0] $end
-$var wire 40 S# product_ext [39:0] $end
-$var wire 32 T# product [31:0] $end
-$var wire 40 U# acc_out [39:0] $end
-$var parameter 32 V# ACC_WIDTH $end
-$var parameter 32 W# DATA_WIDTH $end
-$var parameter 64 X# PROD_WIDTH $end
 $upscope $end
-$scope module mac6 $end
-$var wire 40 Y# acc_in [39:0] $end
-$var wire 16 Z# w [15:0] $end
-$var wire 16 [# x [15:0] $end
-$var wire 40 \# product_ext [39:0] $end
-$var wire 32 ]# product [31:0] $end
-$var wire 40 ^# acc_out [39:0] $end
-$var parameter 32 _# ACC_WIDTH $end
-$var parameter 32 `# DATA_WIDTH $end
-$var parameter 64 a# PROD_WIDTH $end
+$scope begin GEN_MAC[3] $end
+$var parameter 3 8# i $end
+$scope module u_mac $end
+$var wire 32 9# acc_in [31:0] $end
+$var wire 8 :# w [7:0] $end
+$var wire 8 ;# x [7:0] $end
+$var wire 32 <# product_ext [31:0] $end
+$var wire 16 =# product [15:0] $end
+$var wire 32 ># acc_out [31:0] $end
+$var parameter 32 ?# ACC_WIDTH $end
+$var parameter 32 @# DATA_WIDTH $end
+$var parameter 64 A# PROD_WIDTH $end
 $upscope $end
-$scope module mac7 $end
-$var wire 40 b# acc_in [39:0] $end
-$var wire 16 c# w [15:0] $end
-$var wire 16 d# x [15:0] $end
-$var wire 40 e# product_ext [39:0] $end
-$var wire 32 f# product [31:0] $end
-$var wire 40 g# acc_out [39:0] $end
-$var parameter 32 h# ACC_WIDTH $end
-$var parameter 32 i# DATA_WIDTH $end
-$var parameter 64 j# PROD_WIDTH $end
+$upscope $end
+$scope begin GEN_MAC[4] $end
+$var parameter 4 B# i $end
+$scope module u_mac $end
+$var wire 32 C# acc_in [31:0] $end
+$var wire 8 D# w [7:0] $end
+$var wire 8 E# x [7:0] $end
+$var wire 32 F# product_ext [31:0] $end
+$var wire 16 G# product [15:0] $end
+$var wire 32 H# acc_out [31:0] $end
+$var parameter 32 I# ACC_WIDTH $end
+$var parameter 32 J# DATA_WIDTH $end
+$var parameter 64 K# PROD_WIDTH $end
+$upscope $end
+$upscope $end
+$scope begin GEN_MAC[5] $end
+$var parameter 4 L# i $end
+$scope module u_mac $end
+$var wire 32 M# acc_in [31:0] $end
+$var wire 8 N# w [7:0] $end
+$var wire 8 O# x [7:0] $end
+$var wire 32 P# product_ext [31:0] $end
+$var wire 16 Q# product [15:0] $end
+$var wire 32 R# acc_out [31:0] $end
+$var parameter 32 S# ACC_WIDTH $end
+$var parameter 32 T# DATA_WIDTH $end
+$var parameter 64 U# PROD_WIDTH $end
+$upscope $end
+$upscope $end
+$scope begin GEN_MAC[6] $end
+$var parameter 4 V# i $end
+$scope module u_mac $end
+$var wire 32 W# acc_in [31:0] $end
+$var wire 8 X# w [7:0] $end
+$var wire 8 Y# x [7:0] $end
+$var wire 32 Z# product_ext [31:0] $end
+$var wire 16 [# product [15:0] $end
+$var wire 32 \# acc_out [31:0] $end
+$var parameter 32 ]# ACC_WIDTH $end
+$var parameter 32 ^# DATA_WIDTH $end
+$var parameter 64 _# PROD_WIDTH $end
+$upscope $end
+$upscope $end
+$scope begin GEN_MAC[7] $end
+$var parameter 4 `# i $end
+$scope module u_mac $end
+$var wire 32 a# acc_in [31:0] $end
+$var wire 8 b# w [7:0] $end
+$var wire 8 c# x [7:0] $end
+$var wire 32 d# product_ext [31:0] $end
+$var wire 16 e# product [15:0] $end
+$var wire 32 f# acc_out [31:0] $end
+$var parameter 32 g# ACC_WIDTH $end
+$var parameter 32 h# DATA_WIDTH $end
+$var parameter 64 i# PROD_WIDTH $end
+$upscope $end
+$upscope $end
+$scope begin GEN_TREE_INPUT[0] $end
+$var parameter 2 j# i $end
+$upscope $end
+$scope begin GEN_TREE_INPUT[1] $end
+$var parameter 2 k# i $end
+$upscope $end
+$scope begin GEN_TREE_INPUT[2] $end
+$var parameter 3 l# i $end
+$upscope $end
+$scope begin GEN_TREE_INPUT[3] $end
+$var parameter 3 m# i $end
+$upscope $end
+$scope begin GEN_TREE_INPUT[4] $end
+$var parameter 4 n# i $end
+$upscope $end
+$scope begin GEN_TREE_INPUT[5] $end
+$var parameter 4 o# i $end
+$upscope $end
+$scope begin GEN_TREE_INPUT[6] $end
+$var parameter 4 p# i $end
+$upscope $end
+$scope begin GEN_TREE_INPUT[7] $end
+$var parameter 4 q# i $end
+$upscope $end
+$scope begin GEN_TREE_LEVEL[0] $end
+$var parameter 2 r# level $end
+$scope begin GEN_TREE_NODE[0] $end
+$var parameter 2 s# node $end
+$upscope $end
+$scope begin GEN_TREE_NODE[1] $end
+$var parameter 2 t# node $end
+$upscope $end
+$scope begin GEN_TREE_NODE[2] $end
+$var parameter 3 u# node $end
+$upscope $end
+$scope begin GEN_TREE_NODE[3] $end
+$var parameter 3 v# node $end
+$upscope $end
+$upscope $end
+$scope begin GEN_TREE_LEVEL[1] $end
+$var parameter 2 w# level $end
+$scope begin GEN_TREE_NODE[0] $end
+$var parameter 2 x# node $end
+$upscope $end
+$scope begin GEN_TREE_NODE[1] $end
+$var parameter 2 y# node $end
+$upscope $end
+$upscope $end
+$scope begin GEN_TREE_LEVEL[2] $end
+$var parameter 3 z# level $end
+$scope begin GEN_TREE_NODE[0] $end
+$var parameter 2 {# node $end
+$upscope $end
 $upscope $end
 $upscope $end
 $upscope $end
 $upscope $end
 $scope begin GEN_NEURON[2] $end
-$var parameter 3 k# n $end
+$var parameter 3 |# n $end
 $scope module u_neuron $end
-$var wire 16 l# bias [15:0] $end
-$var wire 16 m# bias_ext_small [15:0] $end
-$var wire 1 + clk $end
-$var wire 1 , rst $end
-$var wire 1 - start $end
-$var wire 1024 n# w_bus [1023:0] $end
-$var wire 1024 o# x_bus [1023:0] $end
-$var wire 128 p# x_group [127:0] $end
-$var wire 128 q# w_group [127:0] $end
-$var wire 40 r# final_value [39:0] $end
-$var wire 40 s# final_acc [39:0] $end
-$var wire 40 t# bias_ext [39:0] $end
-$var wire 40 u# acc_next [39:0] $end
-$var parameter 32 v# ACC_WIDTH $end
-$var parameter 32 w# DATA_WIDTH $end
-$var parameter 32 x# FRAC_BITS $end
-$var parameter 32 y# GROUPS $end
-$var parameter 32 z# GROUP_INDEX_WIDTH $end
-$var parameter 32 {# N_INPUTS $end
-$var parameter 32 |# PARALLEL $end
-$var reg 40 }# acc [39:0] $end
-$var reg 1 ~# busy $end
-$var reg 1 !$ done $end
-$var reg 3 "$ group_index [2:0] $end
-$var reg 16 #$ y [15:0] $end
+$var wire 8 }# bias [7:0] $end
+$var wire 1 * clk $end
+$var wire 1 + rst $end
+$var wire 1 , start $end
+$var wire 256 ~# w_bus [255:0] $end
+$var wire 256 !$ x_bus [255:0] $end
+$var wire 64 "$ x_group [63:0] $end
+$var wire 64 #$ w_group [63:0] $end
+$var wire 32 $$ final_acc [31:0] $end
+$var wire 32 %$ bias_ext [31:0] $end
+$var wire 32 &$ acc_next [31:0] $end
+$var parameter 32 '$ ACC_WIDTH $end
+$var parameter 32 ($ DATA_WIDTH $end
+$var parameter 32 )$ GROUPS $end
+$var parameter 32 *$ GROUP_INDEX_WIDTH $end
+$var parameter 32 +$ N_INPUTS $end
+$var parameter 32 ,$ PARALLEL $end
+$var reg 32 -$ acc [31:0] $end
+$var reg 1 .$ busy $end
+$var reg 1 /$ done $end
+$var reg 2 0$ group_index [1:0] $end
+$var reg 8 1$ y [7:0] $end
 $scope module u_mac8 $end
-$var wire 40 $$ acc_in [39:0] $end
-$var wire 128 %$ w_bus [127:0] $end
-$var wire 128 &$ x_bus [127:0] $end
-$var wire 40 '$ sum [39:0] $end
-$var wire 40 ($ s5 [39:0] $end
-$var wire 40 )$ s4 [39:0] $end
-$var wire 40 *$ s3 [39:0] $end
-$var wire 40 +$ s2 [39:0] $end
-$var wire 40 ,$ s1 [39:0] $end
-$var wire 40 -$ s0 [39:0] $end
-$var wire 40 .$ m7 [39:0] $end
-$var wire 40 /$ m6 [39:0] $end
-$var wire 40 0$ m5 [39:0] $end
-$var wire 40 1$ m4 [39:0] $end
-$var wire 40 2$ m3 [39:0] $end
-$var wire 40 3$ m2 [39:0] $end
-$var wire 40 4$ m1 [39:0] $end
-$var wire 40 5$ m0 [39:0] $end
-$var wire 40 6$ acc_out [39:0] $end
-$var parameter 32 7$ ACC_WIDTH $end
-$var parameter 32 8$ DATA_WIDTH $end
-$scope module mac0 $end
-$var wire 40 9$ acc_in [39:0] $end
-$var wire 16 :$ w [15:0] $end
-$var wire 16 ;$ x [15:0] $end
-$var wire 40 <$ product_ext [39:0] $end
-$var wire 32 =$ product [31:0] $end
-$var wire 40 >$ acc_out [39:0] $end
-$var parameter 32 ?$ ACC_WIDTH $end
-$var parameter 32 @$ DATA_WIDTH $end
-$var parameter 64 A$ PROD_WIDTH $end
+$var wire 32 2$ acc_in [31:0] $end
+$var wire 64 3$ w_bus [63:0] $end
+$var wire 64 4$ x_bus [63:0] $end
+$var wire 32 5$ acc_out [31:0] $end
+$var parameter 32 6$ ACC_WIDTH $end
+$var parameter 32 7$ DATA_WIDTH $end
+$var parameter 32 8$ PARALLEL $end
+$var parameter 32 9$ TREE_LEVELS $end
+$scope begin GEN_MAC[0] $end
+$var parameter 2 :$ i $end
+$scope module u_mac $end
+$var wire 32 ;$ acc_in [31:0] $end
+$var wire 8 <$ w [7:0] $end
+$var wire 8 =$ x [7:0] $end
+$var wire 32 >$ product_ext [31:0] $end
+$var wire 16 ?$ product [15:0] $end
+$var wire 32 @$ acc_out [31:0] $end
+$var parameter 32 A$ ACC_WIDTH $end
+$var parameter 32 B$ DATA_WIDTH $end
+$var parameter 64 C$ PROD_WIDTH $end
 $upscope $end
-$scope module mac1 $end
-$var wire 40 B$ acc_in [39:0] $end
-$var wire 16 C$ w [15:0] $end
-$var wire 16 D$ x [15:0] $end
-$var wire 40 E$ product_ext [39:0] $end
-$var wire 32 F$ product [31:0] $end
-$var wire 40 G$ acc_out [39:0] $end
-$var parameter 32 H$ ACC_WIDTH $end
-$var parameter 32 I$ DATA_WIDTH $end
-$var parameter 64 J$ PROD_WIDTH $end
 $upscope $end
-$scope module mac2 $end
-$var wire 40 K$ acc_in [39:0] $end
-$var wire 16 L$ w [15:0] $end
-$var wire 16 M$ x [15:0] $end
-$var wire 40 N$ product_ext [39:0] $end
-$var wire 32 O$ product [31:0] $end
-$var wire 40 P$ acc_out [39:0] $end
-$var parameter 32 Q$ ACC_WIDTH $end
-$var parameter 32 R$ DATA_WIDTH $end
-$var parameter 64 S$ PROD_WIDTH $end
+$scope begin GEN_MAC[1] $end
+$var parameter 2 D$ i $end
+$scope module u_mac $end
+$var wire 32 E$ acc_in [31:0] $end
+$var wire 8 F$ w [7:0] $end
+$var wire 8 G$ x [7:0] $end
+$var wire 32 H$ product_ext [31:0] $end
+$var wire 16 I$ product [15:0] $end
+$var wire 32 J$ acc_out [31:0] $end
+$var parameter 32 K$ ACC_WIDTH $end
+$var parameter 32 L$ DATA_WIDTH $end
+$var parameter 64 M$ PROD_WIDTH $end
 $upscope $end
-$scope module mac3 $end
-$var wire 40 T$ acc_in [39:0] $end
-$var wire 16 U$ w [15:0] $end
-$var wire 16 V$ x [15:0] $end
-$var wire 40 W$ product_ext [39:0] $end
-$var wire 32 X$ product [31:0] $end
-$var wire 40 Y$ acc_out [39:0] $end
-$var parameter 32 Z$ ACC_WIDTH $end
-$var parameter 32 [$ DATA_WIDTH $end
-$var parameter 64 \$ PROD_WIDTH $end
 $upscope $end
-$scope module mac4 $end
-$var wire 40 ]$ acc_in [39:0] $end
-$var wire 16 ^$ w [15:0] $end
-$var wire 16 _$ x [15:0] $end
-$var wire 40 `$ product_ext [39:0] $end
-$var wire 32 a$ product [31:0] $end
-$var wire 40 b$ acc_out [39:0] $end
-$var parameter 32 c$ ACC_WIDTH $end
-$var parameter 32 d$ DATA_WIDTH $end
-$var parameter 64 e$ PROD_WIDTH $end
+$scope begin GEN_MAC[2] $end
+$var parameter 3 N$ i $end
+$scope module u_mac $end
+$var wire 32 O$ acc_in [31:0] $end
+$var wire 8 P$ w [7:0] $end
+$var wire 8 Q$ x [7:0] $end
+$var wire 32 R$ product_ext [31:0] $end
+$var wire 16 S$ product [15:0] $end
+$var wire 32 T$ acc_out [31:0] $end
+$var parameter 32 U$ ACC_WIDTH $end
+$var parameter 32 V$ DATA_WIDTH $end
+$var parameter 64 W$ PROD_WIDTH $end
 $upscope $end
-$scope module mac5 $end
-$var wire 40 f$ acc_in [39:0] $end
-$var wire 16 g$ w [15:0] $end
-$var wire 16 h$ x [15:0] $end
-$var wire 40 i$ product_ext [39:0] $end
-$var wire 32 j$ product [31:0] $end
-$var wire 40 k$ acc_out [39:0] $end
-$var parameter 32 l$ ACC_WIDTH $end
-$var parameter 32 m$ DATA_WIDTH $end
-$var parameter 64 n$ PROD_WIDTH $end
 $upscope $end
-$scope module mac6 $end
-$var wire 40 o$ acc_in [39:0] $end
-$var wire 16 p$ w [15:0] $end
-$var wire 16 q$ x [15:0] $end
-$var wire 40 r$ product_ext [39:0] $end
-$var wire 32 s$ product [31:0] $end
-$var wire 40 t$ acc_out [39:0] $end
-$var parameter 32 u$ ACC_WIDTH $end
-$var parameter 32 v$ DATA_WIDTH $end
-$var parameter 64 w$ PROD_WIDTH $end
+$scope begin GEN_MAC[3] $end
+$var parameter 3 X$ i $end
+$scope module u_mac $end
+$var wire 32 Y$ acc_in [31:0] $end
+$var wire 8 Z$ w [7:0] $end
+$var wire 8 [$ x [7:0] $end
+$var wire 32 \$ product_ext [31:0] $end
+$var wire 16 ]$ product [15:0] $end
+$var wire 32 ^$ acc_out [31:0] $end
+$var parameter 32 _$ ACC_WIDTH $end
+$var parameter 32 `$ DATA_WIDTH $end
+$var parameter 64 a$ PROD_WIDTH $end
 $upscope $end
-$scope module mac7 $end
-$var wire 40 x$ acc_in [39:0] $end
-$var wire 16 y$ w [15:0] $end
-$var wire 16 z$ x [15:0] $end
-$var wire 40 {$ product_ext [39:0] $end
-$var wire 32 |$ product [31:0] $end
-$var wire 40 }$ acc_out [39:0] $end
-$var parameter 32 ~$ ACC_WIDTH $end
-$var parameter 32 !% DATA_WIDTH $end
-$var parameter 64 "% PROD_WIDTH $end
+$upscope $end
+$scope begin GEN_MAC[4] $end
+$var parameter 4 b$ i $end
+$scope module u_mac $end
+$var wire 32 c$ acc_in [31:0] $end
+$var wire 8 d$ w [7:0] $end
+$var wire 8 e$ x [7:0] $end
+$var wire 32 f$ product_ext [31:0] $end
+$var wire 16 g$ product [15:0] $end
+$var wire 32 h$ acc_out [31:0] $end
+$var parameter 32 i$ ACC_WIDTH $end
+$var parameter 32 j$ DATA_WIDTH $end
+$var parameter 64 k$ PROD_WIDTH $end
+$upscope $end
+$upscope $end
+$scope begin GEN_MAC[5] $end
+$var parameter 4 l$ i $end
+$scope module u_mac $end
+$var wire 32 m$ acc_in [31:0] $end
+$var wire 8 n$ w [7:0] $end
+$var wire 8 o$ x [7:0] $end
+$var wire 32 p$ product_ext [31:0] $end
+$var wire 16 q$ product [15:0] $end
+$var wire 32 r$ acc_out [31:0] $end
+$var parameter 32 s$ ACC_WIDTH $end
+$var parameter 32 t$ DATA_WIDTH $end
+$var parameter 64 u$ PROD_WIDTH $end
+$upscope $end
+$upscope $end
+$scope begin GEN_MAC[6] $end
+$var parameter 4 v$ i $end
+$scope module u_mac $end
+$var wire 32 w$ acc_in [31:0] $end
+$var wire 8 x$ w [7:0] $end
+$var wire 8 y$ x [7:0] $end
+$var wire 32 z$ product_ext [31:0] $end
+$var wire 16 {$ product [15:0] $end
+$var wire 32 |$ acc_out [31:0] $end
+$var parameter 32 }$ ACC_WIDTH $end
+$var parameter 32 ~$ DATA_WIDTH $end
+$var parameter 64 !% PROD_WIDTH $end
+$upscope $end
+$upscope $end
+$scope begin GEN_MAC[7] $end
+$var parameter 4 "% i $end
+$scope module u_mac $end
+$var wire 32 #% acc_in [31:0] $end
+$var wire 8 $% w [7:0] $end
+$var wire 8 %% x [7:0] $end
+$var wire 32 &% product_ext [31:0] $end
+$var wire 16 '% product [15:0] $end
+$var wire 32 (% acc_out [31:0] $end
+$var parameter 32 )% ACC_WIDTH $end
+$var parameter 32 *% DATA_WIDTH $end
+$var parameter 64 +% PROD_WIDTH $end
+$upscope $end
+$upscope $end
+$scope begin GEN_TREE_INPUT[0] $end
+$var parameter 2 ,% i $end
+$upscope $end
+$scope begin GEN_TREE_INPUT[1] $end
+$var parameter 2 -% i $end
+$upscope $end
+$scope begin GEN_TREE_INPUT[2] $end
+$var parameter 3 .% i $end
+$upscope $end
+$scope begin GEN_TREE_INPUT[3] $end
+$var parameter 3 /% i $end
+$upscope $end
+$scope begin GEN_TREE_INPUT[4] $end
+$var parameter 4 0% i $end
+$upscope $end
+$scope begin GEN_TREE_INPUT[5] $end
+$var parameter 4 1% i $end
+$upscope $end
+$scope begin GEN_TREE_INPUT[6] $end
+$var parameter 4 2% i $end
+$upscope $end
+$scope begin GEN_TREE_INPUT[7] $end
+$var parameter 4 3% i $end
+$upscope $end
+$scope begin GEN_TREE_LEVEL[0] $end
+$var parameter 2 4% level $end
+$scope begin GEN_TREE_NODE[0] $end
+$var parameter 2 5% node $end
+$upscope $end
+$scope begin GEN_TREE_NODE[1] $end
+$var parameter 2 6% node $end
+$upscope $end
+$scope begin GEN_TREE_NODE[2] $end
+$var parameter 3 7% node $end
+$upscope $end
+$scope begin GEN_TREE_NODE[3] $end
+$var parameter 3 8% node $end
+$upscope $end
+$upscope $end
+$scope begin GEN_TREE_LEVEL[1] $end
+$var parameter 2 9% level $end
+$scope begin GEN_TREE_NODE[0] $end
+$var parameter 2 :% node $end
+$upscope $end
+$scope begin GEN_TREE_NODE[1] $end
+$var parameter 2 ;% node $end
+$upscope $end
+$upscope $end
+$scope begin GEN_TREE_LEVEL[2] $end
+$var parameter 3 <% level $end
+$scope begin GEN_TREE_NODE[0] $end
+$var parameter 2 =% node $end
+$upscope $end
 $upscope $end
 $upscope $end
 $upscope $end
 $upscope $end
 $scope begin GEN_NEURON[3] $end
-$var parameter 3 #% n $end
+$var parameter 3 >% n $end
 $scope module u_neuron $end
-$var wire 16 $% bias [15:0] $end
-$var wire 16 %% bias_ext_small [15:0] $end
-$var wire 1 + clk $end
-$var wire 1 , rst $end
-$var wire 1 - start $end
-$var wire 1024 &% w_bus [1023:0] $end
-$var wire 1024 '% x_bus [1023:0] $end
-$var wire 128 (% x_group [127:0] $end
-$var wire 128 )% w_group [127:0] $end
-$var wire 40 *% final_value [39:0] $end
-$var wire 40 +% final_acc [39:0] $end
-$var wire 40 ,% bias_ext [39:0] $end
-$var wire 40 -% acc_next [39:0] $end
-$var parameter 32 .% ACC_WIDTH $end
-$var parameter 32 /% DATA_WIDTH $end
-$var parameter 32 0% FRAC_BITS $end
-$var parameter 32 1% GROUPS $end
-$var parameter 32 2% GROUP_INDEX_WIDTH $end
-$var parameter 32 3% N_INPUTS $end
-$var parameter 32 4% PARALLEL $end
-$var reg 40 5% acc [39:0] $end
-$var reg 1 6% busy $end
-$var reg 1 7% done $end
-$var reg 3 8% group_index [2:0] $end
-$var reg 16 9% y [15:0] $end
+$var wire 8 ?% bias [7:0] $end
+$var wire 1 * clk $end
+$var wire 1 + rst $end
+$var wire 1 , start $end
+$var wire 256 @% w_bus [255:0] $end
+$var wire 256 A% x_bus [255:0] $end
+$var wire 64 B% x_group [63:0] $end
+$var wire 64 C% w_group [63:0] $end
+$var wire 32 D% final_acc [31:0] $end
+$var wire 32 E% bias_ext [31:0] $end
+$var wire 32 F% acc_next [31:0] $end
+$var parameter 32 G% ACC_WIDTH $end
+$var parameter 32 H% DATA_WIDTH $end
+$var parameter 32 I% GROUPS $end
+$var parameter 32 J% GROUP_INDEX_WIDTH $end
+$var parameter 32 K% N_INPUTS $end
+$var parameter 32 L% PARALLEL $end
+$var reg 32 M% acc [31:0] $end
+$var reg 1 N% busy $end
+$var reg 1 O% done $end
+$var reg 2 P% group_index [1:0] $end
+$var reg 8 Q% y [7:0] $end
 $scope module u_mac8 $end
-$var wire 40 :% acc_in [39:0] $end
-$var wire 128 ;% w_bus [127:0] $end
-$var wire 128 <% x_bus [127:0] $end
-$var wire 40 =% sum [39:0] $end
-$var wire 40 >% s5 [39:0] $end
-$var wire 40 ?% s4 [39:0] $end
-$var wire 40 @% s3 [39:0] $end
-$var wire 40 A% s2 [39:0] $end
-$var wire 40 B% s1 [39:0] $end
-$var wire 40 C% s0 [39:0] $end
-$var wire 40 D% m7 [39:0] $end
-$var wire 40 E% m6 [39:0] $end
-$var wire 40 F% m5 [39:0] $end
-$var wire 40 G% m4 [39:0] $end
-$var wire 40 H% m3 [39:0] $end
-$var wire 40 I% m2 [39:0] $end
-$var wire 40 J% m1 [39:0] $end
-$var wire 40 K% m0 [39:0] $end
-$var wire 40 L% acc_out [39:0] $end
-$var parameter 32 M% ACC_WIDTH $end
-$var parameter 32 N% DATA_WIDTH $end
-$scope module mac0 $end
-$var wire 40 O% acc_in [39:0] $end
-$var wire 16 P% w [15:0] $end
-$var wire 16 Q% x [15:0] $end
-$var wire 40 R% product_ext [39:0] $end
-$var wire 32 S% product [31:0] $end
-$var wire 40 T% acc_out [39:0] $end
-$var parameter 32 U% ACC_WIDTH $end
-$var parameter 32 V% DATA_WIDTH $end
-$var parameter 64 W% PROD_WIDTH $end
+$var wire 32 R% acc_in [31:0] $end
+$var wire 64 S% w_bus [63:0] $end
+$var wire 64 T% x_bus [63:0] $end
+$var wire 32 U% acc_out [31:0] $end
+$var parameter 32 V% ACC_WIDTH $end
+$var parameter 32 W% DATA_WIDTH $end
+$var parameter 32 X% PARALLEL $end
+$var parameter 32 Y% TREE_LEVELS $end
+$scope begin GEN_MAC[0] $end
+$var parameter 2 Z% i $end
+$scope module u_mac $end
+$var wire 32 [% acc_in [31:0] $end
+$var wire 8 \% w [7:0] $end
+$var wire 8 ]% x [7:0] $end
+$var wire 32 ^% product_ext [31:0] $end
+$var wire 16 _% product [15:0] $end
+$var wire 32 `% acc_out [31:0] $end
+$var parameter 32 a% ACC_WIDTH $end
+$var parameter 32 b% DATA_WIDTH $end
+$var parameter 64 c% PROD_WIDTH $end
 $upscope $end
-$scope module mac1 $end
-$var wire 40 X% acc_in [39:0] $end
-$var wire 16 Y% w [15:0] $end
-$var wire 16 Z% x [15:0] $end
-$var wire 40 [% product_ext [39:0] $end
-$var wire 32 \% product [31:0] $end
-$var wire 40 ]% acc_out [39:0] $end
-$var parameter 32 ^% ACC_WIDTH $end
-$var parameter 32 _% DATA_WIDTH $end
-$var parameter 64 `% PROD_WIDTH $end
 $upscope $end
-$scope module mac2 $end
-$var wire 40 a% acc_in [39:0] $end
-$var wire 16 b% w [15:0] $end
-$var wire 16 c% x [15:0] $end
-$var wire 40 d% product_ext [39:0] $end
-$var wire 32 e% product [31:0] $end
-$var wire 40 f% acc_out [39:0] $end
-$var parameter 32 g% ACC_WIDTH $end
-$var parameter 32 h% DATA_WIDTH $end
-$var parameter 64 i% PROD_WIDTH $end
+$scope begin GEN_MAC[1] $end
+$var parameter 2 d% i $end
+$scope module u_mac $end
+$var wire 32 e% acc_in [31:0] $end
+$var wire 8 f% w [7:0] $end
+$var wire 8 g% x [7:0] $end
+$var wire 32 h% product_ext [31:0] $end
+$var wire 16 i% product [15:0] $end
+$var wire 32 j% acc_out [31:0] $end
+$var parameter 32 k% ACC_WIDTH $end
+$var parameter 32 l% DATA_WIDTH $end
+$var parameter 64 m% PROD_WIDTH $end
 $upscope $end
-$scope module mac3 $end
-$var wire 40 j% acc_in [39:0] $end
-$var wire 16 k% w [15:0] $end
-$var wire 16 l% x [15:0] $end
-$var wire 40 m% product_ext [39:0] $end
-$var wire 32 n% product [31:0] $end
-$var wire 40 o% acc_out [39:0] $end
-$var parameter 32 p% ACC_WIDTH $end
-$var parameter 32 q% DATA_WIDTH $end
-$var parameter 64 r% PROD_WIDTH $end
 $upscope $end
-$scope module mac4 $end
-$var wire 40 s% acc_in [39:0] $end
-$var wire 16 t% w [15:0] $end
-$var wire 16 u% x [15:0] $end
-$var wire 40 v% product_ext [39:0] $end
-$var wire 32 w% product [31:0] $end
-$var wire 40 x% acc_out [39:0] $end
-$var parameter 32 y% ACC_WIDTH $end
-$var parameter 32 z% DATA_WIDTH $end
-$var parameter 64 {% PROD_WIDTH $end
+$scope begin GEN_MAC[2] $end
+$var parameter 3 n% i $end
+$scope module u_mac $end
+$var wire 32 o% acc_in [31:0] $end
+$var wire 8 p% w [7:0] $end
+$var wire 8 q% x [7:0] $end
+$var wire 32 r% product_ext [31:0] $end
+$var wire 16 s% product [15:0] $end
+$var wire 32 t% acc_out [31:0] $end
+$var parameter 32 u% ACC_WIDTH $end
+$var parameter 32 v% DATA_WIDTH $end
+$var parameter 64 w% PROD_WIDTH $end
 $upscope $end
-$scope module mac5 $end
-$var wire 40 |% acc_in [39:0] $end
-$var wire 16 }% w [15:0] $end
-$var wire 16 ~% x [15:0] $end
-$var wire 40 !& product_ext [39:0] $end
-$var wire 32 "& product [31:0] $end
-$var wire 40 #& acc_out [39:0] $end
-$var parameter 32 $& ACC_WIDTH $end
-$var parameter 32 %& DATA_WIDTH $end
-$var parameter 64 && PROD_WIDTH $end
 $upscope $end
-$scope module mac6 $end
-$var wire 40 '& acc_in [39:0] $end
-$var wire 16 (& w [15:0] $end
-$var wire 16 )& x [15:0] $end
-$var wire 40 *& product_ext [39:0] $end
-$var wire 32 +& product [31:0] $end
-$var wire 40 ,& acc_out [39:0] $end
-$var parameter 32 -& ACC_WIDTH $end
-$var parameter 32 .& DATA_WIDTH $end
-$var parameter 64 /& PROD_WIDTH $end
+$scope begin GEN_MAC[3] $end
+$var parameter 3 x% i $end
+$scope module u_mac $end
+$var wire 32 y% acc_in [31:0] $end
+$var wire 8 z% w [7:0] $end
+$var wire 8 {% x [7:0] $end
+$var wire 32 |% product_ext [31:0] $end
+$var wire 16 }% product [15:0] $end
+$var wire 32 ~% acc_out [31:0] $end
+$var parameter 32 !& ACC_WIDTH $end
+$var parameter 32 "& DATA_WIDTH $end
+$var parameter 64 #& PROD_WIDTH $end
 $upscope $end
-$scope module mac7 $end
-$var wire 40 0& acc_in [39:0] $end
-$var wire 16 1& w [15:0] $end
-$var wire 16 2& x [15:0] $end
-$var wire 40 3& product_ext [39:0] $end
-$var wire 32 4& product [31:0] $end
-$var wire 40 5& acc_out [39:0] $end
-$var parameter 32 6& ACC_WIDTH $end
-$var parameter 32 7& DATA_WIDTH $end
-$var parameter 64 8& PROD_WIDTH $end
+$upscope $end
+$scope begin GEN_MAC[4] $end
+$var parameter 4 $& i $end
+$scope module u_mac $end
+$var wire 32 %& acc_in [31:0] $end
+$var wire 8 && w [7:0] $end
+$var wire 8 '& x [7:0] $end
+$var wire 32 (& product_ext [31:0] $end
+$var wire 16 )& product [15:0] $end
+$var wire 32 *& acc_out [31:0] $end
+$var parameter 32 +& ACC_WIDTH $end
+$var parameter 32 ,& DATA_WIDTH $end
+$var parameter 64 -& PROD_WIDTH $end
+$upscope $end
+$upscope $end
+$scope begin GEN_MAC[5] $end
+$var parameter 4 .& i $end
+$scope module u_mac $end
+$var wire 32 /& acc_in [31:0] $end
+$var wire 8 0& w [7:0] $end
+$var wire 8 1& x [7:0] $end
+$var wire 32 2& product_ext [31:0] $end
+$var wire 16 3& product [15:0] $end
+$var wire 32 4& acc_out [31:0] $end
+$var parameter 32 5& ACC_WIDTH $end
+$var parameter 32 6& DATA_WIDTH $end
+$var parameter 64 7& PROD_WIDTH $end
+$upscope $end
+$upscope $end
+$scope begin GEN_MAC[6] $end
+$var parameter 4 8& i $end
+$scope module u_mac $end
+$var wire 32 9& acc_in [31:0] $end
+$var wire 8 :& w [7:0] $end
+$var wire 8 ;& x [7:0] $end
+$var wire 32 <& product_ext [31:0] $end
+$var wire 16 =& product [15:0] $end
+$var wire 32 >& acc_out [31:0] $end
+$var parameter 32 ?& ACC_WIDTH $end
+$var parameter 32 @& DATA_WIDTH $end
+$var parameter 64 A& PROD_WIDTH $end
+$upscope $end
+$upscope $end
+$scope begin GEN_MAC[7] $end
+$var parameter 4 B& i $end
+$scope module u_mac $end
+$var wire 32 C& acc_in [31:0] $end
+$var wire 8 D& w [7:0] $end
+$var wire 8 E& x [7:0] $end
+$var wire 32 F& product_ext [31:0] $end
+$var wire 16 G& product [15:0] $end
+$var wire 32 H& acc_out [31:0] $end
+$var parameter 32 I& ACC_WIDTH $end
+$var parameter 32 J& DATA_WIDTH $end
+$var parameter 64 K& PROD_WIDTH $end
+$upscope $end
+$upscope $end
+$scope begin GEN_TREE_INPUT[0] $end
+$var parameter 2 L& i $end
+$upscope $end
+$scope begin GEN_TREE_INPUT[1] $end
+$var parameter 2 M& i $end
+$upscope $end
+$scope begin GEN_TREE_INPUT[2] $end
+$var parameter 3 N& i $end
+$upscope $end
+$scope begin GEN_TREE_INPUT[3] $end
+$var parameter 3 O& i $end
+$upscope $end
+$scope begin GEN_TREE_INPUT[4] $end
+$var parameter 4 P& i $end
+$upscope $end
+$scope begin GEN_TREE_INPUT[5] $end
+$var parameter 4 Q& i $end
+$upscope $end
+$scope begin GEN_TREE_INPUT[6] $end
+$var parameter 4 R& i $end
+$upscope $end
+$scope begin GEN_TREE_INPUT[7] $end
+$var parameter 4 S& i $end
+$upscope $end
+$scope begin GEN_TREE_LEVEL[0] $end
+$var parameter 2 T& level $end
+$scope begin GEN_TREE_NODE[0] $end
+$var parameter 2 U& node $end
+$upscope $end
+$scope begin GEN_TREE_NODE[1] $end
+$var parameter 2 V& node $end
+$upscope $end
+$scope begin GEN_TREE_NODE[2] $end
+$var parameter 3 W& node $end
+$upscope $end
+$scope begin GEN_TREE_NODE[3] $end
+$var parameter 3 X& node $end
+$upscope $end
+$upscope $end
+$scope begin GEN_TREE_LEVEL[1] $end
+$var parameter 2 Y& level $end
+$scope begin GEN_TREE_NODE[0] $end
+$var parameter 2 Z& node $end
+$upscope $end
+$scope begin GEN_TREE_NODE[1] $end
+$var parameter 2 [& node $end
+$upscope $end
+$upscope $end
+$scope begin GEN_TREE_LEVEL[2] $end
+$var parameter 3 \& level $end
+$scope begin GEN_TREE_NODE[0] $end
+$var parameter 2 ]& node $end
+$upscope $end
 $upscope $end
 $upscope $end
 $upscope $end
 $upscope $end
 $scope begin GEN_NEURON[4] $end
-$var parameter 4 9& n $end
+$var parameter 4 ^& n $end
 $scope module u_neuron $end
-$var wire 16 :& bias [15:0] $end
-$var wire 16 ;& bias_ext_small [15:0] $end
-$var wire 1 + clk $end
-$var wire 1 , rst $end
-$var wire 1 - start $end
-$var wire 1024 <& w_bus [1023:0] $end
-$var wire 1024 =& x_bus [1023:0] $end
-$var wire 128 >& x_group [127:0] $end
-$var wire 128 ?& w_group [127:0] $end
-$var wire 40 @& final_value [39:0] $end
-$var wire 40 A& final_acc [39:0] $end
-$var wire 40 B& bias_ext [39:0] $end
-$var wire 40 C& acc_next [39:0] $end
-$var parameter 32 D& ACC_WIDTH $end
-$var parameter 32 E& DATA_WIDTH $end
-$var parameter 32 F& FRAC_BITS $end
-$var parameter 32 G& GROUPS $end
-$var parameter 32 H& GROUP_INDEX_WIDTH $end
-$var parameter 32 I& N_INPUTS $end
-$var parameter 32 J& PARALLEL $end
-$var reg 40 K& acc [39:0] $end
-$var reg 1 L& busy $end
-$var reg 1 M& done $end
-$var reg 3 N& group_index [2:0] $end
-$var reg 16 O& y [15:0] $end
+$var wire 8 _& bias [7:0] $end
+$var wire 1 * clk $end
+$var wire 1 + rst $end
+$var wire 1 , start $end
+$var wire 256 `& w_bus [255:0] $end
+$var wire 256 a& x_bus [255:0] $end
+$var wire 64 b& x_group [63:0] $end
+$var wire 64 c& w_group [63:0] $end
+$var wire 32 d& final_acc [31:0] $end
+$var wire 32 e& bias_ext [31:0] $end
+$var wire 32 f& acc_next [31:0] $end
+$var parameter 32 g& ACC_WIDTH $end
+$var parameter 32 h& DATA_WIDTH $end
+$var parameter 32 i& GROUPS $end
+$var parameter 32 j& GROUP_INDEX_WIDTH $end
+$var parameter 32 k& N_INPUTS $end
+$var parameter 32 l& PARALLEL $end
+$var reg 32 m& acc [31:0] $end
+$var reg 1 n& busy $end
+$var reg 1 o& done $end
+$var reg 2 p& group_index [1:0] $end
+$var reg 8 q& y [7:0] $end
 $scope module u_mac8 $end
-$var wire 40 P& acc_in [39:0] $end
-$var wire 128 Q& w_bus [127:0] $end
-$var wire 128 R& x_bus [127:0] $end
-$var wire 40 S& sum [39:0] $end
-$var wire 40 T& s5 [39:0] $end
-$var wire 40 U& s4 [39:0] $end
-$var wire 40 V& s3 [39:0] $end
-$var wire 40 W& s2 [39:0] $end
-$var wire 40 X& s1 [39:0] $end
-$var wire 40 Y& s0 [39:0] $end
-$var wire 40 Z& m7 [39:0] $end
-$var wire 40 [& m6 [39:0] $end
-$var wire 40 \& m5 [39:0] $end
-$var wire 40 ]& m4 [39:0] $end
-$var wire 40 ^& m3 [39:0] $end
-$var wire 40 _& m2 [39:0] $end
-$var wire 40 `& m1 [39:0] $end
-$var wire 40 a& m0 [39:0] $end
-$var wire 40 b& acc_out [39:0] $end
-$var parameter 32 c& ACC_WIDTH $end
-$var parameter 32 d& DATA_WIDTH $end
-$scope module mac0 $end
-$var wire 40 e& acc_in [39:0] $end
-$var wire 16 f& w [15:0] $end
-$var wire 16 g& x [15:0] $end
-$var wire 40 h& product_ext [39:0] $end
-$var wire 32 i& product [31:0] $end
-$var wire 40 j& acc_out [39:0] $end
-$var parameter 32 k& ACC_WIDTH $end
-$var parameter 32 l& DATA_WIDTH $end
-$var parameter 64 m& PROD_WIDTH $end
+$var wire 32 r& acc_in [31:0] $end
+$var wire 64 s& w_bus [63:0] $end
+$var wire 64 t& x_bus [63:0] $end
+$var wire 32 u& acc_out [31:0] $end
+$var parameter 32 v& ACC_WIDTH $end
+$var parameter 32 w& DATA_WIDTH $end
+$var parameter 32 x& PARALLEL $end
+$var parameter 32 y& TREE_LEVELS $end
+$scope begin GEN_MAC[0] $end
+$var parameter 2 z& i $end
+$scope module u_mac $end
+$var wire 32 {& acc_in [31:0] $end
+$var wire 8 |& w [7:0] $end
+$var wire 8 }& x [7:0] $end
+$var wire 32 ~& product_ext [31:0] $end
+$var wire 16 !' product [15:0] $end
+$var wire 32 "' acc_out [31:0] $end
+$var parameter 32 #' ACC_WIDTH $end
+$var parameter 32 $' DATA_WIDTH $end
+$var parameter 64 %' PROD_WIDTH $end
 $upscope $end
-$scope module mac1 $end
-$var wire 40 n& acc_in [39:0] $end
-$var wire 16 o& w [15:0] $end
-$var wire 16 p& x [15:0] $end
-$var wire 40 q& product_ext [39:0] $end
-$var wire 32 r& product [31:0] $end
-$var wire 40 s& acc_out [39:0] $end
-$var parameter 32 t& ACC_WIDTH $end
-$var parameter 32 u& DATA_WIDTH $end
-$var parameter 64 v& PROD_WIDTH $end
 $upscope $end
-$scope module mac2 $end
-$var wire 40 w& acc_in [39:0] $end
-$var wire 16 x& w [15:0] $end
-$var wire 16 y& x [15:0] $end
-$var wire 40 z& product_ext [39:0] $end
-$var wire 32 {& product [31:0] $end
-$var wire 40 |& acc_out [39:0] $end
-$var parameter 32 }& ACC_WIDTH $end
-$var parameter 32 ~& DATA_WIDTH $end
-$var parameter 64 !' PROD_WIDTH $end
+$scope begin GEN_MAC[1] $end
+$var parameter 2 &' i $end
+$scope module u_mac $end
+$var wire 32 '' acc_in [31:0] $end
+$var wire 8 (' w [7:0] $end
+$var wire 8 )' x [7:0] $end
+$var wire 32 *' product_ext [31:0] $end
+$var wire 16 +' product [15:0] $end
+$var wire 32 ,' acc_out [31:0] $end
+$var parameter 32 -' ACC_WIDTH $end
+$var parameter 32 .' DATA_WIDTH $end
+$var parameter 64 /' PROD_WIDTH $end
 $upscope $end
-$scope module mac3 $end
-$var wire 40 "' acc_in [39:0] $end
-$var wire 16 #' w [15:0] $end
-$var wire 16 $' x [15:0] $end
-$var wire 40 %' product_ext [39:0] $end
-$var wire 32 &' product [31:0] $end
-$var wire 40 '' acc_out [39:0] $end
-$var parameter 32 (' ACC_WIDTH $end
-$var parameter 32 )' DATA_WIDTH $end
-$var parameter 64 *' PROD_WIDTH $end
 $upscope $end
-$scope module mac4 $end
-$var wire 40 +' acc_in [39:0] $end
-$var wire 16 ,' w [15:0] $end
-$var wire 16 -' x [15:0] $end
-$var wire 40 .' product_ext [39:0] $end
-$var wire 32 /' product [31:0] $end
-$var wire 40 0' acc_out [39:0] $end
-$var parameter 32 1' ACC_WIDTH $end
-$var parameter 32 2' DATA_WIDTH $end
-$var parameter 64 3' PROD_WIDTH $end
+$scope begin GEN_MAC[2] $end
+$var parameter 3 0' i $end
+$scope module u_mac $end
+$var wire 32 1' acc_in [31:0] $end
+$var wire 8 2' w [7:0] $end
+$var wire 8 3' x [7:0] $end
+$var wire 32 4' product_ext [31:0] $end
+$var wire 16 5' product [15:0] $end
+$var wire 32 6' acc_out [31:0] $end
+$var parameter 32 7' ACC_WIDTH $end
+$var parameter 32 8' DATA_WIDTH $end
+$var parameter 64 9' PROD_WIDTH $end
 $upscope $end
-$scope module mac5 $end
-$var wire 40 4' acc_in [39:0] $end
-$var wire 16 5' w [15:0] $end
-$var wire 16 6' x [15:0] $end
-$var wire 40 7' product_ext [39:0] $end
-$var wire 32 8' product [31:0] $end
-$var wire 40 9' acc_out [39:0] $end
-$var parameter 32 :' ACC_WIDTH $end
-$var parameter 32 ;' DATA_WIDTH $end
-$var parameter 64 <' PROD_WIDTH $end
 $upscope $end
-$scope module mac6 $end
-$var wire 40 =' acc_in [39:0] $end
-$var wire 16 >' w [15:0] $end
-$var wire 16 ?' x [15:0] $end
-$var wire 40 @' product_ext [39:0] $end
-$var wire 32 A' product [31:0] $end
-$var wire 40 B' acc_out [39:0] $end
-$var parameter 32 C' ACC_WIDTH $end
-$var parameter 32 D' DATA_WIDTH $end
-$var parameter 64 E' PROD_WIDTH $end
+$scope begin GEN_MAC[3] $end
+$var parameter 3 :' i $end
+$scope module u_mac $end
+$var wire 32 ;' acc_in [31:0] $end
+$var wire 8 <' w [7:0] $end
+$var wire 8 =' x [7:0] $end
+$var wire 32 >' product_ext [31:0] $end
+$var wire 16 ?' product [15:0] $end
+$var wire 32 @' acc_out [31:0] $end
+$var parameter 32 A' ACC_WIDTH $end
+$var parameter 32 B' DATA_WIDTH $end
+$var parameter 64 C' PROD_WIDTH $end
 $upscope $end
-$scope module mac7 $end
-$var wire 40 F' acc_in [39:0] $end
-$var wire 16 G' w [15:0] $end
-$var wire 16 H' x [15:0] $end
-$var wire 40 I' product_ext [39:0] $end
-$var wire 32 J' product [31:0] $end
-$var wire 40 K' acc_out [39:0] $end
-$var parameter 32 L' ACC_WIDTH $end
-$var parameter 32 M' DATA_WIDTH $end
-$var parameter 64 N' PROD_WIDTH $end
+$upscope $end
+$scope begin GEN_MAC[4] $end
+$var parameter 4 D' i $end
+$scope module u_mac $end
+$var wire 32 E' acc_in [31:0] $end
+$var wire 8 F' w [7:0] $end
+$var wire 8 G' x [7:0] $end
+$var wire 32 H' product_ext [31:0] $end
+$var wire 16 I' product [15:0] $end
+$var wire 32 J' acc_out [31:0] $end
+$var parameter 32 K' ACC_WIDTH $end
+$var parameter 32 L' DATA_WIDTH $end
+$var parameter 64 M' PROD_WIDTH $end
+$upscope $end
+$upscope $end
+$scope begin GEN_MAC[5] $end
+$var parameter 4 N' i $end
+$scope module u_mac $end
+$var wire 32 O' acc_in [31:0] $end
+$var wire 8 P' w [7:0] $end
+$var wire 8 Q' x [7:0] $end
+$var wire 32 R' product_ext [31:0] $end
+$var wire 16 S' product [15:0] $end
+$var wire 32 T' acc_out [31:0] $end
+$var parameter 32 U' ACC_WIDTH $end
+$var parameter 32 V' DATA_WIDTH $end
+$var parameter 64 W' PROD_WIDTH $end
+$upscope $end
+$upscope $end
+$scope begin GEN_MAC[6] $end
+$var parameter 4 X' i $end
+$scope module u_mac $end
+$var wire 32 Y' acc_in [31:0] $end
+$var wire 8 Z' w [7:0] $end
+$var wire 8 [' x [7:0] $end
+$var wire 32 \' product_ext [31:0] $end
+$var wire 16 ]' product [15:0] $end
+$var wire 32 ^' acc_out [31:0] $end
+$var parameter 32 _' ACC_WIDTH $end
+$var parameter 32 `' DATA_WIDTH $end
+$var parameter 64 a' PROD_WIDTH $end
+$upscope $end
+$upscope $end
+$scope begin GEN_MAC[7] $end
+$var parameter 4 b' i $end
+$scope module u_mac $end
+$var wire 32 c' acc_in [31:0] $end
+$var wire 8 d' w [7:0] $end
+$var wire 8 e' x [7:0] $end
+$var wire 32 f' product_ext [31:0] $end
+$var wire 16 g' product [15:0] $end
+$var wire 32 h' acc_out [31:0] $end
+$var parameter 32 i' ACC_WIDTH $end
+$var parameter 32 j' DATA_WIDTH $end
+$var parameter 64 k' PROD_WIDTH $end
+$upscope $end
+$upscope $end
+$scope begin GEN_TREE_INPUT[0] $end
+$var parameter 2 l' i $end
+$upscope $end
+$scope begin GEN_TREE_INPUT[1] $end
+$var parameter 2 m' i $end
+$upscope $end
+$scope begin GEN_TREE_INPUT[2] $end
+$var parameter 3 n' i $end
+$upscope $end
+$scope begin GEN_TREE_INPUT[3] $end
+$var parameter 3 o' i $end
+$upscope $end
+$scope begin GEN_TREE_INPUT[4] $end
+$var parameter 4 p' i $end
+$upscope $end
+$scope begin GEN_TREE_INPUT[5] $end
+$var parameter 4 q' i $end
+$upscope $end
+$scope begin GEN_TREE_INPUT[6] $end
+$var parameter 4 r' i $end
+$upscope $end
+$scope begin GEN_TREE_INPUT[7] $end
+$var parameter 4 s' i $end
+$upscope $end
+$scope begin GEN_TREE_LEVEL[0] $end
+$var parameter 2 t' level $end
+$scope begin GEN_TREE_NODE[0] $end
+$var parameter 2 u' node $end
+$upscope $end
+$scope begin GEN_TREE_NODE[1] $end
+$var parameter 2 v' node $end
+$upscope $end
+$scope begin GEN_TREE_NODE[2] $end
+$var parameter 3 w' node $end
+$upscope $end
+$scope begin GEN_TREE_NODE[3] $end
+$var parameter 3 x' node $end
+$upscope $end
+$upscope $end
+$scope begin GEN_TREE_LEVEL[1] $end
+$var parameter 2 y' level $end
+$scope begin GEN_TREE_NODE[0] $end
+$var parameter 2 z' node $end
+$upscope $end
+$scope begin GEN_TREE_NODE[1] $end
+$var parameter 2 {' node $end
+$upscope $end
+$upscope $end
+$scope begin GEN_TREE_LEVEL[2] $end
+$var parameter 3 |' level $end
+$scope begin GEN_TREE_NODE[0] $end
+$var parameter 2 }' node $end
+$upscope $end
 $upscope $end
 $upscope $end
 $upscope $end
 $upscope $end
 $scope begin GEN_NEURON[5] $end
-$var parameter 4 O' n $end
+$var parameter 4 ~' n $end
 $scope module u_neuron $end
-$var wire 16 P' bias [15:0] $end
-$var wire 16 Q' bias_ext_small [15:0] $end
-$var wire 1 + clk $end
-$var wire 1 , rst $end
-$var wire 1 - start $end
-$var wire 1024 R' w_bus [1023:0] $end
-$var wire 1024 S' x_bus [1023:0] $end
-$var wire 128 T' x_group [127:0] $end
-$var wire 128 U' w_group [127:0] $end
-$var wire 40 V' final_value [39:0] $end
-$var wire 40 W' final_acc [39:0] $end
-$var wire 40 X' bias_ext [39:0] $end
-$var wire 40 Y' acc_next [39:0] $end
-$var parameter 32 Z' ACC_WIDTH $end
-$var parameter 32 [' DATA_WIDTH $end
-$var parameter 32 \' FRAC_BITS $end
-$var parameter 32 ]' GROUPS $end
-$var parameter 32 ^' GROUP_INDEX_WIDTH $end
-$var parameter 32 _' N_INPUTS $end
-$var parameter 32 `' PARALLEL $end
-$var reg 40 a' acc [39:0] $end
-$var reg 1 b' busy $end
-$var reg 1 c' done $end
-$var reg 3 d' group_index [2:0] $end
-$var reg 16 e' y [15:0] $end
+$var wire 8 !( bias [7:0] $end
+$var wire 1 * clk $end
+$var wire 1 + rst $end
+$var wire 1 , start $end
+$var wire 256 "( w_bus [255:0] $end
+$var wire 256 #( x_bus [255:0] $end
+$var wire 64 $( x_group [63:0] $end
+$var wire 64 %( w_group [63:0] $end
+$var wire 32 &( final_acc [31:0] $end
+$var wire 32 '( bias_ext [31:0] $end
+$var wire 32 (( acc_next [31:0] $end
+$var parameter 32 )( ACC_WIDTH $end
+$var parameter 32 *( DATA_WIDTH $end
+$var parameter 32 +( GROUPS $end
+$var parameter 32 ,( GROUP_INDEX_WIDTH $end
+$var parameter 32 -( N_INPUTS $end
+$var parameter 32 .( PARALLEL $end
+$var reg 32 /( acc [31:0] $end
+$var reg 1 0( busy $end
+$var reg 1 1( done $end
+$var reg 2 2( group_index [1:0] $end
+$var reg 8 3( y [7:0] $end
 $scope module u_mac8 $end
-$var wire 40 f' acc_in [39:0] $end
-$var wire 128 g' w_bus [127:0] $end
-$var wire 128 h' x_bus [127:0] $end
-$var wire 40 i' sum [39:0] $end
-$var wire 40 j' s5 [39:0] $end
-$var wire 40 k' s4 [39:0] $end
-$var wire 40 l' s3 [39:0] $end
-$var wire 40 m' s2 [39:0] $end
-$var wire 40 n' s1 [39:0] $end
-$var wire 40 o' s0 [39:0] $end
-$var wire 40 p' m7 [39:0] $end
-$var wire 40 q' m6 [39:0] $end
-$var wire 40 r' m5 [39:0] $end
-$var wire 40 s' m4 [39:0] $end
-$var wire 40 t' m3 [39:0] $end
-$var wire 40 u' m2 [39:0] $end
-$var wire 40 v' m1 [39:0] $end
-$var wire 40 w' m0 [39:0] $end
-$var wire 40 x' acc_out [39:0] $end
-$var parameter 32 y' ACC_WIDTH $end
-$var parameter 32 z' DATA_WIDTH $end
-$scope module mac0 $end
-$var wire 40 {' acc_in [39:0] $end
-$var wire 16 |' w [15:0] $end
-$var wire 16 }' x [15:0] $end
-$var wire 40 ~' product_ext [39:0] $end
-$var wire 32 !( product [31:0] $end
-$var wire 40 "( acc_out [39:0] $end
-$var parameter 32 #( ACC_WIDTH $end
-$var parameter 32 $( DATA_WIDTH $end
-$var parameter 64 %( PROD_WIDTH $end
+$var wire 32 4( acc_in [31:0] $end
+$var wire 64 5( w_bus [63:0] $end
+$var wire 64 6( x_bus [63:0] $end
+$var wire 32 7( acc_out [31:0] $end
+$var parameter 32 8( ACC_WIDTH $end
+$var parameter 32 9( DATA_WIDTH $end
+$var parameter 32 :( PARALLEL $end
+$var parameter 32 ;( TREE_LEVELS $end
+$scope begin GEN_MAC[0] $end
+$var parameter 2 <( i $end
+$scope module u_mac $end
+$var wire 32 =( acc_in [31:0] $end
+$var wire 8 >( w [7:0] $end
+$var wire 8 ?( x [7:0] $end
+$var wire 32 @( product_ext [31:0] $end
+$var wire 16 A( product [15:0] $end
+$var wire 32 B( acc_out [31:0] $end
+$var parameter 32 C( ACC_WIDTH $end
+$var parameter 32 D( DATA_WIDTH $end
+$var parameter 64 E( PROD_WIDTH $end
 $upscope $end
-$scope module mac1 $end
-$var wire 40 &( acc_in [39:0] $end
-$var wire 16 '( w [15:0] $end
-$var wire 16 (( x [15:0] $end
-$var wire 40 )( product_ext [39:0] $end
-$var wire 32 *( product [31:0] $end
-$var wire 40 +( acc_out [39:0] $end
-$var parameter 32 ,( ACC_WIDTH $end
-$var parameter 32 -( DATA_WIDTH $end
-$var parameter 64 .( PROD_WIDTH $end
 $upscope $end
-$scope module mac2 $end
-$var wire 40 /( acc_in [39:0] $end
-$var wire 16 0( w [15:0] $end
-$var wire 16 1( x [15:0] $end
-$var wire 40 2( product_ext [39:0] $end
-$var wire 32 3( product [31:0] $end
-$var wire 40 4( acc_out [39:0] $end
-$var parameter 32 5( ACC_WIDTH $end
-$var parameter 32 6( DATA_WIDTH $end
-$var parameter 64 7( PROD_WIDTH $end
+$scope begin GEN_MAC[1] $end
+$var parameter 2 F( i $end
+$scope module u_mac $end
+$var wire 32 G( acc_in [31:0] $end
+$var wire 8 H( w [7:0] $end
+$var wire 8 I( x [7:0] $end
+$var wire 32 J( product_ext [31:0] $end
+$var wire 16 K( product [15:0] $end
+$var wire 32 L( acc_out [31:0] $end
+$var parameter 32 M( ACC_WIDTH $end
+$var parameter 32 N( DATA_WIDTH $end
+$var parameter 64 O( PROD_WIDTH $end
 $upscope $end
-$scope module mac3 $end
-$var wire 40 8( acc_in [39:0] $end
-$var wire 16 9( w [15:0] $end
-$var wire 16 :( x [15:0] $end
-$var wire 40 ;( product_ext [39:0] $end
-$var wire 32 <( product [31:0] $end
-$var wire 40 =( acc_out [39:0] $end
-$var parameter 32 >( ACC_WIDTH $end
-$var parameter 32 ?( DATA_WIDTH $end
-$var parameter 64 @( PROD_WIDTH $end
 $upscope $end
-$scope module mac4 $end
-$var wire 40 A( acc_in [39:0] $end
-$var wire 16 B( w [15:0] $end
-$var wire 16 C( x [15:0] $end
-$var wire 40 D( product_ext [39:0] $end
-$var wire 32 E( product [31:0] $end
-$var wire 40 F( acc_out [39:0] $end
-$var parameter 32 G( ACC_WIDTH $end
-$var parameter 32 H( DATA_WIDTH $end
-$var parameter 64 I( PROD_WIDTH $end
+$scope begin GEN_MAC[2] $end
+$var parameter 3 P( i $end
+$scope module u_mac $end
+$var wire 32 Q( acc_in [31:0] $end
+$var wire 8 R( w [7:0] $end
+$var wire 8 S( x [7:0] $end
+$var wire 32 T( product_ext [31:0] $end
+$var wire 16 U( product [15:0] $end
+$var wire 32 V( acc_out [31:0] $end
+$var parameter 32 W( ACC_WIDTH $end
+$var parameter 32 X( DATA_WIDTH $end
+$var parameter 64 Y( PROD_WIDTH $end
 $upscope $end
-$scope module mac5 $end
-$var wire 40 J( acc_in [39:0] $end
-$var wire 16 K( w [15:0] $end
-$var wire 16 L( x [15:0] $end
-$var wire 40 M( product_ext [39:0] $end
-$var wire 32 N( product [31:0] $end
-$var wire 40 O( acc_out [39:0] $end
-$var parameter 32 P( ACC_WIDTH $end
-$var parameter 32 Q( DATA_WIDTH $end
-$var parameter 64 R( PROD_WIDTH $end
 $upscope $end
-$scope module mac6 $end
-$var wire 40 S( acc_in [39:0] $end
-$var wire 16 T( w [15:0] $end
-$var wire 16 U( x [15:0] $end
-$var wire 40 V( product_ext [39:0] $end
-$var wire 32 W( product [31:0] $end
-$var wire 40 X( acc_out [39:0] $end
-$var parameter 32 Y( ACC_WIDTH $end
-$var parameter 32 Z( DATA_WIDTH $end
-$var parameter 64 [( PROD_WIDTH $end
+$scope begin GEN_MAC[3] $end
+$var parameter 3 Z( i $end
+$scope module u_mac $end
+$var wire 32 [( acc_in [31:0] $end
+$var wire 8 \( w [7:0] $end
+$var wire 8 ]( x [7:0] $end
+$var wire 32 ^( product_ext [31:0] $end
+$var wire 16 _( product [15:0] $end
+$var wire 32 `( acc_out [31:0] $end
+$var parameter 32 a( ACC_WIDTH $end
+$var parameter 32 b( DATA_WIDTH $end
+$var parameter 64 c( PROD_WIDTH $end
 $upscope $end
-$scope module mac7 $end
-$var wire 40 \( acc_in [39:0] $end
-$var wire 16 ]( w [15:0] $end
-$var wire 16 ^( x [15:0] $end
-$var wire 40 _( product_ext [39:0] $end
-$var wire 32 `( product [31:0] $end
-$var wire 40 a( acc_out [39:0] $end
-$var parameter 32 b( ACC_WIDTH $end
-$var parameter 32 c( DATA_WIDTH $end
-$var parameter 64 d( PROD_WIDTH $end
+$upscope $end
+$scope begin GEN_MAC[4] $end
+$var parameter 4 d( i $end
+$scope module u_mac $end
+$var wire 32 e( acc_in [31:0] $end
+$var wire 8 f( w [7:0] $end
+$var wire 8 g( x [7:0] $end
+$var wire 32 h( product_ext [31:0] $end
+$var wire 16 i( product [15:0] $end
+$var wire 32 j( acc_out [31:0] $end
+$var parameter 32 k( ACC_WIDTH $end
+$var parameter 32 l( DATA_WIDTH $end
+$var parameter 64 m( PROD_WIDTH $end
+$upscope $end
+$upscope $end
+$scope begin GEN_MAC[5] $end
+$var parameter 4 n( i $end
+$scope module u_mac $end
+$var wire 32 o( acc_in [31:0] $end
+$var wire 8 p( w [7:0] $end
+$var wire 8 q( x [7:0] $end
+$var wire 32 r( product_ext [31:0] $end
+$var wire 16 s( product [15:0] $end
+$var wire 32 t( acc_out [31:0] $end
+$var parameter 32 u( ACC_WIDTH $end
+$var parameter 32 v( DATA_WIDTH $end
+$var parameter 64 w( PROD_WIDTH $end
+$upscope $end
+$upscope $end
+$scope begin GEN_MAC[6] $end
+$var parameter 4 x( i $end
+$scope module u_mac $end
+$var wire 32 y( acc_in [31:0] $end
+$var wire 8 z( w [7:0] $end
+$var wire 8 {( x [7:0] $end
+$var wire 32 |( product_ext [31:0] $end
+$var wire 16 }( product [15:0] $end
+$var wire 32 ~( acc_out [31:0] $end
+$var parameter 32 !) ACC_WIDTH $end
+$var parameter 32 ") DATA_WIDTH $end
+$var parameter 64 #) PROD_WIDTH $end
+$upscope $end
+$upscope $end
+$scope begin GEN_MAC[7] $end
+$var parameter 4 $) i $end
+$scope module u_mac $end
+$var wire 32 %) acc_in [31:0] $end
+$var wire 8 &) w [7:0] $end
+$var wire 8 ') x [7:0] $end
+$var wire 32 () product_ext [31:0] $end
+$var wire 16 )) product [15:0] $end
+$var wire 32 *) acc_out [31:0] $end
+$var parameter 32 +) ACC_WIDTH $end
+$var parameter 32 ,) DATA_WIDTH $end
+$var parameter 64 -) PROD_WIDTH $end
+$upscope $end
+$upscope $end
+$scope begin GEN_TREE_INPUT[0] $end
+$var parameter 2 .) i $end
+$upscope $end
+$scope begin GEN_TREE_INPUT[1] $end
+$var parameter 2 /) i $end
+$upscope $end
+$scope begin GEN_TREE_INPUT[2] $end
+$var parameter 3 0) i $end
+$upscope $end
+$scope begin GEN_TREE_INPUT[3] $end
+$var parameter 3 1) i $end
+$upscope $end
+$scope begin GEN_TREE_INPUT[4] $end
+$var parameter 4 2) i $end
+$upscope $end
+$scope begin GEN_TREE_INPUT[5] $end
+$var parameter 4 3) i $end
+$upscope $end
+$scope begin GEN_TREE_INPUT[6] $end
+$var parameter 4 4) i $end
+$upscope $end
+$scope begin GEN_TREE_INPUT[7] $end
+$var parameter 4 5) i $end
+$upscope $end
+$scope begin GEN_TREE_LEVEL[0] $end
+$var parameter 2 6) level $end
+$scope begin GEN_TREE_NODE[0] $end
+$var parameter 2 7) node $end
+$upscope $end
+$scope begin GEN_TREE_NODE[1] $end
+$var parameter 2 8) node $end
+$upscope $end
+$scope begin GEN_TREE_NODE[2] $end
+$var parameter 3 9) node $end
+$upscope $end
+$scope begin GEN_TREE_NODE[3] $end
+$var parameter 3 :) node $end
+$upscope $end
+$upscope $end
+$scope begin GEN_TREE_LEVEL[1] $end
+$var parameter 2 ;) level $end
+$scope begin GEN_TREE_NODE[0] $end
+$var parameter 2 <) node $end
+$upscope $end
+$scope begin GEN_TREE_NODE[1] $end
+$var parameter 2 =) node $end
+$upscope $end
+$upscope $end
+$scope begin GEN_TREE_LEVEL[2] $end
+$var parameter 3 >) level $end
+$scope begin GEN_TREE_NODE[0] $end
+$var parameter 2 ?) node $end
+$upscope $end
 $upscope $end
 $upscope $end
 $upscope $end
 $upscope $end
 $scope begin GEN_NEURON[6] $end
-$var parameter 4 e( n $end
+$var parameter 4 @) n $end
 $scope module u_neuron $end
-$var wire 16 f( bias [15:0] $end
-$var wire 16 g( bias_ext_small [15:0] $end
-$var wire 1 + clk $end
-$var wire 1 , rst $end
-$var wire 1 - start $end
-$var wire 1024 h( w_bus [1023:0] $end
-$var wire 1024 i( x_bus [1023:0] $end
-$var wire 128 j( x_group [127:0] $end
-$var wire 128 k( w_group [127:0] $end
-$var wire 40 l( final_value [39:0] $end
-$var wire 40 m( final_acc [39:0] $end
-$var wire 40 n( bias_ext [39:0] $end
-$var wire 40 o( acc_next [39:0] $end
-$var parameter 32 p( ACC_WIDTH $end
-$var parameter 32 q( DATA_WIDTH $end
-$var parameter 32 r( FRAC_BITS $end
-$var parameter 32 s( GROUPS $end
-$var parameter 32 t( GROUP_INDEX_WIDTH $end
-$var parameter 32 u( N_INPUTS $end
-$var parameter 32 v( PARALLEL $end
-$var reg 40 w( acc [39:0] $end
-$var reg 1 x( busy $end
-$var reg 1 y( done $end
-$var reg 3 z( group_index [2:0] $end
-$var reg 16 {( y [15:0] $end
+$var wire 8 A) bias [7:0] $end
+$var wire 1 * clk $end
+$var wire 1 + rst $end
+$var wire 1 , start $end
+$var wire 256 B) w_bus [255:0] $end
+$var wire 256 C) x_bus [255:0] $end
+$var wire 64 D) x_group [63:0] $end
+$var wire 64 E) w_group [63:0] $end
+$var wire 32 F) final_acc [31:0] $end
+$var wire 32 G) bias_ext [31:0] $end
+$var wire 32 H) acc_next [31:0] $end
+$var parameter 32 I) ACC_WIDTH $end
+$var parameter 32 J) DATA_WIDTH $end
+$var parameter 32 K) GROUPS $end
+$var parameter 32 L) GROUP_INDEX_WIDTH $end
+$var parameter 32 M) N_INPUTS $end
+$var parameter 32 N) PARALLEL $end
+$var reg 32 O) acc [31:0] $end
+$var reg 1 P) busy $end
+$var reg 1 Q) done $end
+$var reg 2 R) group_index [1:0] $end
+$var reg 8 S) y [7:0] $end
 $scope module u_mac8 $end
-$var wire 40 |( acc_in [39:0] $end
-$var wire 128 }( w_bus [127:0] $end
-$var wire 128 ~( x_bus [127:0] $end
-$var wire 40 !) sum [39:0] $end
-$var wire 40 ") s5 [39:0] $end
-$var wire 40 #) s4 [39:0] $end
-$var wire 40 $) s3 [39:0] $end
-$var wire 40 %) s2 [39:0] $end
-$var wire 40 &) s1 [39:0] $end
-$var wire 40 ') s0 [39:0] $end
-$var wire 40 () m7 [39:0] $end
-$var wire 40 )) m6 [39:0] $end
-$var wire 40 *) m5 [39:0] $end
-$var wire 40 +) m4 [39:0] $end
-$var wire 40 ,) m3 [39:0] $end
-$var wire 40 -) m2 [39:0] $end
-$var wire 40 .) m1 [39:0] $end
-$var wire 40 /) m0 [39:0] $end
-$var wire 40 0) acc_out [39:0] $end
-$var parameter 32 1) ACC_WIDTH $end
-$var parameter 32 2) DATA_WIDTH $end
-$scope module mac0 $end
-$var wire 40 3) acc_in [39:0] $end
-$var wire 16 4) w [15:0] $end
-$var wire 16 5) x [15:0] $end
-$var wire 40 6) product_ext [39:0] $end
-$var wire 32 7) product [31:0] $end
-$var wire 40 8) acc_out [39:0] $end
-$var parameter 32 9) ACC_WIDTH $end
-$var parameter 32 :) DATA_WIDTH $end
-$var parameter 64 ;) PROD_WIDTH $end
+$var wire 32 T) acc_in [31:0] $end
+$var wire 64 U) w_bus [63:0] $end
+$var wire 64 V) x_bus [63:0] $end
+$var wire 32 W) acc_out [31:0] $end
+$var parameter 32 X) ACC_WIDTH $end
+$var parameter 32 Y) DATA_WIDTH $end
+$var parameter 32 Z) PARALLEL $end
+$var parameter 32 [) TREE_LEVELS $end
+$scope begin GEN_MAC[0] $end
+$var parameter 2 \) i $end
+$scope module u_mac $end
+$var wire 32 ]) acc_in [31:0] $end
+$var wire 8 ^) w [7:0] $end
+$var wire 8 _) x [7:0] $end
+$var wire 32 `) product_ext [31:0] $end
+$var wire 16 a) product [15:0] $end
+$var wire 32 b) acc_out [31:0] $end
+$var parameter 32 c) ACC_WIDTH $end
+$var parameter 32 d) DATA_WIDTH $end
+$var parameter 64 e) PROD_WIDTH $end
 $upscope $end
-$scope module mac1 $end
-$var wire 40 <) acc_in [39:0] $end
-$var wire 16 =) w [15:0] $end
-$var wire 16 >) x [15:0] $end
-$var wire 40 ?) product_ext [39:0] $end
-$var wire 32 @) product [31:0] $end
-$var wire 40 A) acc_out [39:0] $end
-$var parameter 32 B) ACC_WIDTH $end
-$var parameter 32 C) DATA_WIDTH $end
-$var parameter 64 D) PROD_WIDTH $end
 $upscope $end
-$scope module mac2 $end
-$var wire 40 E) acc_in [39:0] $end
-$var wire 16 F) w [15:0] $end
-$var wire 16 G) x [15:0] $end
-$var wire 40 H) product_ext [39:0] $end
-$var wire 32 I) product [31:0] $end
-$var wire 40 J) acc_out [39:0] $end
-$var parameter 32 K) ACC_WIDTH $end
-$var parameter 32 L) DATA_WIDTH $end
-$var parameter 64 M) PROD_WIDTH $end
+$scope begin GEN_MAC[1] $end
+$var parameter 2 f) i $end
+$scope module u_mac $end
+$var wire 32 g) acc_in [31:0] $end
+$var wire 8 h) w [7:0] $end
+$var wire 8 i) x [7:0] $end
+$var wire 32 j) product_ext [31:0] $end
+$var wire 16 k) product [15:0] $end
+$var wire 32 l) acc_out [31:0] $end
+$var parameter 32 m) ACC_WIDTH $end
+$var parameter 32 n) DATA_WIDTH $end
+$var parameter 64 o) PROD_WIDTH $end
 $upscope $end
-$scope module mac3 $end
-$var wire 40 N) acc_in [39:0] $end
-$var wire 16 O) w [15:0] $end
-$var wire 16 P) x [15:0] $end
-$var wire 40 Q) product_ext [39:0] $end
-$var wire 32 R) product [31:0] $end
-$var wire 40 S) acc_out [39:0] $end
-$var parameter 32 T) ACC_WIDTH $end
-$var parameter 32 U) DATA_WIDTH $end
-$var parameter 64 V) PROD_WIDTH $end
 $upscope $end
-$scope module mac4 $end
-$var wire 40 W) acc_in [39:0] $end
-$var wire 16 X) w [15:0] $end
-$var wire 16 Y) x [15:0] $end
-$var wire 40 Z) product_ext [39:0] $end
-$var wire 32 [) product [31:0] $end
-$var wire 40 \) acc_out [39:0] $end
-$var parameter 32 ]) ACC_WIDTH $end
-$var parameter 32 ^) DATA_WIDTH $end
-$var parameter 64 _) PROD_WIDTH $end
+$scope begin GEN_MAC[2] $end
+$var parameter 3 p) i $end
+$scope module u_mac $end
+$var wire 32 q) acc_in [31:0] $end
+$var wire 8 r) w [7:0] $end
+$var wire 8 s) x [7:0] $end
+$var wire 32 t) product_ext [31:0] $end
+$var wire 16 u) product [15:0] $end
+$var wire 32 v) acc_out [31:0] $end
+$var parameter 32 w) ACC_WIDTH $end
+$var parameter 32 x) DATA_WIDTH $end
+$var parameter 64 y) PROD_WIDTH $end
 $upscope $end
-$scope module mac5 $end
-$var wire 40 `) acc_in [39:0] $end
-$var wire 16 a) w [15:0] $end
-$var wire 16 b) x [15:0] $end
-$var wire 40 c) product_ext [39:0] $end
-$var wire 32 d) product [31:0] $end
-$var wire 40 e) acc_out [39:0] $end
-$var parameter 32 f) ACC_WIDTH $end
-$var parameter 32 g) DATA_WIDTH $end
-$var parameter 64 h) PROD_WIDTH $end
 $upscope $end
-$scope module mac6 $end
-$var wire 40 i) acc_in [39:0] $end
-$var wire 16 j) w [15:0] $end
-$var wire 16 k) x [15:0] $end
-$var wire 40 l) product_ext [39:0] $end
-$var wire 32 m) product [31:0] $end
-$var wire 40 n) acc_out [39:0] $end
-$var parameter 32 o) ACC_WIDTH $end
-$var parameter 32 p) DATA_WIDTH $end
-$var parameter 64 q) PROD_WIDTH $end
+$scope begin GEN_MAC[3] $end
+$var parameter 3 z) i $end
+$scope module u_mac $end
+$var wire 32 {) acc_in [31:0] $end
+$var wire 8 |) w [7:0] $end
+$var wire 8 }) x [7:0] $end
+$var wire 32 ~) product_ext [31:0] $end
+$var wire 16 !* product [15:0] $end
+$var wire 32 "* acc_out [31:0] $end
+$var parameter 32 #* ACC_WIDTH $end
+$var parameter 32 $* DATA_WIDTH $end
+$var parameter 64 %* PROD_WIDTH $end
 $upscope $end
-$scope module mac7 $end
-$var wire 40 r) acc_in [39:0] $end
-$var wire 16 s) w [15:0] $end
-$var wire 16 t) x [15:0] $end
-$var wire 40 u) product_ext [39:0] $end
-$var wire 32 v) product [31:0] $end
-$var wire 40 w) acc_out [39:0] $end
-$var parameter 32 x) ACC_WIDTH $end
-$var parameter 32 y) DATA_WIDTH $end
-$var parameter 64 z) PROD_WIDTH $end
+$upscope $end
+$scope begin GEN_MAC[4] $end
+$var parameter 4 &* i $end
+$scope module u_mac $end
+$var wire 32 '* acc_in [31:0] $end
+$var wire 8 (* w [7:0] $end
+$var wire 8 )* x [7:0] $end
+$var wire 32 ** product_ext [31:0] $end
+$var wire 16 +* product [15:0] $end
+$var wire 32 ,* acc_out [31:0] $end
+$var parameter 32 -* ACC_WIDTH $end
+$var parameter 32 .* DATA_WIDTH $end
+$var parameter 64 /* PROD_WIDTH $end
+$upscope $end
+$upscope $end
+$scope begin GEN_MAC[5] $end
+$var parameter 4 0* i $end
+$scope module u_mac $end
+$var wire 32 1* acc_in [31:0] $end
+$var wire 8 2* w [7:0] $end
+$var wire 8 3* x [7:0] $end
+$var wire 32 4* product_ext [31:0] $end
+$var wire 16 5* product [15:0] $end
+$var wire 32 6* acc_out [31:0] $end
+$var parameter 32 7* ACC_WIDTH $end
+$var parameter 32 8* DATA_WIDTH $end
+$var parameter 64 9* PROD_WIDTH $end
+$upscope $end
+$upscope $end
+$scope begin GEN_MAC[6] $end
+$var parameter 4 :* i $end
+$scope module u_mac $end
+$var wire 32 ;* acc_in [31:0] $end
+$var wire 8 <* w [7:0] $end
+$var wire 8 =* x [7:0] $end
+$var wire 32 >* product_ext [31:0] $end
+$var wire 16 ?* product [15:0] $end
+$var wire 32 @* acc_out [31:0] $end
+$var parameter 32 A* ACC_WIDTH $end
+$var parameter 32 B* DATA_WIDTH $end
+$var parameter 64 C* PROD_WIDTH $end
+$upscope $end
+$upscope $end
+$scope begin GEN_MAC[7] $end
+$var parameter 4 D* i $end
+$scope module u_mac $end
+$var wire 32 E* acc_in [31:0] $end
+$var wire 8 F* w [7:0] $end
+$var wire 8 G* x [7:0] $end
+$var wire 32 H* product_ext [31:0] $end
+$var wire 16 I* product [15:0] $end
+$var wire 32 J* acc_out [31:0] $end
+$var parameter 32 K* ACC_WIDTH $end
+$var parameter 32 L* DATA_WIDTH $end
+$var parameter 64 M* PROD_WIDTH $end
+$upscope $end
+$upscope $end
+$scope begin GEN_TREE_INPUT[0] $end
+$var parameter 2 N* i $end
+$upscope $end
+$scope begin GEN_TREE_INPUT[1] $end
+$var parameter 2 O* i $end
+$upscope $end
+$scope begin GEN_TREE_INPUT[2] $end
+$var parameter 3 P* i $end
+$upscope $end
+$scope begin GEN_TREE_INPUT[3] $end
+$var parameter 3 Q* i $end
+$upscope $end
+$scope begin GEN_TREE_INPUT[4] $end
+$var parameter 4 R* i $end
+$upscope $end
+$scope begin GEN_TREE_INPUT[5] $end
+$var parameter 4 S* i $end
+$upscope $end
+$scope begin GEN_TREE_INPUT[6] $end
+$var parameter 4 T* i $end
+$upscope $end
+$scope begin GEN_TREE_INPUT[7] $end
+$var parameter 4 U* i $end
+$upscope $end
+$scope begin GEN_TREE_LEVEL[0] $end
+$var parameter 2 V* level $end
+$scope begin GEN_TREE_NODE[0] $end
+$var parameter 2 W* node $end
+$upscope $end
+$scope begin GEN_TREE_NODE[1] $end
+$var parameter 2 X* node $end
+$upscope $end
+$scope begin GEN_TREE_NODE[2] $end
+$var parameter 3 Y* node $end
+$upscope $end
+$scope begin GEN_TREE_NODE[3] $end
+$var parameter 3 Z* node $end
+$upscope $end
+$upscope $end
+$scope begin GEN_TREE_LEVEL[1] $end
+$var parameter 2 [* level $end
+$scope begin GEN_TREE_NODE[0] $end
+$var parameter 2 \* node $end
+$upscope $end
+$scope begin GEN_TREE_NODE[1] $end
+$var parameter 2 ]* node $end
+$upscope $end
+$upscope $end
+$scope begin GEN_TREE_LEVEL[2] $end
+$var parameter 3 ^* level $end
+$scope begin GEN_TREE_NODE[0] $end
+$var parameter 2 _* node $end
+$upscope $end
 $upscope $end
 $upscope $end
 $upscope $end
 $upscope $end
 $scope begin GEN_NEURON[7] $end
-$var parameter 4 {) n $end
+$var parameter 4 `* n $end
 $scope module u_neuron $end
-$var wire 16 |) bias [15:0] $end
-$var wire 16 }) bias_ext_small [15:0] $end
-$var wire 1 + clk $end
-$var wire 1 , rst $end
-$var wire 1 - start $end
-$var wire 1024 ~) w_bus [1023:0] $end
-$var wire 1024 !* x_bus [1023:0] $end
-$var wire 128 "* x_group [127:0] $end
-$var wire 128 #* w_group [127:0] $end
-$var wire 40 $* final_value [39:0] $end
-$var wire 40 %* final_acc [39:0] $end
-$var wire 40 &* bias_ext [39:0] $end
-$var wire 40 '* acc_next [39:0] $end
-$var parameter 32 (* ACC_WIDTH $end
-$var parameter 32 )* DATA_WIDTH $end
-$var parameter 32 ** FRAC_BITS $end
-$var parameter 32 +* GROUPS $end
-$var parameter 32 ,* GROUP_INDEX_WIDTH $end
-$var parameter 32 -* N_INPUTS $end
-$var parameter 32 .* PARALLEL $end
-$var reg 40 /* acc [39:0] $end
-$var reg 1 0* busy $end
-$var reg 1 1* done $end
-$var reg 3 2* group_index [2:0] $end
-$var reg 16 3* y [15:0] $end
+$var wire 8 a* bias [7:0] $end
+$var wire 1 * clk $end
+$var wire 1 + rst $end
+$var wire 1 , start $end
+$var wire 256 b* w_bus [255:0] $end
+$var wire 256 c* x_bus [255:0] $end
+$var wire 64 d* x_group [63:0] $end
+$var wire 64 e* w_group [63:0] $end
+$var wire 32 f* final_acc [31:0] $end
+$var wire 32 g* bias_ext [31:0] $end
+$var wire 32 h* acc_next [31:0] $end
+$var parameter 32 i* ACC_WIDTH $end
+$var parameter 32 j* DATA_WIDTH $end
+$var parameter 32 k* GROUPS $end
+$var parameter 32 l* GROUP_INDEX_WIDTH $end
+$var parameter 32 m* N_INPUTS $end
+$var parameter 32 n* PARALLEL $end
+$var reg 32 o* acc [31:0] $end
+$var reg 1 p* busy $end
+$var reg 1 q* done $end
+$var reg 2 r* group_index [1:0] $end
+$var reg 8 s* y [7:0] $end
 $scope module u_mac8 $end
-$var wire 40 4* acc_in [39:0] $end
-$var wire 128 5* w_bus [127:0] $end
-$var wire 128 6* x_bus [127:0] $end
-$var wire 40 7* sum [39:0] $end
-$var wire 40 8* s5 [39:0] $end
-$var wire 40 9* s4 [39:0] $end
-$var wire 40 :* s3 [39:0] $end
-$var wire 40 ;* s2 [39:0] $end
-$var wire 40 <* s1 [39:0] $end
-$var wire 40 =* s0 [39:0] $end
-$var wire 40 >* m7 [39:0] $end
-$var wire 40 ?* m6 [39:0] $end
-$var wire 40 @* m5 [39:0] $end
-$var wire 40 A* m4 [39:0] $end
-$var wire 40 B* m3 [39:0] $end
-$var wire 40 C* m2 [39:0] $end
-$var wire 40 D* m1 [39:0] $end
-$var wire 40 E* m0 [39:0] $end
-$var wire 40 F* acc_out [39:0] $end
-$var parameter 32 G* ACC_WIDTH $end
-$var parameter 32 H* DATA_WIDTH $end
-$scope module mac0 $end
-$var wire 40 I* acc_in [39:0] $end
-$var wire 16 J* w [15:0] $end
-$var wire 16 K* x [15:0] $end
-$var wire 40 L* product_ext [39:0] $end
-$var wire 32 M* product [31:0] $end
-$var wire 40 N* acc_out [39:0] $end
-$var parameter 32 O* ACC_WIDTH $end
-$var parameter 32 P* DATA_WIDTH $end
-$var parameter 64 Q* PROD_WIDTH $end
+$var wire 32 t* acc_in [31:0] $end
+$var wire 64 u* w_bus [63:0] $end
+$var wire 64 v* x_bus [63:0] $end
+$var wire 32 w* acc_out [31:0] $end
+$var parameter 32 x* ACC_WIDTH $end
+$var parameter 32 y* DATA_WIDTH $end
+$var parameter 32 z* PARALLEL $end
+$var parameter 32 {* TREE_LEVELS $end
+$scope begin GEN_MAC[0] $end
+$var parameter 2 |* i $end
+$scope module u_mac $end
+$var wire 32 }* acc_in [31:0] $end
+$var wire 8 ~* w [7:0] $end
+$var wire 8 !+ x [7:0] $end
+$var wire 32 "+ product_ext [31:0] $end
+$var wire 16 #+ product [15:0] $end
+$var wire 32 $+ acc_out [31:0] $end
+$var parameter 32 %+ ACC_WIDTH $end
+$var parameter 32 &+ DATA_WIDTH $end
+$var parameter 64 '+ PROD_WIDTH $end
 $upscope $end
-$scope module mac1 $end
-$var wire 40 R* acc_in [39:0] $end
-$var wire 16 S* w [15:0] $end
-$var wire 16 T* x [15:0] $end
-$var wire 40 U* product_ext [39:0] $end
-$var wire 32 V* product [31:0] $end
-$var wire 40 W* acc_out [39:0] $end
-$var parameter 32 X* ACC_WIDTH $end
-$var parameter 32 Y* DATA_WIDTH $end
-$var parameter 64 Z* PROD_WIDTH $end
 $upscope $end
-$scope module mac2 $end
-$var wire 40 [* acc_in [39:0] $end
-$var wire 16 \* w [15:0] $end
-$var wire 16 ]* x [15:0] $end
-$var wire 40 ^* product_ext [39:0] $end
-$var wire 32 _* product [31:0] $end
-$var wire 40 `* acc_out [39:0] $end
-$var parameter 32 a* ACC_WIDTH $end
-$var parameter 32 b* DATA_WIDTH $end
-$var parameter 64 c* PROD_WIDTH $end
+$scope begin GEN_MAC[1] $end
+$var parameter 2 (+ i $end
+$scope module u_mac $end
+$var wire 32 )+ acc_in [31:0] $end
+$var wire 8 *+ w [7:0] $end
+$var wire 8 ++ x [7:0] $end
+$var wire 32 ,+ product_ext [31:0] $end
+$var wire 16 -+ product [15:0] $end
+$var wire 32 .+ acc_out [31:0] $end
+$var parameter 32 /+ ACC_WIDTH $end
+$var parameter 32 0+ DATA_WIDTH $end
+$var parameter 64 1+ PROD_WIDTH $end
 $upscope $end
-$scope module mac3 $end
-$var wire 40 d* acc_in [39:0] $end
-$var wire 16 e* w [15:0] $end
-$var wire 16 f* x [15:0] $end
-$var wire 40 g* product_ext [39:0] $end
-$var wire 32 h* product [31:0] $end
-$var wire 40 i* acc_out [39:0] $end
-$var parameter 32 j* ACC_WIDTH $end
-$var parameter 32 k* DATA_WIDTH $end
-$var parameter 64 l* PROD_WIDTH $end
 $upscope $end
-$scope module mac4 $end
-$var wire 40 m* acc_in [39:0] $end
-$var wire 16 n* w [15:0] $end
-$var wire 16 o* x [15:0] $end
-$var wire 40 p* product_ext [39:0] $end
-$var wire 32 q* product [31:0] $end
-$var wire 40 r* acc_out [39:0] $end
-$var parameter 32 s* ACC_WIDTH $end
-$var parameter 32 t* DATA_WIDTH $end
-$var parameter 64 u* PROD_WIDTH $end
+$scope begin GEN_MAC[2] $end
+$var parameter 3 2+ i $end
+$scope module u_mac $end
+$var wire 32 3+ acc_in [31:0] $end
+$var wire 8 4+ w [7:0] $end
+$var wire 8 5+ x [7:0] $end
+$var wire 32 6+ product_ext [31:0] $end
+$var wire 16 7+ product [15:0] $end
+$var wire 32 8+ acc_out [31:0] $end
+$var parameter 32 9+ ACC_WIDTH $end
+$var parameter 32 :+ DATA_WIDTH $end
+$var parameter 64 ;+ PROD_WIDTH $end
 $upscope $end
-$scope module mac5 $end
-$var wire 40 v* acc_in [39:0] $end
-$var wire 16 w* w [15:0] $end
-$var wire 16 x* x [15:0] $end
-$var wire 40 y* product_ext [39:0] $end
-$var wire 32 z* product [31:0] $end
-$var wire 40 {* acc_out [39:0] $end
-$var parameter 32 |* ACC_WIDTH $end
-$var parameter 32 }* DATA_WIDTH $end
-$var parameter 64 ~* PROD_WIDTH $end
 $upscope $end
-$scope module mac6 $end
-$var wire 40 !+ acc_in [39:0] $end
-$var wire 16 "+ w [15:0] $end
-$var wire 16 #+ x [15:0] $end
-$var wire 40 $+ product_ext [39:0] $end
-$var wire 32 %+ product [31:0] $end
-$var wire 40 &+ acc_out [39:0] $end
-$var parameter 32 '+ ACC_WIDTH $end
-$var parameter 32 (+ DATA_WIDTH $end
-$var parameter 64 )+ PROD_WIDTH $end
+$scope begin GEN_MAC[3] $end
+$var parameter 3 <+ i $end
+$scope module u_mac $end
+$var wire 32 =+ acc_in [31:0] $end
+$var wire 8 >+ w [7:0] $end
+$var wire 8 ?+ x [7:0] $end
+$var wire 32 @+ product_ext [31:0] $end
+$var wire 16 A+ product [15:0] $end
+$var wire 32 B+ acc_out [31:0] $end
+$var parameter 32 C+ ACC_WIDTH $end
+$var parameter 32 D+ DATA_WIDTH $end
+$var parameter 64 E+ PROD_WIDTH $end
 $upscope $end
-$scope module mac7 $end
-$var wire 40 *+ acc_in [39:0] $end
-$var wire 16 ++ w [15:0] $end
-$var wire 16 ,+ x [15:0] $end
-$var wire 40 -+ product_ext [39:0] $end
-$var wire 32 .+ product [31:0] $end
-$var wire 40 /+ acc_out [39:0] $end
-$var parameter 32 0+ ACC_WIDTH $end
-$var parameter 32 1+ DATA_WIDTH $end
-$var parameter 64 2+ PROD_WIDTH $end
+$upscope $end
+$scope begin GEN_MAC[4] $end
+$var parameter 4 F+ i $end
+$scope module u_mac $end
+$var wire 32 G+ acc_in [31:0] $end
+$var wire 8 H+ w [7:0] $end
+$var wire 8 I+ x [7:0] $end
+$var wire 32 J+ product_ext [31:0] $end
+$var wire 16 K+ product [15:0] $end
+$var wire 32 L+ acc_out [31:0] $end
+$var parameter 32 M+ ACC_WIDTH $end
+$var parameter 32 N+ DATA_WIDTH $end
+$var parameter 64 O+ PROD_WIDTH $end
+$upscope $end
+$upscope $end
+$scope begin GEN_MAC[5] $end
+$var parameter 4 P+ i $end
+$scope module u_mac $end
+$var wire 32 Q+ acc_in [31:0] $end
+$var wire 8 R+ w [7:0] $end
+$var wire 8 S+ x [7:0] $end
+$var wire 32 T+ product_ext [31:0] $end
+$var wire 16 U+ product [15:0] $end
+$var wire 32 V+ acc_out [31:0] $end
+$var parameter 32 W+ ACC_WIDTH $end
+$var parameter 32 X+ DATA_WIDTH $end
+$var parameter 64 Y+ PROD_WIDTH $end
+$upscope $end
+$upscope $end
+$scope begin GEN_MAC[6] $end
+$var parameter 4 Z+ i $end
+$scope module u_mac $end
+$var wire 32 [+ acc_in [31:0] $end
+$var wire 8 \+ w [7:0] $end
+$var wire 8 ]+ x [7:0] $end
+$var wire 32 ^+ product_ext [31:0] $end
+$var wire 16 _+ product [15:0] $end
+$var wire 32 `+ acc_out [31:0] $end
+$var parameter 32 a+ ACC_WIDTH $end
+$var parameter 32 b+ DATA_WIDTH $end
+$var parameter 64 c+ PROD_WIDTH $end
+$upscope $end
+$upscope $end
+$scope begin GEN_MAC[7] $end
+$var parameter 4 d+ i $end
+$scope module u_mac $end
+$var wire 32 e+ acc_in [31:0] $end
+$var wire 8 f+ w [7:0] $end
+$var wire 8 g+ x [7:0] $end
+$var wire 32 h+ product_ext [31:0] $end
+$var wire 16 i+ product [15:0] $end
+$var wire 32 j+ acc_out [31:0] $end
+$var parameter 32 k+ ACC_WIDTH $end
+$var parameter 32 l+ DATA_WIDTH $end
+$var parameter 64 m+ PROD_WIDTH $end
+$upscope $end
+$upscope $end
+$scope begin GEN_TREE_INPUT[0] $end
+$var parameter 2 n+ i $end
+$upscope $end
+$scope begin GEN_TREE_INPUT[1] $end
+$var parameter 2 o+ i $end
+$upscope $end
+$scope begin GEN_TREE_INPUT[2] $end
+$var parameter 3 p+ i $end
+$upscope $end
+$scope begin GEN_TREE_INPUT[3] $end
+$var parameter 3 q+ i $end
+$upscope $end
+$scope begin GEN_TREE_INPUT[4] $end
+$var parameter 4 r+ i $end
+$upscope $end
+$scope begin GEN_TREE_INPUT[5] $end
+$var parameter 4 s+ i $end
+$upscope $end
+$scope begin GEN_TREE_INPUT[6] $end
+$var parameter 4 t+ i $end
+$upscope $end
+$scope begin GEN_TREE_INPUT[7] $end
+$var parameter 4 u+ i $end
+$upscope $end
+$scope begin GEN_TREE_LEVEL[0] $end
+$var parameter 2 v+ level $end
+$scope begin GEN_TREE_NODE[0] $end
+$var parameter 2 w+ node $end
+$upscope $end
+$scope begin GEN_TREE_NODE[1] $end
+$var parameter 2 x+ node $end
+$upscope $end
+$scope begin GEN_TREE_NODE[2] $end
+$var parameter 3 y+ node $end
+$upscope $end
+$scope begin GEN_TREE_NODE[3] $end
+$var parameter 3 z+ node $end
+$upscope $end
+$upscope $end
+$scope begin GEN_TREE_LEVEL[1] $end
+$var parameter 2 {+ level $end
+$scope begin GEN_TREE_NODE[0] $end
+$var parameter 2 |+ node $end
+$upscope $end
+$scope begin GEN_TREE_NODE[1] $end
+$var parameter 2 }+ node $end
+$upscope $end
+$upscope $end
+$scope begin GEN_TREE_LEVEL[2] $end
+$var parameter 3 ~+ level $end
+$scope begin GEN_TREE_NODE[0] $end
+$var parameter 2 !, node $end
+$upscope $end
 $upscope $end
 $upscope $end
 $upscope $end
@@ -1181,2412 +1672,2069 @@ $upscope $end
 $enddefinitions $end
 $comment Show the parameter values. $end
 $dumpall
-b100000 2+
+b0 !,
+b10 ~+
+b1 }+
+b0 |+
+b1 {+
+b11 z+
+b10 y+
+b1 x+
+b0 w+
+b0 v+
+b111 u+
+b110 t+
+b101 s+
+b100 r+
+b11 q+
+b10 p+
+b1 o+
+b0 n+
+b10000 m+
+b1000 l+
+b100000 k+
+b111 d+
+b10000 c+
+b1000 b+
+b100000 a+
+b110 Z+
+b10000 Y+
+b1000 X+
+b100000 W+
+b101 P+
+b10000 O+
+b1000 N+
+b100000 M+
+b100 F+
+b10000 E+
+b1000 D+
+b100000 C+
+b11 <+
+b10000 ;+
+b1000 :+
+b100000 9+
+b10 2+
 b10000 1+
-b101000 0+
-b100000 )+
-b10000 (+
-b101000 '+
-b100000 ~*
-b10000 }*
-b101000 |*
-b100000 u*
-b10000 t*
-b101000 s*
-b100000 l*
-b10000 k*
-b101000 j*
-b100000 c*
-b10000 b*
-b101000 a*
-b100000 Z*
-b10000 Y*
-b101000 X*
-b100000 Q*
-b10000 P*
-b101000 O*
-b10000 H*
-b101000 G*
+b1000 0+
+b100000 /+
+b1 (+
+b10000 '+
+b1000 &+
+b100000 %+
+b0 |*
+b11 {*
+b1000 z*
+b1000 y*
+b100000 x*
+b1000 n*
+b100000 m*
+b10 l*
+b100 k*
+b1000 j*
+b100000 i*
+b111 `*
+b0 _*
+b10 ^*
+b1 ]*
+b0 \*
+b1 [*
+b11 Z*
+b10 Y*
+b1 X*
+b0 W*
+b0 V*
+b111 U*
+b110 T*
+b101 S*
+b100 R*
+b11 Q*
+b10 P*
+b1 O*
+b0 N*
+b10000 M*
+b1000 L*
+b100000 K*
+b111 D*
+b10000 C*
+b1000 B*
+b100000 A*
+b110 :*
+b10000 9*
+b1000 8*
+b100000 7*
+b101 0*
+b10000 /*
 b1000 .*
-b1000000 -*
-b11 ,*
-b1000 +*
-b1000 **
-b10000 )*
-b101000 (*
-b111 {)
-b100000 z)
+b100000 -*
+b100 &*
+b10000 %*
+b1000 $*
+b100000 #*
+b11 z)
 b10000 y)
-b101000 x)
-b100000 q)
-b10000 p)
-b101000 o)
-b100000 h)
-b10000 g)
-b101000 f)
-b100000 _)
-b10000 ^)
-b101000 ])
-b100000 V)
-b10000 U)
-b101000 T)
+b1000 x)
+b100000 w)
+b10 p)
+b10000 o)
+b1000 n)
+b100000 m)
+b1 f)
+b10000 e)
+b1000 d)
+b100000 c)
+b0 \)
+b11 [)
+b1000 Z)
+b1000 Y)
+b100000 X)
+b1000 N)
 b100000 M)
-b10000 L)
-b101000 K)
-b100000 D)
-b10000 C)
-b101000 B)
-b100000 ;)
-b10000 :)
-b101000 9)
-b10000 2)
-b101000 1)
+b10 L)
+b100 K)
+b1000 J)
+b100000 I)
+b110 @)
+b0 ?)
+b10 >)
+b1 =)
+b0 <)
+b1 ;)
+b11 :)
+b10 9)
+b1 8)
+b0 7)
+b0 6)
+b111 5)
+b110 4)
+b101 3)
+b100 2)
+b11 1)
+b10 0)
+b1 /)
+b0 .)
+b10000 -)
+b1000 ,)
+b100000 +)
+b111 $)
+b10000 #)
+b1000 ")
+b100000 !)
+b110 x(
+b10000 w(
 b1000 v(
-b1000000 u(
-b11 t(
-b1000 s(
-b1000 r(
-b10000 q(
-b101000 p(
-b110 e(
-b100000 d(
+b100000 u(
+b101 n(
+b10000 m(
+b1000 l(
+b100000 k(
+b100 d(
 b10000 c(
-b101000 b(
-b100000 [(
-b10000 Z(
-b101000 Y(
-b100000 R(
-b10000 Q(
-b101000 P(
-b100000 I(
-b10000 H(
-b101000 G(
-b100000 @(
-b10000 ?(
-b101000 >(
-b100000 7(
-b10000 6(
-b101000 5(
-b100000 .(
-b10000 -(
-b101000 ,(
-b100000 %(
-b10000 $(
-b101000 #(
-b10000 z'
-b101000 y'
+b1000 b(
+b100000 a(
+b11 Z(
+b10000 Y(
+b1000 X(
+b100000 W(
+b10 P(
+b10000 O(
+b1000 N(
+b100000 M(
+b1 F(
+b10000 E(
+b1000 D(
+b100000 C(
+b0 <(
+b11 ;(
+b1000 :(
+b1000 9(
+b100000 8(
+b1000 .(
+b100000 -(
+b10 ,(
+b100 +(
+b1000 *(
+b100000 )(
+b101 ~'
+b0 }'
+b10 |'
+b1 {'
+b0 z'
+b1 y'
+b11 x'
+b10 w'
+b1 v'
+b0 u'
+b0 t'
+b111 s'
+b110 r'
+b101 q'
+b100 p'
+b11 o'
+b10 n'
+b1 m'
+b0 l'
+b10000 k'
+b1000 j'
+b100000 i'
+b111 b'
+b10000 a'
 b1000 `'
-b1000000 _'
-b11 ^'
-b1000 ]'
-b1000 \'
-b10000 ['
-b101000 Z'
-b101 O'
-b100000 N'
+b100000 _'
+b110 X'
+b10000 W'
+b1000 V'
+b100000 U'
+b101 N'
 b10000 M'
-b101000 L'
-b100000 E'
-b10000 D'
-b101000 C'
-b100000 <'
-b10000 ;'
-b101000 :'
-b100000 3'
-b10000 2'
-b101000 1'
-b100000 *'
-b10000 )'
-b101000 ('
-b100000 !'
-b10000 ~&
-b101000 }&
+b1000 L'
+b100000 K'
+b100 D'
+b10000 C'
+b1000 B'
+b100000 A'
+b11 :'
+b10000 9'
+b1000 8'
+b100000 7'
+b10 0'
+b10000 /'
+b1000 .'
+b100000 -'
+b1 &'
+b10000 %'
+b1000 $'
+b100000 #'
+b0 z&
+b11 y&
+b1000 x&
+b1000 w&
 b100000 v&
-b10000 u&
-b101000 t&
-b100000 m&
-b10000 l&
-b101000 k&
-b10000 d&
-b101000 c&
+b1000 l&
+b100000 k&
+b10 j&
+b100 i&
+b1000 h&
+b100000 g&
+b100 ^&
+b0 ]&
+b10 \&
+b1 [&
+b0 Z&
+b1 Y&
+b11 X&
+b10 W&
+b1 V&
+b0 U&
+b0 T&
+b111 S&
+b110 R&
+b101 Q&
+b100 P&
+b11 O&
+b10 N&
+b1 M&
+b0 L&
+b10000 K&
 b1000 J&
-b1000000 I&
-b11 H&
-b1000 G&
-b1000 F&
-b10000 E&
-b101000 D&
-b100 9&
-b100000 8&
+b100000 I&
+b111 B&
+b10000 A&
+b1000 @&
+b100000 ?&
+b110 8&
 b10000 7&
-b101000 6&
-b100000 /&
-b10000 .&
-b101000 -&
-b100000 &&
-b10000 %&
-b101000 $&
-b100000 {%
-b10000 z%
-b101000 y%
-b100000 r%
-b10000 q%
-b101000 p%
-b100000 i%
-b10000 h%
-b101000 g%
-b100000 `%
-b10000 _%
-b101000 ^%
-b100000 W%
-b10000 V%
-b101000 U%
-b10000 N%
-b101000 M%
-b1000 4%
-b1000000 3%
-b11 2%
-b1000 1%
-b1000 0%
-b10000 /%
-b101000 .%
-b11 #%
-b100000 "%
+b1000 6&
+b100000 5&
+b101 .&
+b10000 -&
+b1000 ,&
+b100000 +&
+b100 $&
+b10000 #&
+b1000 "&
+b100000 !&
+b11 x%
+b10000 w%
+b1000 v%
+b100000 u%
+b10 n%
+b10000 m%
+b1000 l%
+b100000 k%
+b1 d%
+b10000 c%
+b1000 b%
+b100000 a%
+b0 Z%
+b11 Y%
+b1000 X%
+b1000 W%
+b100000 V%
+b1000 L%
+b100000 K%
+b10 J%
+b100 I%
+b1000 H%
+b100000 G%
+b11 >%
+b0 =%
+b10 <%
+b1 ;%
+b0 :%
+b1 9%
+b11 8%
+b10 7%
+b1 6%
+b0 5%
+b0 4%
+b111 3%
+b110 2%
+b101 1%
+b100 0%
+b11 /%
+b10 .%
+b1 -%
+b0 ,%
+b10000 +%
+b1000 *%
+b100000 )%
+b111 "%
 b10000 !%
-b101000 ~$
-b100000 w$
-b10000 v$
-b101000 u$
-b100000 n$
-b10000 m$
-b101000 l$
-b100000 e$
-b10000 d$
-b101000 c$
-b100000 \$
-b10000 [$
-b101000 Z$
-b100000 S$
-b10000 R$
-b101000 Q$
-b100000 J$
-b10000 I$
-b101000 H$
+b1000 ~$
+b100000 }$
+b110 v$
+b10000 u$
+b1000 t$
+b100000 s$
+b101 l$
+b10000 k$
+b1000 j$
+b100000 i$
+b100 b$
+b10000 a$
+b1000 `$
+b100000 _$
+b11 X$
+b10000 W$
+b1000 V$
+b100000 U$
+b10 N$
+b10000 M$
+b1000 L$
+b100000 K$
+b1 D$
+b10000 C$
+b1000 B$
 b100000 A$
-b10000 @$
-b101000 ?$
-b10000 8$
-b101000 7$
-b1000 |#
-b1000000 {#
-b11 z#
-b1000 y#
-b1000 x#
-b10000 w#
-b101000 v#
-b10 k#
-b100000 j#
+b0 :$
+b11 9$
+b1000 8$
+b1000 7$
+b100000 6$
+b1000 ,$
+b100000 +$
+b10 *$
+b100 )$
+b1000 ($
+b100000 '$
+b10 |#
+b0 {#
+b10 z#
+b1 y#
+b0 x#
+b1 w#
+b11 v#
+b10 u#
+b1 t#
+b0 s#
+b0 r#
+b111 q#
+b110 p#
+b101 o#
+b100 n#
+b11 m#
+b10 l#
+b1 k#
+b0 j#
 b10000 i#
-b101000 h#
-b100000 a#
-b10000 `#
-b101000 _#
-b100000 X#
-b10000 W#
-b101000 V#
-b100000 O#
-b10000 N#
-b101000 M#
-b100000 F#
-b10000 E#
-b101000 D#
-b100000 =#
-b10000 <#
-b101000 ;#
-b100000 4#
-b10000 3#
-b101000 2#
+b1000 h#
+b100000 g#
+b111 `#
+b10000 _#
+b1000 ^#
+b100000 ]#
+b110 V#
+b10000 U#
+b1000 T#
+b100000 S#
+b101 L#
+b10000 K#
+b1000 J#
+b100000 I#
+b100 B#
+b10000 A#
+b1000 @#
+b100000 ?#
+b11 8#
+b10000 7#
+b1000 6#
+b100000 5#
+b10 .#
+b10000 -#
+b1000 ,#
 b100000 +#
-b10000 *#
-b101000 )#
-b10000 "#
-b101000 !#
+b1 $#
+b10000 ##
+b1000 "#
+b100000 !#
+b0 x"
+b11 w"
+b1000 v"
+b1000 u"
+b100000 t"
+b1000 j"
+b100000 i"
+b10 h"
+b100 g"
 b1000 f"
-b1000000 e"
-b11 d"
-b1000 c"
-b1000 b"
-b10000 a"
-b101000 `"
-b1 U"
-b100000 T"
-b10000 S"
-b101000 R"
-b100000 K"
-b10000 J"
-b101000 I"
-b100000 B"
-b10000 A"
-b101000 @"
-b100000 9"
-b10000 8"
-b101000 7"
-b100000 0"
-b10000 /"
-b101000 ."
-b100000 '"
-b10000 &"
-b101000 %"
-b100000 |
-b10000 {
-b101000 z
+b100000 e"
+b1 \"
+b0 ["
+b10 Z"
+b1 Y"
+b0 X"
+b1 W"
+b11 V"
+b10 U"
+b1 T"
+b0 S"
+b0 R"
+b111 Q"
+b110 P"
+b101 O"
+b100 N"
+b11 M"
+b10 L"
+b1 K"
+b0 J"
+b10000 I"
+b1000 H"
+b100000 G"
+b111 @"
+b10000 ?"
+b1000 >"
+b100000 ="
+b110 6"
+b10000 5"
+b1000 4"
+b100000 3"
+b101 ,"
+b10000 +"
+b1000 *"
+b100000 )"
+b100 ""
+b10000 !"
+b1000 ~
+b100000 }
+b11 v
+b10000 u
+b1000 t
 b100000 s
-b10000 r
-b101000 q
-b10000 j
-b101000 i
-b1000 P
-b1000000 O
-b11 N
-b1000 M
-b1000 L
-b10000 K
-b101000 J
-b0 ?
-b1000 >
-b1000 =
-b1000000 <
+b10 l
+b10000 k
+b1000 j
+b100000 i
+b1 b
+b10000 a
+b1000 `
+b100000 _
+b0 X
+b11 W
+b1000 V
+b1000 U
+b100000 T
+b1000 J
+b100000 I
+b10 H
+b100 G
+b1000 F
+b100000 E
+b0 <
 b1000 ;
-b10000 :
-b101000 9
-b1000 )
+b1000 :
+b100000 9
+b1000 8
+b100000 7
 b1000 (
-b1000000 '
-b1000 &
-b10000 %
-b101000 $
+b1000 '
+b100000 &
+b1000 %
+b100000 $
 $end
 #0
 $dumpvars
-bx /+
+bx j+
+bx i+
+bx h+
+bx g+
+bx f+
+b0 e+
+bx `+
+bx _+
+bx ^+
+bx ]+
+bx \+
+b0 [+
+bx V+
+bx U+
+bx T+
+bx S+
+bx R+
+b0 Q+
+bx L+
+bx K+
+bx J+
+bx I+
+bx H+
+b0 G+
+bx B+
+bx A+
+bx @+
+bx ?+
+bx >+
+b0 =+
+bx 8+
+bx 7+
+bx 6+
+bx 5+
+bx 4+
+b0 3+
 bx .+
 bx -+
 bx ,+
 bx ++
-b0 *+
-bx &+
-bx %+
+bx *+
+b0 )+
 bx $+
 bx #+
 bx "+
-b0 !+
-bx {*
-bx z*
-bx y*
-bx x*
+bx !+
+bx ~*
+b0 }*
 bx w*
-b0 v*
+bx v*
+bx u*
+bx t*
+bx s*
 bx r*
-bx q*
-bx p*
+xq*
+xp*
 bx o*
-bx n*
-b0 m*
-bx i*
 bx h*
-bx g*
+b0 g*
 bx f*
 bx e*
-b0 d*
-bx `*
-bx _*
-bx ^*
-bx ]*
-bx \*
-b0 [*
-bx W*
-bx V*
-bx U*
-bx T*
-bx S*
-b0 R*
-bx N*
-bx M*
-bx L*
-bx K*
+bx d*
+b0 c*
+b0 b*
+b0 a*
 bx J*
-b0 I*
+bx I*
+bx H*
+bx G*
 bx F*
-bx E*
-bx D*
-bx C*
-bx B*
-bx A*
+b0 E*
 bx @*
 bx ?*
 bx >*
 bx =*
 bx <*
-bx ;*
-bx :*
-bx 9*
-bx 8*
-bx 7*
+b0 ;*
 bx 6*
 bx 5*
 bx 4*
 bx 3*
 bx 2*
-x1*
-x0*
-bx /*
-bx '*
-b0 &*
-bx %*
-bx $*
-bx #*
+b0 1*
+bx ,*
+bx +*
+bx **
+bx )*
+bx (*
+b0 '*
 bx "*
-b0 !*
-b0 ~)
-b0 })
-b0 |)
-bx w)
+bx !*
+bx ~)
+bx })
+bx |)
+b0 {)
 bx v)
 bx u)
 bx t)
 bx s)
-b0 r)
-bx n)
-bx m)
+bx r)
+b0 q)
 bx l)
 bx k)
 bx j)
-b0 i)
-bx e)
-bx d)
-bx c)
+bx i)
+bx h)
+b0 g)
 bx b)
 bx a)
-b0 `)
-bx \)
-bx [)
-bx Z)
-bx Y)
-bx X)
-b0 W)
+bx `)
+bx _)
+bx ^)
+b0 ])
+bx W)
+bx V)
+bx U)
+bx T)
 bx S)
 bx R)
-bx Q)
-bx P)
+xQ)
+xP)
 bx O)
-b0 N)
-bx J)
-bx I)
 bx H)
-bx G)
+b0 G)
 bx F)
-b0 E)
-bx A)
-bx @)
-bx ?)
-bx >)
-bx =)
-b0 <)
-bx 8)
-bx 7)
-bx 6)
-bx 5)
-bx 4)
-b0 3)
-bx 0)
-bx /)
-bx .)
-bx -)
-bx ,)
-bx +)
+bx E)
+bx D)
+b0 C)
+b0 B)
+b0 A)
 bx *)
 bx ))
 bx ()
 bx ')
 bx &)
-bx %)
-bx $)
-bx #)
-bx ")
-bx !)
+b0 %)
 bx ~(
 bx }(
 bx |(
 bx {(
 bx z(
-xy(
-xx(
-bx w(
-bx o(
-b0 n(
-bx m(
-bx l(
-bx k(
+b0 y(
+bx t(
+bx s(
+bx r(
+bx q(
+bx p(
+b0 o(
 bx j(
-b0 i(
-b0 h(
-b0 g(
-b0 f(
-bx a(
+bx i(
+bx h(
+bx g(
+bx f(
+b0 e(
 bx `(
 bx _(
 bx ^(
 bx ](
-b0 \(
-bx X(
-bx W(
+bx \(
+b0 [(
 bx V(
 bx U(
 bx T(
-b0 S(
-bx O(
-bx N(
-bx M(
+bx S(
+bx R(
+b0 Q(
 bx L(
 bx K(
-b0 J(
-bx F(
-bx E(
-bx D(
-bx C(
+bx J(
+bx I(
+bx H(
+b0 G(
 bx B(
-b0 A(
-bx =(
-bx <(
-bx ;(
-bx :(
-bx 9(
-b0 8(
+bx A(
+bx @(
+bx ?(
+bx >(
+b0 =(
+bx 7(
+bx 6(
+bx 5(
 bx 4(
 bx 3(
 bx 2(
-bx 1(
-bx 0(
-b0 /(
-bx +(
-bx *(
-bx )(
+x1(
+x0(
+bx /(
 bx ((
-bx '(
-b0 &(
-bx "(
-bx !(
-bx ~'
-bx }'
-bx |'
-b0 {'
-bx x'
-bx w'
-bx v'
-bx u'
-bx t'
-bx s'
-bx r'
-bx q'
-bx p'
-bx o'
-bx n'
-bx m'
-bx l'
-bx k'
-bx j'
-bx i'
+b0 '(
+bx &(
+bx %(
+bx $(
+b0 #(
+b0 "(
+b0 !(
 bx h'
 bx g'
 bx f'
 bx e'
 bx d'
-xc'
-xb'
-bx a'
-bx Y'
-b0 X'
-bx W'
-bx V'
-bx U'
+b0 c'
+bx ^'
+bx ]'
+bx \'
+bx ['
+bx Z'
+b0 Y'
 bx T'
-b0 S'
-b0 R'
-b0 Q'
-b0 P'
-bx K'
+bx S'
+bx R'
+bx Q'
+bx P'
+b0 O'
 bx J'
 bx I'
 bx H'
 bx G'
-b0 F'
-bx B'
-bx A'
+bx F'
+b0 E'
 bx @'
 bx ?'
 bx >'
-b0 ='
-bx 9'
-bx 8'
-bx 7'
+bx ='
+bx <'
+b0 ;'
 bx 6'
 bx 5'
-b0 4'
-bx 0'
-bx /'
-bx .'
-bx -'
+bx 4'
+bx 3'
+bx 2'
+b0 1'
 bx ,'
-b0 +'
-bx ''
-bx &'
-bx %'
-bx $'
-bx #'
-b0 "'
+bx +'
+bx *'
+bx )'
+bx ('
+b0 ''
+bx "'
+bx !'
+bx ~&
+bx }&
 bx |&
-bx {&
-bx z&
-bx y&
-bx x&
-b0 w&
+b0 {&
+bx u&
+bx t&
 bx s&
 bx r&
 bx q&
 bx p&
-bx o&
-b0 n&
-bx j&
-bx i&
-bx h&
-bx g&
+xo&
+xn&
+bx m&
 bx f&
 b0 e&
+bx d&
+bx c&
 bx b&
-bx a&
-bx `&
-bx _&
-bx ^&
-bx ]&
-bx \&
-bx [&
-bx Z&
-bx Y&
-bx X&
-bx W&
-bx V&
-bx U&
-bx T&
-bx S&
-bx R&
-bx Q&
-bx P&
-bx O&
-bx N&
-xM&
-xL&
-bx K&
-bx C&
-b0 B&
-bx A&
-bx @&
-bx ?&
+b0 a&
+b0 `&
+b0 _&
+bx H&
+bx G&
+bx F&
+bx E&
+bx D&
+b0 C&
 bx >&
-b0 =&
-b0 <&
-b0 ;&
-b0 :&
-bx 5&
+bx =&
+bx <&
+bx ;&
+bx :&
+b0 9&
 bx 4&
 bx 3&
 bx 2&
 bx 1&
-b0 0&
-bx ,&
-bx +&
+bx 0&
+b0 /&
 bx *&
 bx )&
 bx (&
-b0 '&
-bx #&
-bx "&
-bx !&
+bx '&
+bx &&
+b0 %&
 bx ~%
 bx }%
-b0 |%
-bx x%
-bx w%
-bx v%
-bx u%
+bx |%
+bx {%
+bx z%
+b0 y%
 bx t%
-b0 s%
-bx o%
-bx n%
-bx m%
-bx l%
-bx k%
-b0 j%
+bx s%
+bx r%
+bx q%
+bx p%
+b0 o%
+bx j%
+bx i%
+bx h%
+bx g%
 bx f%
-bx e%
-bx d%
-bx c%
-bx b%
-b0 a%
+b0 e%
+bx `%
+bx _%
+bx ^%
 bx ]%
 bx \%
-bx [%
-bx Z%
-bx Y%
-b0 X%
+b0 [%
+bx U%
 bx T%
 bx S%
 bx R%
 bx Q%
 bx P%
-b0 O%
-bx L%
-bx K%
-bx J%
-bx I%
-bx H%
-bx G%
+xO%
+xN%
+bx M%
 bx F%
-bx E%
+b0 E%
 bx D%
 bx C%
 bx B%
-bx A%
-bx @%
-bx ?%
-bx >%
-bx =%
-bx <%
-bx ;%
-bx :%
-bx 9%
-bx 8%
-x7%
-x6%
-bx 5%
-bx -%
-b0 ,%
-bx +%
-bx *%
-bx )%
+b0 A%
+b0 @%
+b0 ?%
 bx (%
-b0 '%
-b0 &%
-b0 %%
-b0 $%
-bx }$
+bx '%
+bx &%
+bx %%
+bx $%
+b0 #%
 bx |$
 bx {$
 bx z$
 bx y$
-b0 x$
-bx t$
-bx s$
+bx x$
+b0 w$
 bx r$
 bx q$
 bx p$
-b0 o$
-bx k$
-bx j$
-bx i$
+bx o$
+bx n$
+b0 m$
 bx h$
 bx g$
-b0 f$
-bx b$
-bx a$
-bx `$
-bx _$
+bx f$
+bx e$
+bx d$
+b0 c$
 bx ^$
-b0 ]$
-bx Y$
-bx X$
-bx W$
-bx V$
-bx U$
-b0 T$
+bx ]$
+bx \$
+bx [$
+bx Z$
+b0 Y$
+bx T$
+bx S$
+bx R$
+bx Q$
 bx P$
-bx O$
-bx N$
-bx M$
-bx L$
-b0 K$
+b0 O$
+bx J$
+bx I$
+bx H$
 bx G$
 bx F$
-bx E$
-bx D$
-bx C$
-b0 B$
+b0 E$
+bx @$
+bx ?$
 bx >$
 bx =$
 bx <$
-bx ;$
-bx :$
-b0 9$
-bx 6$
+b0 ;$
 bx 5$
 bx 4$
 bx 3$
 bx 2$
 bx 1$
 bx 0$
-bx /$
-bx .$
+x/$
+x.$
 bx -$
-bx ,$
-bx +$
-bx *$
-bx )$
-bx ($
-bx '$
 bx &$
-bx %$
+b0 %$
 bx $$
 bx #$
 bx "$
-x!$
-x~#
-bx }#
-bx u#
-b0 t#
-bx s#
-bx r#
-bx q#
-bx p#
-b0 o#
-b0 n#
-b0 m#
-b0 l#
-bx g#
+b0 !$
+b0 ~#
+b0 }#
 bx f#
 bx e#
 bx d#
 bx c#
-b0 b#
-bx ^#
-bx ]#
+bx b#
+b0 a#
 bx \#
 bx [#
 bx Z#
-b0 Y#
-bx U#
-bx T#
-bx S#
+bx Y#
+bx X#
+b0 W#
 bx R#
 bx Q#
-b0 P#
-bx L#
-bx K#
-bx J#
-bx I#
+bx P#
+bx O#
+bx N#
+b0 M#
 bx H#
-b0 G#
-bx C#
-bx B#
-bx A#
-bx @#
-bx ?#
-b0 >#
+bx G#
+bx F#
+bx E#
+bx D#
+b0 C#
+bx >#
+bx =#
+bx <#
+bx ;#
 bx :#
-bx 9#
-bx 8#
-bx 7#
-bx 6#
-b0 5#
+b0 9#
+bx 4#
+bx 3#
+bx 2#
 bx 1#
 bx 0#
-bx /#
-bx .#
-bx -#
-b0 ,#
+b0 /#
+bx *#
+bx )#
 bx (#
 bx '#
 bx &#
-bx %#
-bx $#
-b0 ##
+b0 %#
 bx ~"
 bx }"
 bx |"
 bx {"
 bx z"
-bx y"
-bx x"
-bx w"
-bx v"
-bx u"
-bx t"
+b0 y"
 bx s"
 bx r"
 bx q"
 bx p"
 bx o"
 bx n"
-bx m"
-bx l"
+xm"
+xl"
 bx k"
-bx j"
-xi"
-xh"
-bx g"
-bx _"
+bx d"
+b0 c"
+bx b"
+bx a"
+bx `"
+b0 _"
 b0 ^"
-bx ]"
-bx \"
-bx ["
-bx Z"
-b0 Y"
-b0 X"
-b0 W"
-b0 V"
-bx Q"
-bx P"
-bx O"
-bx N"
-bx M"
-b0 L"
-bx H"
-bx G"
+b0 ]"
 bx F"
 bx E"
 bx D"
-b0 C"
-bx ?"
-bx >"
-bx ="
+bx C"
+bx B"
+b0 A"
 bx <"
 bx ;"
-b0 :"
-bx 6"
-bx 5"
-bx 4"
-bx 3"
+bx :"
+bx 9"
+bx 8"
+b0 7"
 bx 2"
-b0 1"
-bx -"
-bx ,"
-bx +"
-bx *"
-bx )"
-b0 ("
+bx 1"
+bx 0"
+bx /"
+bx ."
+b0 -"
+bx ("
+bx '"
+bx &"
+bx %"
 bx $"
-bx #"
-bx ""
-bx !"
-bx ~
-b0 }
+b0 #"
+bx |
+bx {
+bx z
 bx y
 bx x
-bx w
-bx v
-bx u
-b0 t
+b0 w
+bx r
+bx q
 bx p
 bx o
 bx n
-bx m
-bx l
-b0 k
+b0 m
 bx h
 bx g
 bx f
 bx e
 bx d
-bx c
-bx b
-bx a
-bx `
-bx _
+b0 c
 bx ^
 bx ]
 bx \
 bx [
 bx Z
-bx Y
-bx X
-bx W
-bx V
-bx U
-bx T
-xS
-xR
+b0 Y
+bx S
+bx R
 bx Q
-bx I
-b0 H
-bx G
-bx F
-bx E
+bx P
+bx O
+bx N
+xM
+xL
+bx K
 bx D
 b0 C
-b0 B
-b0 A
-b0 @
-bx 8
-bx 7
+bx B
+bx A
+bx @
+b0 ?
+b0 >
+b0 =
 bx 6
-b0 5
-b0 4
+bx 5
+bx 4
 b0 3
-r0 2
-bx 1
-b0 0
+b0 2
+b0 1
+bx 0
 b0 /
 b0 .
-0-
-1,
-0+
-b0 *
+b0 -
+0,
+1+
+0*
+b0 )
 x#
 x"
 bx !
 $end
-#5
-b0 F
-b0 \"
-b0 r#
-b0 *%
-b0 @&
-b0 V'
-b0 l(
-b0 $*
-b0 G
-b0 I
-b0 h
-b0 Y
-b0 [
-b0 _
-b0 g
-b0 p
-b0 f
-b0 y
+#5000
+b0 B
+b0 D
+b0 S
 b0 ^
-b0 e
-b0 $"
-b0 d
-b0 -"
-b0 Z
-b0 ]
-b0 c
-b0 6"
-b0 b
-b0 ?"
-b0 \
-b0 a
-b0 H"
-b0 `
-b0 Q"
-b0 ]"
-b0 _"
-b0 ~"
-b0 o"
-b0 q"
-b0 u"
-b0 }"
-b0 (#
-b0 |"
-b0 1#
-b0 t"
-b0 {"
-b0 :#
-b0 z"
-b0 C#
-b0 p"
-b0 s"
-b0 y"
-b0 L#
-b0 x"
-b0 U#
-b0 r"
-b0 w"
-b0 ^#
-b0 v"
-b0 g#
-b0 s#
-b0 u#
-b0 6$
-b0 '$
-b0 )$
-b0 -$
-b0 5$
-b0 >$
-b0 4$
-b0 G$
-b0 ,$
-b0 3$
-b0 P$
-b0 2$
-b0 Y$
-b0 ($
-b0 +$
-b0 1$
-b0 b$
-b0 0$
-b0 k$
-b0 *$
-b0 /$
-b0 t$
-b0 .$
-b0 }$
-b0 +%
-b0 -%
-b0 L%
-b0 =%
-b0 ?%
-b0 C%
-b0 K%
-b0 T%
-b0 J%
-b0 ]%
-b0 B%
-b0 I%
-b0 f%
-b0 H%
-b0 o%
-b0 >%
-b0 A%
-b0 G%
-b0 x%
-b0 F%
-b0 #&
-b0 @%
-b0 E%
-b0 ,&
-b0 D%
-b0 5&
-b0 A&
-b0 C&
-b0 b&
-b0 S&
-b0 U&
-b0 Y&
-b0 a&
-b0 j&
-b0 `&
-b0 s&
-b0 X&
-b0 _&
-b0 |&
-b0 ^&
-b0 ''
-b0 T&
-b0 W&
-b0 ]&
-b0 0'
-b0 \&
-b0 9'
-b0 V&
-b0 [&
-b0 B'
-b0 Z&
-b0 K'
-b0 W'
-b0 Y'
-b0 x'
-b0 i'
-b0 k'
-b0 o'
-b0 w'
-b0 "(
-b0 v'
-b0 +(
-b0 n'
-b0 u'
-b0 4(
-b0 t'
-b0 =(
-b0 j'
-b0 m'
-b0 s'
-b0 F(
-b0 r'
-b0 O(
-b0 l'
-b0 q'
-b0 X(
-b0 p'
-b0 a(
-b0 m(
-b0 o(
-b0 0)
-b0 !)
-b0 #)
-b0 ')
-b0 /)
-b0 8)
-b0 .)
-b0 A)
-b0 &)
-b0 -)
-b0 J)
-b0 ,)
-b0 S)
-b0 ")
-b0 %)
-b0 +)
-b0 \)
-b0 *)
-b0 e)
-b0 $)
-b0 ))
-b0 n)
-b0 ()
-b0 w)
-b0 %*
-b0 '*
-b0 F*
-b0 7*
-b0 9*
-b0 =*
-b0 E*
-b0 N*
-b0 D*
-b0 W*
-b0 <*
-b0 C*
-b0 `*
-b0 B*
-b0 i*
-b0 8*
-b0 ;*
-b0 A*
-b0 r*
-b0 @*
-b0 {*
-b0 :*
-b0 ?*
-b0 &+
-b0 >*
-b0 /+
-b0 n
-b0 w
-b0 ""
-b0 +"
-b0 4"
-b0 ="
-b0 F"
-b0 O"
-b0 &#
-b0 /#
-b0 8#
-b0 A#
-b0 J#
-b0 S#
-b0 \#
-b0 e#
-b0 <$
-b0 E$
-b0 N$
-b0 W$
-b0 `$
-b0 i$
-b0 r$
-b0 {$
-b0 R%
-b0 [%
-b0 d%
-b0 m%
-b0 v%
-b0 !&
-b0 *&
-b0 3&
-b0 h&
-b0 q&
-b0 z&
-b0 %'
-b0 .'
-b0 7'
-b0 @'
-b0 I'
-b0 ~'
-b0 )(
-b0 2(
-b0 ;(
-b0 D(
-b0 M(
-b0 V(
-b0 _(
-b0 6)
-b0 ?)
-b0 H)
-b0 Q)
-b0 Z)
-b0 c)
-b0 l)
-b0 u)
-b0 L*
-b0 U*
-b0 ^*
-b0 g*
-b0 p*
-b0 y*
-b0 $+
-b0 -+
-b0 o
-b0 m
-b0 x
-b0 v
-b0 #"
-b0 !"
-b0 ,"
-b0 *"
-b0 5"
-b0 3"
-b0 >"
-b0 <"
-b0 G"
-b0 E"
-b0 P"
-b0 N"
-b0 l
-b0 u
-b0 ~
-b0 )"
+b0 h
+b0 r
+b0 |
+b0 ("
 b0 2"
-b0 ;"
-b0 D"
-b0 M"
-b0 '#
-b0 %#
-b0 0#
-b0 .#
-b0 9#
-b0 7#
-b0 B#
-b0 @#
-b0 K#
-b0 I#
-b0 T#
-b0 R#
-b0 ]#
-b0 [#
-b0 f#
-b0 d#
-b0 $#
-b0 -#
-b0 6#
-b0 ?#
+b0 <"
+b0 F"
+b0 b"
+b0 d"
+b0 s"
+b0 ~"
+b0 *#
+b0 4#
+b0 >#
 b0 H#
-b0 Q#
-b0 Z#
-b0 c#
-b0 =$
-b0 ;$
-b0 F$
-b0 D$
-b0 O$
-b0 M$
-b0 X$
-b0 V$
-b0 a$
-b0 _$
-b0 j$
-b0 h$
-b0 s$
-b0 q$
-b0 |$
-b0 z$
-b0 :$
-b0 C$
-b0 L$
-b0 U$
+b0 R#
+b0 \#
+b0 f#
+b0 $$
+b0 &$
+b0 5$
+b0 @$
+b0 J$
+b0 T$
 b0 ^$
-b0 g$
-b0 p$
-b0 y$
-b0 S%
-b0 Q%
-b0 \%
-b0 Z%
-b0 e%
-b0 c%
-b0 n%
-b0 l%
-b0 w%
-b0 u%
-b0 "&
-b0 ~%
-b0 +&
-b0 )&
-b0 4&
-b0 2&
-b0 P%
-b0 Y%
-b0 b%
-b0 k%
+b0 h$
+b0 r$
+b0 |$
+b0 (%
+b0 D%
+b0 F%
+b0 U%
+b0 `%
+b0 j%
 b0 t%
-b0 }%
+b0 ~%
+b0 *&
+b0 4&
+b0 >&
+b0 H&
+b0 d&
+b0 f&
+b0 u&
+b0 "'
+b0 ,'
+b0 6'
+b0 @'
+b0 J'
+b0 T'
+b0 ^'
+b0 h'
+b0 &(
+b0 ((
+b0 7(
+b0 B(
+b0 L(
+b0 V(
+b0 `(
+b0 j(
+b0 t(
+b0 ~(
+b0 *)
+b0 F)
+b0 H)
+b0 W)
+b0 b)
+b0 l)
+b0 v)
+b0 "*
+b0 ,*
+b0 6*
+b0 @*
+b0 J*
+b0 f*
+b0 h*
+b0 w*
+b0 $+
+b0 .+
+b0 8+
+b0 B+
+b0 L+
+b0 V+
+b0 `+
+b0 j+
+b0 \
+b0 f
+b0 p
+b0 z
+b0 &"
+b0 0"
+b0 :"
+b0 D"
+b0 |"
+b0 (#
+b0 2#
+b0 <#
+b0 F#
+b0 P#
+b0 Z#
+b0 d#
+b0 >$
+b0 H$
+b0 R$
+b0 \$
+b0 f$
+b0 p$
+b0 z$
+b0 &%
+b0 ^%
+b0 h%
+b0 r%
+b0 |%
 b0 (&
+b0 2&
+b0 <&
+b0 F&
+b0 ~&
+b0 *'
+b0 4'
+b0 >'
+b0 H'
+b0 R'
+b0 \'
+b0 f'
+b0 @(
+b0 J(
+b0 T(
+b0 ^(
+b0 h(
+b0 r(
+b0 |(
+b0 ()
+b0 `)
+b0 j)
+b0 t)
+b0 ~)
+b0 **
+b0 4*
+b0 >*
+b0 H*
+b0 "+
+b0 ,+
+b0 6+
+b0 @+
+b0 J+
+b0 T+
+b0 ^+
+b0 h+
+b0 ]
+b0 [
+b0 g
+b0 e
+b0 q
+b0 o
+b0 {
+b0 y
+b0 '"
+b0 %"
+b0 1"
+b0 /"
+b0 ;"
+b0 9"
+b0 E"
+b0 C"
+b0 Z
+b0 d
+b0 n
+b0 x
+b0 $"
+b0 ."
+b0 8"
+b0 B"
+b0 }"
+b0 {"
+b0 )#
+b0 '#
+b0 3#
+b0 1#
+b0 =#
+b0 ;#
+b0 G#
+b0 E#
+b0 Q#
+b0 O#
+b0 [#
+b0 Y#
+b0 e#
+b0 c#
+b0 z"
+b0 &#
+b0 0#
+b0 :#
+b0 D#
+b0 N#
+b0 X#
+b0 b#
+b0 ?$
+b0 =$
+b0 I$
+b0 G$
+b0 S$
+b0 Q$
+b0 ]$
+b0 [$
+b0 g$
+b0 e$
+b0 q$
+b0 o$
+b0 {$
+b0 y$
+b0 '%
+b0 %%
+b0 <$
+b0 F$
+b0 P$
+b0 Z$
+b0 d$
+b0 n$
+b0 x$
+b0 $%
+b0 _%
+b0 ]%
+b0 i%
+b0 g%
+b0 s%
+b0 q%
+b0 }%
+b0 {%
+b0 )&
+b0 '&
+b0 3&
 b0 1&
-b0 i&
-b0 g&
+b0 =&
+b0 ;&
+b0 G&
+b0 E&
+b0 \%
+b0 f%
+b0 p%
+b0 z%
+b0 &&
+b0 0&
+b0 :&
+b0 D&
+b0 !'
+b0 }&
+b0 +'
+b0 )'
+b0 5'
+b0 3'
+b0 ?'
+b0 ='
+b0 I'
+b0 G'
+b0 S'
+b0 Q'
+b0 ]'
+b0 ['
+b0 g'
+b0 e'
+b0 |&
+b0 ('
+b0 2'
+b0 <'
+b0 F'
+b0 P'
+b0 Z'
+b0 d'
+b0 A(
+b0 ?(
+b0 K(
+b0 I(
+b0 U(
+b0 S(
+b0 _(
+b0 ](
+b0 i(
+b0 g(
+b0 s(
+b0 q(
+b0 }(
+b0 {(
+b0 ))
+b0 ')
+b0 >(
+b0 H(
+b0 R(
+b0 \(
+b0 f(
+b0 p(
+b0 z(
+b0 &)
+b0 a)
+b0 _)
+b0 k)
+b0 i)
+b0 u)
+b0 s)
+b0 !*
+b0 })
+b0 +*
+b0 )*
+b0 5*
+b0 3*
+b0 ?*
+b0 =*
+b0 I*
+b0 G*
+b0 ^)
+b0 h)
+b0 r)
+b0 |)
+b0 (*
+b0 2*
+b0 <*
+b0 F*
+0"
+b0 5
+0#
+b0 6
+b0 !
+b0 4
+b0 #+
+b0 !+
+b0 -+
+b0 ++
+b0 7+
+b0 5+
+b0 A+
+b0 ?+
+b0 K+
+b0 I+
+b0 U+
+b0 S+
+b0 _+
+b0 ]+
+b0 i+
+b0 g+
+b0 ~*
+b0 *+
+b0 4+
+b0 >+
+b0 H+
+b0 R+
+b0 \+
+b0 f+
+b0 @
+b0 R
+b0 A
+b0 Q
+b0 `"
+b0 r"
+b0 a"
+b0 q"
+b0 "$
+b0 4$
+b0 #$
+b0 3$
+b0 B%
+b0 T%
+b0 C%
+b0 S%
+b0 b&
+b0 t&
+b0 c&
+b0 s&
+b0 $(
+b0 6(
+b0 %(
+b0 5(
+b0 D)
+b0 V)
+b0 E)
+b0 U)
+b0 d*
+b0 v*
+b0 e*
+b0 u*
+0M
+0L
+b0 O
+b0 K
+b0 P
+b0 N
+0m"
+0l"
+b0 o"
+b0 k"
+b0 p"
+b0 n"
+0/$
+0.$
+b0 1$
+b0 -$
+b0 2$
+b0 0$
+0O%
+0N%
+b0 Q%
+b0 M%
+b0 R%
+b0 P%
+0o&
+0n&
+b0 q&
+b0 m&
 b0 r&
 b0 p&
-b0 {&
-b0 y&
-b0 &'
-b0 $'
-b0 /'
-b0 -'
-b0 8'
-b0 6'
-b0 A'
-b0 ?'
-b0 J'
-b0 H'
-b0 f&
-b0 o&
-b0 x&
-b0 #'
-b0 ,'
-b0 5'
-b0 >'
-b0 G'
-b0 !(
-b0 }'
-b0 *(
-b0 ((
+01(
+00(
 b0 3(
-b0 1(
-b0 <(
-b0 :(
-b0 E(
-b0 C(
-b0 N(
-b0 L(
-b0 W(
-b0 U(
-b0 `(
-b0 ^(
-b0 |'
-b0 '(
-b0 0(
-b0 9(
-b0 B(
-b0 K(
-b0 T(
-b0 ](
-b0 7)
-b0 5)
-b0 @)
-b0 >)
-b0 I)
-b0 G)
-b0 R)
-b0 P)
-b0 [)
-b0 Y)
-b0 d)
-b0 b)
-b0 m)
-b0 k)
-b0 v)
-b0 t)
-b0 4)
-b0 =)
-b0 F)
+b0 /(
+b0 4(
+b0 2(
+0Q)
+0P)
+b0 S)
 b0 O)
-b0 X)
-b0 a)
-b0 j)
-b0 s)
-0"
-b0 7
-0#
-b0 8
-b0 !
-b0 6
-b0 M*
-b0 K*
-b0 V*
-b0 T*
-b0 _*
-b0 ]*
-b0 h*
-b0 f*
-b0 q*
+b0 T)
+b0 R)
+0q*
+0p*
+b0 s*
 b0 o*
-b0 z*
-b0 x*
-b0 %+
-b0 #+
+b0 t*
+b0 r*
+1*
+#10000
+0*
+#15000
+b1 $+
+b1 "+
+b1 .+
+b1 ,+
+b1 8+
+b1 6+
+b1 B+
+b1 @+
+b1 L+
+b1 J+
+b1 V+
+b1 T+
+b1 `+
+b1 ^+
+b1000 h*
+b1000 w*
+b1 j+
+b1 h+
+b1 b)
+b1 `)
+b1 l)
+b1 j)
+b1 v)
+b1 t)
+b1 "*
+b1 ~)
+b1 ,*
+b1 **
+b1 6*
+b1 4*
+b1 @*
+b1 >*
+b1000 H)
+b1000 W)
+b1 J*
+b1 H*
+b1000 `%
+b1000 ^%
+b1000 j%
+b1000 h%
+b1000 t%
+b1000 r%
+b1000 ~%
+b1000 |%
+b1000 *&
+b1000 (&
+b1000 4&
+b1000 2&
+b1000 >&
+b1000 <&
+b1000000 D%
+b1000000 F%
+b1000000 U%
+b1000 H&
+b1000 F&
+b11111111111111111111111111111111 @$
+b11111111111111111111111111111111 >$
+b11111111111111111111111111111111 J$
+b11111111111111111111111111111111 H$
+b11111111111111111111111111111111 T$
+b11111111111111111111111111111111 R$
+b11111111111111111111111111111111 ^$
+b11111111111111111111111111111111 \$
+b11111111111111111111111111111111 h$
+b11111111111111111111111111111111 f$
+b11111111111111111111111111111111 r$
+b11111111111111111111111111111111 p$
+b11111111111111111111111111111111 |$
+b11111111111111111111111111111111 z$
+b11111111111111111111111111111000 $$
+b11111111111111111111111111111000 &$
+b11111111111111111111111111111000 5$
+b11111111111111111111111111111111 (%
+b11111111111111111111111111111111 &%
+b11 ~"
+b11 |"
+b11 *#
+b11 (#
+b11 4#
+b11 2#
+b11 >#
+b11 <#
+b11 H#
+b11 F#
+b11 R#
+b11 P#
+b11 \#
+b11 Z#
+b11000 b"
+b11000 d"
+b11000 s"
+b11 f#
+b11 d#
+b1 ^
+b1 \
+b1 h
+b1 f
+b1 r
+b1 p
+b1 |
+b1 z
+b1 ("
+b1 &"
+b1 2"
+b1 0"
+b1 <"
+b1 :"
+b1000 B
+b1000 D
+b1000 S
+b1 F"
+b1 D"
+b1101 f*
+b101 g*
+b1 #+
+b1 ~*
+b1 -+
+b1 *+
+b1 7+
+b1 4+
+b1 A+
+b1 >+
+b1 K+
+b1 H+
+b1 U+
+b1 R+
+b1 _+
+b1 \+
+b1 i+
+b1 f+
+b11111111111111111111111111111110 F)
+b11111111111111111111111111110110 G)
+b1 a)
+b1 ^)
+b1 k)
+b1 h)
+b1 u)
+b1 r)
+b1 !*
+b1 |)
+b1 +*
+b1 (*
+b1 5*
+b1 2*
+b1 ?*
+b1 <*
+b1 I*
+b1 F*
+b11111111111111111111111111111011 &(
+b11111111111111111111111111111011 '(
+b101 d&
+b101 e&
+b1000 _%
+b1000 \%
+b1000 i%
+b1000 f%
+b1000 s%
+b1000 p%
+b1000 }%
+b1000 z%
+b1000 )&
+b1000 &&
+b1000 3&
+b1000 0&
+b1000 =&
+b1000 :&
+b1000 G&
+b1000 D&
+b1111111111111111 ?$
+b11111111 <$
+b1111111111111111 I$
+b11111111 F$
+b1111111111111111 S$
+b11111111 P$
+b1111111111111111 ]$
+b11111111 Z$
+b1111111111111111 g$
+b11111111 d$
+b1111111111111111 q$
+b11111111 n$
+b1111111111111111 {$
+b11111111 x$
+b1111111111111111 '%
+b11111111 $%
+b11 }"
+b11 z"
+b11 )#
+b11 &#
+b11 3#
+b11 0#
+b11 =#
+b11 :#
+b11 G#
+b11 D#
+b11 Q#
+b11 N#
+b11 [#
+b11 X#
+b11 e#
+b11 b#
+b1 ]
+b1 Z
+b1 g
+b1 d
+b1 q
+b1 n
+b1 {
+b1 x
+b1 '"
+b1 $"
+b1 1"
+b1 ."
+b1 ;"
+b1 8"
+b1 E"
+b1 B"
+b101 a*
+b100000001000000010000000100000001000000010000000100000001 e*
+b100000001000000010000000100000001000000010000000100000001 u*
+b1000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001 b*
+b11110110 A)
+b100000001000000010000000100000001000000010000000100000001 E)
+b100000001000000010000000100000001000000010000000100000001 U)
+b100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001 B)
+b11111011 !(
+b101 _&
+b100000001000000010000000100000001000000010000000100000001000 C%
+b100000001000000010000000100000001000000010000000100000001000 S%
+b100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000 @%
+b1111111111111111111111111111111111111111111111111111111111111111 #$
+b1111111111111111111111111111111111111111111111111111111111111111 3$
+b1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111 ~#
+b1100000011000000110000001100000011000000110000001100000011 a"
+b1100000011000000110000001100000011000000110000001100000011 q"
+b1100000011000000110000001100000011000000110000001100000011000000110000001100000011000000110000001100000011000000110000001100000011000000110000001100000011000000110000001100000011000000110000001100000011000000110000001100000011000000110000001100000011 ^"
+b100000001000000010000000100000001000000010000000100000001 A
+b100000001000000010000000100000001000000010000000100000001 Q
+b100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001 >
+b1 C"
+b1 c#
+b1 %%
+b1 E&
+b1 e'
+b1 ')
+b1 G*
+b1 g+
+b1 9"
+b1 Y#
+b1 y$
+b1 ;&
+b1 ['
+b1 {(
+b1 =*
+b1 ]+
+b1 /"
+b1 O#
+b1 o$
+b1 1&
+b1 Q'
+b1 q(
+b1 3*
+b1 S+
+b1 %"
+b1 E#
+b1 e$
+b1 '&
+b1 G'
+b1 g(
+b1 )*
+b1 I+
+b1 y
+b1 ;#
+b1 [$
+b1 {%
+b1 ='
+b1 ](
+b1 })
+b1 ?+
+b1 o
+b1 1#
+b1 Q$
+b1 q%
+b1 3'
+b1 S(
+b1 s)
+b1 5+
+b1 e
+b1 '#
+b1 G$
+b1 g%
+b1 )'
+b1 I(
+b1 i)
+b1 ++
+b1 [
+b1 {"
+b1 =$
+b1 ]%
+b1 }&
+b1 ?(
+b1 _)
+b1 !+
+b10111110110111110110000010100000000000000000000000000000000 )
+b10111110110111110110000010100000000000000000000000000000000 1
+b10000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111100000011000000110000001100000011000000110000001100000011000000110000001100000011000000110000001100000011000000110000001100000011000000110000001100000011000000110000001100000011000000110000001100000011000000110000001100000011000000110000001100000011000000110000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001 -
+b10000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111100000011000000110000001100000011000000110000001100000011000000110000001100000011000000110000001100000011000000110000001100000011000000110000001100000011000000110000001100000011000000110000001100000011000000110000001100000011000000110000001100000011000000110000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001 2
+b100000001000000010000000100000001000000010000000100000001 @
+b100000001000000010000000100000001000000010000000100000001 R
+b100000001000000010000000100000001000000010000000100000001 `"
+b100000001000000010000000100000001000000010000000100000001 r"
+b100000001000000010000000100000001000000010000000100000001 "$
+b100000001000000010000000100000001000000010000000100000001 4$
+b100000001000000010000000100000001000000010000000100000001 B%
+b100000001000000010000000100000001000000010000000100000001 T%
+b100000001000000010000000100000001000000010000000100000001 b&
+b100000001000000010000000100000001000000010000000100000001 t&
+b100000001000000010000000100000001000000010000000100000001 $(
+b100000001000000010000000100000001000000010000000100000001 6(
+b100000001000000010000000100000001000000010000000100000001 D)
+b100000001000000010000000100000001000000010000000100000001 V)
+b100000001000000010000000100000001000000010000000100000001 d*
+b100000001000000010000000100000001000000010000000100000001 v*
+b100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001 .
+b100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001 3
+b100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001 ?
+b100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001 _"
+b100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001 !$
+b100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001 A%
+b100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001 a&
+b100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001 #(
+b100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001 C)
+b100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001 c*
+b100000 0
+0+
+1*
+#20000
+0*
+#25000
+1#
+b11111111 6
+1L
+1l"
+1.$
+1N%
+1n&
+10(
+1P)
+1p*
+1,
+1*
+#30000
+0*
+#35000
+b1 r*
+b10101 f*
+b10000 h*
+b10000 w*
+b1000 o*
+b1000 t*
+b1 R)
+b110 F)
+b10000 H)
+b10000 W)
+b1000 O)
+b1000 T)
+b1 2(
+b1 p&
+b1 P%
+b10000000 D%
+b10000000 F%
+b10000000 U%
+b1000000 M%
+b1000000 R%
+b1 0$
+b11111111111111111111111111110000 $$
+b11111111111111111111111111110000 &$
+b11111111111111111111111111110000 5$
+b11111111111111111111111111111000 -$
+b11111111111111111111111111111000 2$
+b1 n"
+b110000 b"
+b110000 d"
+b110000 s"
+b11000 k"
+b11000 p"
+b1 N
+b10000 B
+b10000 D
+b10000 S
+b1000 K
+b1000 P
+0,
+1*
+#40000
+0*
+#45000
+b0 $+
+b0 "+
 b0 .+
 b0 ,+
-b0 J*
-b0 S*
-b0 \*
+b0 8+
+b0 6+
+b0 B+
+b0 @+
+b0 L+
+b0 J+
+b0 V+
+b0 T+
+b0 `+
+b0 ^+
+b0 j+
+b0 h+
+b0 #+
+b0 ~*
+b0 -+
+b0 *+
+b0 7+
+b0 4+
+b0 A+
+b0 >+
+b0 K+
+b0 H+
+b0 U+
+b0 R+
+b0 _+
+b0 \+
+b0 i+
+b0 f+
 b0 e*
-b0 n*
-b0 w*
-b0 "+
-b0 ++
-b0 D
-b0 X
-b0 E
-b0 W
-b0 Z"
-b0 n"
-b0 ["
-b0 m"
-b0 p#
-b0 &$
-b0 q#
-b0 %$
-b0 (%
-b0 <%
-b0 )%
-b0 ;%
-b0 >&
-b0 R&
-b0 ?&
-b0 Q&
-b0 T'
-b0 h'
-b0 U'
-b0 g'
-b0 j(
-b0 ~(
-b0 k(
-b0 }(
-b0 "*
-b0 6*
-b0 #*
-b0 5*
-0S
-0R
-b0 U
-b0 Q
-b0 V
-b0 T
-0i"
-0h"
-b0 k"
-b0 g"
-b0 l"
-b0 j"
-0!$
-0~#
-b0 #$
-b0 }#
-b0 $$
-b0 "$
-07%
-06%
-b0 9%
-b0 5%
-b0 :%
-b0 8%
-0M&
-0L&
-b0 O&
-b0 K&
-b0 P&
-b0 N&
-0c'
-0b'
-b0 e'
-b0 a'
-b0 f'
-b0 d'
-0y(
-0x(
-b0 {(
-b0 w(
-b0 |(
-b0 z(
-01*
-00*
-b0 3*
-b0 /*
-b0 4*
-b0 2*
-1+
-#10
-0+
-#15
-b1111111111111111111111111111111100000000 V'
-b100000000 @&
-b1100000000 $*
-b11100000000 l(
-b1111111111111111111111110000000000000000 W'
-b10000000000000000 A&
-b1000000000000 *%
-b1111111111111111111111111111110000000000 r#
-b10000000000 \"
-b100000000000 F
-b100000000000000 E*
-b100000000000000 N*
-b100000000000000 L*
-b1000000000000000 =*
-b100000000000000 D*
-b100000000000000 W*
-b100000000000000 U*
-b100000000000000 C*
-b100000000000000 `*
-b100000000000000 ^*
-b10000000000000000 9*
-b1000000000000000 <*
-b100000000000000 B*
-b100000000000000 i*
-b100000000000000 g*
-b100000000000000 A*
-b100000000000000 r*
-b100000000000000 p*
-b1000000000000000 ;*
-b100000000000000 @*
-b100000000000000 {*
-b100000000000000 y*
-b100000000000000 ?*
-b100000000000000 &+
-b100000000000000 $+
-b110000000000000000 %*
-b100000000000000000 '*
-b100000000000000000 F*
-b100000000000000000 7*
-b10000000000000000 8*
-b1000000000000000 :*
-b100000000000000 >*
-b100000000000000 /+
-b100000000000000 -+
-b10000000000000000 /)
-b10000000000000000 8)
-b10000000000000000 6)
-b100000000000000000 ')
-b10000000000000000 .)
-b10000000000000000 A)
-b10000000000000000 ?)
-b10000000000000000 -)
-b10000000000000000 J)
-b10000000000000000 H)
-b1000000000000000000 #)
-b100000000000000000 &)
-b10000000000000000 ,)
-b10000000000000000 S)
-b10000000000000000 Q)
-b10000000000000000 +)
-b10000000000000000 \)
-b10000000000000000 Z)
-b100000000000000000 %)
-b10000000000000000 *)
-b10000000000000000 e)
-b10000000000000000 c)
-b10000000000000000 ))
-b10000000000000000 n)
-b10000000000000000 l)
-b1110000000000000000 m(
-b10000000000000000000 o(
-b10000000000000000000 0)
-b10000000000000000000 !)
-b1000000000000000000 ")
-b100000000000000000 $)
-b10000000000000000 ()
-b10000000000000000 w)
-b10000000000000000 u)
-b100000000000000000 K%
-b100000000000000000 T%
-b100000000000000000 R%
-b1000000000000000000 C%
-b100000000000000000 J%
-b100000000000000000 ]%
-b100000000000000000 [%
-b100000000000000000 I%
-b100000000000000000 f%
-b100000000000000000 d%
-b10000000000000000000 ?%
-b1000000000000000000 B%
-b100000000000000000 H%
-b100000000000000000 o%
-b100000000000000000 m%
-b100000000000000000 G%
-b100000000000000000 x%
-b100000000000000000 v%
-b1000000000000000000 A%
-b100000000000000000 F%
-b100000000000000000 #&
-b100000000000000000 !&
-b100000000000000000 E%
-b100000000000000000 ,&
-b100000000000000000 *&
-b100000000000000000000 +%
-b100000000000000000000 -%
-b100000000000000000000 L%
-b100000000000000000000 =%
-b10000000000000000000 >%
-b1000000000000000000 @%
-b100000000000000000 D%
-b100000000000000000 5&
-b100000000000000000 3&
-b1111111111111111111111111000000000000000 5$
-b1111111111111111111111111000000000000000 >$
-b1111111111111111111111111000000000000000 <$
-b1111111111111111111111110000000000000000 -$
-b1111111111111111111111111000000000000000 4$
-b1111111111111111111111111000000000000000 G$
-b1111111111111111111111111000000000000000 E$
-b1111111111111111111111111000000000000000 3$
-b1111111111111111111111111000000000000000 P$
-b1111111111111111111111111000000000000000 N$
-b1111111111111111111111100000000000000000 )$
-b1111111111111111111111110000000000000000 ,$
-b1111111111111111111111111000000000000000 2$
-b1111111111111111111111111000000000000000 Y$
-b1111111111111111111111111000000000000000 W$
-b1111111111111111111111111000000000000000 1$
-b1111111111111111111111111000000000000000 b$
-b1111111111111111111111111000000000000000 `$
-b1111111111111111111111110000000000000000 +$
-b1111111111111111111111111000000000000000 0$
-b1111111111111111111111111000000000000000 k$
-b1111111111111111111111111000000000000000 i$
-b1111111111111111111111111000000000000000 /$
-b1111111111111111111111111000000000000000 t$
-b1111111111111111111111111000000000000000 r$
-b1111111111111111111111000000000000000000 s#
-b1111111111111111111111000000000000000000 u#
-b1111111111111111111111000000000000000000 6$
-b1111111111111111111111000000000000000000 '$
-b1111111111111111111111100000000000000000 ($
-b1111111111111111111111110000000000000000 *$
-b1111111111111111111111111000000000000000 .$
-b1111111111111111111111111000000000000000 }$
-b1111111111111111111111111000000000000000 {$
-b1000000000000000 }"
-b1000000000000000 (#
-b1000000000000000 &#
-b10000000000000000 u"
-b1000000000000000 |"
-b1000000000000000 1#
-b1000000000000000 /#
-b1000000000000000 {"
-b1000000000000000 :#
-b1000000000000000 8#
-b100000000000000000 q"
-b10000000000000000 t"
-b1000000000000000 z"
-b1000000000000000 C#
-b1000000000000000 A#
-b1000000000000000 y"
-b1000000000000000 L#
-b1000000000000000 J#
-b10000000000000000 s"
-b1000000000000000 x"
-b1000000000000000 U#
-b1000000000000000 S#
-b1000000000000000 w"
-b1000000000000000 ^#
-b1000000000000000 \#
-b1000000000000000000 ]"
-b1000000000000000000 _"
-b1000000000000000000 ~"
-b1000000000000000000 o"
-b100000000000000000 p"
-b10000000000000000 r"
-b1000000000000000 v"
-b1000000000000000 g#
-b1000000000000000 e#
-b10000000000000000 g
-b10000000000000000 p
-b10000000000000000 n
-b100000000000000000 _
-b10000000000000000 f
-b10000000000000000 y
-b10000000000000000 w
-b10000000000000000 e
-b10000000000000000 $"
-b10000000000000000 ""
-b1000000000000000000 [
-b100000000000000000 ^
-b10000000000000000 d
-b10000000000000000 -"
-b10000000000000000 +"
-b10000000000000000 c
-b10000000000000000 6"
-b10000000000000000 4"
-b100000000000000000 ]
-b10000000000000000 b
-b10000000000000000 ?"
-b10000000000000000 ="
-b10000000000000000 a
-b10000000000000000 H"
-b10000000000000000 F"
-b10000000000000000000 G
-b10000000000000000000 I
-b10000000000000000000 h
-b10000000000000000000 Y
-b1000000000000000000 Z
-b100000000000000000 \
-b10000000000000000 `
-b10000000000000000 Q"
-b10000000000000000 O"
-b100000000 &*
-b100000000000000 M*
-b1000000 J*
-b100000000000000 V*
-b1000000 S*
-b100000000000000 _*
-b1000000 \*
-b100000000000000 h*
-b1000000 e*
-b100000000000000 q*
-b1000000 n*
-b100000000000000 z*
-b1000000 w*
-b100000000000000 %+
-b1000000 "+
-b100000000000000 .+
-b1000000 ++
-b1111111111111111111111111111111100000000 n(
-b10000000000000000 7)
-b100000000 4)
-b10000000000000000 @)
-b100000000 =)
-b10000000000000000 I)
-b100000000 F)
-b10000000000000000 R)
-b100000000 O)
-b10000000000000000 [)
-b100000000 X)
-b10000000000000000 d)
-b100000000 a)
-b10000000000000000 m)
-b100000000 j)
-b10000000000000000 v)
-b100000000 s)
-b1111111111111111111111111111111100000000 X'
-b100000000 B&
-b100000000000000000 S%
-b1000000000 P%
-b100000000000000000 \%
-b1000000000 Y%
-b100000000000000000 e%
-b1000000000 b%
-b100000000000000000 n%
-b1000000000 k%
-b100000000000000000 w%
-b1000000000 t%
-b100000000000000000 "&
-b1000000000 }%
-b100000000000000000 +&
-b1000000000 (&
-b100000000000000000 4&
-b1000000000 1&
-b11111111111111111000000000000000 =$
-b1111111110000000 :$
-b11111111111111111000000000000000 F$
-b1111111110000000 C$
-b11111111111111111000000000000000 O$
-b1111111110000000 L$
-b11111111111111111000000000000000 X$
-b1111111110000000 U$
-b11111111111111111000000000000000 a$
-b1111111110000000 ^$
-b11111111111111111000000000000000 j$
-b1111111110000000 g$
-b11111111111111111000000000000000 s$
-b1111111110000000 p$
-b11111111111111111000000000000000 |$
-b1111111110000000 y$
-b1000000000000000 '#
-b10000000 $#
-b1000000000000000 0#
-b10000000 -#
-b1000000000000000 9#
-b10000000 6#
-b1000000000000000 B#
-b10000000 ?#
-b1000000000000000 K#
-b10000000 H#
-b1000000000000000 T#
-b10000000 Q#
-b1000000000000000 ]#
-b10000000 Z#
-b1000000000000000 f#
-b10000000 c#
-b10000000000000000 o
-b100000000 l
-b10000000000000000 x
-b100000000 u
-b10000000000000000 #"
-b100000000 ~
-b10000000000000000 ,"
-b100000000 )"
-b10000000000000000 5"
-b100000000 2"
-b10000000000000000 >"
-b100000000 ;"
-b10000000000000000 G"
-b100000000 D"
-b10000000000000000 P"
-b100000000 M"
-b100000000 })
-b100000000 |)
-b10000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000 #*
-b10000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000 5*
-b1000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000 ~)
-b1111111100000000 g(
-b1111111100000000 f(
-b1000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000 k(
-b1000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000 }(
-b100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000 h(
-b1111111100000000 Q'
-b1111111100000000 P'
-b100000000 ;&
-b100000000 :&
-b10000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000 )%
-b10000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000 ;%
-b1000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000 &%
-b11111111100000001111111110000000111111111000000011111111100000001111111110000000111111111000000011111111100000001111111110000000 q#
-b11111111100000001111111110000000111111111000000011111111100000001111111110000000111111111000000011111111100000001111111110000000 %$
-b1111111110000000111111111000000011111111100000001111111110000000111111111000000011111111100000001111111110000000111111111000000011111111100000001111111110000000111111111000000011111111100000001111111110000000111111111000000011111111100000001111111110000000111111111000000011111111100000001111111110000000111111111000000011111111100000001111111110000000111111111000000011111111100000001111111110000000111111111000000011111111100000001111111110000000111111111000000011111111100000001111111110000000111111111000000011111111100000001111111110000000111111111000000011111111100000001111111110000000111111111000000011111111100000001111111110000000111111111000000011111111100000001111111110000000111111111000000011111111100000001111111110000000111111111000000011111111100000001111111110000000111111111000000011111111100000001111111110000000111111111000000011111111100000001111111110000000111111111000000011111111100000001111111110000000111111111000000011111111100000001111111110000000111111111000000011111111100000001111111110000000 n#
-b100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000 ["
-b100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000 m"
-b10000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000 X"
-b1000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000 E
-b1000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000 W
-b100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000 B
-b100000000 N"
-b100000000 d#
-b100000000 z$
-b100000000 2&
-b100000000 H'
-b100000000 ^(
-b100000000 t)
-b100000000 ,+
-b100000000 E"
-b100000000 [#
-b100000000 q$
-b100000000 )&
-b100000000 ?'
-b100000000 U(
-b100000000 k)
-b100000000 #+
-b100000000 <"
-b100000000 R#
-b100000000 h$
-b100000000 ~%
-b100000000 6'
-b100000000 L(
-b100000000 b)
-b100000000 x*
-b100000000 3"
-b100000000 I#
-b100000000 _$
-b100000000 u%
-b100000000 -'
-b100000000 C(
-b100000000 Y)
-b100000000 o*
-b100000000 *"
-b100000000 @#
-b100000000 V$
-b100000000 l%
-b100000000 $'
-b100000000 :(
-b100000000 P)
-b100000000 f*
-b100000000 !"
-b100000000 7#
-b100000000 M$
-b100000000 c%
-b100000000 y&
-b100000000 1(
-b100000000 G)
-b100000000 ]*
-b100000000 v
-b100000000 .#
-b100000000 D$
-b100000000 Z%
-b100000000 p&
-b100000000 ((
-b100000000 >)
-b100000000 T*
-b100000000 m
-b100000000 %#
-b100000000 ;$
-b100000000 Q%
-b100000000 g&
-b100000000 }'
-b100000000 5)
-b100000000 K*
-b1000000001111111100000000111111110000000000000001000000000000000000000000000000000000000000000000000000000000000000000000 *
-b1000000001111111100000000111111110000000000000001000000000000000000000000000000000000000000000000000000000000000000000000 3
-b10000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000111111111000000011111111100000001111111110000000111111111000000011111111100000001111111110000000111111111000000011111111100000001111111110000000111111111000000011111111100000001111111110000000111111111000000011111111100000001111111110000000111111111000000011111111100000001111111110000000111111111000000011111111100000001111111110000000111111111000000011111111100000001111111110000000111111111000000011111111100000001111111110000000111111111000000011111111100000001111111110000000111111111000000011111111100000001111111110000000111111111000000011111111100000001111111110000000111111111000000011111111100000001111111110000000111111111000000011111111100000001111111110000000111111111000000011111111100000001111111110000000111111111000000011111111100000001111111110000000111111111000000011111111100000001111111110000000111111111000000011111111100000001111111110000000111111111000000011111111100000001111111110000000111111111000000011111111100000001111111110000000111111111000000011111111100000001111111110000000111111111000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000 .
-b10000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000111111111000000011111111100000001111111110000000111111111000000011111111100000001111111110000000111111111000000011111111100000001111111110000000111111111000000011111111100000001111111110000000111111111000000011111111100000001111111110000000111111111000000011111111100000001111111110000000111111111000000011111111100000001111111110000000111111111000000011111111100000001111111110000000111111111000000011111111100000001111111110000000111111111000000011111111100000001111111110000000111111111000000011111111100000001111111110000000111111111000000011111111100000001111111110000000111111111000000011111111100000001111111110000000111111111000000011111111100000001111111110000000111111111000000011111111100000001111111110000000111111111000000011111111100000001111111110000000111111111000000011111111100000001111111110000000111111111000000011111111100000001111111110000000111111111000000011111111100000001111111110000000111111111000000011111111100000001111111110000000111111111000000011111111100000001111111110000000111111111000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000 4
-b1000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000 D
-b1000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000 X
-b1000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000 Z"
-b1000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000 n"
-b1000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000 p#
-b1000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000 &$
-b1000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000 (%
-b1000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000 <%
-b1000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000 >&
-b1000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000 R&
-b1000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000 T'
-b1000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000 h'
-b1000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000 j(
-b1000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000 ~(
-b1000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000 "*
-b1000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000 6*
-b100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000 /
-b100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000 5
-b100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000 C
-b100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000 Y"
-b100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000 o#
-b100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000 '%
-b100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000 =&
-b100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000 S'
-b100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000 i(
-b100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000000000010000000000000001000000000000000100000000 !*
-r1 2
-b1000000 1
-0,
-1+
-#20
-0+
-#25
-1#
-b11111111 8
-1R
-1h"
-1~#
-16%
-1L&
-1b'
-1x(
-10*
-1-
-1+
-#30
-0+
-#35
-b10100000000 $*
-b111100000000 l(
-b10000000000000 *%
-b1111111111111111111111111111100000000000 r#
-b100000000000 \"
-b1000000000000 F
-b1 2*
-b1010000000000000000 %*
-b1000000000000000000 '*
-b1000000000000000000 F*
-b100000000000000000 /*
-b100000000000000000 4*
-b1 z(
-b11110000000000000000 m(
-b100000000000000000000 o(
-b100000000000000000000 0)
-b10000000000000000000 w(
-b10000000000000000000 |(
-b1 d'
-b1 N&
-b1 8%
-b1000000000000000000000 +%
-b1000000000000000000000 -%
-b1000000000000000000000 L%
-b100000000000000000000 5%
-b100000000000000000000 :%
-b1 "$
-b1111111111111111111110000000000000000000 s#
-b1111111111111111111110000000000000000000 u#
-b1111111111111111111110000000000000000000 6$
-b1111111111111111111111000000000000000000 }#
-b1111111111111111111111000000000000000000 $$
-b1 j"
-b10000000000000000000 ]"
-b10000000000000000000 _"
-b10000000000000000000 ~"
-b1000000000000000000 g"
-b1000000000000000000 l"
-b1 T
-b100000000000000000000 G
-b100000000000000000000 I
-b100000000000000000000 h
-b10000000000000000000 Q
-b10000000000000000000 V
-0-
-1+
-#40
-0+
-#45
-b1100000000000 F
-b110000000000 \"
-b1111111111111111111111111111010000000000 r#
-b11000000000000 *%
-b1011100000000 l(
-b11100000000 $*
-b10 T
-b110000000000000000000 G
-b110000000000000000000 I
-b110000000000000000000 h
-b100000000000000000000 Q
-b100000000000000000000 V
-b10 j"
-b11000000000000000000 ]"
-b11000000000000000000 _"
-b11000000000000000000 ~"
-b10000000000000000000 g"
-b10000000000000000000 l"
-b10 "$
-b1111111111111111111101000000000000000000 s#
-b1111111111111111111101000000000000000000 u#
-b1111111111111111111101000000000000000000 6$
-b1111111111111111111110000000000000000000 }#
-b1111111111111111111110000000000000000000 $$
-b10 8%
-b1100000000000000000000 +%
-b1100000000000000000000 -%
-b1100000000000000000000 L%
-b1000000000000000000000 5%
-b1000000000000000000000 :%
-b10 N&
-b10 d'
-b10 z(
-b101110000000000000000 m(
-b110000000000000000000 o(
-b110000000000000000000 0)
-b100000000000000000000 w(
-b100000000000000000000 |(
-b10 2*
-b1110000000000000000 %*
-b1100000000000000000 '*
-b1100000000000000000 F*
-b1000000000000000000 /*
-b1000000000000000000 4*
-1+
-#50
-0+
-#55
-b100100000000 $*
-b1111100000000 l(
-b100000000000000 *%
-b1111111111111111111111111111000000000000 r#
-b1000000000000 \"
-b10000000000000 F
-b11 2*
-b10010000000000000000 %*
-b10000000000000000000 '*
-b10000000000000000000 F*
-b1100000000000000000 /*
-b1100000000000000000 4*
-b11 z(
-b111110000000000000000 m(
-b1000000000000000000000 o(
-b1000000000000000000000 0)
-b110000000000000000000 w(
-b110000000000000000000 |(
-b11 d'
-b11 N&
-b11 8%
-b10000000000000000000000 +%
-b10000000000000000000000 -%
-b10000000000000000000000 L%
-b1100000000000000000000 5%
-b1100000000000000000000 :%
-b11 "$
-b1111111111111111111100000000000000000000 s#
-b1111111111111111111100000000000000000000 u#
-b1111111111111111111100000000000000000000 6$
-b1111111111111111111101000000000000000000 }#
-b1111111111111111111101000000000000000000 $$
-b11 j"
-b100000000000000000000 ]"
-b100000000000000000000 _"
-b100000000000000000000 ~"
-b11000000000000000000 g"
-b11000000000000000000 l"
-b11 T
-b1000000000000000000000 G
-b1000000000000000000000 I
-b1000000000000000000000 h
-b110000000000000000000 Q
-b110000000000000000000 V
-1+
-#60
-0+
-#65
-b10100000000000 F
-b1010000000000 \"
-b1111111111111111111111111110110000000000 r#
-b101000000000000 *%
-b10011100000000 l(
-b101100000000 $*
-b100 T
-b1010000000000000000000 G
-b1010000000000000000000 I
-b1010000000000000000000 h
-b1000000000000000000000 Q
-b1000000000000000000000 V
-b100 j"
-b101000000000000000000 ]"
-b101000000000000000000 _"
-b101000000000000000000 ~"
-b100000000000000000000 g"
-b100000000000000000000 l"
-b100 "$
-b1111111111111111111011000000000000000000 s#
-b1111111111111111111011000000000000000000 u#
-b1111111111111111111011000000000000000000 6$
-b1111111111111111111100000000000000000000 }#
-b1111111111111111111100000000000000000000 $$
-b100 8%
-b10100000000000000000000 +%
-b10100000000000000000000 -%
-b10100000000000000000000 L%
-b10000000000000000000000 5%
-b10000000000000000000000 :%
-b100 N&
-b100 d'
-b100 z(
-b1001110000000000000000 m(
-b1010000000000000000000 o(
-b1010000000000000000000 0)
-b1000000000000000000000 w(
-b1000000000000000000000 |(
-b100 2*
-b10110000000000000000 %*
-b10100000000000000000 '*
-b10100000000000000000 F*
-b10000000000000000000 /*
-b10000000000000000000 4*
-1+
-#70
-0+
-#75
-b110100000000 $*
-b10111100000000 l(
-b110000000000000 *%
-b1111111111111111111111111110100000000000 r#
-b1100000000000 \"
-b11000000000000 F
-b101 2*
-b11010000000000000000 %*
-b11000000000000000000 '*
-b11000000000000000000 F*
-b10100000000000000000 /*
-b10100000000000000000 4*
-b101 z(
-b1011110000000000000000 m(
-b1100000000000000000000 o(
-b1100000000000000000000 0)
-b1010000000000000000000 w(
-b1010000000000000000000 |(
-b101 d'
-b101 N&
-b101 8%
-b11000000000000000000000 +%
-b11000000000000000000000 -%
-b11000000000000000000000 L%
-b10100000000000000000000 5%
-b10100000000000000000000 :%
-b101 "$
-b1111111111111111111010000000000000000000 s#
-b1111111111111111111010000000000000000000 u#
-b1111111111111111111010000000000000000000 6$
-b1111111111111111111011000000000000000000 }#
-b1111111111111111111011000000000000000000 $$
-b101 j"
-b110000000000000000000 ]"
-b110000000000000000000 _"
-b110000000000000000000 ~"
-b101000000000000000000 g"
-b101000000000000000000 l"
-b101 T
-b1100000000000000000000 G
-b1100000000000000000000 I
-b1100000000000000000000 h
-b1010000000000000000000 Q
-b1010000000000000000000 V
-1+
-#80
-0+
-#85
-b11100000000000 F
-b1110000000000 \"
-b1111111111111111111111111110010000000000 r#
-b111000000000000 *%
-b11011100000000 l(
-b111100000000 $*
-b110 T
-b1110000000000000000000 G
-b1110000000000000000000 I
-b1110000000000000000000 h
-b1100000000000000000000 Q
-b1100000000000000000000 V
-b110 j"
-b111000000000000000000 ]"
-b111000000000000000000 _"
-b111000000000000000000 ~"
-b110000000000000000000 g"
-b110000000000000000000 l"
-b110 "$
-b1111111111111111111001000000000000000000 s#
-b1111111111111111111001000000000000000000 u#
-b1111111111111111111001000000000000000000 6$
-b1111111111111111111010000000000000000000 }#
-b1111111111111111111010000000000000000000 $$
-b110 8%
-b11100000000000000000000 +%
-b11100000000000000000000 -%
-b11100000000000000000000 L%
-b11000000000000000000000 5%
-b11000000000000000000000 :%
-b110 N&
-b110 d'
-b110 z(
-b1101110000000000000000 m(
-b1110000000000000000000 o(
-b1110000000000000000000 0)
-b1100000000000000000000 w(
-b1100000000000000000000 |(
-b110 2*
-b11110000000000000000 %*
-b11100000000000000000 '*
-b11100000000000000000 F*
-b11000000000000000000 /*
-b11000000000000000000 4*
-1+
-#90
-0+
-#95
-b1000100000000 $*
-b11111100000000 l(
-b1000000000000000 *%
-b1111111111111111111111111110000000000000 r#
-b10000000000000 \"
-b100000000000000 F
-b111 2*
-b100010000000000000000 %*
-b100000000000000000000 '*
-b100000000000000000000 F*
-b11100000000000000000 /*
-b11100000000000000000 4*
-b111 z(
-b1111110000000000000000 m(
-b10000000000000000000000 o(
-b10000000000000000000000 0)
-b1110000000000000000000 w(
-b1110000000000000000000 |(
-b111 d'
-b111 N&
-b111 8%
-b100000000000000000000000 +%
-b100000000000000000000000 -%
-b100000000000000000000000 L%
-b11100000000000000000000 5%
-b11100000000000000000000 :%
-b111 "$
-b1111111111111111111000000000000000000000 s#
-b1111111111111111111000000000000000000000 u#
-b1111111111111111111000000000000000000000 6$
-b1111111111111111111001000000000000000000 }#
-b1111111111111111111001000000000000000000 $$
-b111 j"
-b1000000000000000000000 ]"
-b1000000000000000000000 _"
-b1000000000000000000000 ~"
-b111000000000000000000 g"
-b111000000000000000000 l"
-b111 T
-b10000000000000000000000 G
-b10000000000000000000000 I
-b10000000000000000000000 h
-b1110000000000000000000 Q
-b1110000000000000000000 V
-1+
-#100
-0+
-#105
+b0 u*
+b10 N
+b11000 B
+b11000 D
+b11000 S
+b10000 K
+b10000 P
+b10 n"
+b1001000 b"
+b1001000 d"
+b1001000 s"
+b110000 k"
+b110000 p"
+b10 0$
+b11111111111111111111111111101000 $$
+b11111111111111111111111111101000 &$
+b11111111111111111111111111101000 5$
+b11111111111111111111111111110000 -$
+b11111111111111111111111111110000 2$
+b10 P%
+b11000000 D%
+b11000000 F%
+b11000000 U%
+b10000000 M%
+b10000000 R%
+b10 p&
+b10 2(
+b10 R)
+b1110 F)
+b11000 H)
+b11000 W)
+b10000 O)
+b10000 T)
+b10 r*
+b10101 f*
+b10000 h*
+b10000 w*
+b10000 o*
+b10000 t*
+1*
+#50000
+0*
+#55000
+b11 r*
+b11 R)
+b10110 F)
+b100000 H)
+b100000 W)
+b11000 O)
+b11000 T)
+b11 2(
+b11 p&
+b11 P%
+b100000000 D%
+b100000000 F%
+b100000000 U%
+b11000000 M%
+b11000000 R%
+b11 0$
+b11111111111111111111111111100000 $$
+b11111111111111111111111111100000 &$
+b11111111111111111111111111100000 5$
+b11111111111111111111111111101000 -$
+b11111111111111111111111111101000 2$
+b11 n"
+b1100000 b"
+b1100000 d"
+b1100000 s"
+b1001000 k"
+b1001000 p"
+b11 N
+b100000 B
+b100000 D
+b100000 S
+b11000 K
+b11000 P
+1*
+#60000
+0*
+#65000
 1"
-b11111111 7
+b11111111 5
 0#
-b0 8
-b10001000000000011111100000000000000000000000000000001000000000111111111111111000000000000000000100000000000000100000000000000 !
-b10001000000000011111100000000000000000000000000000001000000000111111111111111000000000000000000100000000000000100000000000000 6
-b100100000000000 F
-b10010000000000 \"
-b1111111111111111111111111101110000000000 r#
-b1001000000000000 *%
-b1000000000 @&
-b1111111111111111111111111111111000000000 V'
-b100011000000000 l(
-b1010000000000 $*
-1S
-0R
-b100000000000000 U
-b10010000000000000000000 G
-b10010000000000000000000 I
-b10010000000000000000000 h
-b10000000000000000000000 Q
-b10000000000000000000000 V
-1i"
-0h"
-b10000000000000 k"
-b1001000000000000000000 ]"
-b1001000000000000000000 _"
-b1001000000000000000000 ~"
-b1000000000000000000000 g"
-b1000000000000000000000 l"
-1!$
-0~#
-b1111111111111111110111000000000000000000 s#
-b1111111111111111110111000000000000000000 u#
-b1111111111111111110111000000000000000000 6$
-b1111111111111111111000000000000000000000 }#
-b1111111111111111111000000000000000000000 $$
-17%
-06%
-b111111111111111 9%
-b100100000000000000000000 +%
-b100100000000000000000000 -%
-b100100000000000000000000 L%
-b100000000000000000000000 5%
-b100000000000000000000000 :%
-1M&
-0L&
-b100000000 O&
-b100000000000000000 A&
-b10000000000000000 C&
-b10000000000000000 b&
-b10000000000000000 K&
-b10000000000000000 P&
-1c'
-0b'
-b1111111111111111111111100000000000000000 W'
-b1111111111111111111111110000000000000000 Y'
-b1111111111111111111111110000000000000000 x'
-b1111111111111111111111110000000000000000 a'
-b1111111111111111111111110000000000000000 f'
-1y(
-0x(
-b11111100000000 {(
-b10001100000000000000000 m(
-b10001110000000000000000 o(
-b10001110000000000000000 0)
-b1111110000000000000000 w(
-b1111110000000000000000 |(
-11*
-00*
-b1000100000000 3*
-b101000000000000000000 %*
-b100110000000000000000 '*
-b100110000000000000000 F*
-b100010000000000000000 /*
-b100010000000000000000 4*
-1+
-#110
-0+
-#115
+b0 6
+b1010100010110000000000000010101111111000000000110000000100000 !
+b1010100010110000000000000010101111111000000000110000000100000 4
+1M
+0L
+b100000 O
+b101000 B
+b101000 D
+b101000 S
+b100000 K
+b100000 P
+1m"
+0l"
+b1100000 o"
+b1111000 b"
+b1111000 d"
+b1111000 s"
+b1100000 k"
+b1100000 p"
+1/$
+0.$
+b11111111111111111111111111011000 $$
+b11111111111111111111111111011000 &$
+b11111111111111111111111111011000 5$
+b11111111111111111111111111100000 -$
+b11111111111111111111111111100000 2$
+1O%
+0N%
+b1111111 Q%
+b101000000 D%
+b101000000 F%
+b101000000 U%
+b100000000 M%
+b100000000 R%
+1o&
+0n&
+b101 q&
+b1010 d&
+b101 f&
+b101 u&
+b101 m&
+b101 r&
+11(
+00(
+b11111111111111111111111111110110 &(
+b11111111111111111111111111111011 ((
+b11111111111111111111111111111011 7(
+b11111111111111111111111111111011 /(
+b11111111111111111111111111111011 4(
+1Q)
+0P)
+b10110 S)
+b10100 F)
+b11110 H)
+b11110 W)
+b10110 O)
+b10110 T)
+1q*
+0p*
+b10101 s*
+b11010 f*
+b10101 h*
+b10101 w*
+b10101 o*
+b10101 t*
+1*
+#70000
+0*
+#75000
 0"
-b0 7
-01*
-0y(
-0c'
-0M&
-07%
-0!$
-0i"
-0S
-1+
+b0 5
+0q*
+0Q)
+01(
+0o&
+0O%
+0/$
+0m"
+0M
+1*

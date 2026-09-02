@@ -22,3 +22,28 @@
   - neuron_parallel_tb: FALLISCE in elaborazione — stesso errore, `parameter FRAC_BITS not found in tb.dut`, riferito a rtl/neuron_parallel.v.
   - NOTA: questi due fallimenti sono preesistenti e non toccano i file modificati in questa sessione (sim/neuron_memory_tb.v). Non risolti in questa sessione perché fuori scope dichiarato (debug neuron_memory); da segnalare all'utente.
 - 2026-09-02T00:20 — [FASE 3] — CONCLUSIONE: il bug indirizzamento byte/word nei task preload_vector/preload_weights di sim/neuron_memory_tb.v era l'unico difetto riscontrato nel percorso neuron_memory; risulta già corretto nel working tree e validato con successo da tutti e 5 i test (incl. il nuovo test PATTERN aggiunto). Nessun bug residuo individuato in rtl/neuron_memory.v o rtl/int8_memory_access.v per il caso N_NEURONS=1. Procedo al commit del fix sul branch `fix/neuron-memory-debug`.
+- 2026-09-02T00:21 — [FASE 4] — Committato (896f56c) il fix di sim/neuron_memory_tb.v + artefatti sim/neuron_memory_sim, sim/neuron_memory.vcd + WORKLOG.md sul branch fix/neuron-memory-debug. Ripristinati con `git checkout --` i .vcd di altri testbench (int8_memory_access, int8_psram_integration, memory_interface, parametric, psram_controller) rigenerati per errore durante la regressione, per non introdurre diff non pertinenti.
+- 2026-09-02T00:25 — [FASE 5] — Contesto hardware fornito dall'utente durante la sessione (per riferimento futuro, non ancora usato in RTL/sim): FPGA target = Lattice ECP5 LFE5U-45F-8BG381C; PSRAM = ISSI IS66WVE4M16EBLL-70BLI; il controller esterno pilota il sistema FPGA+RAM via SPI, e accede alla RAM solo tramite la FPGA (mai in accesso diretto).
+- 2026-09-02T00:26 — [FASE 6] — Richiesta utente: "sistema i due test e così chiudiamo" — riferito a sim/layer_tb.v e sim/neuron_parallel_tb.v, che fallivano in elaborazione con `parameter FRAC_BITS not found in tb.dut`.
+- 2026-09-02T00:27 — [FASE 6] — Letto rtl/neuron_parallel.v per intero: DATA_WIDTH default 8, nessun parametro FRAC_BITS, ReLU (final_acc<=0 -> y=0) e saturazione positiva HARDCODED a `8'sd127` indipendentemente da DATA_WIDTH (nessuna saturazione negativa esplicita, solo ReLU). Confermato che il modulo non supporta più (e non ha mai realmente supportato in questa versione) il formato fixed-point Q8.8 a 16 bit assunto dai due testbench.
+- 2026-09-02T00:28 — [FASE 6] — Letto rtl/layer.v per intero: parametrico, instanzia N_NEURONS x neuron_parallel con layout pesi neuron-major; nessun riferimento a FRAC_BITS.
+- 2026-09-02T00:29 — [FASE 6] — Letto per intero sim/neuron_parallel_tb.v e sim/layer_tb.v (versioni obsolete, DATA_WIDTH=16, FRAC_BITS=8, valori Q8.8 via funzione q8_8(), saturazione attesa a ±32767): confermato che sono residui di una precedente architettura fixed-point a 16 bit, incompatibile con neuron_parallel.v attuale (core validato, da NON modificare).
+- 2026-09-02T00:30 — [FASE 6] — Letto sim/parametric_tb.v (test già passante) come riferimento di stile/parametri corretti per l'architettura INT8 attuale (DATA_WIDTH=8, valori interi, saturazione a 127).
+- 2026-09-02T00:35 — [FASE 6] — Riscritto interamente sim/neuron_parallel_tb.v: rimosso FRAC_BITS e funzione q8_8; parametri allineati ai default di rtl/neuron_parallel.v (DATA_WIDTH=8, N_INPUTS=32, PARALLEL=8, ACC_WIDTH=32); 4 test ridisegnati con valori interi INT8 mantenendo lo stesso intento dei test originali:
+  - TEST 1 DIVERSE VECTOR: x0=3,w0=2 / x1=4,w1=-1 / x2=2,w2=1 / bias=1 -> atteso 5.
+  - TEST 2 RELU: tutti i prodotti negativi (x=1,w=-1 su 32 input) -> atteso 0.
+  - TEST 3 POSITIVE SATURATION: x=100,w=2 su 32 input -> somma 6400, satura a 127.
+  - TEST 4 MIXED + NEGATIVE BIAS: 16 input pari (x=2,w=1) + 16 dispari (x=-1,w=1), bias=-16 -> somma esattamente 0 -> ReLU -> atteso 0.
+- 2026-09-02T00:40 — [FASE 6] — Riscritto interamente sim/layer_tb.v: rimosso FRAC_BITS; parametri DATA_WIDTH=8, N_INPUTS=32, N_NEURONS=8, PARALLEL=8, ACC_WIDTH=32; input vettore tutti =1; 8 neuroni con scenari distinti (pattern ispirato a parametric_tb.v):
+  - N0 w=1,bias=0 -> 32
+  - N1 w=3,bias=0 -> 96
+  - N2 w=-1 -> ReLU -> 0
+  - N3 w=8 -> somma 256 -> satura 127
+  - N4 w=0,bias=+5 -> 5
+  - N5 w=0,bias=-5 -> ReLU -> 0
+  - N6 w=1,bias=-10 -> 32-10=22
+  - N7 primi 16 pesi=1 resto 0, bias=+5 -> 16+5=21 (verifica pattern di pesi sparso su più gruppi, PARALLEL=8 -> GROUPS=4)
+- 2026-09-02T00:42 — [FASE 6] — Compilato ed eseguito `sim/neuron_parallel_tb.v`: `iverilog -g2012 -o <tmp> rtl/*.v sim/neuron_parallel_tb.v` + `vvp`. Risultato: TUTTI I 4 TEST PASSANO (TEST1=5, TEST2=0, TEST3=127, TEST4=0).
+- 2026-09-02T00:43 — [FASE 6] — Compilato ed eseguito `sim/layer_tb.v`: `iverilog -g2012 -o <tmp> rtl/*.v sim/layer_tb.v` + `vvp`. Risultato: TUTTI GLI 8 NEURONI PASSANO (32,96,0,127,5,0,22,21), busy=0, done=1 a fine test.
+- 2026-09-02T00:44 — [FASE 6] — Rigenerati gli artefatti tracciati in git `sim/neuron_sim` (da neuron_parallel_tb.v) e `sim/layer_sim` (da layer_tb.v) con i relativi `.vcd`, per coerenza con la convenzione del repo di committare i binari di simulazione insieme alle sorgenti.
+- 2026-09-02T00:45 — [FASE 7] — Nessuna modifica a rtl/ in questa fase: root cause dei due fallimenti era esclusivamente nei testbench (riferimento a un parametro FRAC_BITS rimosso da tempo dall'RTL), non nel core di calcolo. Sessione di debug neuron_memory + fix dei due test residui considerata chiusa.

@@ -1,11 +1,12 @@
+`timescale 1ns/1ps
+
 module tb;
 
-    parameter DATA_WIDTH = 16;
-    parameter FRAC_BITS  = 8;
-    parameter N_INPUTS   = 64;
+    parameter DATA_WIDTH = 8;
+    parameter N_INPUTS   = 32;
     parameter N_NEURONS  = 8;
     parameter PARALLEL   = 8;
-    parameter ACC_WIDTH  = 40;
+    parameter ACC_WIDTH  = 32;
 
     reg clk;
     reg rst;
@@ -26,12 +27,10 @@ module tb;
     wire done;
 
     integer i;
-    integer n;
     integer errors;
 
     layer #(
         .DATA_WIDTH(DATA_WIDTH),
-        .FRAC_BITS(FRAC_BITS),
         .N_INPUTS(N_INPUTS),
         .N_NEURONS(N_NEURONS),
         .PARALLEL(PARALLEL),
@@ -52,13 +51,6 @@ module tb;
         clk = 0;
         forever #5 clk = ~clk;
     end
-
-    function signed [15:0] q8_8;
-        input real value;
-        begin
-            q8_8 = $rtoi(value * 256.0);
-        end
-    endfunction
 
     task run_layer;
         begin
@@ -92,41 +84,41 @@ module tb;
 
         /*
          * Input vector:
-         * all inputs = 1.0
+         * all inputs = 1
          */
         for (i = 0; i < N_INPUTS; i = i + 1)
-            x_bus[i*DATA_WIDTH +: DATA_WIDTH] = q8_8(1.0);
+            x_bus[i*DATA_WIDTH +: DATA_WIDTH] = 8'sd1;
 
         /*
          * Neuron 0:
-         * weights = 1.0
+         * weights = 1
          * bias = 0
-         * result = 64
+         * result = 32
          */
         for (i = 0; i < N_INPUTS; i = i + 1)
             weights_bus[
                 0*N_INPUTS*DATA_WIDTH +
                 i*DATA_WIDTH +:
                 DATA_WIDTH
-            ] = q8_8(1.0);
+            ] = 8'sd1;
 
-        bias_bus[0*DATA_WIDTH +: DATA_WIDTH] = q8_8(0.0);
+        bias_bus[0*DATA_WIDTH +: DATA_WIDTH] = 8'sd0;
 
         /*
          * Neuron 1:
-         * weights = 0.5
-         * result = 32
+         * weights = 3
+         * result = 96
          */
         for (i = 0; i < N_INPUTS; i = i + 1)
             weights_bus[
                 1*N_INPUTS*DATA_WIDTH +
                 i*DATA_WIDTH +:
                 DATA_WIDTH
-            ] = q8_8(0.5);
+            ] = 8'sd3;
 
         /*
          * Neuron 2:
-         * weights = -0.5
+         * weights = -1
          * result = -32 -> ReLU = 0
          */
         for (i = 0; i < N_INPUTS; i = i + 1)
@@ -134,90 +126,93 @@ module tb;
                 2*N_INPUTS*DATA_WIDTH +
                 i*DATA_WIDTH +:
                 DATA_WIDTH
-            ] = q8_8(-0.5);
+            ] = -8'sd1;
 
         /*
          * Neuron 3:
-         * weights = 2.0
-         * result = 128 -> saturation = 127.996...
+         * weights = 8
+         * result = 256 -> INT8 saturation = 127
          */
         for (i = 0; i < N_INPUTS; i = i + 1)
             weights_bus[
                 3*N_INPUTS*DATA_WIDTH +
                 i*DATA_WIDTH +:
                 DATA_WIDTH
-            ] = q8_8(2.0);
+            ] = 8'sd8;
 
         /*
          * Neuron 4:
          * weights = 0
-         * bias = +1
-         * result = 1
+         * bias = +5
+         * result = 5
          */
-        bias_bus[4*DATA_WIDTH +: DATA_WIDTH] = q8_8(1.0);
+        bias_bus[4*DATA_WIDTH +: DATA_WIDTH] = 8'sd5;
 
         /*
          * Neuron 5:
          * weights = 0
-         * bias = -1
+         * bias = -5
          * ReLU = 0
          */
-        bias_bus[5*DATA_WIDTH +: DATA_WIDTH] = q8_8(-1.0);
+        bias_bus[5*DATA_WIDTH +: DATA_WIDTH] = -8'sd5;
 
         /*
          * Neuron 6:
-         * weights = 1.0
-         * bias = -1.0
-         * result = 63
+         * weights = 1
+         * bias = -10
+         * result = 32 - 10 = 22
          */
         for (i = 0; i < N_INPUTS; i = i + 1)
             weights_bus[
                 6*N_INPUTS*DATA_WIDTH +
                 i*DATA_WIDTH +:
                 DATA_WIDTH
-            ] = q8_8(1.0);
+            ] = 8'sd1;
 
-        bias_bus[6*DATA_WIDTH +: DATA_WIDTH] = q8_8(-1.0);
+        bias_bus[6*DATA_WIDTH +: DATA_WIDTH] = -8'sd10;
 
         /*
          * Neuron 7:
-         * weights = 0.25
-         * bias = +1
-         * result = 16 + 1 = 17
+         * first 16 weights = 1, remaining 16 = 0
+         * bias = +5
+         * result = 16 + 5 = 21
+         *
+         * Exercises a sparse weight pattern across groups
+         * (PARALLEL = 8 -> GROUPS = 4).
          */
         for (i = 0; i < N_INPUTS; i = i + 1)
             weights_bus[
                 7*N_INPUTS*DATA_WIDTH +
                 i*DATA_WIDTH +:
                 DATA_WIDTH
-            ] = q8_8(0.25);
+            ] = (i < 16) ? 8'sd1 : 8'sd0;
 
-        bias_bus[7*DATA_WIDTH +: DATA_WIDTH] = q8_8(1.0);
+        bias_bus[7*DATA_WIDTH +: DATA_WIDTH] = 8'sd5;
 
         $display("");
         $display("==============================");
-        $display("LAYER TEST");
+        $display("LAYER TEST (INT8)");
         $display("==============================");
 
         run_layer;
 
-        $display("Neuron 0 = %5d   expected = 16384", y_bus[0*16 +: 16]);
-        $display("Neuron 1 = %5d   expected =  8192", y_bus[1*16 +: 16]);
-        $display("Neuron 2 = %5d   expected =     0", y_bus[2*16 +: 16]);
-        $display("Neuron 3 = %5d   expected = 32767", y_bus[3*16 +: 16]);
-        $display("Neuron 4 = %5d   expected =   256", y_bus[4*16 +: 16]);
-        $display("Neuron 5 = %5d   expected =     0", y_bus[5*16 +: 16]);
-        $display("Neuron 6 = %5d   expected = 16128", y_bus[6*16 +: 16]);
-        $display("Neuron 7 = %5d   expected =  4352", y_bus[7*16 +: 16]);
+        $display("Neuron 0 = %5d   expected =  32", $signed(y_bus[0*DATA_WIDTH +: DATA_WIDTH]));
+        $display("Neuron 1 = %5d   expected =  96", $signed(y_bus[1*DATA_WIDTH +: DATA_WIDTH]));
+        $display("Neuron 2 = %5d   expected =   0", $signed(y_bus[2*DATA_WIDTH +: DATA_WIDTH]));
+        $display("Neuron 3 = %5d   expected = 127", $signed(y_bus[3*DATA_WIDTH +: DATA_WIDTH]));
+        $display("Neuron 4 = %5d   expected =   5", $signed(y_bus[4*DATA_WIDTH +: DATA_WIDTH]));
+        $display("Neuron 5 = %5d   expected =   0", $signed(y_bus[5*DATA_WIDTH +: DATA_WIDTH]));
+        $display("Neuron 6 = %5d   expected =  22", $signed(y_bus[6*DATA_WIDTH +: DATA_WIDTH]));
+        $display("Neuron 7 = %5d   expected =  21", $signed(y_bus[7*DATA_WIDTH +: DATA_WIDTH]));
 
-        if (y_bus[0*16 +: 16] !== 16'sd16384) errors = errors + 1;
-        if (y_bus[1*16 +: 16] !== 16'sd8192)  errors = errors + 1;
-        if (y_bus[2*16 +: 16] !== 16'sd0)     errors = errors + 1;
-        if (y_bus[3*16 +: 16] !== 16'sd32767) errors = errors + 1;
-        if (y_bus[4*16 +: 16] !== 16'sd256)   errors = errors + 1;
-        if (y_bus[5*16 +: 16] !== 16'sd0)     errors = errors + 1;
-        if (y_bus[6*16 +: 16] !== 16'sd16128) errors = errors + 1;
-        if (y_bus[7*16 +: 16] !== 16'sd4352)  errors = errors + 1;
+        if ($signed(y_bus[0*DATA_WIDTH +: DATA_WIDTH]) !== 8'sd32)  errors = errors + 1;
+        if ($signed(y_bus[1*DATA_WIDTH +: DATA_WIDTH]) !== 8'sd96)  errors = errors + 1;
+        if ($signed(y_bus[2*DATA_WIDTH +: DATA_WIDTH]) !== 8'sd0)   errors = errors + 1;
+        if ($signed(y_bus[3*DATA_WIDTH +: DATA_WIDTH]) !== 8'sd127) errors = errors + 1;
+        if ($signed(y_bus[4*DATA_WIDTH +: DATA_WIDTH]) !== 8'sd5)   errors = errors + 1;
+        if ($signed(y_bus[5*DATA_WIDTH +: DATA_WIDTH]) !== 8'sd0)   errors = errors + 1;
+        if ($signed(y_bus[6*DATA_WIDTH +: DATA_WIDTH]) !== 8'sd22)  errors = errors + 1;
+        if ($signed(y_bus[7*DATA_WIDTH +: DATA_WIDTH]) !== 8'sd21)  errors = errors + 1;
 
         $display("busy = %0d", busy);
         $display("done = %0d", done);
