@@ -1,0 +1,275 @@
+Warning: IO 'y_bus[31]' is unconstrained in LPF and will be automatically placed
+Warning: IO 'y_bus[30]' is unconstrained in LPF and will be automatically placed
+Warning: IO 'y_bus[29]' is unconstrained in LPF and will be automatically placed
+Warning: IO 'y_bus[28]' is unconstrained in LPF and will be automatically placed
+Warning: IO 'y_bus[27]' is unconstrained in LPF and will be automatically placed
+Warning: IO 'y_bus[26]' is unconstrained in LPF and will be automatically placed
+Warning: IO 'y_bus[25]' is unconstrained in LPF and will be automatically placed
+Warning: IO 'y_bus[24]' is unconstrained in LPF and will be automatically placed
+Warning: IO 'y_bus[23]' is unconstrained in LPF and will be automatically placed
+Warning: IO 'y_bus[22]' is unconstrained in LPF and will be automatically placed
+Warning: IO 'y_bus[21]' is unconstrained in LPF and will be automatically placed
+Warning: IO 'y_bus[20]' is unconstrained in LPF and will be automatically placed
+Warning: IO 'y_bus[19]' is unconstrained in LPF and will be automatically placed
+Warning: IO 'y_bus[18]' is unconstrained in LPF and will be automatically placed
+Warning: IO 'y_bus[17]' is unconstrained in LPF and will be automatically placed
+Warning: IO 'y_bus[16]' is unconstrained in LPF and will be automatically placed
+Warning: IO 'y_bus[15]' is unconstrained in LPF and will be automatically placed
+Warning: IO 'y_bus[14]' is unconstrained in LPF and will be automatically placed
+Warning: IO 'y_bus[13]' is unconstrained in LPF and will be automatically placed
+Warning: IO 'y_bus[12]' is unconstrained in LPF and will be automatically placed
+Warning: IO 'y_bus[11]' is unconstrained in LPF and will be automatically placed
+Warning: IO 'y_bus[10]' is unconstrained in LPF and will be automatically placed
+Warning: IO 'y_bus[9]' is unconstrained in LPF and will be automatically placed
+Warning: IO 'y_bus[8]' is unconstrained in LPF and will be automatically placed
+Warning: IO 'y_bus[7]' is unconstrained in LPF and will be automatically placed
+Warning: IO 'y_bus[6]' is unconstrained in LPF and will be automatically placed
+Warning: IO 'y_bus[5]' is unconstrained in LPF and will be automatically placed
+Warning: IO 'y_bus[4]' is unconstrained in LPF and will be automatically placed
+Warning: IO 'y_bus[3]' is unconstrained in LPF and will be automatically placed
+Warning: IO 'y_bus[2]' is unconstrained in LPF and will be automatically placed
+Warning: IO 'y_bus[1]' is unconstrained in LPF and will be automatically placed
+Warning: IO 'y_bus[0]' is unconstrained in LPF and will be automatically placed
+Warning: IO 'start' is unconstrained in LPF and will be automatically placed
+Warning: IO 'rst' is unconstrained in LPF and will be automatically placed
+Warning: IO 'done' is unconstrained in LPF and will be automatically placed
+Warning: IO 'clk' is unconstrained in LPF and will be automatically placed
+Warning: IO 'busy' is unconstrained in LPF and will be automatically placed
+
+Info: Logic utilisation before packing:
+Info:     Total LUT4s:       737/43848     1%
+Info:         logic LUTs:    737/43848     1%
+Info:         carry LUTs:      0/43848     0%
+Info:           RAM LUTs:      0/ 5481     0%
+Info:          RAMW LUTs:      0/10962     0%
+
+Info:      Total DFFs:       164/43848     0%
+
+Info: Packing IOs..
+Info: Packing constants..
+Info: Packing carries...
+Info: Packing LUTs...
+Info: Packing LUT5-7s...
+Info: Packing FFs...
+Info:     143 FFs paired with LUTs.
+Info: Generating derived timing constraints...
+Info: Promoting globals...
+Info:     promoting clock net clk$TRELLIS_IO_IN to global network
+Info: Checksum: 0xba108497
+
+Info: Device utilisation:
+Info: 	          TRELLIS_IO:      37/    245    15%
+Info: 	                DCCA:       1/     56     1%
+Info: 	              DP16KD:       0/    108     0%
+Info: 	          MULT18X18D:       0/     72     0%
+Info: 	              ALU54B:       0/     36     0%
+Info: 	             EHXPLLL:       0/      4     0%
+Info: 	             EXTREFB:       0/      2     0%
+Info: 	                DCUA:       0/      2     0%
+Info: 	           PCSCLKDIV:       0/      2     0%
+Info: 	             IOLOGIC:       0/    160     0%
+Info: 	            SIOLOGIC:       0/     85     0%
+Info: 	                 GSR:       0/      1     0%
+Info: 	               JTAGG:       0/      1     0%
+Info: 	                OSCG:       0/      1     0%
+Info: 	               SEDGA:       0/      1     0%
+Info: 	                 DTR:       0/      1     0%
+Info: 	             USRMCLK:       0/      1     0%
+Info: 	             CLKDIVF:       0/      4     0%
+Info: 	           ECLKSYNCB:       0/     10     0%
+Info: 	             DLLDELD:       0/      8     0%
+Info: 	              DDRDLL:       0/      4     0%
+Info: 	             DQSBUFM:       0/     10     0%
+Info: 	     TRELLIS_ECLKBUF:       0/      8     0%
+Info: 	        ECLKBRIDGECS:       0/      2     0%
+Info: 	                DCSC:       0/      2     0%
+Info: 	          TRELLIS_FF:     164/  43848     0%
+Info: 	        TRELLIS_COMB:     738/  43848     1%
+Info: 	        TRELLIS_RAMW:       0/   5481     0%
+
+Info: Placed 0 cells based on constraints.
+Info: Creating initial analytic placement for 316 cells, random placement wirelen = 29789.
+Info:     at initial placer iter 0, wirelen = 1963
+Info:     at initial placer iter 1, wirelen = 1613
+Info:     at initial placer iter 2, wirelen = 1586
+Info:     at initial placer iter 3, wirelen = 1563
+Info: Running main analytical placer, max placement attempts per cell = 110450.
+Info:     at iteration #1, type ALL: wirelen solved = 1570, spread = 2941, legal = 3088; time = 0.01s
+Info:     at iteration #2, type ALL: wirelen solved = 1684, spread = 2706, legal = 2843; time = 0.01s
+Info:     at iteration #3, type ALL: wirelen solved = 1708, spread = 2620, legal = 2790; time = 0.01s
+Info:     at iteration #4, type ALL: wirelen solved = 1737, spread = 2552, legal = 2659; time = 0.01s
+Info:     at iteration #5, type ALL: wirelen solved = 1777, spread = 2535, legal = 2630; time = 0.01s
+Info:     at iteration #6, type ALL: wirelen solved = 1824, spread = 2651, legal = 2719; time = 0.01s
+Info:     at iteration #7, type ALL: wirelen solved = 1832, spread = 2550, legal = 2667; time = 0.01s
+Info:     at iteration #8, type ALL: wirelen solved = 1864, spread = 2610, legal = 2719; time = 0.01s
+Info:     at iteration #9, type ALL: wirelen solved = 1928, spread = 2544, legal = 2641; time = 0.01s
+Info:     at iteration #10, type ALL: wirelen solved = 1940, spread = 2863, legal = 2901; time = 0.01s
+Info: HeAP Placer Time: 0.10s
+Info:   of which solving equations: 0.07s
+Info:   of which spreading cells: 0.01s
+Info:   of which strict legalisation: 0.00s
+
+Info: Running simulated annealing placer for refinement.
+Info:   at iteration #1: temp = 0.000000, timing cost = 96, wirelen = 2630
+Info:   at iteration #5: temp = 0.000000, timing cost = 138, wirelen = 2016
+Info:   at iteration #10: temp = 0.000000, timing cost = 108, wirelen = 1947
+Info:   at iteration #15: temp = 0.000000, timing cost = 100, wirelen = 1917
+Info:   at iteration #17: temp = 0.000000, timing cost = 118, wirelen = 1911 
+Info: SA placement time 0.21s
+
+Info: Max frequency for clock '$glbnet$clk$TRELLIS_IO_IN': 132.89 MHz (PASS at 80.00 MHz)
+
+Info: Max delay <async>                           -> posedge $glbnet$clk$TRELLIS_IO_IN: 5.99 ns
+Info: Max delay posedge $glbnet$clk$TRELLIS_IO_IN -> <async>                          : 6.41 ns
+
+Info: Slack histogram:
+Info:  legend: * represents 1 endpoint(s)
+Info:          + represents [1,1) endpoint(s)
+Info: [  4975,   5323) |*****+
+Info: [  5323,   5671) | 
+Info: [  5671,   6019) |****+
+Info: [  6019,   6367) |*********+
+Info: [  6367,   6715) |*******+
+Info: [  6715,   7063) |*******+
+Info: [  7063,   7411) |******+
+Info: [  7411,   7759) |*****+
+Info: [  7759,   8107) |*******************+
+Info: [  8107,   8455) |*****************+
+Info: [  8455,   8803) |***************************+
+Info: [  8803,   9151) |************+
+Info: [  9151,   9499) |***********+
+Info: [  9499,   9847) |**************************+
+Info: [  9847,  10195) |****************************************************+
+Info: [ 10195,  10543) |************************************************************ 
+Info: [ 10543,  10891) |***********************+
+Info: [ 10891,  11239) |**************************************+
+Info: [ 11239,  11587) |************************************+
+Info: [ 11587,  11935) |*****+
+Info: Checksum: 0xf1666ddb
+Info: Routing globals...
+Info:     routing clock net $glbnet$clk$TRELLIS_IO_IN using global 0
+
+Info: Routing..
+Info: Setting up routing queue.
+Info: Routing 2723 arcs.
+Info:            |   (re-)routed arcs  |   delta    | remaining|       time spent     |
+Info:    IterCnt |  w/ripup   wo/ripup |  w/r  wo/r |      arcs| batch(sec) total(sec)|
+Info:       1000 |      341        658 |  341   658 |      2076|       0.08       0.08|
+Info:       2000 |      540       1426 |  199   768 |      1288|       0.04       0.12|
+Info:       3000 |      602       2280 |   62   854 |       350|       0.03       0.15|
+Info:       3372 |      625       2485 |   23   205 |         0|       0.07       0.22|
+Info: Routing complete.
+Info: Router1 time 0.22s
+Info: Checksum: 0x3dbc8311
+
+Info: Critical path report for clock '$glbnet$clk$TRELLIS_IO_IN' (posedge -> posedge):
+Info:       type curr  total name
+Info:   clk-to-q  0.40  0.40 Source u_layer.GEN_NEURON[1].u_neuron.acc_TRELLIS_FF_Q.Q
+Info:    routing  0.84  1.24 Net u_layer.GEN_NEURON[1].u_neuron.acc[2] (21,30) -> (20,30)
+Info:                          Sink u_layer.GEN_NEURON[1].u_neuron.acc_TRELLIS_FF_Q_1_DI_LUT4_Z_C_LUT4_Z_D_PFUMX_C0_Z_LUT4_Z_D_PFUMX_Z_ALUT_LUT4_Z.D
+Info:                          Defined in:
+Info:                               /Users/michelebigi/Development/FPGA-Neural/FPGA-Neural/rtl/mac8.v:9.35-9.42
+Info:      logic  0.18  1.42 Source u_layer.GEN_NEURON[1].u_neuron.acc_TRELLIS_FF_Q_1_DI_LUT4_Z_C_LUT4_Z_D_PFUMX_C0_Z_LUT4_Z_D_PFUMX_Z_ALUT_LUT4_Z.F
+Info:    routing  0.00  1.42 Net u_layer.GEN_NEURON[1].u_neuron.acc_TRELLIS_FF_Q_1_DI_LUT4_Z_C_LUT4_Z_D_PFUMX_C0_Z_LUT4_Z_D_PFUMX_Z_ALUT (20,30) -> (20,30)
+Info:                          Sink u_layer.GEN_NEURON[1].u_neuron.acc_TRELLIS_FF_Q_1_DI_LUT4_Z_C_LUT4_Z_D_PFUMX_C0_Z_LUT4_Z_D_PFUMX_Z_BLUT_LUT4_Z.F1
+Info:                          Defined in:
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/cells_map_trellis.v:133.22-133.24
+Info:      logic  0.13  1.54 Source u_layer.GEN_NEURON[1].u_neuron.acc_TRELLIS_FF_Q_1_DI_LUT4_Z_C_LUT4_Z_D_PFUMX_C0_Z_LUT4_Z_D_PFUMX_Z_BLUT_LUT4_Z.OFX
+Info:    routing  0.78  2.33 Net u_layer.GEN_NEURON[1].u_neuron.acc_TRELLIS_FF_Q_1_DI_LUT4_Z_C_LUT4_Z_D_PFUMX_C0_Z_LUT4_Z_D[6] (20,30) -> (22,27)
+Info:                          Sink u_layer.GEN_NEURON[1].u_neuron.acc_TRELLIS_FF_Q_1_DI_LUT4_Z_C_LUT4_Z_D_PFUMX_C0_Z_LUT4_Z_D_L6MUX21_SD_D1_L6MUX21_Z_D0_PFUMX_Z_ALUT_LUT4_Z.M
+Info:                          Defined in:
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/cells_map_trellis.v:108.23-108.24
+Info:      logic  0.19  2.52 Source u_layer.GEN_NEURON[1].u_neuron.acc_TRELLIS_FF_Q_1_DI_LUT4_Z_C_LUT4_Z_D_PFUMX_C0_Z_LUT4_Z_D_L6MUX21_SD_D1_L6MUX21_Z_D0_PFUMX_Z_ALUT_LUT4_Z.OFX
+Info:    routing  0.58  3.10 Net u_layer.GEN_NEURON[1].u_neuron.acc_TRELLIS_FF_Q_1_DI_LUT4_Z_C_LUT4_Z_D_PFUMX_C0_Z_LUT4_Z_D_L6MUX21_SD_Z[6] (22,27) -> (21,26)
+Info:                          Sink u_layer.GEN_NEURON[1].u_neuron.acc_TRELLIS_FF_Q_5_DI_LUT4_Z_C_L6MUX21_SD_Z_L6MUX21_SD_D1_L6MUX21_Z_D1_PFUMX_Z_ALUT_LUT4_Z.M
+Info:                          Defined in:
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/cells_map_trellis.v:108.23-108.24
+Info:      logic  0.19  3.29 Source u_layer.GEN_NEURON[1].u_neuron.acc_TRELLIS_FF_Q_5_DI_LUT4_Z_C_L6MUX21_SD_Z_L6MUX21_SD_D1_L6MUX21_Z_D1_PFUMX_Z_ALUT_LUT4_Z.OFX
+Info:    routing  0.00  3.29 Net u_layer.GEN_NEURON[1].u_neuron.acc_TRELLIS_FF_Q_5_DI_LUT4_Z_C_L6MUX21_SD_Z_L6MUX21_SD_D1 (21,26) -> (21,26)
+Info:                          Sink u_layer.GEN_NEURON[1].u_neuron.acc_TRELLIS_FF_Q_5_DI_LUT4_Z_C_L6MUX21_SD_Z_L6MUX21_SD_D1_L6MUX21_Z_D0_PFUMX_Z_ALUT_LUT4_Z.FXB
+Info:                          Defined in:
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/cells_map_trellis.v:157.70-157.72
+Info:      logic  0.18  3.47 Source u_layer.GEN_NEURON[1].u_neuron.acc_TRELLIS_FF_Q_5_DI_LUT4_Z_C_L6MUX21_SD_Z_L6MUX21_SD_D1_L6MUX21_Z_D0_PFUMX_Z_ALUT_LUT4_Z.OFX
+Info:    routing  0.53  4.00 Net u_layer.GEN_NEURON[1].u_neuron.acc_TRELLIS_FF_Q_5_DI_LUT4_Z_C_L6MUX21_SD_Z_L6MUX21_SD_Z[6] (21,26) -> (20,27)
+Info:                          Sink u_layer.GEN_NEURON[1].u_neuron.acc_TRELLIS_FF_Q_5_DI_LUT4_Z_C_L6MUX21_SD_Z_L6MUX21_SD_Z_L6MUX21_SD_D1_L6MUX21_Z_D0_PFUMX_Z_ALUT_LUT4_Z.M
+Info:                          Defined in:
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/cells_map_trellis.v:108.23-108.24
+Info:      logic  0.19  4.20 Source u_layer.GEN_NEURON[1].u_neuron.acc_TRELLIS_FF_Q_5_DI_LUT4_Z_C_L6MUX21_SD_Z_L6MUX21_SD_Z_L6MUX21_SD_D1_L6MUX21_Z_D0_PFUMX_Z_ALUT_LUT4_Z.OFX
+Info:    routing  0.53  4.73 Net u_layer.GEN_NEURON[1].u_neuron.acc_TRELLIS_FF_Q_5_DI_LUT4_Z_C_L6MUX21_SD_Z_L6MUX21_SD_Z_L6MUX21_SD_Z[6] (20,27) -> (18,27)
+Info:                          Sink u_layer.GEN_NEURON[1].u_neuron.acc_TRELLIS_FF_Q_16_DI_LUT4_Z_C_L6MUX21_SD_Z_L6MUX21_SD_Z_L6MUX21_Z_D1_L6MUX21_Z_D0_PFUMX_Z_ALUT_LUT4_Z.M
+Info:                          Defined in:
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/cells_map_trellis.v:108.23-108.24
+Info:      logic  0.19  4.92 Source u_layer.GEN_NEURON[1].u_neuron.acc_TRELLIS_FF_Q_16_DI_LUT4_Z_C_L6MUX21_SD_Z_L6MUX21_SD_Z_L6MUX21_Z_D1_L6MUX21_Z_D0_PFUMX_Z_ALUT_LUT4_Z.OFX
+Info:    routing  0.68  5.60 Net u_layer.GEN_NEURON[1].u_neuron.acc_TRELLIS_FF_Q_16_DI_LUT4_Z_C_L6MUX21_SD_Z_L6MUX21_SD_Z[3] (18,27) -> (18,28)
+Info:                          Sink u_layer.GEN_NEURON[1].u_neuron.y_TRELLIS_FF_Q_3_DI_L6MUX21_Z_D0_L6MUX21_Z_D0_PFUMX_Z_BLUT_LUT4_Z.D
+Info:                          Defined in:
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/cells_map_trellis.v:108.23-108.24
+Info:      logic  0.31  5.91 Source u_layer.GEN_NEURON[1].u_neuron.y_TRELLIS_FF_Q_3_DI_L6MUX21_Z_D0_L6MUX21_Z_D0_PFUMX_Z_BLUT_LUT4_Z.OFX
+Info:    routing  0.00  5.91 Net u_layer.GEN_NEURON[1].u_neuron.y_TRELLIS_FF_Q_3_DI_L6MUX21_Z_D0_L6MUX21_Z_D0 (18,28) -> (18,28)
+Info:                          Sink u_layer.GEN_NEURON[1].u_neuron.y_TRELLIS_FF_Q_3_DI_L6MUX21_Z_D0_L6MUX21_Z_D1_PFUMX_Z_ALUT_LUT4_Z.FXA
+Info:                          Defined in:
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/cells_map_trellis.v:157.50-157.52
+Info:      logic  0.18  6.09 Source u_layer.GEN_NEURON[1].u_neuron.y_TRELLIS_FF_Q_3_DI_L6MUX21_Z_D0_L6MUX21_Z_D1_PFUMX_Z_ALUT_LUT4_Z.OFX
+Info:    routing  0.00  6.09 Net u_layer.GEN_NEURON[1].u_neuron.y_TRELLIS_FF_Q_3_DI_L6MUX21_Z_D0 (18,28) -> (18,28)
+Info:                          Sink u_layer.GEN_NEURON[1].u_neuron.y_TRELLIS_FF_Q_3_DI_L6MUX21_Z_D1_L6MUX21_Z_D0_PFUMX_Z_ALUT_LUT4_Z.FXA
+Info:                          Defined in:
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/cells_map_trellis.v:157.66-157.68
+Info:      logic  0.18  6.27 Source u_layer.GEN_NEURON[1].u_neuron.y_TRELLIS_FF_Q_3_DI_L6MUX21_Z_D1_L6MUX21_Z_D0_PFUMX_Z_ALUT_LUT4_Z.OFX
+Info:    routing  0.51  6.77 Net u_layer.GEN_NEURON[1].u_neuron.y_TRELLIS_FF_Q_3_DI (18,28) -> (18,27)
+Info:                          Sink u_layer.GEN_NEURON[1].u_neuron.y_TRELLIS_FF_Q_3.M
+Info:      setup  0.00  6.77 Source u_layer.GEN_NEURON[1].u_neuron.y_TRELLIS_FF_Q_3.M
+Info: 2.32 ns logic, 4.46 ns routing
+
+Info: Critical path report for cross-domain path '<async>' -> 'posedge $glbnet$clk$TRELLIS_IO_IN':
+Info:       type curr  total name
+Info:     source  0.00  0.00 Source rst$tr_io.O
+Info:    routing  2.64  2.64 Net rst$TRELLIS_IO_IN (44,0) -> (20,21)
+Info:                          Sink u_layer.GEN_NEURON[1].u_neuron.busy_LUT4_D.C
+Info:                          Defined in:
+Info:                               /Users/michelebigi/Development/FPGA-Neural/FPGA-Neural/rtl/layer.v:9.11-9.14
+Info:      logic  0.18  2.82 Source u_layer.GEN_NEURON[1].u_neuron.busy_LUT4_D.F
+Info:    routing  1.19  4.01 Net u_layer.GEN_NEURON[1].u_neuron.busy_LUT4_D_Z (20,21) -> (16,30)
+Info:                          Sink u_layer.GEN_NEURON[1].u_neuron.acc_TRELLIS_FF_Q_29.LSR
+Info:      setup  0.29  4.29 Source u_layer.GEN_NEURON[1].u_neuron.acc_TRELLIS_FF_Q_29.LSR
+Info: 0.47 ns logic, 3.83 ns routing
+
+Info: Critical path report for cross-domain path 'posedge $glbnet$clk$TRELLIS_IO_IN' -> '<async>':
+Info:       type curr  total name
+Info:   clk-to-q  0.40  0.40 Source u_layer.GEN_NEURON[0].u_neuron.y_TRELLIS_FF_Q.Q
+Info:    routing  3.92  4.31 Net y_bus[0]$TRELLIS_IO_OUT (31,7) -> (90,29)
+Info:                          Sink y_bus[2]$tr_io.I
+Info:                          Defined in:
+Info:                               /Users/michelebigi/Development/FPGA-Neural/FPGA-Neural/synth/ecp5/p8/top.v:6.26-6.31
+Info: 0.40 ns logic, 3.92 ns routing
+
+Info: Max frequency for clock '$glbnet$clk$TRELLIS_IO_IN': 147.62 MHz (PASS at 80.00 MHz)
+
+Info: Max delay <async>                           -> posedge $glbnet$clk$TRELLIS_IO_IN: 4.29 ns
+Info: Max delay posedge $glbnet$clk$TRELLIS_IO_IN -> <async>                          : 4.31 ns
+
+Info: Slack histogram:
+Info:  legend: * represents 1 endpoint(s)
+Info:          + represents [1,1) endpoint(s)
+Info: [  5726,   6025) |**+
+Info: [  6025,   6324) |******+
+Info: [  6324,   6623) |*********+
+Info: [  6623,   6922) |****+
+Info: [  6922,   7221) |**********+
+Info: [  7221,   7520) |********+
+Info: [  7520,   7819) |***********+
+Info: [  7819,   8118) |***+
+Info: [  8118,   8417) |*******+
+Info: [  8417,   8716) |***********************+
+Info: [  8716,   9015) |****************************+
+Info: [  9015,   9314) |****************+
+Info: [  9314,   9613) |******************+
+Info: [  9613,   9912) |**************+
+Info: [  9912,  10211) |********+
+Info: [ 10211,  10510) |******************************************************+
+Info: [ 10510,  10809) |***************************************************+
+Info: [ 10809,  11108) |*********************************+
+Info: [ 11108,  11407) |************************************************************ 
+Info: [ 11407,  11706) |**************+
+37 warnings, 0 errors
+
+Info: Program finished normally.

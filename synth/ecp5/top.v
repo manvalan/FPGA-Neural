@@ -1,75 +1,117 @@
-module top (
-    input clk,
-    input rst,
-    input start,
+module top #(
+    parameter DATA_WIDTH = 8,
+    parameter N_INPUTS   = 256,
+    parameter N_NEURONS  = 4,
+    parameter PARALLEL   = 8,
+    parameter ACC_WIDTH  = 32
+)(
+    input  wire clk,
+    input  wire rst,
+    input  wire start,
 
-    output signed [31:0] y_bus,
-    output busy,
-    output done
+    output wire signed [DATA_WIDTH*N_NEURONS-1:0] y_bus,
+    output wire busy,
+    output wire done
 );
 
-    localparam DATA_WIDTH = 8;
-    localparam N_INPUTS   = 256;
-    localparam N_NEURONS  = 4;
-    localparam PARALLEL   = 2;
-    localparam ACC_WIDTH  = 32;
+    localparam X_BITS = DATA_WIDTH * N_INPUTS;
+    localparam W_BITS = DATA_WIDTH * N_INPUTS * N_NEURONS;
+    localparam B_BITS = DATA_WIDTH * N_NEURONS;
 
-    reg signed [DATA_WIDTH*N_INPUTS-1:0] x_bus;
-    reg signed [DATA_WIDTH*N_INPUTS*N_NEURONS-1:0] weights_bus;
-    reg signed [DATA_WIDTH*N_NEURONS-1:0] bias_bus;
+    /*
+     * Deterministic benchmark vectors.
+     *
+     * These are INTERNAL signals.
+     * They are deliberately marked keep so that Yosys does not
+     * constant-fold the complete neural datapath away.
+     */
 
-    integer i;
+    (* keep = "true" *)
+    wire signed [X_BITS-1:0] x_bus;
 
-    initial begin
-        x_bus       = 0;
-        weights_bus = 0;
-        bias_bus    = 0;
+    (* keep = "true" *)
+    wire signed [W_BITS-1:0] weights_bus;
 
-        // x[i] = 1
-        for (i = 0; i < N_INPUTS; i = i + 1)
-            x_bus[i*DATA_WIDTH +: DATA_WIDTH] = 8'sd1;
+    (* keep = "true" *)
+    wire signed [B_BITS-1:0] bias_bus;
 
-        // Neurone 0: primi 32 pesi = +1
-        for (i = 0; i < 32; i = i + 1)
-            weights_bus[
-                0*N_INPUTS*DATA_WIDTH +
-                i*DATA_WIDTH +:
-                DATA_WIDTH
-            ] = 8'sd1;
 
-        // Neurone 1: tutti i pesi = 0, bias = 10
-        bias_bus[1*DATA_WIDTH +: DATA_WIDTH] = 8'sd10;
+    /*
+     * Generate deterministic non-zero INT8 data.
+     *
+     * Each byte is a different constant.  The buses remain internal,
+     * so nextpnr sees only the 37 real top-level I/Os.
+     */
 
-        // Neurone 2: tutti i pesi = -1
-        for (i = 0; i < N_INPUTS; i = i + 1)
-            weights_bus[
-                2*N_INPUTS*DATA_WIDTH +
-                i*DATA_WIDTH +:
-                DATA_WIDTH
-            ] = -8'sd1;
+    genvar i;
+    genvar n;
 
-        // Neurone 3: primi 32 pesi = +4
-        for (i = 0; i < 32; i = i + 1)
-            weights_bus[
-                3*N_INPUTS*DATA_WIDTH +
-                i*DATA_WIDTH +:
-                DATA_WIDTH
-            ] = 8'sd4;
-    end
+    generate
 
+        for (i = 0; i < N_INPUTS; i = i + 1) begin : GEN_X
+
+            localparam integer XV =
+                ((i * 17 + 3) % 31) - 15;
+
+            assign x_bus[
+                i*DATA_WIDTH +: DATA_WIDTH
+            ] = XV;
+
+        end
+
+
+        for (n = 0; n < N_NEURONS; n = n + 1) begin : GEN_WN
+
+            for (i = 0; i < N_INPUTS; i = i + 1) begin : GEN_WI
+
+                localparam integer WV =
+                    ((n * 29 + i * 13 + 5) % 31) - 15;
+
+                assign weights_bus[
+                    (n*N_INPUTS+i)*DATA_WIDTH
+                    +: DATA_WIDTH
+                ] = WV;
+
+            end
+
+        end
+
+
+        for (n = 0; n < N_NEURONS; n = n + 1) begin : GEN_B
+
+            localparam integer BV =
+                ((n * 7 + 1) % 9) - 4;
+
+            assign bias_bus[
+                n*DATA_WIDTH
+                +: DATA_WIDTH
+            ] = BV;
+
+        end
+
+    endgenerate
+
+
+    /*
+     * Real neural-network layer.
+     */
+
+    (* keep_hierarchy = "true" *)
     layer #(
         .DATA_WIDTH(DATA_WIDTH),
         .N_INPUTS(N_INPUTS),
         .N_NEURONS(N_NEURONS),
         .PARALLEL(PARALLEL),
         .ACC_WIDTH(ACC_WIDTH)
-    ) u_layer (
+    ) dut (
         .clk(clk),
         .rst(rst),
         .start(start),
+
         .x_bus(x_bus),
         .weights_bus(weights_bus),
         .bias_bus(bias_bus),
+
         .y_bus(y_bus),
         .busy(busy),
         .done(done)

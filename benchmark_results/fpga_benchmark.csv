@@ -1,0 +1,4 @@
+target_id,fpga,family,parallel,n_inputs,n_neurons,status,fmax_mhz,period_ns,slack_ns,lut,ff,dsp,lut_pct,ff_pct,dsp_pct,mac_per_cycle,groups_per_neuron,total_mac,cycles_per_layer,cost_eur,mac_per_second,mac_per_euro,build_time_s,error
+ecp5_45f,LFE5U-45F-8BG381,ECP5,8,256,4,FAIL,,,,,,,,,,32,32,32,32,35.0,,,,nextpnr placement/routing failed
+ecp5_45f,LFE5U-45F-8BG381,ECP5,4,256,4,FAIL,,,,,,,,,,16,64,16,64,35.0,,,,nextpnr placement/routing failed
+ecp5_45f,LFE5U-45F-8BG381,ECP5,2,256,4,PASS,,,,,,,,,,8,128,8,128,35.0,,,1.504363291998743,
