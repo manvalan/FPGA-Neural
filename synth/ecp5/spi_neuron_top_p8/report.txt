@@ -1,0 +1,501 @@
+Warning: IO 'sclk' is unconstrained in LPF and will be automatically placed
+Warning: IO 'rst' is unconstrained in LPF and will be automatically placed
+Warning: IO 'psram_zz_n' is unconstrained in LPF and will be automatically placed
+Warning: IO 'psram_we_n' is unconstrained in LPF and will be automatically placed
+Warning: IO 'psram_ub_n' is unconstrained in LPF and will be automatically placed
+Warning: IO 'psram_oe_n' is unconstrained in LPF and will be automatically placed
+Warning: IO 'psram_lb_n' is unconstrained in LPF and will be automatically placed
+Warning: IO 'psram_dq[15]' is unconstrained in LPF and will be automatically placed
+Warning: IO 'psram_dq[14]' is unconstrained in LPF and will be automatically placed
+Warning: IO 'psram_dq[13]' is unconstrained in LPF and will be automatically placed
+Warning: IO 'psram_dq[12]' is unconstrained in LPF and will be automatically placed
+Warning: IO 'psram_dq[11]' is unconstrained in LPF and will be automatically placed
+Warning: IO 'psram_dq[10]' is unconstrained in LPF and will be automatically placed
+Warning: IO 'psram_dq[9]' is unconstrained in LPF and will be automatically placed
+Warning: IO 'psram_dq[8]' is unconstrained in LPF and will be automatically placed
+Warning: IO 'psram_dq[7]' is unconstrained in LPF and will be automatically placed
+Warning: IO 'psram_dq[6]' is unconstrained in LPF and will be automatically placed
+Warning: IO 'psram_dq[5]' is unconstrained in LPF and will be automatically placed
+Warning: IO 'psram_dq[4]' is unconstrained in LPF and will be automatically placed
+Warning: IO 'psram_dq[3]' is unconstrained in LPF and will be automatically placed
+Warning: IO 'psram_dq[2]' is unconstrained in LPF and will be automatically placed
+Warning: IO 'psram_dq[1]' is unconstrained in LPF and will be automatically placed
+Warning: IO 'psram_dq[0]' is unconstrained in LPF and will be automatically placed
+Warning: IO 'psram_ce_n' is unconstrained in LPF and will be automatically placed
+Warning: IO 'psram_a[21]' is unconstrained in LPF and will be automatically placed
+Warning: IO 'psram_a[20]' is unconstrained in LPF and will be automatically placed
+Warning: IO 'psram_a[19]' is unconstrained in LPF and will be automatically placed
+Warning: IO 'psram_a[18]' is unconstrained in LPF and will be automatically placed
+Warning: IO 'psram_a[17]' is unconstrained in LPF and will be automatically placed
+Warning: IO 'psram_a[16]' is unconstrained in LPF and will be automatically placed
+Warning: IO 'psram_a[15]' is unconstrained in LPF and will be automatically placed
+Warning: IO 'psram_a[14]' is unconstrained in LPF and will be automatically placed
+Warning: IO 'psram_a[13]' is unconstrained in LPF and will be automatically placed
+Warning: IO 'psram_a[12]' is unconstrained in LPF and will be automatically placed
+Warning: IO 'psram_a[11]' is unconstrained in LPF and will be automatically placed
+Warning: IO 'psram_a[10]' is unconstrained in LPF and will be automatically placed
+Warning: IO 'psram_a[9]' is unconstrained in LPF and will be automatically placed
+Warning: IO 'psram_a[8]' is unconstrained in LPF and will be automatically placed
+Warning: IO 'psram_a[7]' is unconstrained in LPF and will be automatically placed
+Warning: IO 'psram_a[6]' is unconstrained in LPF and will be automatically placed
+Warning: IO 'psram_a[5]' is unconstrained in LPF and will be automatically placed
+Warning: IO 'psram_a[4]' is unconstrained in LPF and will be automatically placed
+Warning: IO 'psram_a[3]' is unconstrained in LPF and will be automatically placed
+Warning: IO 'psram_a[2]' is unconstrained in LPF and will be automatically placed
+Warning: IO 'psram_a[1]' is unconstrained in LPF and will be automatically placed
+Warning: IO 'psram_a[0]' is unconstrained in LPF and will be automatically placed
+Warning: IO 'mosi' is unconstrained in LPF and will be automatically placed
+Warning: IO 'miso' is unconstrained in LPF and will be automatically placed
+Warning: IO 'cs_n' is unconstrained in LPF and will be automatically placed
+Warning: IO 'clk' is unconstrained in LPF and will be automatically placed
+
+Info: Logic utilisation before packing:
+Info:     Total LUT4s:      6436/43848    14%
+Info:         logic LUTs:   6436/43848    14%
+Info:         carry LUTs:      0/43848     0%
+Info:           RAM LUTs:      0/ 5481     0%
+Info:          RAMW LUTs:      0/10962     0%
+
+Info:      Total DFFs:      1420/43848     3%
+
+Info: Packing IOs..
+Info: Packing constants..
+Info: Packing carries...
+Info: Packing LUTs...
+Info: Packing LUT5-7s...
+Info: Packing FFs...
+Info:     355 FFs paired with LUTs.
+Info: Generating derived timing constraints...
+Info: Promoting globals...
+Info:     promoting clock net clk$TRELLIS_IO_IN to global network
+Info: Checksum: 0x9f1947b5
+
+Info: Device utilisation:
+Info: 	          TRELLIS_IO:      50/    245    20%
+Info: 	                DCCA:       1/     56     1%
+Info: 	              DP16KD:       0/    108     0%
+Info: 	          MULT18X18D:       0/     72     0%
+Info: 	              ALU54B:       0/     36     0%
+Info: 	             EHXPLLL:       0/      4     0%
+Info: 	             EXTREFB:       0/      2     0%
+Info: 	                DCUA:       0/      2     0%
+Info: 	           PCSCLKDIV:       0/      2     0%
+Info: 	             IOLOGIC:       0/    160     0%
+Info: 	            SIOLOGIC:       0/     85     0%
+Info: 	                 GSR:       0/      1     0%
+Info: 	               JTAGG:       0/      1     0%
+Info: 	                OSCG:       0/      1     0%
+Info: 	               SEDGA:       0/      1     0%
+Info: 	                 DTR:       0/      1     0%
+Info: 	             USRMCLK:       0/      1     0%
+Info: 	             CLKDIVF:       0/      4     0%
+Info: 	           ECLKSYNCB:       0/     10     0%
+Info: 	             DLLDELD:       0/      8     0%
+Info: 	              DDRDLL:       0/      4     0%
+Info: 	             DQSBUFM:       0/     10     0%
+Info: 	     TRELLIS_ECLKBUF:       0/      8     0%
+Info: 	        ECLKBRIDGECS:       0/      2     0%
+Info: 	                DCSC:       0/      2     0%
+Info: 	          TRELLIS_FF:    1420/  43848     3%
+Info: 	        TRELLIS_COMB:    6438/  43848    14%
+Info: 	        TRELLIS_RAMW:       0/   5481     0%
+
+Info: Placed 0 cells based on constraints.
+Info: Creating initial analytic placement for 4222 cells, random placement wirelen = 352199.
+Info:     at initial placer iter 0, wirelen = 4378
+Info:     at initial placer iter 1, wirelen = 3553
+Info:     at initial placer iter 2, wirelen = 3239
+Info:     at initial placer iter 3, wirelen = 3128
+Info: Running main analytical placer, max placement attempts per cell = 7819035.
+Info:     at iteration #1, type ALL: wirelen solved = 3151, spread = 41347, legal = 42253; time = 0.06s
+Info:     at iteration #2, type ALL: wirelen solved = 6665, spread = 30679, legal = 31933; time = 0.06s
+Info:     at iteration #3, type ALL: wirelen solved = 8857, spread = 31063, legal = 32086; time = 0.06s
+Info:     at iteration #4, type ALL: wirelen solved = 11208, spread = 28659, legal = 29631; time = 0.06s
+Info:     at iteration #5, type ALL: wirelen solved = 12164, spread = 25995, legal = 27179; time = 0.06s
+Info:     at iteration #6, type ALL: wirelen solved = 13394, spread = 26139, legal = 27468; time = 0.05s
+Info:     at iteration #7, type ALL: wirelen solved = 14075, spread = 25798, legal = 26969; time = 0.05s
+Info:     at iteration #8, type ALL: wirelen solved = 14766, spread = 24905, legal = 26219; time = 0.05s
+Info:     at iteration #9, type ALL: wirelen solved = 14828, spread = 25125, legal = 26359; time = 0.05s
+Info:     at iteration #10, type ALL: wirelen solved = 15249, spread = 25236, legal = 26354; time = 0.05s
+Info:     at iteration #11, type ALL: wirelen solved = 15892, spread = 24980, legal = 26181; time = 0.05s
+Info:     at iteration #12, type ALL: wirelen solved = 16095, spread = 25002, legal = 26263; time = 0.05s
+Info:     at iteration #13, type ALL: wirelen solved = 16520, spread = 25223, legal = 26312; time = 0.05s
+Info:     at iteration #14, type ALL: wirelen solved = 17114, spread = 24988, legal = 26021; time = 0.05s
+Info:     at iteration #15, type ALL: wirelen solved = 17403, spread = 25457, legal = 26491; time = 0.05s
+Info:     at iteration #16, type ALL: wirelen solved = 18089, spread = 25821, legal = 26584; time = 0.05s
+Info:     at iteration #17, type ALL: wirelen solved = 18656, spread = 25904, legal = 26453; time = 0.05s
+Info:     at iteration #18, type ALL: wirelen solved = 19287, spread = 25940, legal = 26660; time = 0.05s
+Info:     at iteration #19, type ALL: wirelen solved = 19350, spread = 24986, legal = 25846; time = 0.05s
+Info:     at iteration #20, type ALL: wirelen solved = 19046, spread = 25002, legal = 25977; time = 0.05s
+Info:     at iteration #21, type ALL: wirelen solved = 19079, spread = 24701, legal = 25751; time = 0.05s
+Info:     at iteration #22, type ALL: wirelen solved = 18866, spread = 24709, legal = 25638; time = 0.05s
+Info:     at iteration #23, type ALL: wirelen solved = 19095, spread = 23320, legal = 24519; time = 0.05s
+Info:     at iteration #24, type ALL: wirelen solved = 18684, spread = 24177, legal = 25080; time = 0.05s
+Info:     at iteration #25, type ALL: wirelen solved = 19167, spread = 23164, legal = 24255; time = 0.05s
+Info:     at iteration #26, type ALL: wirelen solved = 18682, spread = 22609, legal = 23832; time = 0.05s
+Info:     at iteration #27, type ALL: wirelen solved = 18209, spread = 23817, legal = 24630; time = 0.05s
+Info:     at iteration #28, type ALL: wirelen solved = 19084, spread = 23785, legal = 24603; time = 0.05s
+Info:     at iteration #29, type ALL: wirelen solved = 19141, spread = 22830, legal = 24133; time = 0.05s
+Info:     at iteration #30, type ALL: wirelen solved = 18661, spread = 24011, legal = 24831; time = 0.05s
+Info:     at iteration #31, type ALL: wirelen solved = 19584, spread = 24034, legal = 24815; time = 0.05s
+Info: HeAP Placer Time: 2.20s
+Info:   of which solving equations: 1.39s
+Info:   of which spreading cells: 0.27s
+Info:   of which strict legalisation: 0.10s
+
+Info: Running simulated annealing placer for refinement.
+Info:   at iteration #1: temp = 0.000000, timing cost = 9426, wirelen = 23832
+Info:   at iteration #5: temp = 0.000000, timing cost = 8054, wirelen = 21144
+Info:   at iteration #10: temp = 0.000000, timing cost = 7776, wirelen = 20420
+Info:   at iteration #15: temp = 0.000000, timing cost = 7381, wirelen = 20052
+Info:   at iteration #20: temp = 0.000000, timing cost = 7346, wirelen = 19932
+Info:   at iteration #25: temp = 0.000000, timing cost = 7354, wirelen = 19899
+Info:   at iteration #25: temp = 0.000000, timing cost = 7350, wirelen = 19899 
+Info: SA placement time 3.34s
+
+Info: Max frequency for clock '$glbnet$clk$TRELLIS_IO_IN': 33.42 MHz (FAIL at 80.00 MHz)
+
+Info: Max delay <async>                           -> posedge $glbnet$clk$TRELLIS_IO_IN: 17.03 ns
+Info: Max delay posedge $glbnet$clk$TRELLIS_IO_IN -> <async>                          : 8.57 ns
+
+Info: Slack histogram:
+Info:  legend: * represents 11 endpoint(s)
+Info:          + represents [1,11) endpoint(s)
+Info: [-17426, -15958) |+
+Info: [-15958, -14490) |+
+Info: [-14490, -13022) |+
+Info: [-13022, -11554) |+
+Info: [-11554, -10086) |+
+Info: [-10086,  -8618) |+
+Info: [ -8618,  -7150) |+
+Info: [ -7150,  -5682) |+
+Info: [ -5682,  -4214) |+
+Info: [ -4214,  -2746) |+
+Info: [ -2746,  -1278) |+
+Info: [ -1278,    190) |+
+Info: [   190,   1658) |+
+Info: [  1658,   3126) |**+
+Info: [  3126,   4594) |*************************+
+Info: [  4594,   6062) |************************************************************ 
+Info: [  6062,   7530) |**************************************+
+Info: [  7530,   8998) |*****************************************+
+Info: [  8998,  10466) |**********************************************+
+Info: [ 10466,  11934) |*******************************************+
+Info: Checksum: 0x038b2da9
+Info: Routing globals...
+Info:     routing clock net $glbnet$clk$TRELLIS_IO_IN using global 0
+
+Info: Routing..
+Info: Setting up routing queue.
+Info: Routing 30440 arcs.
+Info:            |   (re-)routed arcs  |   delta    | remaining|       time spent     |
+Info:    IterCnt |  w/ripup   wo/ripup |  w/r  wo/r |      arcs| batch(sec) total(sec)|
+Info:       1000 |      392        607 |  392   607 |     29839|       0.21       0.21|
+Info:       2000 |      756       1243 |  364   636 |     29254|       0.08       0.29|
+Info:       3000 |     1165       1834 |  409   591 |     28743|       0.09       0.37|
+Info:       4000 |     1657       2342 |  492   508 |     28323|       0.08       0.46|
+Info:       5000 |     2148       2851 |  491   509 |     27935|       0.09       0.54|
+Info:       6000 |     2711       3288 |  563   437 |     27529|       0.08       0.62|
+Info:       7000 |     3147       3852 |  436   564 |     27174|       0.09       0.71|
+Info:       8000 |     3641       4358 |  494   506 |     26737|       0.09       0.80|
+Info:       9000 |     4188       4811 |  547   453 |     26401|       0.09       0.89|
+Info:      10000 |     4732       5267 |  544   456 |     26034|       0.09       0.98|
+Info:      11000 |     5236       5763 |  504   496 |     25658|       0.09       1.07|
+Info:      12000 |     5712       6287 |  476   524 |     25246|       0.10       1.17|
+Info:      13000 |     6301       6698 |  589   411 |     24955|       0.10       1.27|
+Info:      14000 |     6852       7147 |  551   449 |     24575|       0.10       1.36|
+Info:      15000 |     7364       7635 |  512   488 |     24159|       0.09       1.46|
+Info:      16000 |     7866       8133 |  502   498 |     23740|       0.10       1.56|
+Info:      17000 |     8468       8531 |  602   398 |     23423|       0.11       1.66|
+Info:      18000 |     9085       8914 |  617   383 |     23112|       0.10       1.77|
+Info:      19000 |     9675       9324 |  590   410 |     22809|       0.11       1.87|
+Info:      20000 |    10211       9788 |  536   464 |     22441|       0.10       1.98|
+Info:      21000 |    10712      10287 |  501   499 |     22088|       0.10       2.07|
+Info:      22000 |    11280      10719 |  568   432 |     21742|       0.11       2.18|
+Info:      23000 |    11810      11189 |  530   470 |     21354|       0.10       2.28|
+Info:      24000 |    12310      11689 |  500   500 |     20977|       0.10       2.38|
+Info:      25000 |    12880      12119 |  570   430 |     20719|       0.11       2.49|
+Info:      26000 |    13533      12466 |  653   347 |     20466|       0.11       2.60|
+Info:      27000 |    14169      12830 |  636   364 |     20193|       0.10       2.70|
+Info:      28000 |    14837      13162 |  668   332 |     19961|       0.11       2.81|
+Info:      29000 |    15445      13554 |  608   392 |     19667|       0.10       2.92|
+Info:      30000 |    16065      13934 |  620   380 |     19392|       0.10       3.02|
+Info:      31000 |    16632      14367 |  567   433 |     19065|       0.10       3.12|
+Info:      32000 |    17172      14827 |  540   460 |     18753|       0.10       3.23|
+Info:      33000 |    17727      15272 |  555   445 |     18400|       0.10       3.33|
+Info:      34000 |    18265      15734 |  538   462 |     18038|       0.10       3.43|
+Info:      35000 |    18796      16203 |  531   469 |     17690|       0.09       3.52|
+Info:      36000 |    19315      16684 |  519   481 |     17353|       0.10       3.62|
+Info:      37000 |    19809      17190 |  494   506 |     16958|       0.10       3.72|
+Info:      38000 |    20481      17518 |  672   328 |     16759|       0.10       3.83|
+Info:      39000 |    21138      17861 |  657   343 |     16572|       0.10       3.93|
+Info:      40000 |    21841      18158 |  703   297 |     16379|       0.10       4.03|
+Info:      41000 |    22468      18531 |  627   373 |     16146|       0.10       4.13|
+Info:      42000 |    23138      18861 |  670   330 |     15965|       0.11       4.24|
+Info:      43000 |    23834      19165 |  696   304 |     15814|       0.11       4.35|
+Info:      44000 |    24462      19537 |  628   372 |     15626|       0.11       4.45|
+Info:      45000 |    25086      19913 |  624   376 |     15343|       0.10       4.56|
+Info:      46000 |    25688      20311 |  602   398 |     15067|       0.10       4.66|
+Info:      47000 |    26295      20704 |  607   393 |     14793|       0.10       4.76|
+Info:      48000 |    26843      21156 |  548   452 |     14563|       0.10       4.86|
+Info:      49000 |    27436      21563 |  593   407 |     14319|       0.11       4.97|
+Info:      50000 |    28012      21987 |  576   424 |     14099|       0.11       5.07|
+Info:      51000 |    28600      22399 |  588   412 |     13800|       0.10       5.18|
+Info:      52000 |    29194      22805 |  594   406 |     13508|       0.10       5.27|
+Info:      53000 |    29717      23282 |  523   477 |     13195|       0.10       5.38|
+Info:      54000 |    29826      23913 |  109   631 |     12326|       0.04       5.42|
+Info:      55000 |    30090      24407 |  264   494 |     11608|       0.05       5.47|
+Info:      56000 |    30553      24789 |  463   382 |     11113|       0.08       5.54|
+Info:      57000 |    30946      25207 |  393   418 |     10519|       0.06       5.61|
+Info:      58000 |    31417      25572 |  471   365 |     10001|       0.08       5.68|
+Info:      59000 |    31859      25962 |  442   390 |      9484|       0.08       5.76|
+Info:      60000 |    32341      26341 |  482   379 |      8993|       0.08       5.84|
+Info:      61000 |    32809      26757 |  468   416 |      8518|       0.09       5.93|
+Info:      62000 |    33300      27150 |  491   393 |      8046|       0.09       6.02|
+Info:      63000 |    33821      27575 |  521   425 |      7799|       0.10       6.12|
+Info:      64000 |    34268      28054 |  447   479 |      7433|       0.11       6.22|
+Info:      65000 |    34837      28432 |  569   378 |      7062|       0.10       6.32|
+Info:      66000 |    35429      28802 |  592   370 |      6692|       0.10       6.43|
+Info:      67000 |    35650      29572 |  221   770 |      5925|       0.10       6.53|
+Info:      68000 |    35771      30447 |  121   875 |      5056|       0.10       6.63|
+Info:      69000 |    35881      31329 |  110   882 |      4188|       0.12       6.75|
+Info:      70000 |    35943      32233 |   62   904 |      3265|       0.09       6.84|
+Info:      71000 |    36009      33134 |   66   901 |      2347|       0.09       6.93|
+Info:      72000 |    36080      34026 |   71   892 |      1422|       0.08       7.01|
+Info:      73000 |    36172      34815 |   92   789 |       526|       0.15       7.17|
+Info:      73605 |    36221      35220 |   49   405 |         0|       0.22       7.39|
+Info: Routing complete.
+Info: Router1 time 7.39s
+Info: Checksum: 0x9bcbba0b
+
+Info: Critical path report for clock '$glbnet$clk$TRELLIS_IO_IN' (posedge -> posedge):
+Info:       type curr  total name
+Info:   clk-to-q  0.40  0.40 Source u_neuron_memory.u_neuron.group_index_TRELLIS_FF_Q_1.Q
+Info:    routing  1.90  2.30 Net u_neuron_memory.w_mem[3]_LUT4_D_1_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z[3] (19,23) -> (24,44)
+Info:                          Sink u_neuron_memory.w_mem[7]_LUT4_D_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_LUT4_D_Z_LUT4_C_Z_LUT4_Z_1_D_LUT4_Z_C_LUT4_Z_D_LUT4_D_1_Z_LUT4_Z_3_D_PFUMX_Z_C0_LUT4_Z.D
+Info:                          Defined in:
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/cells_map_trellis.v:108.23-108.24
+Info:      logic  0.18  2.48 Source u_neuron_memory.w_mem[7]_LUT4_D_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_LUT4_D_Z_LUT4_C_Z_LUT4_Z_1_D_LUT4_Z_C_LUT4_Z_D_LUT4_D_1_Z_LUT4_Z_3_D_PFUMX_Z_C0_LUT4_Z.F
+Info:    routing  0.37  2.85 Net u_neuron_memory.w_mem[7]_LUT4_D_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_LUT4_D_B[4] (24,44) -> (22,44)
+Info:                          Sink u_neuron_memory.w_mem[7]_LUT4_D_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_LUT4_D_Z_LUT4_C_Z_LUT4_Z_1_D_LUT4_Z_C_LUT4_Z_D_LUT4_D_1_Z_LUT4_Z_3_D_PFUMX_Z_BLUT_LUT4_Z.M
+Info:                          Defined in:
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/cells_map_trellis.v:108.23-108.24
+Info:      logic  0.19  3.04 Source u_neuron_memory.w_mem[7]_LUT4_D_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_LUT4_D_Z_LUT4_C_Z_LUT4_Z_1_D_LUT4_Z_C_LUT4_Z_D_LUT4_D_1_Z_LUT4_Z_3_D_PFUMX_Z_BLUT_LUT4_Z.OFX
+Info:    routing  0.74  3.79 Net u_neuron_memory.w_mem[7]_LUT4_D_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_LUT4_D_Z_LUT4_C_Z_LUT4_Z_1_D_LUT4_Z_C_LUT4_Z_D_LUT4_D_1_Z_LUT4_Z_3_D[3] (22,44) -> (21,40)
+Info:                          Sink u_neuron_memory.w_mem[7]_LUT4_D_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_LUT4_D_Z_LUT4_C_Z_LUT4_Z_1_D_LUT4_Z_C_LUT4_Z_D_LUT4_D_1_Z_LUT4_Z_3_D_LUT4_D_3.D
+Info:                          Defined in:
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/cells_map_trellis.v:108.23-108.24
+Info:      logic  0.18  3.97 Source u_neuron_memory.w_mem[7]_LUT4_D_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_LUT4_D_Z_LUT4_C_Z_LUT4_Z_1_D_LUT4_Z_C_LUT4_Z_D_LUT4_D_1_Z_LUT4_Z_3_D_LUT4_D_3.F
+Info:    routing  0.90  4.87 Net u_neuron_memory.w_mem[7]_LUT4_D_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_LUT4_D_Z_LUT4_C_Z_LUT4_Z_1_D_LUT4_Z_C_LUT4_Z_D_LUT4_D_1_Z_LUT4_Z_3_D_LUT4_D_3_Z[1] (21,40) -> (24,39)
+Info:                          Sink u_neuron_memory.u_neuron.acc_TRELLIS_FF_Q_31_DI_LUT4_Z_C_LUT4_Z_D_LUT4_D_Z_LUT4_Z_D_LUT4_D_Z_LUT4_Z_2_B_L6MUX21_SD_Z_LUT4_Z_2_C_LUT4_Z_C_LUT4_C.D
+Info:                          Defined in:
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/cells_map_trellis.v:108.23-108.24
+Info:      logic  0.18  5.05 Source u_neuron_memory.u_neuron.acc_TRELLIS_FF_Q_31_DI_LUT4_Z_C_LUT4_Z_D_LUT4_D_Z_LUT4_Z_D_LUT4_D_Z_LUT4_Z_2_B_L6MUX21_SD_Z_LUT4_Z_2_C_LUT4_Z_C_LUT4_C.F
+Info:    routing  1.35  6.40 Net u_neuron_memory.u_neuron.acc_TRELLIS_FF_Q_31_DI_LUT4_Z_C_LUT4_Z_D_LUT4_D_Z_LUT4_Z_D_LUT4_D_Z_LUT4_Z_2_B_L6MUX21_SD_Z_LUT4_Z_2_C_LUT4_Z_C_LUT4_C_Z[3] (24,39) -> (22,29)
+Info:                          Sink u_neuron_memory.w_mem[7]_LUT4_D_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_LUT4_D_Z_LUT4_C_Z_LUT4_Z_1_D_LUT4_Z_C_LUT4_Z_D_LUT4_D_1_Z_LUT4_Z_3_D_LUT4_D_2_Z_LUT4_Z_C_LUT4_C_Z_LUT4_D_Z_PFUMX_BLUT_Z_L6MUX21_SD_Z_LUT4_Z.D
+Info:                          Defined in:
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/cells_map_trellis.v:108.23-108.24
+Info:      logic  0.18  6.58 Source u_neuron_memory.w_mem[7]_LUT4_D_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_LUT4_D_Z_LUT4_C_Z_LUT4_Z_1_D_LUT4_Z_C_LUT4_Z_D_LUT4_D_1_Z_LUT4_Z_3_D_LUT4_D_2_Z_LUT4_Z_C_LUT4_C_Z_LUT4_D_Z_PFUMX_BLUT_Z_L6MUX21_SD_Z_LUT4_Z.F
+Info:    routing  0.62  7.20 Net u_neuron_memory.w_mem[7]_LUT4_D_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_LUT4_D_Z_LUT4_C_Z_LUT4_Z_1_D_LUT4_Z_C_LUT4_Z_D_LUT4_D_1_Z_LUT4_Z_3_D_LUT4_D_2_Z_LUT4_Z_C_LUT4_C_Z_LUT4_D_Z_PFUMX_BLUT_Z_L6MUX21_SD_Z[3] (22,29) -> (22,27)
+Info:                          Sink u_neuron_memory.w_mem[7]_LUT4_D_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_LUT4_D_Z_LUT4_C_Z_LUT4_Z_1_D_LUT4_Z_C_LUT4_Z_D_LUT4_D_1_Z_LUT4_Z_3_D_LUT4_D_2_Z_LUT4_Z_C_LUT4_C_Z_LUT4_D_1_Z_LUT4_Z_1_B_LUT4_C_Z_L6MUX21_Z_SD_LUT4_Z_D_LUT4_Z_C_LUT4_C_1_Z_LUT4_D_Z_LUT4_D_1_Z_PFUMX_Z_1_BLUT_LUT4_Z_B_LUT4_B_1_Z_PFUMX_BLUT_Z_L6MUX21_Z_1_SD_L6MUX21_SD_Z_L6MUX21_Z_SD_L6MUX21_Z_D1_L6MUX21_Z_D1_PFUMX_Z_ALUT_LUT4_Z_D_LUT4_D_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_L6MUX21_D0_Z_PFUMX_Z_BLUT_LUT4_Z_C_LUT4_B_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_L6MUX21_D0_Z_L6MUX21_Z_D1_PFUMX_Z_ALUT_LUT4_Z.D
+Info:                          Defined in:
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/cells_map_trellis.v:108.23-108.24
+Info:      logic  0.18  7.38 Source u_neuron_memory.w_mem[7]_LUT4_D_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_LUT4_D_Z_LUT4_C_Z_LUT4_Z_1_D_LUT4_Z_C_LUT4_Z_D_LUT4_D_1_Z_LUT4_Z_3_D_LUT4_D_2_Z_LUT4_Z_C_LUT4_C_Z_LUT4_D_1_Z_LUT4_Z_1_B_LUT4_C_Z_L6MUX21_Z_SD_LUT4_Z_D_LUT4_Z_C_LUT4_C_1_Z_LUT4_D_Z_LUT4_D_1_Z_PFUMX_Z_1_BLUT_LUT4_Z_B_LUT4_B_1_Z_PFUMX_BLUT_Z_L6MUX21_Z_1_SD_L6MUX21_SD_Z_L6MUX21_Z_SD_L6MUX21_Z_D1_L6MUX21_Z_D1_PFUMX_Z_ALUT_LUT4_Z_D_LUT4_D_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_L6MUX21_D0_Z_PFUMX_Z_BLUT_LUT4_Z_C_LUT4_B_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_L6MUX21_D0_Z_L6MUX21_Z_D1_PFUMX_Z_ALUT_LUT4_Z.F
+Info:    routing  0.00  7.38 Net u_neuron_memory.w_mem[7]_LUT4_D_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_LUT4_D_Z_LUT4_C_Z_LUT4_Z_1_D_LUT4_Z_C_LUT4_Z_D_LUT4_D_1_Z_LUT4_Z_3_D_LUT4_D_2_Z_LUT4_Z_C_LUT4_C_Z_LUT4_D_1_Z_LUT4_Z_1_B_LUT4_C_Z_L6MUX21_Z_SD_LUT4_Z_D_LUT4_Z_C_LUT4_C_1_Z_LUT4_D_Z_LUT4_D_1_Z_PFUMX_Z_1_BLUT_LUT4_Z_B_LUT4_B_1_Z_PFUMX_BLUT_Z_L6MUX21_Z_1_SD_L6MUX21_SD_Z_L6MUX21_Z_SD_L6MUX21_Z_D1_L6MUX21_Z_D1_PFUMX_Z_ALUT_LUT4_Z_D_LUT4_D_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_L6MUX21_D0_Z_PFUMX_Z_BLUT_LUT4_Z_C_LUT4_B_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_L6MUX21_D0_Z_L6MUX21_Z_D1_PFUMX_Z_ALUT (22,27) -> (22,27)
+Info:                          Sink u_neuron_memory.w_mem[7]_LUT4_D_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_LUT4_D_Z_LUT4_C_Z_LUT4_Z_1_D_LUT4_Z_C_LUT4_Z_D_LUT4_D_1_Z_LUT4_Z_3_D_LUT4_D_2_Z_LUT4_Z_C_LUT4_C_Z_LUT4_D_1_Z_LUT4_Z_1_B_LUT4_C_Z_L6MUX21_Z_SD_LUT4_Z_D_LUT4_Z_C_LUT4_C_1_Z_LUT4_D_Z_LUT4_D_1_Z_PFUMX_Z_1_BLUT_LUT4_Z_B_LUT4_B_1_Z_PFUMX_BLUT_Z_L6MUX21_Z_1_SD_L6MUX21_SD_Z_L6MUX21_Z_SD_L6MUX21_Z_D1_L6MUX21_Z_D1_PFUMX_Z_ALUT_LUT4_Z_D_LUT4_D_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_L6MUX21_D0_Z_PFUMX_Z_BLUT_LUT4_Z_C_LUT4_B_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_L6MUX21_D0_Z_L6MUX21_Z_D1_PFUMX_Z_BLUT_LUT4_Z.F1
+Info:                          Defined in:
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/cells_map_trellis.v:141.30-141.32
+Info:      logic  0.13  7.51 Source u_neuron_memory.w_mem[7]_LUT4_D_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_LUT4_D_Z_LUT4_C_Z_LUT4_Z_1_D_LUT4_Z_C_LUT4_Z_D_LUT4_D_1_Z_LUT4_Z_3_D_LUT4_D_2_Z_LUT4_Z_C_LUT4_C_Z_LUT4_D_1_Z_LUT4_Z_1_B_LUT4_C_Z_L6MUX21_Z_SD_LUT4_Z_D_LUT4_Z_C_LUT4_C_1_Z_LUT4_D_Z_LUT4_D_1_Z_PFUMX_Z_1_BLUT_LUT4_Z_B_LUT4_B_1_Z_PFUMX_BLUT_Z_L6MUX21_Z_1_SD_L6MUX21_SD_Z_L6MUX21_Z_SD_L6MUX21_Z_D1_L6MUX21_Z_D1_PFUMX_Z_ALUT_LUT4_Z_D_LUT4_D_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_L6MUX21_D0_Z_PFUMX_Z_BLUT_LUT4_Z_C_LUT4_B_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_L6MUX21_D0_Z_L6MUX21_Z_D1_PFUMX_Z_BLUT_LUT4_Z.OFX
+Info:    routing  0.00  7.51 Net u_neuron_memory.w_mem[7]_LUT4_D_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_LUT4_D_Z_LUT4_C_Z_LUT4_Z_1_D_LUT4_Z_C_LUT4_Z_D_LUT4_D_1_Z_LUT4_Z_3_D_LUT4_D_2_Z_LUT4_Z_C_LUT4_C_Z_LUT4_D_1_Z_LUT4_Z_1_B_LUT4_C_Z_L6MUX21_Z_SD_LUT4_Z_D_LUT4_Z_C_LUT4_C_1_Z_LUT4_D_Z_LUT4_D_1_Z_PFUMX_Z_1_BLUT_LUT4_Z_B_LUT4_B_1_Z_PFUMX_BLUT_Z_L6MUX21_Z_1_SD_L6MUX21_SD_Z_L6MUX21_Z_SD_L6MUX21_Z_D1_L6MUX21_Z_D1_PFUMX_Z_ALUT_LUT4_Z_D_LUT4_D_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_L6MUX21_D0_Z_PFUMX_Z_BLUT_LUT4_Z_C_LUT4_B_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_L6MUX21_D0_Z_L6MUX21_Z_D1 (22,27) -> (22,27)
+Info:                          Sink u_neuron_memory.w_mem[7]_LUT4_D_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_LUT4_D_Z_LUT4_C_Z_LUT4_Z_1_D_LUT4_Z_C_LUT4_Z_D_LUT4_D_1_Z_LUT4_Z_3_D_LUT4_D_2_Z_LUT4_Z_C_LUT4_C_Z_LUT4_D_1_Z_LUT4_Z_1_B_LUT4_C_Z_L6MUX21_Z_SD_LUT4_Z_D_LUT4_Z_C_LUT4_C_1_Z_LUT4_D_Z_LUT4_D_1_Z_PFUMX_Z_1_BLUT_LUT4_Z_B_LUT4_B_1_Z_PFUMX_BLUT_Z_L6MUX21_Z_1_SD_L6MUX21_SD_Z_L6MUX21_Z_SD_L6MUX21_Z_D1_L6MUX21_Z_D1_PFUMX_Z_ALUT_LUT4_Z_D_LUT4_D_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_L6MUX21_D0_Z_PFUMX_Z_BLUT_LUT4_Z_C_LUT4_B_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_L6MUX21_D0_Z_L6MUX21_Z_D1_PFUMX_Z_ALUT_LUT4_Z.FXB
+Info:                          Defined in:
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/cells_map_trellis.v:141.38-141.40
+Info:      logic  0.18  7.69 Source u_neuron_memory.w_mem[7]_LUT4_D_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_LUT4_D_Z_LUT4_C_Z_LUT4_Z_1_D_LUT4_Z_C_LUT4_Z_D_LUT4_D_1_Z_LUT4_Z_3_D_LUT4_D_2_Z_LUT4_Z_C_LUT4_C_Z_LUT4_D_1_Z_LUT4_Z_1_B_LUT4_C_Z_L6MUX21_Z_SD_LUT4_Z_D_LUT4_Z_C_LUT4_C_1_Z_LUT4_D_Z_LUT4_D_1_Z_PFUMX_Z_1_BLUT_LUT4_Z_B_LUT4_B_1_Z_PFUMX_BLUT_Z_L6MUX21_Z_1_SD_L6MUX21_SD_Z_L6MUX21_Z_SD_L6MUX21_Z_D1_L6MUX21_Z_D1_PFUMX_Z_ALUT_LUT4_Z_D_LUT4_D_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_L6MUX21_D0_Z_PFUMX_Z_BLUT_LUT4_Z_C_LUT4_B_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_L6MUX21_D0_Z_L6MUX21_Z_D1_PFUMX_Z_ALUT_LUT4_Z.OFX
+Info:    routing  0.65  8.34 Net u_neuron_memory.w_mem[7]_LUT4_D_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_LUT4_D_Z_LUT4_C_Z_LUT4_Z_1_D_LUT4_Z_C_LUT4_Z_D_LUT4_D_1_Z_LUT4_Z_3_D_LUT4_D_2_Z_LUT4_Z_C_LUT4_C_Z_LUT4_D_1_Z_LUT4_Z_1_B_LUT4_C_Z_L6MUX21_Z_SD_LUT4_Z_D_LUT4_Z_C_LUT4_C_1_Z_LUT4_D_Z_LUT4_D_1_Z_PFUMX_Z_1_BLUT_LUT4_Z_B_LUT4_B_1_Z_PFUMX_BLUT_Z_L6MUX21_Z_1_SD_L6MUX21_SD_Z_L6MUX21_Z_SD_L6MUX21_Z_D1_L6MUX21_Z_D1_PFUMX_Z_ALUT_LUT4_Z_D_LUT4_D_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_L6MUX21_D0_Z_PFUMX_Z_BLUT_LUT4_Z_A[4] (22,27) -> (23,29)
+Info:                          Sink u_neuron_memory.w_mem[7]_LUT4_D_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_LUT4_D_Z_LUT4_C_Z_LUT4_Z_1_D_LUT4_Z_C_LUT4_Z_D_LUT4_D_1_Z_LUT4_Z_3_D_LUT4_D_2_Z_LUT4_Z_C_LUT4_C_Z_LUT4_D_1_Z_LUT4_Z_1_B_LUT4_C_Z_L6MUX21_Z_SD_LUT4_Z_D_LUT4_Z_C_LUT4_C_1_Z_LUT4_D_Z_LUT4_D_1_Z_PFUMX_Z_1_BLUT_LUT4_Z_B_LUT4_B_1_Z_PFUMX_BLUT_Z_L6MUX21_Z_1_SD_L6MUX21_SD_Z_L6MUX21_Z_SD_L6MUX21_Z_D1_L6MUX21_Z_D1_PFUMX_Z_ALUT_LUT4_Z_D_LUT4_D_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_L6MUX21_D0_Z_PFUMX_Z_BLUT_LUT4_Z.M
+Info:                          Defined in:
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/cells_map_trellis.v:108.23-108.24
+Info:      logic  0.19  8.54 Source u_neuron_memory.w_mem[7]_LUT4_D_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_LUT4_D_Z_LUT4_C_Z_LUT4_Z_1_D_LUT4_Z_C_LUT4_Z_D_LUT4_D_1_Z_LUT4_Z_3_D_LUT4_D_2_Z_LUT4_Z_C_LUT4_C_Z_LUT4_D_1_Z_LUT4_Z_1_B_LUT4_C_Z_L6MUX21_Z_SD_LUT4_Z_D_LUT4_Z_C_LUT4_C_1_Z_LUT4_D_Z_LUT4_D_1_Z_PFUMX_Z_1_BLUT_LUT4_Z_B_LUT4_B_1_Z_PFUMX_BLUT_Z_L6MUX21_Z_1_SD_L6MUX21_SD_Z_L6MUX21_Z_SD_L6MUX21_Z_D1_L6MUX21_Z_D1_PFUMX_Z_ALUT_LUT4_Z_D_LUT4_D_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_L6MUX21_D0_Z_PFUMX_Z_BLUT_LUT4_Z.OFX
+Info:    routing  0.82  9.36 Net u_neuron_memory.w_mem[7]_LUT4_D_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_LUT4_D_Z_LUT4_C_Z_LUT4_Z_1_D_LUT4_Z_C_LUT4_Z_D_LUT4_D_1_Z_LUT4_Z_3_D_LUT4_D_2_Z_LUT4_Z_C_LUT4_C_Z_LUT4_D_1_Z_LUT4_Z_1_B_LUT4_C_Z_L6MUX21_Z_SD_LUT4_Z_D_LUT4_Z_C_LUT4_C_1_Z_LUT4_D_Z_LUT4_D_1_Z_PFUMX_Z_1_BLUT_LUT4_Z_B_LUT4_B_1_Z_PFUMX_BLUT_Z_L6MUX21_Z_1_SD_L6MUX21_SD_Z_L6MUX21_Z_SD_L6MUX21_Z_D1_L6MUX21_Z_D1_PFUMX_Z_ALUT_LUT4_Z_D_LUT4_D_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_L6MUX21_D0_Z[5] (23,29) -> (22,21)
+Info:                          Sink u_neuron_memory.u_neuron.acc_TRELLIS_FF_Q_5_DI_LUT4_Z_C_LUT4_Z_C_LUT4_D_C_LUT4_Z_D_L6MUX21_Z_SD_L6MUX21_Z_D1_L6MUX21_Z_D1_PFUMX_Z_ALUT_LUT4_Z.M
+Info:                          Defined in:
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/cells_map_trellis.v:108.23-108.24
+Info:      logic  0.19  9.55 Source u_neuron_memory.u_neuron.acc_TRELLIS_FF_Q_5_DI_LUT4_Z_C_LUT4_Z_C_LUT4_D_C_LUT4_Z_D_L6MUX21_Z_SD_L6MUX21_Z_D1_L6MUX21_Z_D1_PFUMX_Z_ALUT_LUT4_Z.OFX
+Info:    routing  0.00  9.55 Net u_neuron_memory.u_neuron.acc_TRELLIS_FF_Q_5_DI_LUT4_Z_C_LUT4_Z_C_LUT4_D_C_LUT4_Z_D_L6MUX21_Z_SD_L6MUX21_Z_D1 (22,21) -> (22,21)
+Info:                          Sink u_neuron_memory.u_neuron.acc_TRELLIS_FF_Q_5_DI_LUT4_Z_C_LUT4_Z_C_LUT4_D_C_LUT4_Z_D_L6MUX21_Z_SD_L6MUX21_Z_D1_L6MUX21_Z_D0_PFUMX_Z_ALUT_LUT4_Z.FXB
+Info:                          Defined in:
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/cells_map_trellis.v:157.70-157.72
+Info:      logic  0.18  9.73 Source u_neuron_memory.u_neuron.acc_TRELLIS_FF_Q_5_DI_LUT4_Z_C_LUT4_Z_C_LUT4_D_C_LUT4_Z_D_L6MUX21_Z_SD_L6MUX21_Z_D1_L6MUX21_Z_D0_PFUMX_Z_ALUT_LUT4_Z.OFX
+Info:    routing  0.83  10.56 Net u_neuron_memory.u_neuron.acc_TRELLIS_FF_Q_5_DI_LUT4_Z_C_LUT4_Z_C_LUT4_D_C_LUT4_Z_D_L6MUX21_Z_D1_PFUMX_Z_C0[5] (22,21) -> (21,23)
+Info:                          Sink u_neuron_memory.u_neuron.acc_TRELLIS_FF_Q_5_DI_LUT4_Z_C_LUT4_Z_C_LUT4_D_C_LUT4_Z_C_LUT4_C_Z_PFUMX_BLUT_Z_PFUMX_Z_BLUT_LUT4_Z.C
+Info:                          Defined in:
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/cells_map_trellis.v:108.23-108.24
+Info:      logic  0.31  10.86 Source u_neuron_memory.u_neuron.acc_TRELLIS_FF_Q_5_DI_LUT4_Z_C_LUT4_Z_C_LUT4_D_C_LUT4_Z_C_LUT4_C_Z_PFUMX_BLUT_Z_PFUMX_Z_BLUT_LUT4_Z.OFX
+Info:    routing  1.03  11.90 Net u_neuron_memory.w_mem[4]_LUT4_D_1_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_LUT4_B_Z_LUT4_Z_2_C_LUT4_B_Z_LUT4_Z_D_LUT4_D_Z_LUT4_Z_D_LUT4_Z_1_D_LUT4_D_Z_LUT4_D_1_Z_LUT4_D_1_Z_L6MUX21_Z_SD_LUT4_D_Z_PFUMX_BLUT_C0[6] (21,23) -> (20,20)
+Info:                          Sink u_neuron_memory.u_neuron.acc_TRELLIS_FF_Q_31_DI_LUT4_Z_C_LUT4_Z_D_LUT4_D_Z_LUT4_Z_D_LUT4_D_Z_LUT4_Z_D_LUT4_C_Z_LUT4_Z_1_D_LUT4_D_Z_L6MUX21_Z_SD_PFUMX_Z_C0_PFUMX_C0_1_Z_L6MUX21_D1_Z_L6MUX21_Z_D1_PFUMX_Z_C0_PFUMX_C0_Z_LUT4_Z_D_LUT4_D_C_LUT4_C_Z_LUT4_Z_2_B_LUT4_B_Z_PFUMX_C0_Z_LUT4_Z_1_C_LUT4_A_Z_LUT4_Z_D_LUT4_D_Z_L6MUX21_Z_1_SD_LUT4_A_Z_PFUMX_ALUT_Z_L6MUX21_D1_Z_L6MUX21_D1_Z_L6MUX21_SD_Z_L6MUX21_Z_D0_L6MUX21_Z_D0_PFUMX_Z_ALUT_LUT4_Z_D_LUT4_D_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_L6MUX21_D0_Z_LUT4_B_Z_L6MUX21_Z_D1_L6MUX21_Z_SD_LUT4_C.D
+Info:                          Defined in:
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/cells_map_trellis.v:108.23-108.24
+Info:      logic  0.31  12.20 Source u_neuron_memory.u_neuron.acc_TRELLIS_FF_Q_31_DI_LUT4_Z_C_LUT4_Z_D_LUT4_D_Z_LUT4_Z_D_LUT4_D_Z_LUT4_Z_D_LUT4_C_Z_LUT4_Z_1_D_LUT4_D_Z_L6MUX21_Z_SD_PFUMX_Z_C0_PFUMX_C0_1_Z_L6MUX21_D1_Z_L6MUX21_Z_D1_PFUMX_Z_C0_PFUMX_C0_Z_LUT4_Z_D_LUT4_D_C_LUT4_C_Z_LUT4_Z_2_B_LUT4_B_Z_PFUMX_C0_Z_LUT4_Z_1_C_LUT4_A_Z_LUT4_Z_D_LUT4_D_Z_L6MUX21_Z_1_SD_LUT4_A_Z_PFUMX_ALUT_Z_L6MUX21_D1_Z_L6MUX21_D1_Z_L6MUX21_SD_Z_L6MUX21_Z_D0_L6MUX21_Z_D0_PFUMX_Z_ALUT_LUT4_Z_D_LUT4_D_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_L6MUX21_D0_Z_LUT4_B_Z_L6MUX21_Z_D1_L6MUX21_Z_SD_LUT4_C.OFX
+Info:    routing  0.94  13.14 Net u_neuron_memory.w_mem[7]_LUT4_D_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_LUT4_D_Z_LUT4_C_Z_LUT4_Z_1_D_LUT4_Z_C_LUT4_Z_D_LUT4_D_1_Z_LUT4_Z_3_D_LUT4_D_2_Z_LUT4_Z_C_LUT4_C_Z_LUT4_D_1_Z_LUT4_Z_1_B_LUT4_C_Z_L6MUX21_Z_SD_LUT4_Z_D_LUT4_Z_C_LUT4_C_1_Z_LUT4_D_Z_LUT4_D_1_Z_PFUMX_Z_1_BLUT_LUT4_Z_B_LUT4_B_1_Z_PFUMX_BLUT_Z_L6MUX21_Z_1_SD_L6MUX21_SD_Z_L6MUX21_Z_SD_L6MUX21_SD_Z_L6MUX21_SD_2_Z_L6MUX21_D1_Z_LUT4_Z_A_LUT4_A_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_LUT4_B_Z_PFUMX_Z_BLUT_LUT4_Z_B_LUT4_D_Z_L6MUX21_Z_D1_L6MUX21_Z_D1_PFUMX_Z_C0[5] (20,20) -> (15,18)
+Info:                          Sink u_neuron_memory.u_neuron.acc_TRELLIS_FF_Q_5_DI_LUT4_Z_C_LUT4_Z_C_LUT4_D_Z_LUT4_Z_D_PFUMX_Z_2_BLUT_LUT4_Z.M
+Info:                          Defined in:
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/cells_map_trellis.v:108.23-108.24
+Info:      logic  0.19  13.33 Source u_neuron_memory.u_neuron.acc_TRELLIS_FF_Q_5_DI_LUT4_Z_C_LUT4_Z_C_LUT4_D_Z_LUT4_Z_D_PFUMX_Z_2_BLUT_LUT4_Z.OFX
+Info:    routing  0.54  13.88 Net u_neuron_memory.u_neuron.acc_TRELLIS_FF_Q_5_DI_LUT4_Z_C_LUT4_Z_C_LUT4_D_Z_LUT4_Z_D[4] (15,18) -> (17,17)
+Info:                          Sink u_neuron_memory.u_neuron.acc_TRELLIS_FF_Q_5_DI_LUT4_Z_C_LUT4_Z_C_LUT4_D_Z_LUT4_Z.D
+Info:                          Defined in:
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/cells_map_trellis.v:108.23-108.24
+Info:      logic  0.18  14.06 Source u_neuron_memory.u_neuron.acc_TRELLIS_FF_Q_5_DI_LUT4_Z_C_LUT4_Z_C_LUT4_D_Z_LUT4_Z.F
+Info:    routing  0.50  14.56 Net u_neuron_memory.u_neuron.acc_TRELLIS_FF_Q_5_DI_LUT4_Z_C_LUT4_Z_C_LUT4_D_Z[6] (17,17) -> (17,18)
+Info:                          Sink u_neuron_memory.u_neuron.acc_TRELLIS_FF_Q_9_DI_LUT4_Z_C_LUT4_Z_D_L6MUX21_Z_D1_L6MUX21_Z_D0_PFUMX_Z_ALUT_LUT4_Z.M
+Info:                          Defined in:
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/cells_map_trellis.v:108.23-108.24
+Info:      logic  0.19  14.75 Source u_neuron_memory.u_neuron.acc_TRELLIS_FF_Q_9_DI_LUT4_Z_C_LUT4_Z_D_L6MUX21_Z_D1_L6MUX21_Z_D0_PFUMX_Z_ALUT_LUT4_Z.OFX
+Info:    routing  0.55  15.30 Net u_neuron_memory.u_neuron.acc_TRELLIS_FF_Q_9_DI_LUT4_Z_C_LUT4_Z_D[3] (17,18) -> (15,17)
+Info:                          Sink u_neuron_memory.u_neuron.acc_TRELLIS_FF_Q_9_DI_LUT4_Z_C_LUT4_Z_D_L6MUX21_SD_D1_L6MUX21_Z_D0_PFUMX_Z_ALUT_LUT4_Z.M
+Info:                          Defined in:
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/cells_map_trellis.v:108.23-108.24
+Info:      logic  0.19  15.49 Source u_neuron_memory.u_neuron.acc_TRELLIS_FF_Q_9_DI_LUT4_Z_C_LUT4_Z_D_L6MUX21_SD_D1_L6MUX21_Z_D0_PFUMX_Z_ALUT_LUT4_Z.OFX
+Info:    routing  0.96  16.45 Net u_neuron_memory.w_mem[7]_LUT4_D_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_LUT4_D_Z_LUT4_C_Z_LUT4_Z_1_D_LUT4_Z_C_LUT4_Z_D_LUT4_D_1_Z_LUT4_Z_3_D_LUT4_D_2_Z_LUT4_Z_C_LUT4_C_Z_LUT4_D_1_Z_LUT4_Z_1_B_LUT4_C_Z_L6MUX21_Z_SD_LUT4_Z_D_LUT4_Z_C_LUT4_C_1_Z_LUT4_D_Z_LUT4_D_1_Z_PFUMX_Z_1_BLUT_LUT4_Z_B_LUT4_B_Z_LUT4_Z_D_LUT4_D_Z_LUT4_D_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_L6MUX21_D0_Z_L6MUX21_Z_1_D0_PFUMX_Z_BLUT_LUT4_Z_D_LUT4_C_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_L6MUX21_D0_Z_LUT4_B_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_L6MUX21_D0_Z_PFUMX_Z_1_BLUT_LUT4_Z_D_LUT4_B_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_L6MUX21_D0_Z_L6MUX21_SD_Z_PFUMX_Z_BLUT_LUT4_Z_C_LUT4_B_Z_PFUMX_BLUT_Z_L6MUX21_Z_SD[5] (15,17) -> (14,21)
+Info:                          Sink u_neuron_memory.w_mem[7]_LUT4_D_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_LUT4_D_Z_LUT4_C_Z_LUT4_Z_1_D_LUT4_Z_C_LUT4_Z_D_LUT4_D_1_Z_LUT4_Z_3_D_LUT4_D_2_Z_LUT4_Z_C_LUT4_C_Z_LUT4_D_1_Z_LUT4_Z_1_B_LUT4_C_Z_L6MUX21_Z_SD_LUT4_Z_D_LUT4_Z_C_LUT4_C_1_Z_LUT4_D_Z_LUT4_D_1_Z_PFUMX_Z_1_BLUT_LUT4_Z_B_LUT4_B_Z_LUT4_Z_D_LUT4_D_Z_LUT4_D_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_L6MUX21_D0_Z_L6MUX21_Z_1_D0_PFUMX_Z_BLUT_LUT4_Z_D_LUT4_C_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_L6MUX21_D0_Z_LUT4_B_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_L6MUX21_D0_Z_PFUMX_Z_1_BLUT_LUT4_Z_D_LUT4_B_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_L6MUX21_D0_Z_L6MUX21_SD_Z_PFUMX_Z_BLUT_LUT4_Z_C_LUT4_B_Z_PFUMX_BLUT_Z_L6MUX21_Z_D1_L6MUX21_Z_D1_PFUMX_Z_ALUT_LUT4_Z.M
+Info:                          Defined in:
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/cells_map_trellis.v:108.23-108.24
+Info:      logic  0.19  16.65 Source u_neuron_memory.w_mem[7]_LUT4_D_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_LUT4_D_Z_LUT4_C_Z_LUT4_Z_1_D_LUT4_Z_C_LUT4_Z_D_LUT4_D_1_Z_LUT4_Z_3_D_LUT4_D_2_Z_LUT4_Z_C_LUT4_C_Z_LUT4_D_1_Z_LUT4_Z_1_B_LUT4_C_Z_L6MUX21_Z_SD_LUT4_Z_D_LUT4_Z_C_LUT4_C_1_Z_LUT4_D_Z_LUT4_D_1_Z_PFUMX_Z_1_BLUT_LUT4_Z_B_LUT4_B_Z_LUT4_Z_D_LUT4_D_Z_LUT4_D_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_L6MUX21_D0_Z_L6MUX21_Z_1_D0_PFUMX_Z_BLUT_LUT4_Z_D_LUT4_C_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_L6MUX21_D0_Z_LUT4_B_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_L6MUX21_D0_Z_PFUMX_Z_1_BLUT_LUT4_Z_D_LUT4_B_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_L6MUX21_D0_Z_L6MUX21_SD_Z_PFUMX_Z_BLUT_LUT4_Z_C_LUT4_B_Z_PFUMX_BLUT_Z_L6MUX21_Z_D1_L6MUX21_Z_D1_PFUMX_Z_ALUT_LUT4_Z.OFX
+Info:    routing  0.00  16.65 Net u_neuron_memory.w_mem[7]_LUT4_D_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_LUT4_D_Z_LUT4_C_Z_LUT4_Z_1_D_LUT4_Z_C_LUT4_Z_D_LUT4_D_1_Z_LUT4_Z_3_D_LUT4_D_2_Z_LUT4_Z_C_LUT4_C_Z_LUT4_D_1_Z_LUT4_Z_1_B_LUT4_C_Z_L6MUX21_Z_SD_LUT4_Z_D_LUT4_Z_C_LUT4_C_1_Z_LUT4_D_Z_LUT4_D_1_Z_PFUMX_Z_1_BLUT_LUT4_Z_B_LUT4_B_Z_LUT4_Z_D_LUT4_D_Z_LUT4_D_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_L6MUX21_D0_Z_L6MUX21_Z_1_D0_PFUMX_Z_BLUT_LUT4_Z_D_LUT4_C_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_L6MUX21_D0_Z_LUT4_B_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_L6MUX21_D0_Z_PFUMX_Z_1_BLUT_LUT4_Z_D_LUT4_B_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_L6MUX21_D0_Z_L6MUX21_SD_Z_PFUMX_Z_BLUT_LUT4_Z_C_LUT4_B_Z_PFUMX_BLUT_Z_L6MUX21_Z_D1 (14,21) -> (14,21)
+Info:                          Sink u_neuron_memory.w_mem[7]_LUT4_D_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_LUT4_D_Z_LUT4_C_Z_LUT4_Z_1_D_LUT4_Z_C_LUT4_Z_D_LUT4_D_1_Z_LUT4_Z_3_D_LUT4_D_2_Z_LUT4_Z_C_LUT4_C_Z_LUT4_D_1_Z_LUT4_Z_1_B_LUT4_C_Z_L6MUX21_Z_SD_LUT4_Z_D_LUT4_Z_C_LUT4_C_1_Z_LUT4_D_Z_LUT4_D_1_Z_PFUMX_Z_1_BLUT_LUT4_Z_B_LUT4_B_Z_LUT4_Z_D_LUT4_D_Z_LUT4_D_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_L6MUX21_D0_Z_L6MUX21_Z_1_D0_PFUMX_Z_BLUT_LUT4_Z_D_LUT4_C_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_L6MUX21_D0_Z_LUT4_B_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_L6MUX21_D0_Z_PFUMX_Z_1_BLUT_LUT4_Z_D_LUT4_B_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_L6MUX21_D0_Z_L6MUX21_SD_Z_PFUMX_Z_BLUT_LUT4_Z_C_LUT4_B_Z_PFUMX_BLUT_Z_L6MUX21_Z_D1_L6MUX21_Z_D0_PFUMX_Z_ALUT_LUT4_Z.FXB
+Info:                          Defined in:
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/cells_map_trellis.v:157.70-157.72
+Info:      logic  0.18  16.83 Source u_neuron_memory.w_mem[7]_LUT4_D_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_LUT4_D_Z_LUT4_C_Z_LUT4_Z_1_D_LUT4_Z_C_LUT4_Z_D_LUT4_D_1_Z_LUT4_Z_3_D_LUT4_D_2_Z_LUT4_Z_C_LUT4_C_Z_LUT4_D_1_Z_LUT4_Z_1_B_LUT4_C_Z_L6MUX21_Z_SD_LUT4_Z_D_LUT4_Z_C_LUT4_C_1_Z_LUT4_D_Z_LUT4_D_1_Z_PFUMX_Z_1_BLUT_LUT4_Z_B_LUT4_B_Z_LUT4_Z_D_LUT4_D_Z_LUT4_D_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_L6MUX21_D0_Z_L6MUX21_Z_1_D0_PFUMX_Z_BLUT_LUT4_Z_D_LUT4_C_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_L6MUX21_D0_Z_LUT4_B_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_L6MUX21_D0_Z_PFUMX_Z_1_BLUT_LUT4_Z_D_LUT4_B_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_L6MUX21_D0_Z_L6MUX21_SD_Z_PFUMX_Z_BLUT_LUT4_Z_C_LUT4_B_Z_PFUMX_BLUT_Z_L6MUX21_Z_D1_L6MUX21_Z_D0_PFUMX_Z_ALUT_LUT4_Z.OFX
+Info:    routing  0.78  17.61 Net u_neuron_memory.w_mem[7]_LUT4_D_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_LUT4_D_Z_LUT4_C_Z_LUT4_Z_1_D_LUT4_Z_C_LUT4_Z_D_LUT4_D_1_Z_LUT4_Z_3_D_LUT4_D_2_Z_LUT4_Z_C_LUT4_C_Z_LUT4_D_1_Z_LUT4_Z_1_B_LUT4_C_Z_L6MUX21_Z_SD_LUT4_Z_D_LUT4_Z_C_LUT4_C_1_Z_LUT4_D_Z_LUT4_D_1_Z_PFUMX_Z_1_BLUT_LUT4_Z_B_LUT4_B_Z_LUT4_Z_D_LUT4_D_Z_LUT4_D_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_L6MUX21_D0_Z_L6MUX21_Z_1_D0_PFUMX_Z_BLUT_LUT4_Z_D_LUT4_C_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_L6MUX21_D0_Z_LUT4_B_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_L6MUX21_D0_Z_PFUMX_Z_1_BLUT_LUT4_Z_D_LUT4_B_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_L6MUX21_D0_Z_L6MUX21_SD_Z[6] (14,21) -> (15,24)
+Info:                          Sink u_neuron_memory.w_mem[7]_LUT4_D_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_LUT4_D_Z_LUT4_C_Z_LUT4_Z_1_D_LUT4_Z_C_LUT4_Z_D_LUT4_D_1_Z_LUT4_Z_3_D_LUT4_D_2_Z_LUT4_Z_C_LUT4_C_Z_LUT4_D_1_Z_LUT4_Z_1_B_LUT4_C_Z_L6MUX21_Z_SD_LUT4_Z_D_LUT4_Z_C_LUT4_C_1_Z_LUT4_D_Z_LUT4_D_1_Z_PFUMX_Z_1_BLUT_LUT4_Z_B_LUT4_B_Z_LUT4_Z_D_LUT4_D_Z_LUT4_D_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_L6MUX21_D0_Z_L6MUX21_Z_1_D0_PFUMX_Z_BLUT_LUT4_Z_D_LUT4_C_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_L6MUX21_D0_Z_LUT4_B_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_L6MUX21_D0_Z_PFUMX_Z_1_BLUT_LUT4_Z_D_LUT4_B_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_L6MUX21_D0_Z_LUT4_B_Z_PFUMX_ALUT_Z_L6MUX21_Z_1_D1_L6MUX21_Z_D0_PFUMX_Z_ALUT_LUT4_Z.M
+Info:                          Defined in:
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/cells_map_trellis.v:108.23-108.24
+Info:      logic  0.19  17.80 Source u_neuron_memory.w_mem[7]_LUT4_D_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_LUT4_D_Z_LUT4_C_Z_LUT4_Z_1_D_LUT4_Z_C_LUT4_Z_D_LUT4_D_1_Z_LUT4_Z_3_D_LUT4_D_2_Z_LUT4_Z_C_LUT4_C_Z_LUT4_D_1_Z_LUT4_Z_1_B_LUT4_C_Z_L6MUX21_Z_SD_LUT4_Z_D_LUT4_Z_C_LUT4_C_1_Z_LUT4_D_Z_LUT4_D_1_Z_PFUMX_Z_1_BLUT_LUT4_Z_B_LUT4_B_Z_LUT4_Z_D_LUT4_D_Z_LUT4_D_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_L6MUX21_D0_Z_L6MUX21_Z_1_D0_PFUMX_Z_BLUT_LUT4_Z_D_LUT4_C_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_L6MUX21_D0_Z_LUT4_B_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_L6MUX21_D0_Z_PFUMX_Z_1_BLUT_LUT4_Z_D_LUT4_B_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_L6MUX21_D0_Z_LUT4_B_Z_PFUMX_ALUT_Z_L6MUX21_Z_1_D1_L6MUX21_Z_D0_PFUMX_Z_ALUT_LUT4_Z.OFX
+Info:    routing  0.83  18.63 Net u_neuron_memory.w_mem[7]_LUT4_D_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_LUT4_D_Z_LUT4_C_Z_LUT4_Z_1_D_LUT4_Z_C_LUT4_Z_D_LUT4_D_1_Z_LUT4_Z_3_D_LUT4_D_2_Z_LUT4_Z_C_LUT4_C_Z_LUT4_D_1_Z_LUT4_Z_1_B_LUT4_C_Z_L6MUX21_Z_SD_LUT4_Z_D_LUT4_Z_C_LUT4_C_1_Z_LUT4_D_Z_LUT4_D_1_Z_PFUMX_Z_1_BLUT_LUT4_Z_B_LUT4_B_Z_LUT4_Z_D_LUT4_D_Z_LUT4_D_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_L6MUX21_D0_Z_L6MUX21_Z_1_D0_PFUMX_Z_BLUT_LUT4_Z_D_LUT4_C_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_L6MUX21_D0_Z_LUT4_B_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_L6MUX21_D0_Z_PFUMX_Z_1_BLUT_LUT4_Z_D_LUT4_B_Z_PFUMX_BLUT_Z_L6MUX21_D0_Z_L6MUX21_D0_Z_L6MUX21_SD_Z_PFUMX_Z_BLUT_LUT4_Z_C_LUT4_C_Z_PFUMX_BLUT_Z_L6MUX21_SD_Z[5] (15,24) -> (16,26)
+Info:                          Sink u_neuron_memory.u_neuron.acc_TRELLIS_FF_Q_17_DI_LUT4_Z_C_LUT4_Z_1.D
+Info:                          Defined in:
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/cells_map_trellis.v:108.23-108.24
+Info:      logic  0.18  18.81 Source u_neuron_memory.u_neuron.acc_TRELLIS_FF_Q_17_DI_LUT4_Z_C_LUT4_Z_1.F
+Info:    routing  0.62  19.44 Net u_neuron_memory.u_neuron.acc_TRELLIS_FF_Q_17_DI_LUT4_Z_C[2] (16,26) -> (16,26)
+Info:                          Sink u_neuron_memory.u_neuron.acc_TRELLIS_FF_Q_20_DI_LUT4_Z_B_LUT4_B_Z_L6MUX21_Z_SD_L6MUX21_Z_D1_PFUMX_Z_ALUT_LUT4_Z.C
+Info:                          Defined in:
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/cells_map_trellis.v:108.23-108.24
+Info:      logic  0.18  19.62 Source u_neuron_memory.u_neuron.acc_TRELLIS_FF_Q_20_DI_LUT4_Z_B_LUT4_B_Z_L6MUX21_Z_SD_L6MUX21_Z_D1_PFUMX_Z_ALUT_LUT4_Z.F
+Info:    routing  0.00  19.62 Net u_neuron_memory.u_neuron.acc_TRELLIS_FF_Q_20_DI_LUT4_Z_B_LUT4_B_Z_L6MUX21_Z_SD_L6MUX21_Z_D1_PFUMX_Z_ALUT (16,26) -> (16,26)
+Info:                          Sink u_neuron_memory.u_neuron.acc_TRELLIS_FF_Q_20_DI_LUT4_Z_B_LUT4_B_Z_L6MUX21_Z_SD_L6MUX21_Z_D1_PFUMX_Z_BLUT_LUT4_Z.F1
+Info:                          Defined in:
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/cells_map_trellis.v:141.30-141.32
+Info:      logic  0.13  19.74 Source u_neuron_memory.u_neuron.acc_TRELLIS_FF_Q_20_DI_LUT4_Z_B_LUT4_B_Z_L6MUX21_Z_SD_L6MUX21_Z_D1_PFUMX_Z_BLUT_LUT4_Z.OFX
+Info:    routing  0.00  19.74 Net u_neuron_memory.u_neuron.acc_TRELLIS_FF_Q_20_DI_LUT4_Z_B_LUT4_B_Z_L6MUX21_Z_SD_L6MUX21_Z_D1 (16,26) -> (16,26)
+Info:                          Sink u_neuron_memory.u_neuron.acc_TRELLIS_FF_Q_20_DI_LUT4_Z_B_LUT4_B_Z_L6MUX21_Z_SD_L6MUX21_Z_D1_PFUMX_Z_ALUT_LUT4_Z.FXB
+Info:                          Defined in:
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/cells_map_trellis.v:141.38-141.40
+Info:      logic  0.18  19.92 Source u_neuron_memory.u_neuron.acc_TRELLIS_FF_Q_20_DI_LUT4_Z_B_LUT4_B_Z_L6MUX21_Z_SD_L6MUX21_Z_D1_PFUMX_Z_ALUT_LUT4_Z.OFX
+Info:    routing  0.89  20.81 Net u_neuron_memory.u_neuron.acc_TRELLIS_FF_Q_20_DI_LUT4_Z_B_LUT4_B_Z_L6MUX21_Z_SD[5] (16,26) -> (15,30)
+Info:                          Sink u_neuron_memory.u_neuron.acc_TRELLIS_FF_Q_20_DI_LUT4_Z_B_LUT4_B_Z_L6MUX21_Z_D1_PFUMX_Z_ALUT_LUT4_Z.M
+Info:                          Defined in:
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/cells_map_trellis.v:108.23-108.24
+Info:      logic  0.19  21.00 Source u_neuron_memory.u_neuron.acc_TRELLIS_FF_Q_20_DI_LUT4_Z_B_LUT4_B_Z_L6MUX21_Z_D1_PFUMX_Z_ALUT_LUT4_Z.OFX
+Info:    routing  0.57  21.58 Net u_neuron_memory.u_neuron.acc_TRELLIS_FF_Q_20_DI_LUT4_Z_B_LUT4_B_Z[5] (15,30) -> (17,29)
+Info:                          Sink u_neuron_memory.u_neuron.acc_TRELLIS_FF_Q_20_DI_LUT4_Z_B_LUT4_B_Z_LUT4_D_Z_PFUMX_BLUT_ALUT_LUT4_Z.M
+Info:                          Defined in:
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/cells_map_trellis.v:108.23-108.24
+Info:      logic  0.19  21.77 Source u_neuron_memory.u_neuron.acc_TRELLIS_FF_Q_20_DI_LUT4_Z_B_LUT4_B_Z_LUT4_D_Z_PFUMX_BLUT_ALUT_LUT4_Z.OFX
+Info:    routing  0.54  22.31 Net u_neuron_memory.u_neuron.acc_TRELLIS_FF_Q_20_DI_LUT4_Z_B_LUT4_B_Z_LUT4_D_Z_PFUMX_BLUT_Z_L6MUX21_D1_Z[6] (17,29) -> (18,30)
+Info:                          Sink u_neuron_memory.u_neuron.acc_TRELLIS_FF_Q_26_DI_LUT4_Z_D_L6MUX21_Z_2_D1_L6MUX21_Z_D0_PFUMX_Z_ALUT_LUT4_Z.M
+Info:                          Defined in:
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/cells_map_trellis.v:108.23-108.24
+Info:      logic  0.19  22.50 Source u_neuron_memory.u_neuron.acc_TRELLIS_FF_Q_26_DI_LUT4_Z_D_L6MUX21_Z_2_D1_L6MUX21_Z_D0_PFUMX_Z_ALUT_LUT4_Z.OFX
+Info:    routing  0.68  23.18 Net u_neuron_memory.u_neuron.acc_TRELLIS_FF_Q_26_DI_LUT4_Z_D[6] (18,30) -> (18,33)
+Info:                          Sink u_neuron_memory.u_neuron.acc_TRELLIS_FF_Q_26_DI_LUT4_Z_D_LUT4_D.M
+Info:                          Defined in:
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/cells_map_trellis.v:108.23-108.24
+Info:      logic  0.19  23.38 Source u_neuron_memory.u_neuron.acc_TRELLIS_FF_Q_26_DI_LUT4_Z_D_LUT4_D.OFX
+Info:    routing  0.97  24.35 Net u_neuron_memory.u_neuron.acc_TRELLIS_FF_Q_26_DI_LUT4_Z_D_LUT4_D_Z_PFUMX_ALUT_Z_L6MUX21_D0_Z_L6MUX21_D1_Z[3] (18,33) -> (17,37)
+Info:                          Sink u_neuron_memory.u_neuron.y_TRELLIS_FF_Q_DI_LUT4_Z.D
+Info:                          Defined in:
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/cells_map_trellis.v:108.23-108.24
+Info:      logic  0.18  24.53 Source u_neuron_memory.u_neuron.y_TRELLIS_FF_Q_DI_LUT4_Z.F
+Info:    routing  0.12  24.65 Net u_neuron_memory.u_neuron.y_TRELLIS_FF_Q_DI (17,37) -> (17,37)
+Info:                          Sink u_neuron_memory.u_neuron.y_TRELLIS_FF_Q.DI
+Info:      setup  0.00  24.65 Source u_neuron_memory.u_neuron.y_TRELLIS_FF_Q.DI
+Info: 5.91 ns logic, 18.73 ns routing
+
+Info: Critical path report for cross-domain path '<async>' -> 'posedge $glbnet$clk$TRELLIS_IO_IN':
+Info:       type curr  total name
+Info:     source  0.00  0.00 Source rst$tr_io.O
+Info:    routing  4.96  4.96 Net rst$TRELLIS_IO_IN (74,0) -> (12,44)
+Info:                          Sink nm_rst_LUT4_Z.C
+Info:                          Defined in:
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/cells_map_trellis.v:108.23-108.24
+Info:      logic  0.18  5.14 Source nm_rst_LUT4_Z.F
+Info:    routing  1.15  6.29 Net nm_rst (12,44) -> (16,37)
+Info:                          Sink u_neuron_memory.u_neuron.done_LUT4_B_D_LUT4_D_Z_LUT4_D.C
+Info:                          Defined in:
+Info:                               /Users/michelebigi/Development/FPGA-Neural/FPGA-Neural/rtl/neuron_parallel.v:8.11-8.14
+Info:      logic  0.18  6.47 Source u_neuron_memory.u_neuron.done_LUT4_B_D_LUT4_D_Z_LUT4_D.F
+Info:    routing  1.01  7.49 Net u_neuron_memory.u_neuron.done_LUT4_B_D_LUT4_D_Z_LUT4_D_Z[1] (16,37) -> (14,29)
+Info:                          Sink u_neuron_memory.x_mem[3]_TRELLIS_FF_Q_CE_LUT4_Z_D_LUT4_Z.D
+Info:                          Defined in:
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/cells_map_trellis.v:108.23-108.24
+Info:      logic  0.18  7.66 Source u_neuron_memory.x_mem[3]_TRELLIS_FF_Q_CE_LUT4_Z_D_LUT4_Z.F
+Info:    routing  1.45  9.11 Net u_neuron_memory.x_mem[3]_TRELLIS_FF_Q_CE_LUT4_Z_D[2] (14,29) -> (4,33)
+Info:                          Sink u_neuron_memory.x_mem[0]_TRELLIS_FF_Q_CE_LUT4_Z_D_LUT4_Z.D
+Info:                          Defined in:
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/cells_map_trellis.v:108.23-108.24
+Info:      logic  0.18  9.29 Source u_neuron_memory.x_mem[0]_TRELLIS_FF_Q_CE_LUT4_Z_D_LUT4_Z.F
+Info:    routing  0.53  9.82 Net u_neuron_memory.x_mem[0]_TRELLIS_FF_Q_CE_LUT4_Z_D[1] (4,33) -> (4,35)
+Info:                          Sink u_neuron_memory.x_mem[0]_TRELLIS_FF_Q_CE_LUT4_Z.D
+Info:                          Defined in:
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/cells_map_trellis.v:108.23-108.24
+Info:      logic  0.18  10.00 Source u_neuron_memory.x_mem[0]_TRELLIS_FF_Q_CE_LUT4_Z.F
+Info:    routing  1.87  11.86 Net u_neuron_memory.x_mem[0]_TRELLIS_FF_Q_CE (4,35) -> (3,19)
+Info:                          Sink u_neuron_memory.x_mem[0]_TRELLIS_FF_Q.CE
+Info:      setup  0.00  11.86 Source u_neuron_memory.x_mem[0]_TRELLIS_FF_Q.CE
+Info: 0.90 ns logic, 10.97 ns routing
+
+Info: Critical path report for cross-domain path 'posedge $glbnet$clk$TRELLIS_IO_IN' -> '<async>':
+Info:       type curr  total name
+Info:   clk-to-q  0.40  0.40 Source u_psram_ctrl.dq_oe_TRELLIS_FF_Q.Q
+Info:    routing  3.22  3.62 Net u_psram_ctrl.dq_oe (15,47) -> (29,6)
+Info:                          Sink psram_dq_LUT4_Z_3.D
+Info:                          Defined in:
+Info:                               /Users/michelebigi/Development/FPGA-Neural/FPGA-Neural/rtl/psram_controller.v:90.27-90.32
+Info:      logic  0.18  3.80 Source psram_dq_LUT4_Z_3.F
+Info:    routing  2.40  6.20 Net psram_dq[2]$TRELLIS_IO_OUT (29,6) -> (65,0)
+Info:                          Sink psram_dq[2]$tr_io.I
+Info:                          Defined in:
+Info:                               /Users/michelebigi/Development/FPGA-Neural/FPGA-Neural/rtl/psram_controller.v:29.35-29.43
+Info: 0.57 ns logic, 5.62 ns routing
+
+ERROR: Max frequency for clock '$glbnet$clk$TRELLIS_IO_IN': 40.57 MHz (FAIL at 80.00 MHz)
+
+Info: Max delay <async>                           -> posedge $glbnet$clk$TRELLIS_IO_IN: 11.86 ns
+Info: Max delay posedge $glbnet$clk$TRELLIS_IO_IN -> <async>                          : 6.20 ns
+
+Info: Slack histogram:
+Info:  legend: * represents 11 endpoint(s)
+Info:          + represents [1,11) endpoint(s)
+Info: [-12146, -10948) |+
+Info: [-10948,  -9750) |+
+Info: [ -9750,  -8552) |+
+Info: [ -8552,  -7354) |+
+Info: [ -7354,  -6156) |+
+Info: [ -6156,  -4958) |+
+Info: [ -4958,  -3760) |+
+Info: [ -3760,  -2562) |+
+Info: [ -2562,  -1364) |+
+Info: [ -1364,   -166) |+
+Info: [  -166,   1032) |+
+Info: [  1032,   2230) |+
+Info: [  2230,   3428) |+
+Info: [  3428,   4626) |**+
+Info: [  4626,   5824) |*************************+
+Info: [  5824,   7022) |************************************************************ 
+Info: [  7022,   8220) |*************************************+
+Info: [  8220,   9418) |***************************************+
+Info: [  9418,  10616) |*****************************************+
+Info: [ 10616,  11814) |*******************************************+
+50 warnings, 1 error
+
+Info: Program finished normally.

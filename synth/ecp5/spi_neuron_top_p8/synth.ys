@@ -1,0 +1,27 @@
+read_verilog -sv \
+/Users/michelebigi/Development/FPGA-Neural/FPGA-Neural/rtl/spi_slave.v \
+/Users/michelebigi/Development/FPGA-Neural/FPGA-Neural/rtl/spi_engine.v \
+/Users/michelebigi/Development/FPGA-Neural/FPGA-Neural/rtl/layer_sequencer.v \
+/Users/michelebigi/Development/FPGA-Neural/FPGA-Neural/rtl/mem_arbiter.v \
+/Users/michelebigi/Development/FPGA-Neural/FPGA-Neural/rtl/neuron_memory.v \
+/Users/michelebigi/Development/FPGA-Neural/FPGA-Neural/rtl/int8_memory_access.v \
+/Users/michelebigi/Development/FPGA-Neural/FPGA-Neural/rtl/memory_interface.v \
+/Users/michelebigi/Development/FPGA-Neural/FPGA-Neural/rtl/psram_controller.v \
+/Users/michelebigi/Development/FPGA-Neural/FPGA-Neural/rtl/neuron_parallel.v \
+/Users/michelebigi/Development/FPGA-Neural/FPGA-Neural/rtl/mac8.v \
+/Users/michelebigi/Development/FPGA-Neural/FPGA-Neural/rtl/mac_unit.v \
+/Users/michelebigi/Development/FPGA-Neural/FPGA-Neural/rtl/spi_neuron_top.v
+
+hierarchy -top spi_neuron_top
+
+proc
+flatten
+opt
+memory
+opt
+techmap
+opt
+abc -g simple
+clean
+
+synth_ecp5 -top spi_neuron_top -json /Users/michelebigi/Development/FPGA-Neural/FPGA-Neural/synth/ecp5/spi_neuron_top_p8/top.json
