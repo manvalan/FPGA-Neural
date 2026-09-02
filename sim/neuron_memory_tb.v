@@ -308,12 +308,7 @@ module tb;
         begin
 
             for (k = 0; k < 32; k = k + 2) begin
-
-                tb_write_word(
-                    base + (k >> 1),
-                    {value, value}
-                );
-
+                tb_write_word( (base >> 1) + (k >> 1), {value, value} );
             end
 
         end
@@ -335,16 +330,39 @@ module tb;
 
             for (k = 0; k < 32; k = k + 2) begin
 
-                tb_write_word(
-                    base + (k >> 1),
-                    {value, value}
-                );
+                tb_write_word( (base >> 1) + (k >> 1), {value, value} );
 
             end
 
         end
 
     endtask
+
+    task preload_x_pattern;
+
+    input [ADDR_WIDTH-1:0] base;
+
+    integer k;
+    reg signed [7:0] v0;
+    reg signed [7:0] v1;
+
+    begin
+
+        for (k = 0; k < 32; k = k + 2) begin
+
+            v0 = k + 1;
+            v1 = k + 2;
+
+            tb_write_word(
+                (base >> 1) + (k >> 1),
+                {v1, v0}
+            );
+
+        end
+
+    end
+
+endtask
 
     // ============================================================
     // PRELOAD BIAS
@@ -482,10 +500,9 @@ module tb;
         // TB is the ONLY memory master.
         // ========================================================
 
-        $display("PRELOAD: X = 1");
-        preload_vector(
-            x_base,
-            8'sd1
+        $display("PRELOAD: X = 1..32");
+        preload_x_pattern(
+            x_base
         );
 
         $display("PRELOAD: W = 1");
@@ -511,6 +528,49 @@ module tb;
         $display("");
         $display("MEMORY MASTER -> neuron_memory");
         $display("");
+
+        // ========================================================
+        // TEST 0 - PATTERN
+        //
+        // X = 1..32
+        // W = 1
+        // BIAS = 0
+        //
+        // SUM = 1 + 2 + ... + 32 = 528
+        // Output saturates to 127.
+        // ========================================================
+
+        run_neuron(
+            8'sd127,
+            "PATTERN X=1..32"
+        );
+
+        // ========================================================
+        // RESTORE ORIGINAL VECTOR
+        //
+        // X = 1
+        // W = 1
+        // BIAS = 0
+        // ========================================================
+
+        use_neuron_master = 1'b0;
+
+        preload_vector(
+            x_base,
+            8'sd1
+        );
+
+        preload_weights(
+            w_base,
+            8'sd1
+        );
+
+        preload_bias(
+            bias_addr,
+            8'sd0
+        );
+
+        use_neuron_master = 1'b1;
 
         // ========================================================
         // TEST 1
@@ -611,6 +671,7 @@ module tb;
         $display("NEURON MEMORY TEST PASSED");
         $display("========================================");
         $display("PSRAM -> INT8 -> NEURON : PASS");
+        $display("PATTERN X=1..32         : PASS");
         $display("SUM                    : PASS");
         $display("BIAS                   : PASS");
         $display("ReLU                   : PASS");
