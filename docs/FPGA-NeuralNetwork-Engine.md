@@ -753,10 +753,33 @@ Implement:
 - status and control.
 
 - [x] Protocol/opcode set drafted — see §8.1 SPI Protocol v1
-- [ ] SPI controller RTL (physical layer: shift register, CS/clock sync)
-- [ ] Register bank RTL (SET_BASE, sticky STATUS, READ_CONFIG constants)
-- [ ] RAM access passthrough RTL (WRITE_RAM/READ_RAM -> memory_interface)
-- [ ] Testbench (SPI master BFM + full stack, mirroring neuron_memory_tb.v style)
+- [x] SPI controller RTL — `rtl/spi_slave.v` (physical layer: Mode 0, MSB-first, 3-stage CDC synchronizer for SCLK/MOSI/CS_N)
+- [x] Register bank RTL — `rtl/spi_engine.v` (all 8 opcodes: NOP, WRITE_RAM, READ_RAM, RESET, SET_BASE, START, STATUS, READ_OUTPUT, READ_CONFIG; sticky clear-on-read STATUS.done)
+- [x] RAM access passthrough RTL — `rtl/mem_arbiter.v` (fixed-priority arbiter, neuron_memory > spi_engine) + shared `int8_memory_access` instance in `rtl/spi_neuron_top.v`
+- [x] Testbenches: `sim/spi_slave_tb.v` (4 tests), `sim/spi_engine_tb.v` (10 tests, synthetic RAM), `sim/spi_neuron_top_tb.v` (end-to-end, **real** `psram_model.v`, no synthetic mock — RESET/READ_CONFIG/WRITE_RAM/READ_RAM/SET_BASE/START/STATUS/READ_OUTPUT all exercised purely over simulated SPI)
+
+**Real-toolchain verification (Yosys + nextpnr-ecp5 + ecppack, 2026-09-02):**
+
+- `spi_slave.v` alone: PASS, Fmax 403.23 MHz.
+- `spi_engine.v` alone: PASS, Fmax 191.31 MHz. Neither uses any DSP.
+- `spi_neuron_top.v` (full integration: SPI + arbiter + neuron_memory
+  + PSRAM chain), N_NEURONS=1: **FAIL at 80 MHz** — Fmax ~52.58 MHz
+  (PARALLEL=8) / ~55.85 MHz (PARALLEL=2, the benchmark's own
+  80 MHz-passing config in isolation). The critical path in both
+  cases is entirely inside `neuron_parallel.v`'s saturation
+  comparator (`> 127`, `rtl/neuron_parallel.v:127`) — zero
+  contribution from the new SPI/arbiter logic — but its routed delay
+  is ~57% worse than in the isolated benchmark (17.91 ns vs.
+  11.38 ns) due to placement/routing congestion once the SPI +
+  PSRAM logic shares the fabric with it, not resource exhaustion
+  (DSP utilization only 2%). This means the current auto-placed
+  full system would need to run around 50-56 MHz to stay within
+  timing margin at speed grade -8, not the 80 MHz target — a
+  system-level floorplanning/pipelining problem, out of scope here
+  and left for Phase 7 (Optimization: "pipeline depth", "FPGA
+  resource utilization"). It does not affect functional correctness
+  (verified independently, in simulation, against real PSRAM
+  timing) or synthesizability (0 CHECK-pass problems, no latches).
 
 ## Phase 5 — Multi-Layer Network
 
