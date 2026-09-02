@@ -919,24 +919,51 @@ neither Phase 4's nor Phase 5's single P2/P8 runs establish that.
 **Candidate directions (not implemented, need a decision before
 touching the validated core further):**
 
+**Placement-seed sweep (2026-09-02) — resolved: it's structural, not
+noise.** Re-ran `nextpnr-ecp5` on the already-synthesized Phase 5
+netlists (`top.json` reused, only placement re-seeded — no re-synth)
+at `--seed 1/2/3` for both P8 and P2:
+
+| Build | seed (default) | seed 1 | seed 2 | seed 3 | spread |
+|---|---|---|---|---|---|
+| P8 | 40.57 MHz | 39.70 MHz | 39.54 MHz | 40.00 MHz | 1.03 MHz (2.6%) |
+| P2 | 42.54 MHz | 42.82 MHz | 42.72 MHz | 45.01 MHz | 2.47 MHz (5.8%) |
+
+Both builds land in a tight band regardless of seed — nothing close
+to the P2/P4/P8 same-tier benchmark's own non-monotonic swings (that
+benchmark's design uses <2% of the device, so its placer has enormous
+freedom; `spi_neuron_top`'s fuller design does not). **This confirms
+a real structural bottleneck, not a lucky/unlucky placement** — a
+seed sweep or floorplan constraint will not close a ~2x gap to
+80 MHz by itself; an RTL change is needed.
+
+**Candidate directions (not implemented, need a decision before
+touching the validated core further):**
+
 - Move `x_mem`/`w_mem` onto `DP16KD` block RAM (0% used) instead of
-  LUT fabric — likely the highest-leverage single change, since it
-  is directly implicated in the Phase 5 critical path and currently
-  wastes a free, purpose-built resource.
-- Add a pipeline register between the final MAC accumulation and the
-  activation/saturate stage in `neuron_parallel.v`, trading +1 cycle
-  of per-neuron latency (negligible next to the existing
-  N_INPUTS/PARALLEL group-count cycles) for a shorter combinational
-  path. No existing testbench hardcodes an exact cycle count for
-  neuron completion (`wait(done)`/polling patterns throughout), so
-  this should be low regression-risk — but it is still a change to
-  the explicitly "validated, don't touch" datapath (`mac8`/`mac_unit`
-  /`neuron_parallel`), so deserves an explicit go-ahead rather than
-  being done opportunistically.
-- A `nextpnr` seed/effort sweep to check how much of the shortfall is
-  placement variance (see P4's own 75.01/76.41 MHz two-number report
-  in the same run, or P2/P4/P8's non-monotonic Fmax in the
-  same-tier benchmark) vs. a structural bottleneck.
+  LUT fabric — the leading candidate. The critical path runs through
+  what looks like `w_mem`'s *write*-address decode (`neuron_memory`
+  loads one byte per cycle into a variable index during
+  `STATE_READ_X`/`STATE_READ_W`, which needs a full-width mux/demux
+  in LUT fabric to steer that byte to the right register) feeding
+  forward into the accumulator's input path — not the arithmetic
+  itself. A block-RAM read/write port replaces that scattered
+  LUT-based decode with a single hard macro. This is a genuine
+  redesign, not a drop-in swap: `x_bus`/`w_bus` are currently
+  exposed to `neuron_parallel` as one fully-parallel N_INPUTS-wide
+  combinational bus (built by unrolling every `x_mem`/`w_mem`
+  element every cycle); block RAM has a registered, address-in/
+  data-out-next-cycle read port, so `neuron_parallel`'s group
+  processing would need to become RAM-latency-aware instead of
+  assuming the whole bus is already valid. Real potential upside,
+  real design effort — needs a go-ahead, not something to do
+  opportunistically.
+- A pipeline register between MAC accumulation and the
+  activation/saturate stage (this session's original guess) does
+  **not** target the actual Phase 5 bottleneck — that finding was
+  Phase 4's critical path (the saturation comparator), and the path
+  moved once Phase 5's logic was wired in (see above). Keeping this
+  noted for Phase 4-only builds; not a fix for the current problem.
 
 ## Phase 8 — Optional Hardware Training
 
