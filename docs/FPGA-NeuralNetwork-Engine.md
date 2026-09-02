@@ -416,11 +416,11 @@ counter, not CS-edge detection mid-transfer.
 | 0x01 | WRITE_RAM | addr(3B) + len(2B) + `len` data bytes | — | Write a block into PSRAM (X, weights, bias, network params) |
 | 0x02 | READ_RAM | addr(3B) + len(2B) | `len` data bytes | Read a block back from PSRAM |
 | 0x0F | RESET | — | — | Synchronous reset pulse to the compute engine (`neuron_memory`) and clears the STATUS latch below. Does **not** erase PSRAM contents. Kept as a distinct opcode from NOP. |
-| 0x10 | SET_BASE | sel(1B) + addr(3B) | — | Sets `x_base`(sel=0) / `w_base`(sel=1) / `bias_addr`(sel=2) / `table_base`(sel=3) / `buf_a_base`(sel=4) / `buf_b_base`(sel=5) |
+| 0x10 | SET_BASE | sel(1B) + addr(3B) | — | Sets `x_base`(sel=0) / `w_base`(sel=1) / `bias_addr`(sel=2) / `table_base`(sel=3) / `buf_a_base`(sel=4) / `buf_b_base`(sel=5) / `activation`(sel=6) / `n_inputs_real`(sel=7) / `n_neurons_real`(sel=8) — sel=6..8 are single-layer/manual-path registers only (RUN_NETWORK reads the equivalent fields per-layer from the descriptor table instead). sel=6 uses only the low 2 bits of the low address byte (see `neuron_parallel.v`'s `ACT_*` localparams; reset default `ACT_RELU`). sel=7/8 use the low 2 of the 3 address bytes as a 16-bit BE value (reset default = this bitstream's build-time `N_INPUTS`/`N_NEURONS`) — see "Runtime network width" below. |
 | 0x20 | START | — | — | Pulses `start` on `neuron_memory` directly (single-layer/manual path); ignored (no-op) if the engine is busy in any form (single-layer or a RUN_NETWORK job) |
 | 0x21 | STATUS | — | 1 byte | bit0=`busy` (live, OR of the single-layer and RUN_NETWORK busy signals), bit1=`done` (**sticky, clear-on-read**; latches on the *final* layer's completion for a RUN_NETWORK job, not each intermediate layer), bits7:2 reserved=0 |
 | 0x22 | READ_OUTPUT | — | `N_NEURONS` bytes | `y_bus`, neuron-major (byte 0 = neuron 0) |
-| 0x23 | RUN_NETWORK | num_layers(1B) | — | Phase 5: pulses `layer_sequencer`'s `run_start` to chain `num_layers` (1..N_LAYERS) runs of `neuron_memory` using the descriptor table at `table_base` and the ping-pong buffers at `buf_a_base`/`buf_b_base`; layer 0 reads from `x_base`. Ignored (no-op) if the engine is already busy. |
+| 0x23 | RUN_NETWORK | num_layers(1B) | — | Phase 5: pulses `layer_sequencer`'s `run_start` to chain `num_layers` (1..N_LAYERS) runs of `neuron_memory` using the descriptor table at `table_base` and the ping-pong buffers at `buf_a_base`/`buf_b_base`; layer 0 reads from `x_base`. Each layer's activation (see below) is read per-layer from the descriptor table, independent of the single-layer path's `activation` register. Ignored (no-op) if the engine is already busy. |
 | 0x30 | READ_CONFIG | — | 8 bytes | Hardware config record, see below |
 
 **Why STATUS.done is sticky / clear-on-read:** in `rtl/neuron_memory.v`
@@ -445,6 +445,35 @@ work across different bitstreams without recompiling):
 | 5 | `DATA_WIDTH` (bits) | `neuron_memory.DATA_WIDTH` |
 | 6–7 | protocol version (16-bit BE) | `0x0001` for this spec |
 
+**Runtime network width — one bitstream, any topology up to its
+build-time max (2026-09-02):** `READ_CONFIG`'s `N_INPUTS`/`N_NEURONS`
+report this bitstream's build-time **maximum** width (`neuron_memory`'s
+own synthesis parameters) — the ceiling, not necessarily what the
+currently-loaded network actually uses. The *real* per-run width is a
+separate, host-set value:
+
+- **Single-layer/manual path:** `SET_BASE` sel=7 (`n_inputs_real`) /
+  sel=8 (`n_neurons_real`), 16-bit BE, defaulting to the build-time
+  max on reset.
+- **RUN_NETWORK (multi-layer) path:** each layer's own
+  `n_inputs_real`/`n_neurons_real` in its descriptor table entry (see
+  the RUN_NETWORK row above and the table format below) — independent
+  per layer, so a network can taper (e.g. 256 -> 64 -> 16 -> 4) inside
+  one chained run.
+
+`n_inputs_real` **must be a multiple of `PARALLEL`** (the same
+constraint `N_INPUTS` itself is held to at elaboration time — see
+`rtl/neuron_parallel.v`'s parameter guard — now the host's runtime
+responsibility instead of a build-time check). Both fields directly
+bound the hardware's own loops (`neuron_memory`'s X/W RAM reads,
+`neuron_parallel`'s MAC group count, and — for RUN_NETWORK — the
+ping-pong copy-out length): a layer that only uses part of the
+bitstream's max width genuinely computes and copies out faster, not
+just "as if" narrower. No zero-padding of RAM is needed for the
+unused tail (contrast with the old padding-only convention this
+replaced) — data beyond `n_inputs_real`/`n_neurons_real` is simply
+never read.
+
 **Example session** (fills in the conceptual sequence above with
 concrete opcodes):
 
@@ -463,7 +492,7 @@ READ_OUTPUT           -> 0x22
 **RUN_NETWORK (Phase 5) example session:**
 
 ```text
-WRITE_RAM (layer descriptor table) -> 0x01 ...   (N_LAYERS entries of w_base(3B)+bias_addr(3B), MSB-first)
+WRITE_RAM (layer descriptor table) -> 0x01 ...   (N_LAYERS entries of w_base(3B)+bias_addr(3B)+activation(1B)+n_inputs_real(2B)+n_neurons_real(2B), MSB-first)
 WRITE_RAM (weights/biases per layer, X for layer 0) -> 0x01 ...
 SET_BASE (X/TABLE/BUF_A/BUF_B)     -> 0x10 x4
 RUN_NETWORK(num_layers)            -> 0x23 <num_layers>
@@ -803,13 +832,14 @@ Implement:
 - layer sequencing;
 - configurable activation functions.
 
-- [x] `layer_sequencer.v`: chains up to `N_LAYERS` runs of a single, reused `neuron_memory` instance, reading each layer's `w_base`/`bias_addr` from a host-written descriptor table and ping-ponging each layer's output between two RAM buffers (layer 0 reads the external `x_base`; layer k>0 reads the buffer layer k-1 wrote)
+- [x] `layer_sequencer.v`: chains up to `N_LAYERS` runs of a single, reused `neuron_memory` instance, reading each layer's `w_base`/`bias_addr`/`activation`/`n_inputs_real`/`n_neurons_real` from a host-written descriptor table (11 bytes/layer) and ping-ponging each layer's output between two RAM buffers (layer 0 reads the external `x_base`; layer k>0 reads the buffer layer k-1 wrote)
+- [x] Configurable activation functions — `neuron_parallel.v` gains a 2-bit `activation` port (`ACT_NONE`=linear+two-sided saturate, `ACT_RELU`=the original hardwired behavior, kept as the default so every pre-existing caller/testbench is unaffected), threaded through `neuron_memory.v` at runtime and settable per-layer via the descriptor table (Phase 5 path) or per-run via `SET_BASE` sel=6 (legacy single-layer path). Unit-tested directly in `neuron_parallel_tb.v` (linear pass-through + negative saturation to -128) and end-to-end in `spi_neuron_top_runnetwork_tb.v` (a real negative accumulator that ACT_RELU would have clamped to 0 comes through unclamped under ACT_NONE, verified over real SPI/RAM)
+- [x] Runtime network width — one synthesized bitstream serves any topology up to its build-time max: `neuron_parallel.v` gains a runtime `n_inputs_real` (bounding its MAC group loop) and `neuron_memory.v` gains `n_inputs_real`/`n_neurons_real` (bounding its X/W RAM-read loop and its neuron loop), all defaulting to the build-time max so every pre-existing caller is unaffected. Settable per-layer via the descriptor table (Phase 5 path) or per-run via `SET_BASE` sel=7/8 (legacy single-layer path). This is a **real** early termination, not just address bookkeeping — no RAM zero-padding needed for the unused tail, and it measurably runs faster: `neuron_parallel_tb.v` TEST 7 shows 3 cycles vs. 6 for a reduced-vs-full run (with garbage loaded in the skipped lanes, proving they're never read), and `neuron_memory_tb.v` TEST 5 shows the same effect through the real PSRAM stack: **209 cycles vs. 788** for an 8-of-32 vs. full-32 run. `layer_sequencer_tb.v` additionally proves a reduced `n_neurons_real` shortens the ping-pong copy-out itself (untouched RAM bytes beyond the real count, not just a differing value)
 - [x] `mem_arbiter.v`: extended to a third port (Port C, priority B > C > A) for the sequencer's own RAM master access
 - [x] `spi_engine.v`: `RUN_NETWORK` opcode (0x23) + `SET_BASE` selectors for `table_base`/`buf_a_base`/`buf_b_base`; `STATUS.busy`/`STATUS.done` extended to track the sequencer (`seq_busy`/`seq_done`) as well as `neuron_memory` directly, so `done` latches on the *last* layer only, not each intermediate one — see §8.1
 - [x] `spi_neuron_top.v`: instantiates the sequencer and muxes `neuron_memory`'s control inputs between it (while `seq_busy`) and `spi_engine`'s direct-drive path (legacy single-layer mode)
-- [x] Testbenches: `sim/layer_sequencer_tb.v` (2-layer run: descriptor table, ping-pong addressing verified by address not just value, byte-exact output-buffer copy, `seq_busy` held across the layer boundary, `seq_done` fires exactly once); `sim/spi_engine_tb.v` gained tests K/L (new `SET_BASE` selectors, `RUN_NETWORK` accept/busy-ignore gating, `STATUS` semantics) — both use a mocked `neuron_memory`, same pattern as Phase 4's `spi_engine_tb.v`
-- [ ] Configurable activation functions (not started — `neuron_parallel.v` still has ReLU hardwired)
-- [ ] Real-toolchain (Yosys + nextpnr-ecp5) synthesis/Fmax check of the extended `spi_neuron_top.v`
+- [x] Testbenches: `sim/layer_sequencer_tb.v` (2-layer run: descriptor table, ping-pong addressing verified by address not just value, byte-exact output-buffer copy, `seq_busy` held across the layer boundary, `seq_done` fires exactly once, plus a reduced `n_neurons_real` proven to shorten the copy-out itself); `sim/spi_engine_tb.v` gained tests K/L/M/N (new `SET_BASE` selectors incl. activation and runtime width, `RUN_NETWORK` accept/busy-ignore gating, `STATUS` semantics) — both use a mocked `neuron_memory`, same pattern as Phase 4's `spi_engine_tb.v`; `sim/neuron_parallel_tb.v` and `sim/neuron_memory_tb.v` each gained a dedicated runtime-width test against the real datapath/real PSRAM stack (see the runtime-width bullet above for the cycle counts)
+- [x] Real-toolchain (Yosys + nextpnr-ecp5) synthesis/Fmax check of the extended `spi_neuron_top.v` — **worse than Phase 4 alone** in both configs checked, speed grade -8: N_INPUTS=32/N_NEURONS=1/PARALLEL=8 gives **40.57 MHz, FAIL** (Phase 4 alone: ~52.58 MHz); PARALLEL=2 gives **42.54 MHz, FAIL** (Phase 4 alone: ~55.85 MHz). The Phase 5 wiring (sequencer + mux + arbiter Port C) measurably cost 12-13 MHz of headroom on top of Phase 4's own placement-congestion problem, and the critical path itself shifted from Phase 4's saturation-comparator finding to `neuron_memory`'s `x_mem`/`w_mem` LUT-RAM read-mux tree — see the Phase 7 critical-path analysis below.
 - [x] `sim/spi_neuron_top_runnetwork_tb.v`: real end-to-end test, `RUN_NETWORK` driven purely over simulated SPI against the real `neuron_memory` + PSRAM chain (N_INPUTS=N_NEURONS=4, PARALLEL=2, 2 layers, hand-computed expected output verified via both `READ_OUTPUT` and a `READ_RAM` of `buf_b_base`, plus `buf_a_base`'s intermediate layer-0 output) — all PASS, and confirms the mux correctly hands `neuron_memory` back to the legacy single-layer `START` path afterward
 
 **Bug found and fixed while writing the above test (2026-09-02):** a real race
@@ -853,6 +883,60 @@ Evaluate:
 - FPGA resource utilization;
 - latency;
 - throughput.
+
+**Critical-path analysis (real Yosys + nextpnr-ecp5, 2026-09-02):**
+both `spi_neuron_top.v` builds checked so far miss the 80 MHz target, and
+the shortfall grew with Phase 5 wired in:
+
+| Build | N_INPUTS/N_NEURONS/PARALLEL | Fmax | vs. 80 MHz |
+|---|---|---|---|
+| Phase 4 only (documented above) | 32/1/8 | ~52.58 MHz | -34% |
+| Phase 4 only (documented above) | 32/1/2 | ~55.85 MHz | -30% |
+| Phase 5 (this session) | 32/1/8 | 40.57 MHz | -49% |
+| Phase 5 (this session) | 32/1/2 | 42.54 MHz | -47% |
+
+Resource utilization is not the cause in either case: `MULT18X18D`
+(DSP) and `DP16KD` (block RAM) both sit at **0%** in the Phase 5
+builds — `neuron_memory.v`'s `x_mem`/`w_mem` arrays (32 x INT8 each)
+are being inferred as **LUT-based distributed RAM**, not the ECP5's
+dedicated `DP16KD` block RAM, which sits completely idle.
+
+The critical path itself **shifted** between the two checks. Phase
+4's finding (quoted above) pinned it on `neuron_parallel.v`'s
+saturation comparator (`> 127`), with routing congestion as the
+driver, not logic depth. In this session's Phase-5 builds the
+reported critical path (posedge -> posedge, `neuron_memory`'s
+accumulator register) instead runs through a long chain of nested
+`PFUMX`/`L6MUX21` LUT multiplexers reading `w_mem`/`x_mem` before
+reaching `acc` — consistent with a 32-entry LUT-RAM read select tree,
+not the saturation logic. Whether this is a genuinely different
+bottleneck or an artifact of where Phase 5's extra logic pushed the
+placer is not yet determined; it would need a placement-seed sweep
+(same design, several `nextpnr --seed` values) to separate "real
+critical path" from "this particular placement's critical path" —
+neither Phase 4's nor Phase 5's single P2/P8 runs establish that.
+
+**Candidate directions (not implemented, need a decision before
+touching the validated core further):**
+
+- Move `x_mem`/`w_mem` onto `DP16KD` block RAM (0% used) instead of
+  LUT fabric — likely the highest-leverage single change, since it
+  is directly implicated in the Phase 5 critical path and currently
+  wastes a free, purpose-built resource.
+- Add a pipeline register between the final MAC accumulation and the
+  activation/saturate stage in `neuron_parallel.v`, trading +1 cycle
+  of per-neuron latency (negligible next to the existing
+  N_INPUTS/PARALLEL group-count cycles) for a shorter combinational
+  path. No existing testbench hardcodes an exact cycle count for
+  neuron completion (`wait(done)`/polling patterns throughout), so
+  this should be low regression-risk — but it is still a change to
+  the explicitly "validated, don't touch" datapath (`mac8`/`mac_unit`
+  /`neuron_parallel`), so deserves an explicit go-ahead rather than
+  being done opportunistically.
+- A `nextpnr` seed/effort sweep to check how much of the shortfall is
+  placement variance (see P4's own 75.01/76.41 MHz two-number report
+  in the same run, or P2/P4/P8's non-monotonic Fmax in the
+  same-tier benchmark) vs. a structural bottleneck.
 
 ## Phase 8 — Optional Hardware Training
 
@@ -921,10 +1005,12 @@ The FPGA becomes a dedicated neural-computation peripheral, analogous to other h
 | Bias | OK |
 | ReLU | OK |
 | 32×4 / P=8 validation | OK |
-| Dedicated RAM architecture | - Design |
-| SPI interface | Planned |
+| Dedicated RAM architecture | OK (memory_interface + psram_controller + int8_memory_access, real-PSRAM tested) |
+| SPI interface | OK (spi_slave + spi_engine, all 9 opcodes incl. RUN_NETWORK, real-toolchain Fmax checked in isolation) |
 | Dual SPI | Future |
-| Multi-layer engine | - RTL + unit tests + real end-to-end (simulated SPI) done, not yet on real toolchain |
+| Multi-layer engine | - RTL + unit tests + real end-to-end (simulated SPI) done; real toolchain checked (P8: FAIL 40.57 MHz, worse than Phase 4 alone) |
+| Configurable activation functions | OK (ACT_NONE / ACT_RELU, per-layer via descriptor table or per-run via SET_BASE) |
+| Runtime network width (one bitstream, any topology up to build max) | OK (per-layer or per-run `n_inputs_real`/`n_neurons_real`, real cycle savings measured end to end) |
 | Linux host driver | Planned |
 | ESP32 host driver | Planned |
 | Hardware training | Future |
@@ -936,6 +1022,6 @@ The FPGA becomes a dedicated neural-computation peripheral, analogous to other h
 **The FPGA implements the neural-network machine.  
 The FPGA owns its RAM.  
 The host configures and uses the machine.  
-The network topology is specialized at FPGA build time, while its trained parameters are loaded into FPGA-local memory at initialization.**
+A build sets the machine's *ceiling* (max layers, max width, PARALLEL); the host configures the *actual* network — layer count, per-layer input/output width, per-layer activation, and trained parameters — entirely at runtime, over SPI, into FPGA-local memory. One bitstream serves any topology up to that ceiling (2026-09-02, see §17 "Runtime network width").**
 
 This separation is the foundation of the project.

@@ -58,6 +58,9 @@ module tb;
     wire [ADDR_WIDTH-1:0] nm_x_base;
     wire [ADDR_WIDTH-1:0] nm_w_base;
     wire [ADDR_WIDTH-1:0] nm_bias_addr;
+    wire [1:0]            nm_activation;
+    wire [15:0]           nm_n_inputs;
+    wire [15:0]           nm_n_neurons;
     wire                  nm_start;
 
     reg                   nm_busy;
@@ -88,7 +91,9 @@ module tb;
         .buf_a_base(buf_a_base), .buf_b_base(buf_b_base),
 
         .nm_x_base(nm_x_base), .nm_w_base(nm_w_base),
-        .nm_bias_addr(nm_bias_addr), .nm_start(nm_start),
+        .nm_bias_addr(nm_bias_addr), .nm_activation(nm_activation),
+        .nm_n_inputs(nm_n_inputs), .nm_n_neurons(nm_n_neurons),
+        .nm_start(nm_start),
 
         .nm_busy(nm_busy), .nm_done(nm_done),
         .y_bus(y_bus),
@@ -266,20 +271,35 @@ module tb;
         for (i = 0; i < 4096; i = i + 1)
             ram_mem[i] = 8'h00;
 
-        // Descriptor table: 2 layers x 6 bytes (w_base(3B), bias_addr(3B)), MSB-first.
+        // Descriptor table: 2 layers x 11 bytes (w_base(3B),
+        // bias_addr(3B), activation(1B), n_inputs_real(2B),
+        // n_neurons_real(2B)), MSB-first. Layer 0 uses ACT_NONE(0)
+        // and a REDUCED n_neurons_real=2 (of N_WIDTH=4) -- proving
+        // both the field routing (nm_n_inputs/nm_n_neurons) and that
+        // the ping-pong copy loop only writes n_neurons_real bytes,
+        // not the full N_WIDTH. Layer 1 uses ACT_RELU(1),
+        // n_inputs_real=2 (matching layer 0's real output count) and
+        // n_neurons_real=4 (full, back to build width for the final
+        // output).
         ram_mem[TABLE_BASE+0] = L0_W_BASE[23:16];
         ram_mem[TABLE_BASE+1] = L0_W_BASE[15:8];
         ram_mem[TABLE_BASE+2] = L0_W_BASE[7:0];
         ram_mem[TABLE_BASE+3] = L0_BIAS_ADDR[23:16];
         ram_mem[TABLE_BASE+4] = L0_BIAS_ADDR[15:8];
         ram_mem[TABLE_BASE+5] = L0_BIAS_ADDR[7:0];
+        ram_mem[TABLE_BASE+6] = 8'h00; // ACT_NONE
+        ram_mem[TABLE_BASE+7] = 8'h00; ram_mem[TABLE_BASE+8]  = 8'd4; // n_inputs_real = 4 (full)
+        ram_mem[TABLE_BASE+9] = 8'h00; ram_mem[TABLE_BASE+10] = 8'd2; // n_neurons_real = 2 (reduced)
 
-        ram_mem[TABLE_BASE+6]  = L1_W_BASE[23:16];
-        ram_mem[TABLE_BASE+7]  = L1_W_BASE[15:8];
-        ram_mem[TABLE_BASE+8]  = L1_W_BASE[7:0];
-        ram_mem[TABLE_BASE+9]  = L1_BIAS_ADDR[23:16];
-        ram_mem[TABLE_BASE+10] = L1_BIAS_ADDR[15:8];
-        ram_mem[TABLE_BASE+11] = L1_BIAS_ADDR[7:0];
+        ram_mem[TABLE_BASE+11] = L1_W_BASE[23:16];
+        ram_mem[TABLE_BASE+12] = L1_W_BASE[15:8];
+        ram_mem[TABLE_BASE+13] = L1_W_BASE[7:0];
+        ram_mem[TABLE_BASE+14] = L1_BIAS_ADDR[23:16];
+        ram_mem[TABLE_BASE+15] = L1_BIAS_ADDR[15:8];
+        ram_mem[TABLE_BASE+16] = L1_BIAS_ADDR[7:0];
+        ram_mem[TABLE_BASE+17] = 8'h01; // ACT_RELU
+        ram_mem[TABLE_BASE+18] = 8'h00; ram_mem[TABLE_BASE+19] = 8'd2; // n_inputs_real = 2
+        ram_mem[TABLE_BASE+20] = 8'h00; ram_mem[TABLE_BASE+21] = 8'd4; // n_neurons_real = 4 (full)
 
         repeat (5) @(posedge clk);
         rst = 1'b0;
@@ -313,6 +333,9 @@ module tb;
         if (nm_w_base    !== L0_W_BASE)    begin $display("  FAIL: layer0 nm_w_base = 0x%06x", nm_w_base); errors = errors + 1; end
         if (nm_bias_addr !== L0_BIAS_ADDR) begin $display("  FAIL: layer0 nm_bias_addr = 0x%06x", nm_bias_addr); errors = errors + 1; end
         if (nm_x_base    !== X_BASE)       begin $display("  FAIL: layer0 nm_x_base = 0x%06x, expected external x_base", nm_x_base); errors = errors + 1; end
+        if (nm_activation !== 2'd0)        begin $display("  FAIL: layer0 nm_activation = %0d, expected 0 (ACT_NONE)", nm_activation); errors = errors + 1; end
+        if (nm_n_inputs   !== 16'd4)       begin $display("  FAIL: layer0 nm_n_inputs = %0d, expected 4", nm_n_inputs); errors = errors + 1; end
+        if (nm_n_neurons  !== 16'd2)       begin $display("  FAIL: layer0 nm_n_neurons = %0d, expected 2", nm_n_neurons); errors = errors + 1; end
 
         // seq_busy must NOT drop between layer 0's nm_done and layer 1 starting.
         wait (nm_done === 1'b1);
@@ -325,6 +348,9 @@ module tb;
         if (nm_w_base    !== L1_W_BASE)    begin $display("  FAIL: layer1 nm_w_base = 0x%06x", nm_w_base); errors = errors + 1; end
         if (nm_bias_addr !== L1_BIAS_ADDR) begin $display("  FAIL: layer1 nm_bias_addr = 0x%06x", nm_bias_addr); errors = errors + 1; end
         if (nm_x_base    !== BUF_A_BASE)   begin $display("  FAIL: layer1 nm_x_base = 0x%06x, expected buf_a_base (layer0's output buffer)", nm_x_base); errors = errors + 1; end
+        if (nm_activation !== 2'd1)        begin $display("  FAIL: layer1 nm_activation = %0d, expected 1 (ACT_RELU)", nm_activation); errors = errors + 1; end
+        if (nm_n_inputs   !== 16'd2)       begin $display("  FAIL: layer1 nm_n_inputs = %0d, expected 2", nm_n_inputs); errors = errors + 1; end
+        if (nm_n_neurons  !== 16'd4)       begin $display("  FAIL: layer1 nm_n_neurons = %0d, expected 4", nm_n_neurons); errors = errors + 1; end
 
         // Stage layer 1's output now that its own nm_start has fired
         // (the mock samples staged_y a few cycles later, when ITS
@@ -345,8 +371,13 @@ module tb;
         // Verify layer 0's output landed in buf_a_base, byte for byte.
         if (ram_mem[BUF_A_BASE+0] !== 8'sd11) begin $display("  FAIL: buf_a[0] = 0x%02x, expected 0x0b", ram_mem[BUF_A_BASE+0]); errors = errors + 1; end
         if (ram_mem[BUF_A_BASE+1] !== 8'sd21) begin $display("  FAIL: buf_a[1] = 0x%02x, expected 0x15", ram_mem[BUF_A_BASE+1]); errors = errors + 1; end
-        if (ram_mem[BUF_A_BASE+2] !== 8'sd31) begin $display("  FAIL: buf_a[2] = 0x%02x, expected 0x1f", ram_mem[BUF_A_BASE+2]); errors = errors + 1; end
-        if (ram_mem[BUF_A_BASE+3] !== 8'sd41) begin $display("  FAIL: buf_a[3] = 0x%02x, expected 0x29", ram_mem[BUF_A_BASE+3]); errors = errors + 1; end
+
+        // layer 0's n_neurons_real=2: bytes 2/3 must NEVER be
+        // written (must stay at their ram_mem init value of 0), not
+        // just "happen to differ from the staged y" -- proves the
+        // copy loop really stopped after 2 bytes, not 4.
+        if (ram_mem[BUF_A_BASE+2] !== 8'sd0) begin $display("  FAIL: buf_a[2] = 0x%02x, expected untouched 0x00 (n_neurons_real=2 must skip this byte)", ram_mem[BUF_A_BASE+2]); errors = errors + 1; end
+        if (ram_mem[BUF_A_BASE+3] !== 8'sd0) begin $display("  FAIL: buf_a[3] = 0x%02x, expected untouched 0x00 (n_neurons_real=2 must skip this byte)", ram_mem[BUF_A_BASE+3]); errors = errors + 1; end
 
         // Verify layer 1's (final) output landed in buf_b_base.
         if (ram_mem[BUF_B_BASE+0] !== 8'sd11) begin $display("  FAIL: buf_b[0] = 0x%02x, expected 0x0b", ram_mem[BUF_B_BASE+0]); errors = errors + 1; end

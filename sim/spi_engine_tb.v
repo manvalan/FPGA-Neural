@@ -24,6 +24,8 @@
 //   K: SET_BASE for TABLE/BUF_A/BUF_B (Phase 5)
 //   L: RUN_NETWORK (Phase 5: accepted/ignored gating, STATUS.busy
 //      following seq_busy, STATUS.done latching on seq_done only)
+//   M: SET_BASE for ACTIVATION (configurable activation functions)
+//   N: SET_BASE for N_INPUTS/N_NEURONS (runtime topology width)
 // ================================================================
 
 module tb;
@@ -109,6 +111,9 @@ module tb;
     wire [ADDR_WIDTH-1:0] table_base;
     wire [ADDR_WIDTH-1:0] buf_a_base;
     wire [ADDR_WIDTH-1:0] buf_b_base;
+    wire [1:0]             activation;
+    wire [15:0]            n_inputs_real;
+    wire [15:0]            n_neurons_real;
     wire                  run_start;
     wire [7:0]             run_num_layers;
 
@@ -129,6 +134,8 @@ module tb;
         .ram_rdata(ram_rdata), .ram_ready(ram_ready),
 
         .x_base(x_base), .w_base(w_base), .bias_addr(bias_addr),
+        .activation(activation),
+        .n_inputs_real(n_inputs_real), .n_neurons_real(n_neurons_real),
 
         .nm_start(nm_start), .nm_busy(nm_busy), .nm_done(nm_done),
         .y_bus(y_bus),
@@ -623,6 +630,59 @@ module tb;
         if (rx_tmp[1] !== 1'b1) begin $display("  FAIL: done bit not set by seq_done"); errors = errors + 1; end
 
         report("TEST L: RUN_NETWORK");
+
+        // --------------------------------------------------------
+        // TEST M: SET_BASE selector 0x06 (ACTIVATION)
+        //
+        // Only the low 2 bits of the low address byte are used
+        // (see rtl/neuron_parallel.v's ACT_* localparams); reset
+        // default is ACT_RELU (2'd1).
+        // --------------------------------------------------------
+
+        errors_before = errors;
+
+        if (activation !== 2'd1) begin $display("  FAIL: activation reset default = %0d, expected 1 (ACT_RELU)", activation); errors = errors + 1; end
+
+        set_base(8'h06, 22'h000000); // ACT_NONE
+        clk_wait(2);
+        if (activation !== 2'd0) begin $display("  FAIL: activation = %0d after SET_BASE(ACT_NONE)", activation); errors = errors + 1; end
+
+        set_base(8'h06, 22'h0000FF); // only low 2 bits (=3) matter, high bits ignored
+        clk_wait(2);
+        if (activation !== 2'd3) begin $display("  FAIL: activation = %0d after SET_BASE(0xFF), expected low 2 bits = 3", activation); errors = errors + 1; end
+
+        set_base(8'h06, 22'h000001); // back to ACT_RELU for any test relying on the default below
+        clk_wait(2);
+        if (activation !== 2'd1) begin $display("  FAIL: activation = %0d after SET_BASE(ACT_RELU)", activation); errors = errors + 1; end
+
+        report("TEST M: SET_BASE (ACTIVATION)");
+
+        // --------------------------------------------------------
+        // TEST N: SET_BASE selectors 0x07/0x08 (N_INPUTS/N_NEURONS)
+        //
+        // Reset default must equal the module's own N_INPUTS/
+        // N_NEURONS parameters (32/3 in this bench); SET_BASE loads
+        // the low 2 of the 3 transmitted address bytes, BE.
+        // --------------------------------------------------------
+
+        errors_before = errors;
+
+        if (n_inputs_real  !== 16'd32) begin $display("  FAIL: n_inputs_real reset default = %0d, expected 32", n_inputs_real); errors = errors + 1; end
+        if (n_neurons_real !== 16'd3)  begin $display("  FAIL: n_neurons_real reset default = %0d, expected 3", n_neurons_real); errors = errors + 1; end
+
+        set_base(8'h07, 22'h000008); // N_INPUTS = 8
+        clk_wait(2);
+        if (n_inputs_real !== 16'd8) begin $display("  FAIL: n_inputs_real = %0d after SET_BASE(8)", n_inputs_real); errors = errors + 1; end
+
+        set_base(8'h08, 22'h000002); // N_NEURONS = 2
+        clk_wait(2);
+        if (n_neurons_real !== 16'd2) begin $display("  FAIL: n_neurons_real = %0d after SET_BASE(2)", n_neurons_real); errors = errors + 1; end
+
+        set_base(8'h07, 22'h010102); // 3 bytes 01/01/02: N_INPUTS must be low 2 bytes = 0x0102, high byte 0x01 ignored
+        clk_wait(2);
+        if (n_inputs_real !== 16'h0102) begin $display("  FAIL: n_inputs_real = %0d after SET_BASE(0x010102), expected 0x0102", n_inputs_real); errors = errors + 1; end
+
+        report("TEST N: SET_BASE (N_INPUTS/N_NEURONS)");
 
         // --------------------------------------------------------
         // SUMMARY

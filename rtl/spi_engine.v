@@ -72,6 +72,9 @@ module spi_engine #(
     output reg  [ADDR_WIDTH-1:0] x_base,
     output reg  [ADDR_WIDTH-1:0] w_base,
     output reg  [ADDR_WIDTH-1:0] bias_addr,
+    output reg  [1:0]            activation,
+    output reg  [15:0]           n_inputs_real,
+    output reg  [15:0]           n_neurons_real,
 
     output reg                   nm_start,
     input  wire                  nm_busy,
@@ -118,6 +121,9 @@ module spi_engine #(
     localparam SEL_TABLE_BASE = 8'h03;
     localparam SEL_BUF_A_BASE = 8'h04;
     localparam SEL_BUF_B_BASE = 8'h05;
+    localparam SEL_ACTIVATION = 8'h06;
+    localparam SEL_N_INPUTS   = 8'h07;
+    localparam SEL_N_NEURONS  = 8'h08;
 
     // ============================================================
     // STATES
@@ -292,6 +298,9 @@ module spi_engine #(
             x_base         <= {ADDR_WIDTH{1'b0}};
             w_base         <= {ADDR_WIDTH{1'b0}};
             bias_addr      <= {ADDR_WIDTH{1'b0}};
+            activation     <= 2'd1; // ACT_RELU, matches neuron_parallel's own default
+            n_inputs_real  <= N_INPUTS[15:0];
+            n_neurons_real <= N_NEURONS[15:0];
 
             nm_start       <= 1'b0;
             nm_soft_rst    <= 1'b0;
@@ -435,6 +444,9 @@ module spi_engine #(
                                         SEL_TABLE_BASE: table_base <= {addr_acc[15:0], rx_byte};
                                         SEL_BUF_A_BASE: buf_a_base <= {addr_acc[15:0], rx_byte};
                                         SEL_BUF_B_BASE: buf_b_base <= {addr_acc[15:0], rx_byte};
+                                        SEL_ACTIVATION: activation <= rx_byte[1:0]; // low 2 bits of the low addr byte
+                                        SEL_N_INPUTS:   n_inputs_real  <= {addr_acc[7:0], rx_byte}; // low 2 of the 3 addr bytes, BE
+                                        SEL_N_NEURONS:  n_neurons_real <= {addr_acc[7:0], rx_byte}; // low 2 of the 3 addr bytes, BE
                                         default: ; // reserved selector: ignored
                                     endcase
 

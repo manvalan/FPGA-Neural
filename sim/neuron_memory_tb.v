@@ -27,6 +27,7 @@ module tb;
     reg [ADDR_WIDTH-1:0] x_base;
     reg [ADDR_WIDTH-1:0] w_base;
     reg [ADDR_WIDTH-1:0] bias_addr;
+    reg [15:0] n_inputs_real;
 
     wire signed [7:0] y;
     wire busy;
@@ -249,6 +250,7 @@ module tb;
         .x_base(x_base),
         .w_base(w_base),
         .bias_addr(bias_addr),
+        .n_inputs_real(n_inputs_real),
 
         .y_bus(y),
         .busy(busy),
@@ -389,6 +391,69 @@ endtask
     endtask
 
     // ============================================================
+    // PRELOAD `len` INT8 VALUES (for n_inputs_real < 32 tests)
+    // ============================================================
+
+    task preload_vector_n;
+
+        input [ADDR_WIDTH-1:0] base;
+        input signed [7:0] value;
+        input integer len;
+
+        integer k;
+
+        begin
+
+            for (k = 0; k < len; k = k + 2) begin
+                tb_write_word( (base >> 1) + (k >> 1), {value, value} );
+            end
+
+        end
+
+    endtask
+
+    // ============================================================
+    // RUN NEURON (timed variant: returns elapsed cycles via $time)
+    // ============================================================
+
+    integer t_start_nm, t_done_nm;
+
+    task run_neuron_timed;
+
+        input signed [7:0] expected;
+        input [127:0] test_name;
+        output integer elapsed_cycles;
+
+        begin
+
+            @(posedge clk);
+            start <= 1'b1;
+            t_start_nm = $time;
+
+            @(posedge clk);
+            start <= 1'b0;
+
+            wait (done);
+            t_done_nm = $time;
+            elapsed_cycles = (t_done_nm - t_start_nm) / CLK_PERIOD;
+
+            if (y !== expected) begin
+                $display("");
+                $display("FAIL %s", test_name);
+                $display("  got      = %0d (0x%02x)", y, y);
+                $display("  expected = %0d (0x%02x)", expected, expected);
+                $fatal;
+            end else begin
+                $display("PASS %-16s y=%0d (0x%02x), %0d cycles", test_name, y, y, elapsed_cycles);
+            end
+
+            @(posedge clk);
+
+        end
+
+    endtask
+
+    // ============================================================
     // RUN NEURON
     // ============================================================
 
@@ -447,6 +512,7 @@ endtask
     // ============================================================
 
     integer i;
+    integer cycles_full_nm, cycles_reduced_nm;
 
     initial begin
 
@@ -459,6 +525,7 @@ endtask
         x_base    = 22'h000000;
         w_base    = 22'h000100;
         bias_addr = 22'h000200;
+        n_inputs_real = 32;
 
         tb_mem_req   = 1'b0;
         tb_mem_wr    = 1'b0;
@@ -662,6 +729,40 @@ endtask
             8'sd42,
             "BIAS=10"
         );
+
+        // ========================================================
+        // TEST 5 - n_inputs_real < N_INPUTS (runtime early
+        // termination through the full memory stack)
+        //
+        // Full-width baseline: X=1 (32x), W=1, bias=0 -> 32
+        // Reduced: n_inputs_real=8, X=1 (8x), W=1, bias=0 -> 8,
+        // and must complete in fewer cycles (fewer RAM reads).
+        // ========================================================
+
+        use_neuron_master = 1'b0;
+        preload_vector(x_base, 8'sd1);
+        preload_weights(w_base, 8'sd1);
+        preload_bias(bias_addr, 8'sd0);
+        use_neuron_master = 1'b1;
+
+        run_neuron_timed(8'sd32, "FULL-WIDTH(32)", cycles_full_nm);
+
+        use_neuron_master = 1'b0;
+        preload_vector_n(x_base, 8'sd1, 8);
+        preload_vector_n(w_base, 8'sd1, 8);
+        preload_bias(bias_addr, 8'sd0);
+        use_neuron_master = 1'b1;
+
+        n_inputs_real = 8;
+        run_neuron_timed(8'sd8, "REDUCED(8)", cycles_reduced_nm);
+        n_inputs_real = 32;
+
+        if (cycles_reduced_nm >= cycles_full_nm) begin
+            $display("FAIL: n_inputs_real=8 run (%0d cycles) not faster than full-width (%0d cycles)", cycles_reduced_nm, cycles_full_nm);
+            $fatal;
+        end else begin
+            $display("PASS n_inputs_real early termination: %0d cycles vs %0d full-width", cycles_reduced_nm, cycles_full_nm);
+        end
 
         // ========================================================
         // FINAL

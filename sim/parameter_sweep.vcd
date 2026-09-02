@@ -1,5 +1,5 @@
 $date
-	Wed Sep  2 14:40:18 2026
+	Wed Sep  2 20:14:10 2026
 $end
 $version
 	Icarus Verilog
@@ -57,189 +57,179 @@ $var reg 256 N x_bus_g [255:0] $end
 $var integer 32 O count [31:0] $end
 $var integer 32 P errors [31:0] $end
 $scope module u_a $end
-$var wire 8 Q bias [7:0] $end
+$var wire 2 Q activation [1:0] $end
+$var wire 8 R bias [7:0] $end
 $var wire 1 A clk $end
+$var wire 16 S n_inputs_real [15:0] $end
 $var wire 1 B rst $end
 $var wire 1 C start $end
-$var wire 256 R w_bus [255:0] $end
-$var wire 256 S x_bus [255:0] $end
-$var wire 64 T x_group [63:0] $end
-$var wire 64 U w_group [63:0] $end
-$var wire 32 V final_acc [31:0] $end
-$var wire 32 W bias_ext [31:0] $end
-$var wire 32 X acc_next [31:0] $end
-$var parameter 32 Y ACC_WIDTH $end
-$var parameter 32 Z DATA_WIDTH $end
-$var parameter 32 [ GROUPS $end
-$var parameter 32 \ GROUP_INDEX_WIDTH $end
-$var parameter 32 ] N_INPUTS $end
-$var parameter 32 ^ PARALLEL $end
-$var reg 32 _ acc [31:0] $end
+$var wire 256 T w_bus [255:0] $end
+$var wire 256 U x_bus [255:0] $end
+$var wire 64 V x_group [63:0] $end
+$var wire 64 W w_group [63:0] $end
+$var wire 16 X groups_real [15:0] $end
+$var wire 32 Y final_acc [31:0] $end
+$var wire 32 Z bias_ext [31:0] $end
+$var wire 32 [ acc_next [31:0] $end
+$var parameter 32 \ ACC_WIDTH $end
+$var parameter 2 ] ACT_NONE $end
+$var parameter 2 ^ ACT_RELU $end
+$var parameter 32 _ DATA_WIDTH $end
+$var parameter 32 ` GROUPS $end
+$var parameter 32 a GROUP_INDEX_WIDTH $end
+$var parameter 32 b N_INPUTS $end
+$var parameter 32 c PARALLEL $end
+$var reg 32 d acc [31:0] $end
 $var reg 1 , busy $end
 $var reg 1 ( done $end
-$var reg 2 ` group_index [1:0] $end
-$var reg 8 a y [7:0] $end
+$var reg 2 e group_index [1:0] $end
+$var reg 8 f y [7:0] $end
 $scope module u_mac8 $end
-$var wire 32 b acc_in [31:0] $end
-$var wire 64 c w_bus [63:0] $end
-$var wire 64 d x_bus [63:0] $end
-$var wire 32 e acc_out [31:0] $end
-$var parameter 32 f ACC_WIDTH $end
-$var parameter 32 g DATA_WIDTH $end
-$var parameter 32 h PARALLEL $end
-$var parameter 32 i TREE_LEVELS $end
+$var wire 32 g acc_in [31:0] $end
+$var wire 64 h w_bus [63:0] $end
+$var wire 64 i x_bus [63:0] $end
+$var wire 32 j acc_out [31:0] $end
+$var parameter 32 k ACC_WIDTH $end
+$var parameter 32 l DATA_WIDTH $end
+$var parameter 32 m PARALLEL $end
+$var parameter 32 n TREE_LEVELS $end
 $scope begin GEN_MAC[0] $end
-$var parameter 2 j i $end
+$var parameter 2 o i $end
 $scope module u_mac $end
-$var wire 32 k acc_in [31:0] $end
-$var wire 8 l w [7:0] $end
-$var wire 8 m x [7:0] $end
-$var wire 32 n product_ext [31:0] $end
-$var wire 16 o product [15:0] $end
-$var wire 32 p acc_out [31:0] $end
-$var parameter 32 q ACC_WIDTH $end
-$var parameter 32 r DATA_WIDTH $end
-$var parameter 64 s PROD_WIDTH $end
+$var wire 32 p acc_in [31:0] $end
+$var wire 8 q w [7:0] $end
+$var wire 8 r x [7:0] $end
+$var wire 32 s product_ext [31:0] $end
+$var wire 16 t product [15:0] $end
+$var wire 32 u acc_out [31:0] $end
+$var parameter 32 v ACC_WIDTH $end
+$var parameter 32 w DATA_WIDTH $end
+$var parameter 64 x PROD_WIDTH $end
 $upscope $end
 $upscope $end
 $scope begin GEN_MAC[1] $end
-$var parameter 2 t i $end
+$var parameter 2 y i $end
 $scope module u_mac $end
-$var wire 32 u acc_in [31:0] $end
-$var wire 8 v w [7:0] $end
-$var wire 8 w x [7:0] $end
-$var wire 32 x product_ext [31:0] $end
-$var wire 16 y product [15:0] $end
-$var wire 32 z acc_out [31:0] $end
-$var parameter 32 { ACC_WIDTH $end
-$var parameter 32 | DATA_WIDTH $end
-$var parameter 64 } PROD_WIDTH $end
+$var wire 32 z acc_in [31:0] $end
+$var wire 8 { w [7:0] $end
+$var wire 8 | x [7:0] $end
+$var wire 32 } product_ext [31:0] $end
+$var wire 16 ~ product [15:0] $end
+$var wire 32 !" acc_out [31:0] $end
+$var parameter 32 "" ACC_WIDTH $end
+$var parameter 32 #" DATA_WIDTH $end
+$var parameter 64 $" PROD_WIDTH $end
 $upscope $end
 $upscope $end
 $scope begin GEN_MAC[2] $end
-$var parameter 3 ~ i $end
+$var parameter 3 %" i $end
 $scope module u_mac $end
-$var wire 32 !" acc_in [31:0] $end
-$var wire 8 "" w [7:0] $end
-$var wire 8 #" x [7:0] $end
-$var wire 32 $" product_ext [31:0] $end
-$var wire 16 %" product [15:0] $end
-$var wire 32 &" acc_out [31:0] $end
-$var parameter 32 '" ACC_WIDTH $end
-$var parameter 32 (" DATA_WIDTH $end
-$var parameter 64 )" PROD_WIDTH $end
+$var wire 32 &" acc_in [31:0] $end
+$var wire 8 '" w [7:0] $end
+$var wire 8 (" x [7:0] $end
+$var wire 32 )" product_ext [31:0] $end
+$var wire 16 *" product [15:0] $end
+$var wire 32 +" acc_out [31:0] $end
+$var parameter 32 ," ACC_WIDTH $end
+$var parameter 32 -" DATA_WIDTH $end
+$var parameter 64 ." PROD_WIDTH $end
 $upscope $end
 $upscope $end
 $scope begin GEN_MAC[3] $end
-$var parameter 3 *" i $end
+$var parameter 3 /" i $end
 $scope module u_mac $end
-$var wire 32 +" acc_in [31:0] $end
-$var wire 8 ," w [7:0] $end
-$var wire 8 -" x [7:0] $end
-$var wire 32 ." product_ext [31:0] $end
-$var wire 16 /" product [15:0] $end
-$var wire 32 0" acc_out [31:0] $end
-$var parameter 32 1" ACC_WIDTH $end
-$var parameter 32 2" DATA_WIDTH $end
-$var parameter 64 3" PROD_WIDTH $end
+$var wire 32 0" acc_in [31:0] $end
+$var wire 8 1" w [7:0] $end
+$var wire 8 2" x [7:0] $end
+$var wire 32 3" product_ext [31:0] $end
+$var wire 16 4" product [15:0] $end
+$var wire 32 5" acc_out [31:0] $end
+$var parameter 32 6" ACC_WIDTH $end
+$var parameter 32 7" DATA_WIDTH $end
+$var parameter 64 8" PROD_WIDTH $end
 $upscope $end
 $upscope $end
 $scope begin GEN_MAC[4] $end
-$var parameter 4 4" i $end
+$var parameter 4 9" i $end
 $scope module u_mac $end
-$var wire 32 5" acc_in [31:0] $end
-$var wire 8 6" w [7:0] $end
-$var wire 8 7" x [7:0] $end
-$var wire 32 8" product_ext [31:0] $end
-$var wire 16 9" product [15:0] $end
-$var wire 32 :" acc_out [31:0] $end
-$var parameter 32 ;" ACC_WIDTH $end
-$var parameter 32 <" DATA_WIDTH $end
-$var parameter 64 =" PROD_WIDTH $end
+$var wire 32 :" acc_in [31:0] $end
+$var wire 8 ;" w [7:0] $end
+$var wire 8 <" x [7:0] $end
+$var wire 32 =" product_ext [31:0] $end
+$var wire 16 >" product [15:0] $end
+$var wire 32 ?" acc_out [31:0] $end
+$var parameter 32 @" ACC_WIDTH $end
+$var parameter 32 A" DATA_WIDTH $end
+$var parameter 64 B" PROD_WIDTH $end
 $upscope $end
 $upscope $end
 $scope begin GEN_MAC[5] $end
-$var parameter 4 >" i $end
+$var parameter 4 C" i $end
 $scope module u_mac $end
-$var wire 32 ?" acc_in [31:0] $end
-$var wire 8 @" w [7:0] $end
-$var wire 8 A" x [7:0] $end
-$var wire 32 B" product_ext [31:0] $end
-$var wire 16 C" product [15:0] $end
-$var wire 32 D" acc_out [31:0] $end
-$var parameter 32 E" ACC_WIDTH $end
-$var parameter 32 F" DATA_WIDTH $end
-$var parameter 64 G" PROD_WIDTH $end
+$var wire 32 D" acc_in [31:0] $end
+$var wire 8 E" w [7:0] $end
+$var wire 8 F" x [7:0] $end
+$var wire 32 G" product_ext [31:0] $end
+$var wire 16 H" product [15:0] $end
+$var wire 32 I" acc_out [31:0] $end
+$var parameter 32 J" ACC_WIDTH $end
+$var parameter 32 K" DATA_WIDTH $end
+$var parameter 64 L" PROD_WIDTH $end
 $upscope $end
 $upscope $end
 $scope begin GEN_MAC[6] $end
-$var parameter 4 H" i $end
+$var parameter 4 M" i $end
 $scope module u_mac $end
-$var wire 32 I" acc_in [31:0] $end
-$var wire 8 J" w [7:0] $end
-$var wire 8 K" x [7:0] $end
-$var wire 32 L" product_ext [31:0] $end
-$var wire 16 M" product [15:0] $end
-$var wire 32 N" acc_out [31:0] $end
-$var parameter 32 O" ACC_WIDTH $end
-$var parameter 32 P" DATA_WIDTH $end
-$var parameter 64 Q" PROD_WIDTH $end
+$var wire 32 N" acc_in [31:0] $end
+$var wire 8 O" w [7:0] $end
+$var wire 8 P" x [7:0] $end
+$var wire 32 Q" product_ext [31:0] $end
+$var wire 16 R" product [15:0] $end
+$var wire 32 S" acc_out [31:0] $end
+$var parameter 32 T" ACC_WIDTH $end
+$var parameter 32 U" DATA_WIDTH $end
+$var parameter 64 V" PROD_WIDTH $end
 $upscope $end
 $upscope $end
 $scope begin GEN_MAC[7] $end
-$var parameter 4 R" i $end
+$var parameter 4 W" i $end
 $scope module u_mac $end
-$var wire 32 S" acc_in [31:0] $end
-$var wire 8 T" w [7:0] $end
-$var wire 8 U" x [7:0] $end
-$var wire 32 V" product_ext [31:0] $end
-$var wire 16 W" product [15:0] $end
-$var wire 32 X" acc_out [31:0] $end
-$var parameter 32 Y" ACC_WIDTH $end
-$var parameter 32 Z" DATA_WIDTH $end
-$var parameter 64 [" PROD_WIDTH $end
+$var wire 32 X" acc_in [31:0] $end
+$var wire 8 Y" w [7:0] $end
+$var wire 8 Z" x [7:0] $end
+$var wire 32 [" product_ext [31:0] $end
+$var wire 16 \" product [15:0] $end
+$var wire 32 ]" acc_out [31:0] $end
+$var parameter 32 ^" ACC_WIDTH $end
+$var parameter 32 _" DATA_WIDTH $end
+$var parameter 64 `" PROD_WIDTH $end
 $upscope $end
 $upscope $end
 $scope begin GEN_TREE_INPUT[0] $end
-$var parameter 2 \" i $end
+$var parameter 2 a" i $end
 $upscope $end
 $scope begin GEN_TREE_INPUT[1] $end
-$var parameter 2 ]" i $end
+$var parameter 2 b" i $end
 $upscope $end
 $scope begin GEN_TREE_INPUT[2] $end
-$var parameter 3 ^" i $end
+$var parameter 3 c" i $end
 $upscope $end
 $scope begin GEN_TREE_INPUT[3] $end
-$var parameter 3 _" i $end
+$var parameter 3 d" i $end
 $upscope $end
 $scope begin GEN_TREE_INPUT[4] $end
-$var parameter 4 `" i $end
+$var parameter 4 e" i $end
 $upscope $end
 $scope begin GEN_TREE_INPUT[5] $end
-$var parameter 4 a" i $end
+$var parameter 4 f" i $end
 $upscope $end
 $scope begin GEN_TREE_INPUT[6] $end
-$var parameter 4 b" i $end
+$var parameter 4 g" i $end
 $upscope $end
 $scope begin GEN_TREE_INPUT[7] $end
-$var parameter 4 c" i $end
+$var parameter 4 h" i $end
 $upscope $end
 $scope begin GEN_TREE_LEVEL[0] $end
-$var parameter 2 d" level $end
-$scope begin GEN_TREE_NODE[0] $end
-$var parameter 2 e" node $end
-$upscope $end
-$scope begin GEN_TREE_NODE[1] $end
-$var parameter 2 f" node $end
-$upscope $end
-$scope begin GEN_TREE_NODE[2] $end
-$var parameter 3 g" node $end
-$upscope $end
-$scope begin GEN_TREE_NODE[3] $end
-$var parameter 3 h" node $end
-$upscope $end
-$upscope $end
-$scope begin GEN_TREE_LEVEL[1] $end
 $var parameter 2 i" level $end
 $scope begin GEN_TREE_NODE[0] $end
 $var parameter 2 j" node $end
@@ -247,62 +237,68 @@ $upscope $end
 $scope begin GEN_TREE_NODE[1] $end
 $var parameter 2 k" node $end
 $upscope $end
+$scope begin GEN_TREE_NODE[2] $end
+$var parameter 3 l" node $end
+$upscope $end
+$scope begin GEN_TREE_NODE[3] $end
+$var parameter 3 m" node $end
+$upscope $end
+$upscope $end
+$scope begin GEN_TREE_LEVEL[1] $end
+$var parameter 2 n" level $end
+$scope begin GEN_TREE_NODE[0] $end
+$var parameter 2 o" node $end
+$upscope $end
+$scope begin GEN_TREE_NODE[1] $end
+$var parameter 2 p" node $end
+$upscope $end
 $upscope $end
 $scope begin GEN_TREE_LEVEL[2] $end
-$var parameter 3 l" level $end
+$var parameter 3 q" level $end
 $scope begin GEN_TREE_NODE[0] $end
-$var parameter 2 m" node $end
+$var parameter 2 r" node $end
 $upscope $end
 $upscope $end
 $upscope $end
 $upscope $end
 $scope module u_d $end
-$var wire 8 n" bias [7:0] $end
+$var wire 2 s" activation [1:0] $end
+$var wire 8 t" bias [7:0] $end
 $var wire 1 A clk $end
+$var wire 16 u" n_inputs_real [15:0] $end
 $var wire 1 B rst $end
 $var wire 1 D start $end
-$var wire 512 o" w_bus [511:0] $end
-$var wire 512 p" x_bus [511:0] $end
-$var wire 256 q" x_group [255:0] $end
-$var wire 256 r" w_group [255:0] $end
-$var wire 32 s" final_acc [31:0] $end
-$var wire 32 t" bias_ext [31:0] $end
-$var wire 32 u" acc_next [31:0] $end
-$var parameter 32 v" ACC_WIDTH $end
-$var parameter 32 w" DATA_WIDTH $end
-$var parameter 32 x" GROUPS $end
-$var parameter 32 y" GROUP_INDEX_WIDTH $end
-$var parameter 32 z" N_INPUTS $end
-$var parameter 32 {" PARALLEL $end
-$var reg 32 |" acc [31:0] $end
+$var wire 512 v" w_bus [511:0] $end
+$var wire 512 w" x_bus [511:0] $end
+$var wire 256 x" x_group [255:0] $end
+$var wire 256 y" w_group [255:0] $end
+$var wire 16 z" groups_real [15:0] $end
+$var wire 32 {" final_acc [31:0] $end
+$var wire 32 |" bias_ext [31:0] $end
+$var wire 32 }" acc_next [31:0] $end
+$var parameter 32 ~" ACC_WIDTH $end
+$var parameter 2 !# ACT_NONE $end
+$var parameter 2 "# ACT_RELU $end
+$var parameter 32 ## DATA_WIDTH $end
+$var parameter 32 $# GROUPS $end
+$var parameter 32 %# GROUP_INDEX_WIDTH $end
+$var parameter 32 &# N_INPUTS $end
+$var parameter 32 '# PARALLEL $end
+$var reg 32 (# acc [31:0] $end
 $var reg 1 + busy $end
 $var reg 1 ' done $end
-$var reg 1 }" group_index $end
-$var reg 8 ~" y [7:0] $end
+$var reg 1 )# group_index $end
+$var reg 8 *# y [7:0] $end
 $scope module u_mac8 $end
-$var wire 32 !# acc_in [31:0] $end
-$var wire 256 "# w_bus [255:0] $end
-$var wire 256 ## x_bus [255:0] $end
-$var wire 32 $# acc_out [31:0] $end
-$var parameter 32 %# ACC_WIDTH $end
-$var parameter 32 &# DATA_WIDTH $end
-$var parameter 32 '# PARALLEL $end
-$var parameter 32 (# TREE_LEVELS $end
+$var wire 32 +# acc_in [31:0] $end
+$var wire 256 ,# w_bus [255:0] $end
+$var wire 256 -# x_bus [255:0] $end
+$var wire 32 .# acc_out [31:0] $end
+$var parameter 32 /# ACC_WIDTH $end
+$var parameter 32 0# DATA_WIDTH $end
+$var parameter 32 1# PARALLEL $end
+$var parameter 32 2# TREE_LEVELS $end
 $scope begin GEN_MAC[0] $end
-$var parameter 2 )# i $end
-$scope module u_mac $end
-$var wire 32 *# acc_in [31:0] $end
-$var wire 8 +# w [7:0] $end
-$var wire 8 ,# x [7:0] $end
-$var wire 32 -# product_ext [31:0] $end
-$var wire 16 .# product [15:0] $end
-$var wire 32 /# acc_out [31:0] $end
-$var parameter 32 0# ACC_WIDTH $end
-$var parameter 32 1# DATA_WIDTH $end
-$var parameter 64 2# PROD_WIDTH $end
-$upscope $end
-$upscope $end
-$scope begin GEN_MAC[1] $end
 $var parameter 2 3# i $end
 $scope module u_mac $end
 $var wire 32 4# acc_in [31:0] $end
@@ -316,8 +312,8 @@ $var parameter 32 ;# DATA_WIDTH $end
 $var parameter 64 <# PROD_WIDTH $end
 $upscope $end
 $upscope $end
-$scope begin GEN_MAC[2] $end
-$var parameter 3 =# i $end
+$scope begin GEN_MAC[1] $end
+$var parameter 2 =# i $end
 $scope module u_mac $end
 $var wire 32 ># acc_in [31:0] $end
 $var wire 8 ?# w [7:0] $end
@@ -330,7 +326,7 @@ $var parameter 32 E# DATA_WIDTH $end
 $var parameter 64 F# PROD_WIDTH $end
 $upscope $end
 $upscope $end
-$scope begin GEN_MAC[3] $end
+$scope begin GEN_MAC[2] $end
 $var parameter 3 G# i $end
 $scope module u_mac $end
 $var wire 32 H# acc_in [31:0] $end
@@ -344,8 +340,8 @@ $var parameter 32 O# DATA_WIDTH $end
 $var parameter 64 P# PROD_WIDTH $end
 $upscope $end
 $upscope $end
-$scope begin GEN_MAC[4] $end
-$var parameter 4 Q# i $end
+$scope begin GEN_MAC[3] $end
+$var parameter 3 Q# i $end
 $scope module u_mac $end
 $var wire 32 R# acc_in [31:0] $end
 $var wire 8 S# w [7:0] $end
@@ -358,7 +354,7 @@ $var parameter 32 Y# DATA_WIDTH $end
 $var parameter 64 Z# PROD_WIDTH $end
 $upscope $end
 $upscope $end
-$scope begin GEN_MAC[5] $end
+$scope begin GEN_MAC[4] $end
 $var parameter 4 [# i $end
 $scope module u_mac $end
 $var wire 32 \# acc_in [31:0] $end
@@ -372,7 +368,7 @@ $var parameter 32 c# DATA_WIDTH $end
 $var parameter 64 d# PROD_WIDTH $end
 $upscope $end
 $upscope $end
-$scope begin GEN_MAC[6] $end
+$scope begin GEN_MAC[5] $end
 $var parameter 4 e# i $end
 $scope module u_mac $end
 $var wire 32 f# acc_in [31:0] $end
@@ -386,7 +382,7 @@ $var parameter 32 m# DATA_WIDTH $end
 $var parameter 64 n# PROD_WIDTH $end
 $upscope $end
 $upscope $end
-$scope begin GEN_MAC[7] $end
+$scope begin GEN_MAC[6] $end
 $var parameter 4 o# i $end
 $scope module u_mac $end
 $var wire 32 p# acc_in [31:0] $end
@@ -400,8 +396,8 @@ $var parameter 32 w# DATA_WIDTH $end
 $var parameter 64 x# PROD_WIDTH $end
 $upscope $end
 $upscope $end
-$scope begin GEN_MAC[8] $end
-$var parameter 5 y# i $end
+$scope begin GEN_MAC[7] $end
+$var parameter 4 y# i $end
 $scope module u_mac $end
 $var wire 32 z# acc_in [31:0] $end
 $var wire 8 {# w [7:0] $end
@@ -414,7 +410,7 @@ $var parameter 32 #$ DATA_WIDTH $end
 $var parameter 64 $$ PROD_WIDTH $end
 $upscope $end
 $upscope $end
-$scope begin GEN_MAC[9] $end
+$scope begin GEN_MAC[8] $end
 $var parameter 5 %$ i $end
 $scope module u_mac $end
 $var wire 32 &$ acc_in [31:0] $end
@@ -428,7 +424,7 @@ $var parameter 32 -$ DATA_WIDTH $end
 $var parameter 64 .$ PROD_WIDTH $end
 $upscope $end
 $upscope $end
-$scope begin GEN_MAC[10] $end
+$scope begin GEN_MAC[9] $end
 $var parameter 5 /$ i $end
 $scope module u_mac $end
 $var wire 32 0$ acc_in [31:0] $end
@@ -442,7 +438,7 @@ $var parameter 32 7$ DATA_WIDTH $end
 $var parameter 64 8$ PROD_WIDTH $end
 $upscope $end
 $upscope $end
-$scope begin GEN_MAC[11] $end
+$scope begin GEN_MAC[10] $end
 $var parameter 5 9$ i $end
 $scope module u_mac $end
 $var wire 32 :$ acc_in [31:0] $end
@@ -456,7 +452,7 @@ $var parameter 32 A$ DATA_WIDTH $end
 $var parameter 64 B$ PROD_WIDTH $end
 $upscope $end
 $upscope $end
-$scope begin GEN_MAC[12] $end
+$scope begin GEN_MAC[11] $end
 $var parameter 5 C$ i $end
 $scope module u_mac $end
 $var wire 32 D$ acc_in [31:0] $end
@@ -470,7 +466,7 @@ $var parameter 32 K$ DATA_WIDTH $end
 $var parameter 64 L$ PROD_WIDTH $end
 $upscope $end
 $upscope $end
-$scope begin GEN_MAC[13] $end
+$scope begin GEN_MAC[12] $end
 $var parameter 5 M$ i $end
 $scope module u_mac $end
 $var wire 32 N$ acc_in [31:0] $end
@@ -484,7 +480,7 @@ $var parameter 32 U$ DATA_WIDTH $end
 $var parameter 64 V$ PROD_WIDTH $end
 $upscope $end
 $upscope $end
-$scope begin GEN_MAC[14] $end
+$scope begin GEN_MAC[13] $end
 $var parameter 5 W$ i $end
 $scope module u_mac $end
 $var wire 32 X$ acc_in [31:0] $end
@@ -498,7 +494,7 @@ $var parameter 32 _$ DATA_WIDTH $end
 $var parameter 64 `$ PROD_WIDTH $end
 $upscope $end
 $upscope $end
-$scope begin GEN_MAC[15] $end
+$scope begin GEN_MAC[14] $end
 $var parameter 5 a$ i $end
 $scope module u_mac $end
 $var wire 32 b$ acc_in [31:0] $end
@@ -512,8 +508,8 @@ $var parameter 32 i$ DATA_WIDTH $end
 $var parameter 64 j$ PROD_WIDTH $end
 $upscope $end
 $upscope $end
-$scope begin GEN_MAC[16] $end
-$var parameter 6 k$ i $end
+$scope begin GEN_MAC[15] $end
+$var parameter 5 k$ i $end
 $scope module u_mac $end
 $var wire 32 l$ acc_in [31:0] $end
 $var wire 8 m$ w [7:0] $end
@@ -526,7 +522,7 @@ $var parameter 32 s$ DATA_WIDTH $end
 $var parameter 64 t$ PROD_WIDTH $end
 $upscope $end
 $upscope $end
-$scope begin GEN_MAC[17] $end
+$scope begin GEN_MAC[16] $end
 $var parameter 6 u$ i $end
 $scope module u_mac $end
 $var wire 32 v$ acc_in [31:0] $end
@@ -540,7 +536,7 @@ $var parameter 32 }$ DATA_WIDTH $end
 $var parameter 64 ~$ PROD_WIDTH $end
 $upscope $end
 $upscope $end
-$scope begin GEN_MAC[18] $end
+$scope begin GEN_MAC[17] $end
 $var parameter 6 !% i $end
 $scope module u_mac $end
 $var wire 32 "% acc_in [31:0] $end
@@ -554,7 +550,7 @@ $var parameter 32 )% DATA_WIDTH $end
 $var parameter 64 *% PROD_WIDTH $end
 $upscope $end
 $upscope $end
-$scope begin GEN_MAC[19] $end
+$scope begin GEN_MAC[18] $end
 $var parameter 6 +% i $end
 $scope module u_mac $end
 $var wire 32 ,% acc_in [31:0] $end
@@ -568,7 +564,7 @@ $var parameter 32 3% DATA_WIDTH $end
 $var parameter 64 4% PROD_WIDTH $end
 $upscope $end
 $upscope $end
-$scope begin GEN_MAC[20] $end
+$scope begin GEN_MAC[19] $end
 $var parameter 6 5% i $end
 $scope module u_mac $end
 $var wire 32 6% acc_in [31:0] $end
@@ -582,7 +578,7 @@ $var parameter 32 =% DATA_WIDTH $end
 $var parameter 64 >% PROD_WIDTH $end
 $upscope $end
 $upscope $end
-$scope begin GEN_MAC[21] $end
+$scope begin GEN_MAC[20] $end
 $var parameter 6 ?% i $end
 $scope module u_mac $end
 $var wire 32 @% acc_in [31:0] $end
@@ -596,7 +592,7 @@ $var parameter 32 G% DATA_WIDTH $end
 $var parameter 64 H% PROD_WIDTH $end
 $upscope $end
 $upscope $end
-$scope begin GEN_MAC[22] $end
+$scope begin GEN_MAC[21] $end
 $var parameter 6 I% i $end
 $scope module u_mac $end
 $var wire 32 J% acc_in [31:0] $end
@@ -610,7 +606,7 @@ $var parameter 32 Q% DATA_WIDTH $end
 $var parameter 64 R% PROD_WIDTH $end
 $upscope $end
 $upscope $end
-$scope begin GEN_MAC[23] $end
+$scope begin GEN_MAC[22] $end
 $var parameter 6 S% i $end
 $scope module u_mac $end
 $var wire 32 T% acc_in [31:0] $end
@@ -624,7 +620,7 @@ $var parameter 32 [% DATA_WIDTH $end
 $var parameter 64 \% PROD_WIDTH $end
 $upscope $end
 $upscope $end
-$scope begin GEN_MAC[24] $end
+$scope begin GEN_MAC[23] $end
 $var parameter 6 ]% i $end
 $scope module u_mac $end
 $var wire 32 ^% acc_in [31:0] $end
@@ -638,7 +634,7 @@ $var parameter 32 e% DATA_WIDTH $end
 $var parameter 64 f% PROD_WIDTH $end
 $upscope $end
 $upscope $end
-$scope begin GEN_MAC[25] $end
+$scope begin GEN_MAC[24] $end
 $var parameter 6 g% i $end
 $scope module u_mac $end
 $var wire 32 h% acc_in [31:0] $end
@@ -652,7 +648,7 @@ $var parameter 32 o% DATA_WIDTH $end
 $var parameter 64 p% PROD_WIDTH $end
 $upscope $end
 $upscope $end
-$scope begin GEN_MAC[26] $end
+$scope begin GEN_MAC[25] $end
 $var parameter 6 q% i $end
 $scope module u_mac $end
 $var wire 32 r% acc_in [31:0] $end
@@ -666,7 +662,7 @@ $var parameter 32 y% DATA_WIDTH $end
 $var parameter 64 z% PROD_WIDTH $end
 $upscope $end
 $upscope $end
-$scope begin GEN_MAC[27] $end
+$scope begin GEN_MAC[26] $end
 $var parameter 6 {% i $end
 $scope module u_mac $end
 $var wire 32 |% acc_in [31:0] $end
@@ -680,7 +676,7 @@ $var parameter 32 %& DATA_WIDTH $end
 $var parameter 64 && PROD_WIDTH $end
 $upscope $end
 $upscope $end
-$scope begin GEN_MAC[28] $end
+$scope begin GEN_MAC[27] $end
 $var parameter 6 '& i $end
 $scope module u_mac $end
 $var wire 32 (& acc_in [31:0] $end
@@ -694,7 +690,7 @@ $var parameter 32 /& DATA_WIDTH $end
 $var parameter 64 0& PROD_WIDTH $end
 $upscope $end
 $upscope $end
-$scope begin GEN_MAC[29] $end
+$scope begin GEN_MAC[28] $end
 $var parameter 6 1& i $end
 $scope module u_mac $end
 $var wire 32 2& acc_in [31:0] $end
@@ -708,7 +704,7 @@ $var parameter 32 9& DATA_WIDTH $end
 $var parameter 64 :& PROD_WIDTH $end
 $upscope $end
 $upscope $end
-$scope begin GEN_MAC[30] $end
+$scope begin GEN_MAC[29] $end
 $var parameter 6 ;& i $end
 $scope module u_mac $end
 $var wire 32 <& acc_in [31:0] $end
@@ -722,7 +718,7 @@ $var parameter 32 C& DATA_WIDTH $end
 $var parameter 64 D& PROD_WIDTH $end
 $upscope $end
 $upscope $end
-$scope begin GEN_MAC[31] $end
+$scope begin GEN_MAC[30] $end
 $var parameter 6 E& i $end
 $scope module u_mac $end
 $var wire 32 F& acc_in [31:0] $end
@@ -736,348 +732,344 @@ $var parameter 32 M& DATA_WIDTH $end
 $var parameter 64 N& PROD_WIDTH $end
 $upscope $end
 $upscope $end
+$scope begin GEN_MAC[31] $end
+$var parameter 6 O& i $end
+$scope module u_mac $end
+$var wire 32 P& acc_in [31:0] $end
+$var wire 8 Q& w [7:0] $end
+$var wire 8 R& x [7:0] $end
+$var wire 32 S& product_ext [31:0] $end
+$var wire 16 T& product [15:0] $end
+$var wire 32 U& acc_out [31:0] $end
+$var parameter 32 V& ACC_WIDTH $end
+$var parameter 32 W& DATA_WIDTH $end
+$var parameter 64 X& PROD_WIDTH $end
+$upscope $end
+$upscope $end
 $scope begin GEN_TREE_INPUT[0] $end
-$var parameter 2 O& i $end
+$var parameter 2 Y& i $end
 $upscope $end
 $scope begin GEN_TREE_INPUT[1] $end
-$var parameter 2 P& i $end
+$var parameter 2 Z& i $end
 $upscope $end
 $scope begin GEN_TREE_INPUT[2] $end
-$var parameter 3 Q& i $end
+$var parameter 3 [& i $end
 $upscope $end
 $scope begin GEN_TREE_INPUT[3] $end
-$var parameter 3 R& i $end
+$var parameter 3 \& i $end
 $upscope $end
 $scope begin GEN_TREE_INPUT[4] $end
-$var parameter 4 S& i $end
+$var parameter 4 ]& i $end
 $upscope $end
 $scope begin GEN_TREE_INPUT[5] $end
-$var parameter 4 T& i $end
+$var parameter 4 ^& i $end
 $upscope $end
 $scope begin GEN_TREE_INPUT[6] $end
-$var parameter 4 U& i $end
+$var parameter 4 _& i $end
 $upscope $end
 $scope begin GEN_TREE_INPUT[7] $end
-$var parameter 4 V& i $end
+$var parameter 4 `& i $end
 $upscope $end
 $scope begin GEN_TREE_INPUT[8] $end
-$var parameter 5 W& i $end
+$var parameter 5 a& i $end
 $upscope $end
 $scope begin GEN_TREE_INPUT[9] $end
-$var parameter 5 X& i $end
+$var parameter 5 b& i $end
 $upscope $end
 $scope begin GEN_TREE_INPUT[10] $end
-$var parameter 5 Y& i $end
+$var parameter 5 c& i $end
 $upscope $end
 $scope begin GEN_TREE_INPUT[11] $end
-$var parameter 5 Z& i $end
+$var parameter 5 d& i $end
 $upscope $end
 $scope begin GEN_TREE_INPUT[12] $end
-$var parameter 5 [& i $end
+$var parameter 5 e& i $end
 $upscope $end
 $scope begin GEN_TREE_INPUT[13] $end
-$var parameter 5 \& i $end
+$var parameter 5 f& i $end
 $upscope $end
 $scope begin GEN_TREE_INPUT[14] $end
-$var parameter 5 ]& i $end
+$var parameter 5 g& i $end
 $upscope $end
 $scope begin GEN_TREE_INPUT[15] $end
-$var parameter 5 ^& i $end
+$var parameter 5 h& i $end
 $upscope $end
 $scope begin GEN_TREE_INPUT[16] $end
-$var parameter 6 _& i $end
-$upscope $end
-$scope begin GEN_TREE_INPUT[17] $end
-$var parameter 6 `& i $end
-$upscope $end
-$scope begin GEN_TREE_INPUT[18] $end
-$var parameter 6 a& i $end
-$upscope $end
-$scope begin GEN_TREE_INPUT[19] $end
-$var parameter 6 b& i $end
-$upscope $end
-$scope begin GEN_TREE_INPUT[20] $end
-$var parameter 6 c& i $end
-$upscope $end
-$scope begin GEN_TREE_INPUT[21] $end
-$var parameter 6 d& i $end
-$upscope $end
-$scope begin GEN_TREE_INPUT[22] $end
-$var parameter 6 e& i $end
-$upscope $end
-$scope begin GEN_TREE_INPUT[23] $end
-$var parameter 6 f& i $end
-$upscope $end
-$scope begin GEN_TREE_INPUT[24] $end
-$var parameter 6 g& i $end
-$upscope $end
-$scope begin GEN_TREE_INPUT[25] $end
-$var parameter 6 h& i $end
-$upscope $end
-$scope begin GEN_TREE_INPUT[26] $end
 $var parameter 6 i& i $end
 $upscope $end
-$scope begin GEN_TREE_INPUT[27] $end
+$scope begin GEN_TREE_INPUT[17] $end
 $var parameter 6 j& i $end
 $upscope $end
-$scope begin GEN_TREE_INPUT[28] $end
+$scope begin GEN_TREE_INPUT[18] $end
 $var parameter 6 k& i $end
 $upscope $end
-$scope begin GEN_TREE_INPUT[29] $end
+$scope begin GEN_TREE_INPUT[19] $end
 $var parameter 6 l& i $end
 $upscope $end
-$scope begin GEN_TREE_INPUT[30] $end
+$scope begin GEN_TREE_INPUT[20] $end
 $var parameter 6 m& i $end
 $upscope $end
-$scope begin GEN_TREE_INPUT[31] $end
+$scope begin GEN_TREE_INPUT[21] $end
 $var parameter 6 n& i $end
 $upscope $end
+$scope begin GEN_TREE_INPUT[22] $end
+$var parameter 6 o& i $end
+$upscope $end
+$scope begin GEN_TREE_INPUT[23] $end
+$var parameter 6 p& i $end
+$upscope $end
+$scope begin GEN_TREE_INPUT[24] $end
+$var parameter 6 q& i $end
+$upscope $end
+$scope begin GEN_TREE_INPUT[25] $end
+$var parameter 6 r& i $end
+$upscope $end
+$scope begin GEN_TREE_INPUT[26] $end
+$var parameter 6 s& i $end
+$upscope $end
+$scope begin GEN_TREE_INPUT[27] $end
+$var parameter 6 t& i $end
+$upscope $end
+$scope begin GEN_TREE_INPUT[28] $end
+$var parameter 6 u& i $end
+$upscope $end
+$scope begin GEN_TREE_INPUT[29] $end
+$var parameter 6 v& i $end
+$upscope $end
+$scope begin GEN_TREE_INPUT[30] $end
+$var parameter 6 w& i $end
+$upscope $end
+$scope begin GEN_TREE_INPUT[31] $end
+$var parameter 6 x& i $end
+$upscope $end
 $scope begin GEN_TREE_LEVEL[0] $end
-$var parameter 2 o& level $end
+$var parameter 2 y& level $end
 $scope begin GEN_TREE_NODE[0] $end
-$var parameter 2 p& node $end
+$var parameter 2 z& node $end
 $upscope $end
 $scope begin GEN_TREE_NODE[1] $end
-$var parameter 2 q& node $end
+$var parameter 2 {& node $end
 $upscope $end
 $scope begin GEN_TREE_NODE[2] $end
-$var parameter 3 r& node $end
+$var parameter 3 |& node $end
 $upscope $end
 $scope begin GEN_TREE_NODE[3] $end
-$var parameter 3 s& node $end
+$var parameter 3 }& node $end
 $upscope $end
 $scope begin GEN_TREE_NODE[4] $end
-$var parameter 4 t& node $end
+$var parameter 4 ~& node $end
 $upscope $end
 $scope begin GEN_TREE_NODE[5] $end
-$var parameter 4 u& node $end
+$var parameter 4 !' node $end
 $upscope $end
 $scope begin GEN_TREE_NODE[6] $end
-$var parameter 4 v& node $end
+$var parameter 4 "' node $end
 $upscope $end
 $scope begin GEN_TREE_NODE[7] $end
-$var parameter 4 w& node $end
+$var parameter 4 #' node $end
 $upscope $end
 $scope begin GEN_TREE_NODE[8] $end
-$var parameter 5 x& node $end
+$var parameter 5 $' node $end
 $upscope $end
 $scope begin GEN_TREE_NODE[9] $end
-$var parameter 5 y& node $end
+$var parameter 5 %' node $end
 $upscope $end
 $scope begin GEN_TREE_NODE[10] $end
-$var parameter 5 z& node $end
+$var parameter 5 &' node $end
 $upscope $end
 $scope begin GEN_TREE_NODE[11] $end
-$var parameter 5 {& node $end
+$var parameter 5 '' node $end
 $upscope $end
 $scope begin GEN_TREE_NODE[12] $end
-$var parameter 5 |& node $end
+$var parameter 5 (' node $end
 $upscope $end
 $scope begin GEN_TREE_NODE[13] $end
-$var parameter 5 }& node $end
+$var parameter 5 )' node $end
 $upscope $end
 $scope begin GEN_TREE_NODE[14] $end
-$var parameter 5 ~& node $end
+$var parameter 5 *' node $end
 $upscope $end
 $scope begin GEN_TREE_NODE[15] $end
-$var parameter 5 !' node $end
+$var parameter 5 +' node $end
 $upscope $end
 $upscope $end
 $scope begin GEN_TREE_LEVEL[1] $end
-$var parameter 2 "' level $end
+$var parameter 2 ,' level $end
 $scope begin GEN_TREE_NODE[0] $end
-$var parameter 2 #' node $end
+$var parameter 2 -' node $end
 $upscope $end
 $scope begin GEN_TREE_NODE[1] $end
-$var parameter 2 $' node $end
+$var parameter 2 .' node $end
 $upscope $end
 $scope begin GEN_TREE_NODE[2] $end
-$var parameter 3 %' node $end
+$var parameter 3 /' node $end
 $upscope $end
 $scope begin GEN_TREE_NODE[3] $end
-$var parameter 3 &' node $end
+$var parameter 3 0' node $end
 $upscope $end
 $scope begin GEN_TREE_NODE[4] $end
-$var parameter 4 '' node $end
+$var parameter 4 1' node $end
 $upscope $end
 $scope begin GEN_TREE_NODE[5] $end
-$var parameter 4 (' node $end
+$var parameter 4 2' node $end
 $upscope $end
 $scope begin GEN_TREE_NODE[6] $end
-$var parameter 4 )' node $end
+$var parameter 4 3' node $end
 $upscope $end
 $scope begin GEN_TREE_NODE[7] $end
-$var parameter 4 *' node $end
+$var parameter 4 4' node $end
 $upscope $end
 $upscope $end
 $scope begin GEN_TREE_LEVEL[2] $end
-$var parameter 3 +' level $end
+$var parameter 3 5' level $end
 $scope begin GEN_TREE_NODE[0] $end
-$var parameter 2 ,' node $end
+$var parameter 2 6' node $end
 $upscope $end
 $scope begin GEN_TREE_NODE[1] $end
-$var parameter 2 -' node $end
+$var parameter 2 7' node $end
 $upscope $end
 $scope begin GEN_TREE_NODE[2] $end
-$var parameter 3 .' node $end
+$var parameter 3 8' node $end
 $upscope $end
 $scope begin GEN_TREE_NODE[3] $end
-$var parameter 3 /' node $end
+$var parameter 3 9' node $end
 $upscope $end
 $upscope $end
 $scope begin GEN_TREE_LEVEL[3] $end
-$var parameter 3 0' level $end
+$var parameter 3 :' level $end
 $scope begin GEN_TREE_NODE[0] $end
-$var parameter 2 1' node $end
+$var parameter 2 ;' node $end
 $upscope $end
 $scope begin GEN_TREE_NODE[1] $end
-$var parameter 2 2' node $end
+$var parameter 2 <' node $end
 $upscope $end
 $upscope $end
 $scope begin GEN_TREE_LEVEL[4] $end
-$var parameter 4 3' level $end
+$var parameter 4 =' level $end
 $scope begin GEN_TREE_NODE[0] $end
-$var parameter 2 4' node $end
+$var parameter 2 >' node $end
 $upscope $end
 $upscope $end
 $upscope $end
 $upscope $end
 $scope module u_f $end
-$var wire 8 5' bias [7:0] $end
+$var wire 2 ?' activation [1:0] $end
+$var wire 8 @' bias [7:0] $end
 $var wire 1 A clk $end
+$var wire 16 A' n_inputs_real [15:0] $end
 $var wire 1 B rst $end
 $var wire 1 E start $end
-$var wire 256 6' w_bus [255:0] $end
-$var wire 256 7' x_bus [255:0] $end
-$var wire 16 8' x_group [15:0] $end
-$var wire 16 9' w_group [15:0] $end
-$var wire 32 :' final_acc [31:0] $end
-$var wire 32 ;' bias_ext [31:0] $end
-$var wire 32 <' acc_next [31:0] $end
-$var parameter 32 =' ACC_WIDTH $end
-$var parameter 32 >' DATA_WIDTH $end
-$var parameter 32 ?' GROUPS $end
-$var parameter 32 @' GROUP_INDEX_WIDTH $end
-$var parameter 32 A' N_INPUTS $end
-$var parameter 32 B' PARALLEL $end
-$var reg 32 C' acc [31:0] $end
+$var wire 256 B' w_bus [255:0] $end
+$var wire 256 C' x_bus [255:0] $end
+$var wire 16 D' x_group [15:0] $end
+$var wire 16 E' w_group [15:0] $end
+$var wire 16 F' groups_real [15:0] $end
+$var wire 32 G' final_acc [31:0] $end
+$var wire 32 H' bias_ext [31:0] $end
+$var wire 32 I' acc_next [31:0] $end
+$var parameter 32 J' ACC_WIDTH $end
+$var parameter 2 K' ACT_NONE $end
+$var parameter 2 L' ACT_RELU $end
+$var parameter 32 M' DATA_WIDTH $end
+$var parameter 32 N' GROUPS $end
+$var parameter 32 O' GROUP_INDEX_WIDTH $end
+$var parameter 32 P' N_INPUTS $end
+$var parameter 32 Q' PARALLEL $end
+$var reg 32 R' acc [31:0] $end
 $var reg 1 * busy $end
 $var reg 1 & done $end
-$var reg 4 D' group_index [3:0] $end
-$var reg 8 E' y [7:0] $end
+$var reg 4 S' group_index [3:0] $end
+$var reg 8 T' y [7:0] $end
 $scope module u_mac8 $end
-$var wire 32 F' acc_in [31:0] $end
-$var wire 16 G' w_bus [15:0] $end
-$var wire 16 H' x_bus [15:0] $end
-$var wire 32 I' acc_out [31:0] $end
-$var parameter 32 J' ACC_WIDTH $end
-$var parameter 32 K' DATA_WIDTH $end
-$var parameter 32 L' PARALLEL $end
-$var parameter 32 M' TREE_LEVELS $end
+$var wire 32 U' acc_in [31:0] $end
+$var wire 16 V' w_bus [15:0] $end
+$var wire 16 W' x_bus [15:0] $end
+$var wire 32 X' acc_out [31:0] $end
+$var parameter 32 Y' ACC_WIDTH $end
+$var parameter 32 Z' DATA_WIDTH $end
+$var parameter 32 [' PARALLEL $end
+$var parameter 32 \' TREE_LEVELS $end
 $scope begin GEN_MAC[0] $end
-$var parameter 2 N' i $end
+$var parameter 2 ]' i $end
 $scope module u_mac $end
-$var wire 32 O' acc_in [31:0] $end
-$var wire 8 P' w [7:0] $end
-$var wire 8 Q' x [7:0] $end
-$var wire 32 R' product_ext [31:0] $end
-$var wire 16 S' product [15:0] $end
-$var wire 32 T' acc_out [31:0] $end
-$var parameter 32 U' ACC_WIDTH $end
-$var parameter 32 V' DATA_WIDTH $end
-$var parameter 64 W' PROD_WIDTH $end
+$var wire 32 ^' acc_in [31:0] $end
+$var wire 8 _' w [7:0] $end
+$var wire 8 `' x [7:0] $end
+$var wire 32 a' product_ext [31:0] $end
+$var wire 16 b' product [15:0] $end
+$var wire 32 c' acc_out [31:0] $end
+$var parameter 32 d' ACC_WIDTH $end
+$var parameter 32 e' DATA_WIDTH $end
+$var parameter 64 f' PROD_WIDTH $end
 $upscope $end
 $upscope $end
 $scope begin GEN_MAC[1] $end
-$var parameter 2 X' i $end
+$var parameter 2 g' i $end
 $scope module u_mac $end
-$var wire 32 Y' acc_in [31:0] $end
-$var wire 8 Z' w [7:0] $end
-$var wire 8 [' x [7:0] $end
-$var wire 32 \' product_ext [31:0] $end
-$var wire 16 ]' product [15:0] $end
-$var wire 32 ^' acc_out [31:0] $end
-$var parameter 32 _' ACC_WIDTH $end
-$var parameter 32 `' DATA_WIDTH $end
-$var parameter 64 a' PROD_WIDTH $end
+$var wire 32 h' acc_in [31:0] $end
+$var wire 8 i' w [7:0] $end
+$var wire 8 j' x [7:0] $end
+$var wire 32 k' product_ext [31:0] $end
+$var wire 16 l' product [15:0] $end
+$var wire 32 m' acc_out [31:0] $end
+$var parameter 32 n' ACC_WIDTH $end
+$var parameter 32 o' DATA_WIDTH $end
+$var parameter 64 p' PROD_WIDTH $end
 $upscope $end
 $upscope $end
 $scope begin GEN_TREE_INPUT[0] $end
-$var parameter 2 b' i $end
+$var parameter 2 q' i $end
 $upscope $end
 $scope begin GEN_TREE_INPUT[1] $end
-$var parameter 2 c' i $end
+$var parameter 2 r' i $end
 $upscope $end
 $scope begin GEN_TREE_LEVEL[0] $end
-$var parameter 2 d' level $end
+$var parameter 2 s' level $end
 $scope begin GEN_TREE_NODE[0] $end
-$var parameter 2 e' node $end
+$var parameter 2 t' node $end
 $upscope $end
 $upscope $end
 $upscope $end
 $upscope $end
 $scope module u_g $end
-$var wire 8 f' bias [7:0] $end
+$var wire 2 u' activation [1:0] $end
+$var wire 8 v' bias [7:0] $end
 $var wire 1 A clk $end
+$var wire 16 w' n_inputs_real [15:0] $end
 $var wire 1 B rst $end
 $var wire 1 F start $end
-$var wire 256 g' w_bus [255:0] $end
-$var wire 256 h' x_bus [255:0] $end
-$var wire 32 i' x_group [31:0] $end
-$var wire 32 j' w_group [31:0] $end
-$var wire 32 k' final_acc [31:0] $end
-$var wire 32 l' bias_ext [31:0] $end
-$var wire 32 m' acc_next [31:0] $end
-$var parameter 32 n' ACC_WIDTH $end
-$var parameter 32 o' DATA_WIDTH $end
-$var parameter 32 p' GROUPS $end
-$var parameter 32 q' GROUP_INDEX_WIDTH $end
-$var parameter 32 r' N_INPUTS $end
-$var parameter 32 s' PARALLEL $end
-$var reg 32 t' acc [31:0] $end
+$var wire 256 x' w_bus [255:0] $end
+$var wire 256 y' x_bus [255:0] $end
+$var wire 32 z' x_group [31:0] $end
+$var wire 32 {' w_group [31:0] $end
+$var wire 16 |' groups_real [15:0] $end
+$var wire 32 }' final_acc [31:0] $end
+$var wire 32 ~' bias_ext [31:0] $end
+$var wire 32 !( acc_next [31:0] $end
+$var parameter 32 "( ACC_WIDTH $end
+$var parameter 2 #( ACT_NONE $end
+$var parameter 2 $( ACT_RELU $end
+$var parameter 32 %( DATA_WIDTH $end
+$var parameter 32 &( GROUPS $end
+$var parameter 32 '( GROUP_INDEX_WIDTH $end
+$var parameter 32 (( N_INPUTS $end
+$var parameter 32 )( PARALLEL $end
+$var reg 32 *( acc [31:0] $end
 $var reg 1 ) busy $end
 $var reg 1 % done $end
-$var reg 3 u' group_index [2:0] $end
-$var reg 8 v' y [7:0] $end
+$var reg 3 +( group_index [2:0] $end
+$var reg 8 ,( y [7:0] $end
 $scope module u_mac8 $end
-$var wire 32 w' acc_in [31:0] $end
-$var wire 32 x' w_bus [31:0] $end
-$var wire 32 y' x_bus [31:0] $end
-$var wire 32 z' acc_out [31:0] $end
-$var parameter 32 {' ACC_WIDTH $end
-$var parameter 32 |' DATA_WIDTH $end
-$var parameter 32 }' PARALLEL $end
-$var parameter 32 ~' TREE_LEVELS $end
+$var wire 32 -( acc_in [31:0] $end
+$var wire 32 .( w_bus [31:0] $end
+$var wire 32 /( x_bus [31:0] $end
+$var wire 32 0( acc_out [31:0] $end
+$var parameter 32 1( ACC_WIDTH $end
+$var parameter 32 2( DATA_WIDTH $end
+$var parameter 32 3( PARALLEL $end
+$var parameter 32 4( TREE_LEVELS $end
 $scope begin GEN_MAC[0] $end
-$var parameter 2 !( i $end
-$scope module u_mac $end
-$var wire 32 "( acc_in [31:0] $end
-$var wire 8 #( w [7:0] $end
-$var wire 8 $( x [7:0] $end
-$var wire 32 %( product_ext [31:0] $end
-$var wire 16 &( product [15:0] $end
-$var wire 32 '( acc_out [31:0] $end
-$var parameter 32 (( ACC_WIDTH $end
-$var parameter 32 )( DATA_WIDTH $end
-$var parameter 64 *( PROD_WIDTH $end
-$upscope $end
-$upscope $end
-$scope begin GEN_MAC[1] $end
-$var parameter 2 +( i $end
-$scope module u_mac $end
-$var wire 32 ,( acc_in [31:0] $end
-$var wire 8 -( w [7:0] $end
-$var wire 8 .( x [7:0] $end
-$var wire 32 /( product_ext [31:0] $end
-$var wire 16 0( product [15:0] $end
-$var wire 32 1( acc_out [31:0] $end
-$var parameter 32 2( ACC_WIDTH $end
-$var parameter 32 3( DATA_WIDTH $end
-$var parameter 64 4( PROD_WIDTH $end
-$upscope $end
-$upscope $end
-$scope begin GEN_MAC[2] $end
-$var parameter 3 5( i $end
+$var parameter 2 5( i $end
 $scope module u_mac $end
 $var wire 32 6( acc_in [31:0] $end
 $var wire 8 7( w [7:0] $end
@@ -1090,8 +1082,8 @@ $var parameter 32 =( DATA_WIDTH $end
 $var parameter 64 >( PROD_WIDTH $end
 $upscope $end
 $upscope $end
-$scope begin GEN_MAC[3] $end
-$var parameter 3 ?( i $end
+$scope begin GEN_MAC[1] $end
+$var parameter 2 ?( i $end
 $scope module u_mac $end
 $var wire 32 @( acc_in [31:0] $end
 $var wire 8 A( w [7:0] $end
@@ -1104,31 +1096,59 @@ $var parameter 32 G( DATA_WIDTH $end
 $var parameter 64 H( PROD_WIDTH $end
 $upscope $end
 $upscope $end
+$scope begin GEN_MAC[2] $end
+$var parameter 3 I( i $end
+$scope module u_mac $end
+$var wire 32 J( acc_in [31:0] $end
+$var wire 8 K( w [7:0] $end
+$var wire 8 L( x [7:0] $end
+$var wire 32 M( product_ext [31:0] $end
+$var wire 16 N( product [15:0] $end
+$var wire 32 O( acc_out [31:0] $end
+$var parameter 32 P( ACC_WIDTH $end
+$var parameter 32 Q( DATA_WIDTH $end
+$var parameter 64 R( PROD_WIDTH $end
+$upscope $end
+$upscope $end
+$scope begin GEN_MAC[3] $end
+$var parameter 3 S( i $end
+$scope module u_mac $end
+$var wire 32 T( acc_in [31:0] $end
+$var wire 8 U( w [7:0] $end
+$var wire 8 V( x [7:0] $end
+$var wire 32 W( product_ext [31:0] $end
+$var wire 16 X( product [15:0] $end
+$var wire 32 Y( acc_out [31:0] $end
+$var parameter 32 Z( ACC_WIDTH $end
+$var parameter 32 [( DATA_WIDTH $end
+$var parameter 64 \( PROD_WIDTH $end
+$upscope $end
+$upscope $end
 $scope begin GEN_TREE_INPUT[0] $end
-$var parameter 2 I( i $end
+$var parameter 2 ]( i $end
 $upscope $end
 $scope begin GEN_TREE_INPUT[1] $end
-$var parameter 2 J( i $end
+$var parameter 2 ^( i $end
 $upscope $end
 $scope begin GEN_TREE_INPUT[2] $end
-$var parameter 3 K( i $end
+$var parameter 3 _( i $end
 $upscope $end
 $scope begin GEN_TREE_INPUT[3] $end
-$var parameter 3 L( i $end
+$var parameter 3 `( i $end
 $upscope $end
 $scope begin GEN_TREE_LEVEL[0] $end
-$var parameter 2 M( level $end
+$var parameter 2 a( level $end
 $scope begin GEN_TREE_NODE[0] $end
-$var parameter 2 N( node $end
+$var parameter 2 b( node $end
 $upscope $end
 $scope begin GEN_TREE_NODE[1] $end
-$var parameter 2 O( node $end
+$var parameter 2 c( node $end
 $upscope $end
 $upscope $end
 $scope begin GEN_TREE_LEVEL[1] $end
-$var parameter 2 P( level $end
+$var parameter 2 d( level $end
 $scope begin GEN_TREE_NODE[0] $end
-$var parameter 2 Q( node $end
+$var parameter 2 e( node $end
 $upscope $end
 $upscope $end
 $upscope $end
@@ -1137,329 +1157,337 @@ $upscope $end
 $enddefinitions $end
 $comment Show the parameter values. $end
 $dumpall
-b0 Q(
-b1 P(
-b1 O(
-b0 N(
-b0 M(
-b11 L(
-b10 K(
-b1 J(
-b0 I(
+b0 e(
+b1 d(
+b1 c(
+b0 b(
+b0 a(
+b11 `(
+b10 _(
+b1 ^(
+b0 ](
+b10000 \(
+b1000 [(
+b100000 Z(
+b11 S(
+b10000 R(
+b1000 Q(
+b100000 P(
+b10 I(
 b10000 H(
 b1000 G(
 b100000 F(
-b11 ?(
+b1 ?(
 b10000 >(
 b1000 =(
 b100000 <(
-b10 5(
-b10000 4(
-b1000 3(
-b100000 2(
-b1 +(
-b10000 *(
-b1000 )(
+b0 5(
+b10 4(
+b100 3(
+b1000 2(
+b100000 1(
+b100 )(
 b100000 ((
-b0 !(
-b10 ~'
-b100 }'
-b1000 |'
-b100000 {'
-b100 s'
-b100000 r'
-b11 q'
-b1000 p'
+b11 '(
+b1000 &(
+b1000 %(
+b1 $(
+b0 #(
+b100000 "(
+b0 t'
+b0 s'
+b1 r'
+b0 q'
+b10000 p'
 b1000 o'
 b100000 n'
-b0 e'
-b0 d'
-b1 c'
-b0 b'
-b10000 a'
-b1000 `'
-b100000 _'
-b1 X'
-b10000 W'
-b1000 V'
-b100000 U'
-b0 N'
-b1 M'
-b10 L'
-b1000 K'
+b1 g'
+b10000 f'
+b1000 e'
+b100000 d'
+b0 ]'
+b1 \'
+b10 ['
+b1000 Z'
+b100000 Y'
+b10 Q'
+b100000 P'
+b100 O'
+b10000 N'
+b1000 M'
+b1 L'
+b0 K'
 b100000 J'
-b10 B'
-b100000 A'
-b100 @'
-b10000 ?'
-b1000 >'
-b100000 ='
-b0 4'
-b100 3'
-b1 2'
-b0 1'
+b0 >'
+b100 ='
+b1 <'
+b0 ;'
+b11 :'
+b11 9'
+b10 8'
+b1 7'
+b0 6'
+b10 5'
+b111 4'
+b110 3'
+b101 2'
+b100 1'
 b11 0'
-b11 /'
-b10 .'
-b1 -'
-b0 ,'
-b10 +'
-b111 *'
-b110 )'
-b101 ('
-b100 ''
-b11 &'
-b10 %'
-b1 $'
-b0 #'
-b1 "'
-b1111 !'
-b1110 ~&
-b1101 }&
-b1100 |&
-b1011 {&
-b1010 z&
-b1001 y&
-b1000 x&
-b111 w&
-b110 v&
-b101 u&
-b100 t&
-b11 s&
-b10 r&
-b1 q&
-b0 p&
-b0 o&
-b11111 n&
-b11110 m&
-b11101 l&
-b11100 k&
-b11011 j&
-b11010 i&
-b11001 h&
-b11000 g&
-b10111 f&
-b10110 e&
-b10101 d&
-b10100 c&
-b10011 b&
-b10010 a&
-b10001 `&
-b10000 _&
-b1111 ^&
-b1110 ]&
-b1101 \&
-b1100 [&
-b1011 Z&
-b1010 Y&
-b1001 X&
+b10 /'
+b1 .'
+b0 -'
+b1 ,'
+b1111 +'
+b1110 *'
+b1101 )'
+b1100 ('
+b1011 ''
+b1010 &'
+b1001 %'
+b1000 $'
+b111 #'
+b110 "'
+b101 !'
+b100 ~&
+b11 }&
+b10 |&
+b1 {&
+b0 z&
+b0 y&
+b11111 x&
+b11110 w&
+b11101 v&
+b11100 u&
+b11011 t&
+b11010 s&
+b11001 r&
+b11000 q&
+b10111 p&
+b10110 o&
+b10101 n&
+b10100 m&
+b10011 l&
+b10010 k&
+b10001 j&
+b10000 i&
+b1111 h&
+b1110 g&
+b1101 f&
+b1100 e&
+b1011 d&
+b1010 c&
+b1001 b&
+b1000 a&
+b111 `&
+b110 _&
+b101 ^&
+b100 ]&
+b11 \&
+b10 [&
+b1 Z&
+b0 Y&
+b10000 X&
 b1000 W&
-b111 V&
-b110 U&
-b101 T&
-b100 S&
-b11 R&
-b10 Q&
-b1 P&
-b0 O&
+b100000 V&
+b11111 O&
 b10000 N&
 b1000 M&
 b100000 L&
-b11111 E&
+b11110 E&
 b10000 D&
 b1000 C&
 b100000 B&
-b11110 ;&
+b11101 ;&
 b10000 :&
 b1000 9&
 b100000 8&
-b11101 1&
+b11100 1&
 b10000 0&
 b1000 /&
 b100000 .&
-b11100 '&
+b11011 '&
 b10000 &&
 b1000 %&
 b100000 $&
-b11011 {%
+b11010 {%
 b10000 z%
 b1000 y%
 b100000 x%
-b11010 q%
+b11001 q%
 b10000 p%
 b1000 o%
 b100000 n%
-b11001 g%
+b11000 g%
 b10000 f%
 b1000 e%
 b100000 d%
-b11000 ]%
+b10111 ]%
 b10000 \%
 b1000 [%
 b100000 Z%
-b10111 S%
+b10110 S%
 b10000 R%
 b1000 Q%
 b100000 P%
-b10110 I%
+b10101 I%
 b10000 H%
 b1000 G%
 b100000 F%
-b10101 ?%
+b10100 ?%
 b10000 >%
 b1000 =%
 b100000 <%
-b10100 5%
+b10011 5%
 b10000 4%
 b1000 3%
 b100000 2%
-b10011 +%
+b10010 +%
 b10000 *%
 b1000 )%
 b100000 (%
-b10010 !%
+b10001 !%
 b10000 ~$
 b1000 }$
 b100000 |$
-b10001 u$
+b10000 u$
 b10000 t$
 b1000 s$
 b100000 r$
-b10000 k$
+b1111 k$
 b10000 j$
 b1000 i$
 b100000 h$
-b1111 a$
+b1110 a$
 b10000 `$
 b1000 _$
 b100000 ^$
-b1110 W$
+b1101 W$
 b10000 V$
 b1000 U$
 b100000 T$
-b1101 M$
+b1100 M$
 b10000 L$
 b1000 K$
 b100000 J$
-b1100 C$
+b1011 C$
 b10000 B$
 b1000 A$
 b100000 @$
-b1011 9$
+b1010 9$
 b10000 8$
 b1000 7$
 b100000 6$
-b1010 /$
+b1001 /$
 b10000 .$
 b1000 -$
 b100000 ,$
-b1001 %$
+b1000 %$
 b10000 $$
 b1000 #$
 b100000 "$
-b1000 y#
+b111 y#
 b10000 x#
 b1000 w#
 b100000 v#
-b111 o#
+b110 o#
 b10000 n#
 b1000 m#
 b100000 l#
-b110 e#
+b101 e#
 b10000 d#
 b1000 c#
 b100000 b#
-b101 [#
+b100 [#
 b10000 Z#
 b1000 Y#
 b100000 X#
-b100 Q#
+b11 Q#
 b10000 P#
 b1000 O#
 b100000 N#
-b11 G#
+b10 G#
 b10000 F#
 b1000 E#
 b100000 D#
-b10 =#
+b1 =#
 b10000 <#
 b1000 ;#
 b100000 :#
-b1 3#
-b10000 2#
-b1000 1#
-b100000 0#
-b0 )#
-b101 (#
+b0 3#
+b101 2#
+b100000 1#
+b1000 0#
+b100000 /#
 b100000 '#
-b1000 &#
-b100000 %#
-b100000 {"
-b1000000 z"
-b1 y"
-b10 x"
-b1000 w"
-b100000 v"
-b0 m"
+b1000000 &#
+b1 %#
+b10 $#
+b1000 ##
+b1 "#
+b0 !#
+b100000 ~"
+b0 r"
+b10 q"
+b1 p"
+b0 o"
+b1 n"
+b11 m"
 b10 l"
 b1 k"
 b0 j"
-b1 i"
-b11 h"
-b10 g"
-b1 f"
-b0 e"
-b0 d"
-b111 c"
-b110 b"
-b101 a"
-b100 `"
-b11 _"
-b10 ^"
-b1 ]"
-b0 \"
-b10000 ["
-b1000 Z"
-b100000 Y"
-b111 R"
-b10000 Q"
-b1000 P"
-b100000 O"
-b110 H"
-b10000 G"
-b1000 F"
-b100000 E"
-b101 >"
-b10000 ="
-b1000 <"
-b100000 ;"
-b100 4"
-b10000 3"
-b1000 2"
-b100000 1"
-b11 *"
-b10000 )"
-b1000 ("
-b100000 '"
-b10 ~
-b10000 }
-b1000 |
-b100000 {
-b1 t
-b10000 s
-b1000 r
-b100000 q
-b0 j
-b11 i
-b1000 h
-b1000 g
-b100000 f
-b1000 ^
-b100000 ]
-b10 \
-b100 [
-b1000 Z
-b100000 Y
+b0 i"
+b111 h"
+b110 g"
+b101 f"
+b100 e"
+b11 d"
+b10 c"
+b1 b"
+b0 a"
+b10000 `"
+b1000 _"
+b100000 ^"
+b111 W"
+b10000 V"
+b1000 U"
+b100000 T"
+b110 M"
+b10000 L"
+b1000 K"
+b100000 J"
+b101 C"
+b10000 B"
+b1000 A"
+b100000 @"
+b100 9"
+b10000 8"
+b1000 7"
+b100000 6"
+b11 /"
+b10000 ."
+b1000 -"
+b100000 ,"
+b10 %"
+b10000 $"
+b1000 #"
+b100000 ""
+b1 y
+b10000 x
+b1000 w
+b100000 v
+b0 o
+b11 n
+b1000 m
+b1000 l
+b100000 k
+b1000 c
+b100000 b
+b10 a
+b100 `
+b1000 _
+b1 ^
+b0 ]
+b100000 \
 b100 <
 b100000 ;
 b1000 :
@@ -1479,6 +1507,18 @@ b100000 -
 $end
 #0
 $dumpvars
+bx Y(
+bx X(
+bx W(
+bx V(
+bx U(
+b0 T(
+bx O(
+bx N(
+bx M(
+bx L(
+bx K(
+b0 J(
 bx E(
 bx D(
 bx C(
@@ -1491,60 +1531,60 @@ bx 9(
 bx 8(
 bx 7(
 b0 6(
-bx 1(
 bx 0(
 bx /(
 bx .(
 bx -(
-b0 ,(
-bx '(
-bx &(
-bx %(
-bx $(
-bx #(
-b0 "(
+bx ,(
+bx +(
+bx *(
+bx !(
+b0 ~'
+bx }'
+b1000 |'
+bx {'
 bx z'
-bx y'
-bx x'
-bx w'
-bx v'
-bx u'
-bx t'
+b0 y'
+b0 x'
+b100000 w'
+b0 v'
+b1 u'
 bx m'
-b0 l'
+bx l'
 bx k'
 bx j'
 bx i'
 b0 h'
-b0 g'
-b0 f'
-bx ^'
-bx ]'
-bx \'
-bx ['
-bx Z'
-b0 Y'
+bx c'
+bx b'
+bx a'
+bx `'
+bx _'
+b0 ^'
+bx X'
+bx W'
+bx V'
+bx U'
 bx T'
 bx S'
 bx R'
-bx Q'
-bx P'
-b0 O'
 bx I'
-bx H'
+b0 H'
 bx G'
-bx F'
+b10000 F'
 bx E'
 bx D'
-bx C'
-bx <'
-b0 ;'
-bx :'
-bx 9'
-bx 8'
-b0 7'
-b0 6'
-b0 5'
+b0 C'
+b0 B'
+b100000 A'
+b0 @'
+b1 ?'
+bx U&
+bx T&
+bx S&
+bx R&
+bx Q&
+b0 P&
 bx K&
 bx J&
 bx I&
@@ -1731,90 +1771,90 @@ bx 7#
 bx 6#
 bx 5#
 b0 4#
-bx /#
 bx .#
 bx -#
 bx ,#
 bx +#
-b0 *#
-bx $#
-bx ##
-bx "#
-bx !#
-bx ~"
-x}"
-bx |"
-bx u"
+bx *#
+x)#
+bx (#
+bx }"
+b0 |"
+bx {"
+b10 z"
+bx y"
+bx x"
+b0 w"
+b0 v"
+b1000000 u"
 b0 t"
-bx s"
-bx r"
-bx q"
-b0 p"
-b0 o"
-b0 n"
-bx X"
-bx W"
-bx V"
-bx U"
-bx T"
-b0 S"
-bx N"
-bx M"
-bx L"
-bx K"
-bx J"
-b0 I"
-bx D"
-bx C"
-bx B"
-bx A"
-bx @"
-b0 ?"
-bx :"
-bx 9"
-bx 8"
-bx 7"
-bx 6"
-b0 5"
-bx 0"
-bx /"
-bx ."
-bx -"
-bx ,"
-b0 +"
-bx &"
-bx %"
-bx $"
-bx #"
-bx ""
-b0 !"
-bx z
-bx y
-bx x
-bx w
-bx v
-b0 u
-bx p
-bx o
-bx n
-bx m
-bx l
-b0 k
+b1 s"
+bx ]"
+bx \"
+bx ["
+bx Z"
+bx Y"
+b0 X"
+bx S"
+bx R"
+bx Q"
+bx P"
+bx O"
+b0 N"
+bx I"
+bx H"
+bx G"
+bx F"
+bx E"
+b0 D"
+bx ?"
+bx >"
+bx ="
+bx <"
+bx ;"
+b0 :"
+bx 5"
+bx 4"
+bx 3"
+bx 2"
+bx 1"
+b0 0"
+bx +"
+bx *"
+bx )"
+bx ("
+bx '"
+b0 &"
+bx !"
+bx ~
+bx }
+bx |
+bx {
+b0 z
+bx u
+bx t
+bx s
+bx r
+bx q
+b0 p
+bx j
+bx i
+bx h
+bx g
+bx f
 bx e
 bx d
-bx c
-bx b
-bx a
-bx `
-bx _
-bx X
-b0 W
+bx [
+b0 Z
+bx Y
+b100 X
+bx W
 bx V
-bx U
-bx T
-b0 S
+b0 U
+b0 T
+b100000 S
 b0 R
-b0 Q
+b1 Q
 b0 P
 bx O
 b0 N
@@ -1849,21 +1889,20 @@ bx "
 bx !
 $end
 #5000
-b0 V
-b0 X
-b0 e
-b0 p
-b0 z
-b0 &"
-b0 0"
-b0 :"
-b0 D"
-b0 N"
-b0 X"
-b0 s"
-b0 u"
-b0 $#
-b0 /#
+b0 Y
+b0 [
+b0 j
+b0 u
+b0 !"
+b0 +"
+b0 5"
+b0 ?"
+b0 I"
+b0 S"
+b0 ]"
+b0 {"
+b0 }"
+b0 .#
 b0 9#
 b0 C#
 b0 M#
@@ -1895,27 +1934,27 @@ b0 -&
 b0 7&
 b0 A&
 b0 K&
-b0 :'
-b0 <'
+b0 U&
+b0 G'
 b0 I'
-b0 T'
-b0 ^'
-b0 k'
+b0 X'
+b0 c'
 b0 m'
-b0 z'
-b0 '(
-b0 1(
+b0 }'
+b0 !(
+b0 0(
 b0 ;(
 b0 E(
-b0 n
-b0 x
-b0 $"
-b0 ."
-b0 8"
-b0 B"
-b0 L"
-b0 V"
-b0 -#
+b0 O(
+b0 Y(
+b0 s
+b0 }
+b0 )"
+b0 3"
+b0 ="
+b0 G"
+b0 Q"
+b0 ["
 b0 7#
 b0 A#
 b0 K#
@@ -1947,38 +1986,37 @@ b0 +&
 b0 5&
 b0 ?&
 b0 I&
-b0 R'
-b0 \'
-b0 %(
-b0 /(
+b0 S&
+b0 a'
+b0 k'
 b0 9(
 b0 C(
-b0 o
-b0 m
-b0 y
-b0 w
-b0 %"
-b0 #"
-b0 /"
-b0 -"
-b0 9"
-b0 7"
-b0 C"
-b0 A"
-b0 M"
-b0 K"
-b0 W"
-b0 U"
-b0 l
-b0 v
-b0 ""
-b0 ,"
-b0 6"
-b0 @"
-b0 J"
-b0 T"
-b0 .#
-b0 ,#
+b0 M(
+b0 W(
+b0 t
+b0 r
+b0 ~
+b0 |
+b0 *"
+b0 ("
+b0 4"
+b0 2"
+b0 >"
+b0 <"
+b0 H"
+b0 F"
+b0 R"
+b0 P"
+b0 \"
+b0 Z"
+b0 q
+b0 {
+b0 '"
+b0 1"
+b0 ;"
+b0 E"
+b0 O"
+b0 Y"
 b0 8#
 b0 6#
 b0 B#
@@ -2041,7 +2079,8 @@ b0 @&
 b0 >&
 b0 J&
 b0 H&
-b0 +#
+b0 T&
+b0 R&
 b0 5#
 b0 ?#
 b0 I#
@@ -2073,123 +2112,124 @@ b0 )&
 b0 3&
 b0 =&
 b0 G&
-b0 S'
-b0 Q'
-b0 ]'
-b0 ['
-b0 P'
-b0 Z'
-b0 &(
-b0 $(
-b0 0(
-b0 .(
+b0 Q&
+b0 b'
+b0 `'
+b0 l'
+b0 j'
+b0 _'
+b0 i'
 b0 :(
 b0 8(
 b0 D(
 b0 B(
-b0 #(
-b0 -(
+b0 N(
+b0 L(
+b0 X(
+b0 V(
 b0 7(
 b0 A(
-b0 T
-b0 d
-b0 U
-b0 c
-b0 q"
-b0 ##
-b0 r"
-b0 "#
-b0 8'
-b0 H'
-b0 9'
-b0 G'
-b0 i'
-b0 y'
-b0 j'
-b0 x'
+b0 K(
+b0 U(
+b0 V
+b0 i
+b0 W
+b0 h
+b0 x"
+b0 -#
+b0 y"
+b0 ,#
+b0 D'
+b0 W'
+b0 E'
+b0 V'
+b0 z'
+b0 /(
+b0 {'
+b0 .(
 0(
 0,
 b0 $
-b0 a
-b0 _
-b0 b
-b0 `
+b0 f
+b0 d
+b0 g
+b0 e
 0'
 0+
 b0 #
-b0 ~"
-b0 |"
-b0 !#
-0}"
+b0 *#
+b0 (#
+b0 +#
+0)#
 0&
 0*
 b0 "
-b0 E'
-b0 C'
-b0 F'
-b0 D'
+b0 T'
+b0 R'
+b0 U'
+b0 S'
 0%
 0)
 b0 !
-b0 v'
-b0 t'
-b0 w'
-b0 u'
+b0 ,(
+b0 *(
+b0 -(
+b0 +(
 1A
 #10000
 0A
 #15000
-b1 X"
-b1 V"
-b1 N"
-b1 L"
-b1 D"
-b1 B"
-b1 :"
-b1 8"
-b1 0"
-b1 ."
-b1 &"
-b1 $"
-b1 z
-b1 x
-b1000 V
-b1000 X
-b1000 e
-b1 p
-b1 n
-b1 W"
-b1 T"
-b1 U"
-b1 M"
-b1 J"
-b1 K"
-b1 C"
-b1 @"
-b1 A"
-b1 9"
-b1 6"
-b1 7"
-b1 /"
-b1 ,"
-b1 -"
-b1 %"
-b1 ""
-b1 #"
-b1 y
-b1 v
-b1 w
-b1 o
-b1 l
-b1 m
-b100000001000000010000000100000001000000010000000100000001 U
-b100000001000000010000000100000001000000010000000100000001 c
+b1 ]"
+b1 ["
+b1 S"
+b1 Q"
+b1 I"
+b1 G"
+b1 ?"
+b1 ="
+b1 5"
+b1 3"
+b1 +"
+b1 )"
+b1 !"
+b1 }
+b1000 Y
+b1000 [
+b1000 j
+b1 u
+b1 s
+b1 \"
+b1 Y"
+b1 Z"
+b1 R"
+b1 O"
+b1 P"
+b1 H"
+b1 E"
+b1 F"
+b1 >"
+b1 ;"
+b1 <"
+b1 4"
+b1 1"
+b1 2"
+b1 *"
+b1 '"
+b1 ("
+b1 ~
+b1 {
+b1 |
+b1 t
+b1 q
+b1 r
+b100000001000000010000000100000001000000010000000100000001 W
+b100000001000000010000000100000001000000010000000100000001 h
 b100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001 G
-b100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001 R
-b100000001000000010000000100000001000000010000000100000001 T
-b100000001000000010000000100000001000000010000000100000001 d
+b100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001 T
+b100000001000000010000000100000001000000010000000100000001 V
+b100000001000000010000000100000001000000010000000100000001 i
 b100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001 K
-b100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001 S
+b100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001 U
 b100000 O
 0B
 1A
@@ -2207,32 +2247,32 @@ b100000 O
 #40000
 0A
 #45000
-b1 `
-b10000 V
-b10000 X
-b10000 e
-b1000 _
-b1000 b
+b1 e
+b10000 Y
+b10000 [
+b10000 j
+b1000 d
+b1000 g
 1A
 #50000
 0A
 #55000
-b10 `
-b11000 V
-b11000 X
-b11000 e
-b10000 _
-b10000 b
+b10 e
+b11000 Y
+b11000 [
+b11000 j
+b10000 d
+b10000 g
 1A
 #60000
 0A
 #65000
-b11 `
-b100000 V
-b100000 X
-b100000 e
-b11000 _
-b11000 b
+b11 e
+b100000 Y
+b100000 [
+b100000 j
+b11000 d
+b11000 g
 1A
 #70000
 0A
@@ -2240,17 +2280,19 @@ b11000 b
 1(
 0,
 b100000 $
-b100000 a
-b101000 V
-b101000 X
-b101000 e
-b100000 _
-b100000 b
+b100000 f
+b101000 Y
+b101000 [
+b101000 j
+b100000 d
+b100000 g
 1A
 #80000
 0A
 #85000
 0(
+b1 U&
+b1 S&
 b1 K&
 b1 I&
 b1 A&
@@ -2311,13 +2353,14 @@ b1 M#
 b1 K#
 b1 C#
 b1 A#
+b100000 {"
+b100000 }"
+b100000 .#
 b1 9#
 b1 7#
-b100000 s"
-b100000 u"
-b100000 $#
-b1 /#
-b1 -#
+b1 T&
+b1 Q&
+b1 R&
 b1 J&
 b1 G&
 b1 H&
@@ -2411,17 +2454,14 @@ b1 @#
 b1 8#
 b1 5#
 b1 6#
-b1 .#
-b1 +#
-b1 ,#
-b100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001 r"
-b100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001 "#
+b100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001 y"
+b100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001 ,#
 b1000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001 H
-b1000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001 o"
-b100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001 q"
-b100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001 ##
+b1000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001 v"
+b100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001 x"
+b100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001 -#
 b1000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001 L
-b1000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001 p"
+b1000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001 w"
 b1000000 O
 1A
 #90000
@@ -2438,12 +2478,12 @@ b1000000 O
 #110000
 0A
 #115000
-1}"
-b1000000 s"
-b1000000 u"
-b1000000 $#
-b100000 |"
-b100000 !#
+1)#
+b1000000 {"
+b1000000 }"
+b1000000 .#
+b100000 (#
+b100000 +#
 1A
 #120000
 0A
@@ -2451,38 +2491,38 @@ b100000 !#
 1'
 0+
 b1000000 #
-b1000000 ~"
-b1100000 s"
-b1100000 u"
-b1100000 $#
-b1000000 |"
-b1000000 !#
+b1000000 *#
+b1100000 {"
+b1100000 }"
+b1100000 .#
+b1000000 (#
+b1000000 +#
 1A
 #130000
 0A
 #135000
 0'
-b1 ^'
-b1 \'
-b10 :'
-b10 <'
+b1 m'
+b1 k'
+b10 G'
 b10 I'
-b1 T'
-b1 R'
-b1 ]'
-b1 Z'
-b1 ['
-b1 S'
-b1 P'
-b1 Q'
-b100000001 9'
-b100000001 G'
+b10 X'
+b1 c'
+b1 a'
+b1 l'
+b1 i'
+b1 j'
+b1 b'
+b1 _'
+b1 `'
+b100000001 E'
+b100000001 V'
 b100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001 I
-b100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001 6'
-b100000001 8'
-b100000001 H'
+b100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001 B'
+b100000001 D'
+b100000001 W'
 b100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001 M
-b100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001 7'
+b100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001 C'
 b100000 O
 1A
 #140000
@@ -2499,152 +2539,152 @@ b100000 O
 #160000
 0A
 #165000
-b1 D'
-b100 :'
-b100 <'
+b1 S'
+b100 G'
 b100 I'
-b10 C'
-b10 F'
+b100 X'
+b10 R'
+b10 U'
 1A
 #170000
 0A
 #175000
-b10 D'
-b110 :'
-b110 <'
+b10 S'
+b110 G'
 b110 I'
-b100 C'
-b100 F'
+b110 X'
+b100 R'
+b100 U'
 1A
 #180000
 0A
 #185000
-b11 D'
-b1000 :'
-b1000 <'
+b11 S'
+b1000 G'
 b1000 I'
-b110 C'
-b110 F'
+b1000 X'
+b110 R'
+b110 U'
 1A
 #190000
 0A
 #195000
-b100 D'
-b1010 :'
-b1010 <'
+b100 S'
+b1010 G'
 b1010 I'
-b1000 C'
-b1000 F'
+b1010 X'
+b1000 R'
+b1000 U'
 1A
 #200000
 0A
 #205000
-b101 D'
-b1100 :'
-b1100 <'
+b101 S'
+b1100 G'
 b1100 I'
-b1010 C'
-b1010 F'
+b1100 X'
+b1010 R'
+b1010 U'
 1A
 #210000
 0A
 #215000
-b110 D'
-b1110 :'
-b1110 <'
+b110 S'
+b1110 G'
 b1110 I'
-b1100 C'
-b1100 F'
+b1110 X'
+b1100 R'
+b1100 U'
 1A
 #220000
 0A
 #225000
-b111 D'
-b10000 :'
-b10000 <'
+b111 S'
+b10000 G'
 b10000 I'
-b1110 C'
-b1110 F'
+b10000 X'
+b1110 R'
+b1110 U'
 1A
 #230000
 0A
 #235000
-b1000 D'
-b10010 :'
-b10010 <'
+b1000 S'
+b10010 G'
 b10010 I'
-b10000 C'
-b10000 F'
+b10010 X'
+b10000 R'
+b10000 U'
 1A
 #240000
 0A
 #245000
-b1001 D'
-b10100 :'
-b10100 <'
+b1001 S'
+b10100 G'
 b10100 I'
-b10010 C'
-b10010 F'
+b10100 X'
+b10010 R'
+b10010 U'
 1A
 #250000
 0A
 #255000
-b1010 D'
-b10110 :'
-b10110 <'
+b1010 S'
+b10110 G'
 b10110 I'
-b10100 C'
-b10100 F'
+b10110 X'
+b10100 R'
+b10100 U'
 1A
 #260000
 0A
 #265000
-b1011 D'
-b11000 :'
-b11000 <'
+b1011 S'
+b11000 G'
 b11000 I'
-b10110 C'
-b10110 F'
+b11000 X'
+b10110 R'
+b10110 U'
 1A
 #270000
 0A
 #275000
-b1100 D'
-b11010 :'
-b11010 <'
+b1100 S'
+b11010 G'
 b11010 I'
-b11000 C'
-b11000 F'
+b11010 X'
+b11000 R'
+b11000 U'
 1A
 #280000
 0A
 #285000
-b1101 D'
-b11100 :'
-b11100 <'
+b1101 S'
+b11100 G'
 b11100 I'
-b11010 C'
-b11010 F'
+b11100 X'
+b11010 R'
+b11010 U'
 1A
 #290000
 0A
 #295000
-b1110 D'
-b11110 :'
-b11110 <'
+b1110 S'
+b11110 G'
 b11110 I'
-b11100 C'
-b11100 F'
+b11110 X'
+b11100 R'
+b11100 U'
 1A
 #300000
 0A
 #305000
-b1111 D'
-b100000 :'
-b100000 <'
+b1111 S'
+b100000 G'
 b100000 I'
-b11110 C'
-b11110 F'
+b100000 X'
+b11110 R'
+b11110 U'
 1A
 #310000
 0A
@@ -2652,48 +2692,48 @@ b11110 F'
 1&
 0*
 b100000 "
-b100000 E'
-b100010 :'
-b100010 <'
+b100000 T'
+b100010 G'
 b100010 I'
-b100000 C'
-b100000 F'
+b100010 X'
+b100000 R'
+b100000 U'
 1A
 #320000
 0A
 #325000
 0&
+b1 Y(
+b1 W(
+b1 O(
+b1 M(
 b1 E(
 b1 C(
+b100 }'
+b100 !(
+b100 0(
 b1 ;(
 b1 9(
-b1 1(
-b1 /(
-b100 k'
-b100 m'
-b100 z'
-b1 '(
-b1 %(
+b1 X(
+b1 U(
+b1 V(
+b1 N(
+b1 K(
+b1 L(
 b1 D(
 b1 A(
 b1 B(
 b1 :(
 b1 7(
 b1 8(
-b1 0(
-b1 -(
-b1 .(
-b1 &(
-b1 #(
-b1 $(
-b1000000010000000100000001 j'
-b1000000010000000100000001 x'
+b1000000010000000100000001 {'
+b1000000010000000100000001 .(
 b100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001 J
-b100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001 g'
-b1000000010000000100000001 i'
-b1000000010000000100000001 y'
+b100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001 x'
+b1000000010000000100000001 z'
+b1000000010000000100000001 /(
 b100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001 N
-b100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001 h'
+b100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001 y'
 b100000 O
 1A
 #330000
@@ -2710,72 +2750,72 @@ b100000 O
 #350000
 0A
 #355000
-b1 u'
-b1000 k'
-b1000 m'
-b1000 z'
-b100 t'
-b100 w'
+b1 +(
+b1000 }'
+b1000 !(
+b1000 0(
+b100 *(
+b100 -(
 1A
 #360000
 0A
 #365000
-b10 u'
-b1100 k'
-b1100 m'
-b1100 z'
-b1000 t'
-b1000 w'
+b10 +(
+b1100 }'
+b1100 !(
+b1100 0(
+b1000 *(
+b1000 -(
 1A
 #370000
 0A
 #375000
-b11 u'
-b10000 k'
-b10000 m'
-b10000 z'
-b1100 t'
-b1100 w'
+b11 +(
+b10000 }'
+b10000 !(
+b10000 0(
+b1100 *(
+b1100 -(
 1A
 #380000
 0A
 #385000
-b100 u'
-b10100 k'
-b10100 m'
-b10100 z'
-b10000 t'
-b10000 w'
+b100 +(
+b10100 }'
+b10100 !(
+b10100 0(
+b10000 *(
+b10000 -(
 1A
 #390000
 0A
 #395000
-b101 u'
-b11000 k'
-b11000 m'
-b11000 z'
-b10100 t'
-b10100 w'
+b101 +(
+b11000 }'
+b11000 !(
+b11000 0(
+b10100 *(
+b10100 -(
 1A
 #400000
 0A
 #405000
-b110 u'
-b11100 k'
-b11100 m'
-b11100 z'
-b11000 t'
-b11000 w'
+b110 +(
+b11100 }'
+b11100 !(
+b11100 0(
+b11000 *(
+b11000 -(
 1A
 #410000
 0A
 #415000
-b111 u'
-b100000 k'
-b100000 m'
-b100000 z'
-b11100 t'
-b11100 w'
+b111 +(
+b100000 }'
+b100000 !(
+b100000 0(
+b11100 *(
+b11100 -(
 1A
 #420000
 0A
@@ -2783,12 +2823,12 @@ b11100 w'
 1%
 0)
 b100000 !
-b100000 v'
-b100100 k'
-b100100 m'
-b100100 z'
-b100000 t'
-b100000 w'
+b100000 ,(
+b100100 }'
+b100100 !(
+b100100 0(
+b100000 *(
+b100000 -(
 1A
 #430000
 0A

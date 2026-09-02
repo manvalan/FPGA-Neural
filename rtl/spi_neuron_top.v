@@ -89,6 +89,9 @@ module spi_neuron_top #(
     wire [ADDR_WIDTH-1:0] x_base;
     wire [ADDR_WIDTH-1:0] w_base;
     wire [ADDR_WIDTH-1:0] bias_addr;
+    wire [1:0]            activation;
+    wire [15:0]           n_inputs_real;
+    wire [15:0]           n_neurons_real;
 
     wire nm_start;
     wire nm_busy;
@@ -126,6 +129,8 @@ module spi_neuron_top #(
         .ram_rdata(spi_ram_rdata), .ram_ready(spi_ram_ready),
 
         .x_base(x_base), .w_base(w_base), .bias_addr(bias_addr),
+        .activation(activation),
+        .n_inputs_real(n_inputs_real), .n_neurons_real(n_neurons_real),
 
         .nm_start(nm_start), .nm_busy(nm_busy), .nm_done(nm_done),
         .y_bus(y_bus),
@@ -149,6 +154,9 @@ module spi_neuron_top #(
     wire [ADDR_WIDTH-1:0] seq_nm_x_base;
     wire [ADDR_WIDTH-1:0] seq_nm_w_base;
     wire [ADDR_WIDTH-1:0] seq_nm_bias_addr;
+    wire [1:0]            seq_nm_activation;
+    wire [15:0]           seq_nm_n_inputs;
+    wire [15:0]           seq_nm_n_neurons;
     wire                  seq_nm_start;
 
     wire                   seq_ram_req;
@@ -173,7 +181,9 @@ module spi_neuron_top #(
         .buf_a_base(buf_a_base), .buf_b_base(buf_b_base),
 
         .nm_x_base(seq_nm_x_base), .nm_w_base(seq_nm_w_base),
-        .nm_bias_addr(seq_nm_bias_addr), .nm_start(seq_nm_start),
+        .nm_bias_addr(seq_nm_bias_addr), .nm_activation(seq_nm_activation),
+        .nm_n_inputs(seq_nm_n_inputs), .nm_n_neurons(seq_nm_n_neurons),
+        .nm_start(seq_nm_start),
 
         .nm_busy(nm_busy), .nm_done(nm_done),
         .y_bus(y_bus),
@@ -189,6 +199,9 @@ module spi_neuron_top #(
     wire [ADDR_WIDTH-1:0] mux_nm_x_base    = seq_busy ? seq_nm_x_base    : x_base;
     wire [ADDR_WIDTH-1:0] mux_nm_w_base    = seq_busy ? seq_nm_w_base    : w_base;
     wire [ADDR_WIDTH-1:0] mux_nm_bias_addr = seq_busy ? seq_nm_bias_addr : bias_addr;
+    wire [1:0]            mux_nm_activation = seq_busy ? seq_nm_activation : activation;
+    wire [15:0]           mux_nm_n_inputs   = seq_busy ? seq_nm_n_inputs   : n_inputs_real;
+    wire [15:0]           mux_nm_n_neurons  = seq_busy ? seq_nm_n_neurons  : n_neurons_real;
     wire                  mux_nm_start     = seq_busy ? seq_nm_start    : nm_start;
 
     // ============================================================
@@ -222,6 +235,8 @@ module spi_neuron_top #(
         .mem_rdata(nm_ram_rdata), .mem_ready(nm_ram_ready),
 
         .x_base(mux_nm_x_base), .w_base(mux_nm_w_base), .bias_addr(mux_nm_bias_addr),
+        .activation(mux_nm_activation),
+        .n_inputs_real(mux_nm_n_inputs), .n_neurons_real(mux_nm_n_neurons),
 
         .y_bus(y_bus), .busy(nm_busy), .done(nm_done)
     );

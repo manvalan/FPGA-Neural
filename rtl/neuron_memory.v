@@ -34,6 +34,27 @@ module neuron_memory #(
     input wire [ADDR_WIDTH-1:0]   w_base,
     input wire [ADDR_WIDTH-1:0]   bias_addr,
 
+    // Activation function for this run, forwarded to neuron_parallel
+    // (see rtl/neuron_parallel.v's ACT_* localparams). Defaults to
+    // ACT_RELU (2'd1), neuron_parallel's own default, so any caller
+    // that leaves this unconnected is unaffected.
+    input wire [1:0]              activation = 2'd1,
+
+    // Real (runtime) width for THIS run: how many of the N_INPUTS/
+    // N_NEURONS this instance was BUILT for are actually real for
+    // the network currently loaded. Lets one synthesized bitstream
+    // serve any network topology up to its build-time max width --
+    // X/W are read from RAM for n_inputs_real elements per neuron
+    // (not N_INPUTS), and only n_neurons_real neurons are computed
+    // (not N_NEURONS); n_inputs_real must be a multiple of PARALLEL
+    // (the caller's responsibility -- same constraint N_INPUTS
+    // itself is held to at elaboration time, see
+    // rtl/neuron_parallel.v's PARAMETER GUARD). Defaults to the
+    // full build-time width, so any caller that leaves these
+    // unconnected is completely unaffected.
+    input wire [15:0]             n_inputs_real  = N_INPUTS[15:0],
+    input wire [15:0]             n_neurons_real = N_NEURONS[15:0],
+
     // ------------------------------------------------------------
     // Result
     //
@@ -247,6 +268,8 @@ module neuron_memory #(
         .x_bus(x_bus),
         .w_bus(w_bus),
         .bias(bias_reg),
+        .activation(activation),
+        .n_inputs_real(n_inputs_real),
 
         .y(neuron_y),
         .busy(neuron_busy),
@@ -333,7 +356,7 @@ module neuron_memory #(
 
                         x_mem[index] <= access_rdata;
 
-                        if (index == N_INPUTS-1) begin
+                        if (index == n_inputs_real[$clog2(N_INPUTS+1)-1:0]-1'b1) begin
 
                             index <= 0;
 
@@ -366,7 +389,7 @@ module neuron_memory #(
 
                         w_mem[index] <= access_rdata;
 
-                        if (index == N_INPUTS-1) begin
+                        if (index == n_inputs_real[$clog2(N_INPUTS+1)-1:0]-1'b1) begin
 
                             access_addr <= bias_group_addr;
                             access_wr   <= 1'b0;
@@ -425,7 +448,7 @@ module neuron_memory #(
 
                         y_reg[neuron_index] <= neuron_y;
 
-                        if (neuron_index == N_NEURONS-1) begin
+                        if (neuron_index == n_neurons_real[NEURON_INDEX_WIDTH-1:0]-1'b1) begin
 
                             // Last neuron of the layer: done.
                             busy <= 1'b0;
@@ -439,12 +462,12 @@ module neuron_memory #(
                             // in x_mem (shared), reload W and bias
                             // for neuron_index+1 from memory.
                             neuron_index    <= neuron_index + 1'b1;
-                            w_group_base    <= w_group_base + N_INPUTS;
+                            w_group_base    <= w_group_base + n_inputs_real;
                             bias_group_addr <= bias_group_addr + 1'b1;
 
                             index <= 0;
 
-                            access_addr <= w_group_base + N_INPUTS;
+                            access_addr <= w_group_base + n_inputs_real;
                             access_wr   <= 1'b0;
                             access_req  <= 1'b1;
 

@@ -23,15 +23,25 @@
 // known Phase 7 (Optimization) follow-up, not solved here.
 //
 // Layer descriptor table (host-written via WRITE_RAM, read-only to
-// this module): N_LAYERS entries of 6 bytes each, MSB-first,
+// this module): N_LAYERS entries of 11 bytes each, MSB-first,
 // starting at `table_base`:
-//   w_base(3B), bias_addr(3B)
+//   w_base(3B), bias_addr(3B), activation(1B, low 2 bits --
+//   see rtl/neuron_parallel.v's ACT_* localparams),
+//   n_inputs_real(2B), n_neurons_real(2B)
 // Layer 0's input is the external `x_base` (same register used for
 // single-layer/manual mode). Layer k>0's input is the ping-pong
 // output buffer (`buf_a_base`/`buf_b_base`) written by layer k-1.
 // The final layer's output is left both in neuron_memory's own
 // y_bus (readable via the existing READ_OUTPUT opcode, unchanged)
 // and in the ping-pong buffer it was copied to.
+//
+// n_inputs_real/n_neurons_real let ONE synthesized bitstream (fixed
+// N_WIDTH = neuron_memory's build-time max) serve any real network
+// topology up to that width: forwarded to neuron_memory verbatim
+// (see rtl/neuron_memory.v), and this sequencer copies exactly
+// n_neurons_real bytes of y_bus into the ping-pong buffer -- NOT the
+// full N_WIDTH -- so a narrower layer both computes AND is copied
+// out faster, no zero-padding required in RAM.
 // ================================================================
 
 module layer_sequencer #(
@@ -71,6 +81,9 @@ module layer_sequencer #(
     output reg [ADDR_WIDTH-1:0] nm_x_base,
     output reg [ADDR_WIDTH-1:0] nm_w_base,
     output reg [ADDR_WIDTH-1:0] nm_bias_addr,
+    output reg [1:0]            nm_activation,
+    output reg [15:0]           nm_n_inputs,
+    output reg [15:0]           nm_n_neurons,
     output reg                  nm_start,
 
     input wire nm_busy,
@@ -109,9 +122,12 @@ module layer_sequencer #(
     reg [7:0] num_layers_reg;
 
     reg [ADDR_WIDTH-1:0] desc_table_addr;
-    reg [2:0]  desc_byte_idx;   // 0..5
+    reg [3:0]  desc_byte_idx;   // 0..10
     reg [23:0] w_base_acc;
     reg [23:0] bias_addr_acc;
+    reg [7:0]  activation_acc;
+    reg [15:0] n_inputs_acc;
+    reg [15:0] n_neurons_acc;
 
     reg cur_sel;    // which ping-pong buffer to READ from for this layer (layer_idx>0)
     reg write_sel;  // which ping-pong buffer to WRITE this layer's output to
@@ -126,17 +142,23 @@ module layer_sequencer #(
             layer_idx       <= 8'd0;
             num_layers_reg  <= 8'd0;
             desc_table_addr <= {ADDR_WIDTH{1'b0}};
-            desc_byte_idx   <= 3'd0;
+            desc_byte_idx   <= 4'd0;
             w_base_acc      <= 24'h0;
             bias_addr_acc   <= 24'h0;
+            activation_acc  <= 8'h0;
+            n_inputs_acc    <= 16'h0;
+            n_neurons_acc   <= 16'h0;
             cur_sel         <= 1'b0;
             write_sel       <= 1'b0;
             copy_idx        <= 0;
 
-            nm_x_base    <= {ADDR_WIDTH{1'b0}};
-            nm_w_base    <= {ADDR_WIDTH{1'b0}};
-            nm_bias_addr <= {ADDR_WIDTH{1'b0}};
-            nm_start     <= 1'b0;
+            nm_x_base     <= {ADDR_WIDTH{1'b0}};
+            nm_w_base     <= {ADDR_WIDTH{1'b0}};
+            nm_bias_addr  <= {ADDR_WIDTH{1'b0}};
+            nm_activation <= 2'd1; // ACT_RELU
+            nm_n_inputs   <= 16'h0;
+            nm_n_neurons  <= 16'h0;
+            nm_start      <= 1'b0;
 
             ram_req   <= 1'b0;
             ram_wr    <= 1'b0;
@@ -169,7 +191,7 @@ module layer_sequencer #(
                         layer_idx       <= 8'd0;
                         num_layers_reg  <= run_num_layers;
                         desc_table_addr <= table_base;
-                        desc_byte_idx   <= 3'd0;
+                        desc_byte_idx   <= 4'd0;
                         write_sel       <= 1'b0;
 
                         state <= ST_READ_DESC;
@@ -197,19 +219,24 @@ module layer_sequencer #(
                     if (ram_ready) begin
 
                         case (desc_byte_idx)
-                            3'd0: w_base_acc[23:16]    <= ram_rdata;
-                            3'd1: w_base_acc[15:8]     <= ram_rdata;
-                            3'd2: w_base_acc[7:0]      <= ram_rdata;
-                            3'd3: bias_addr_acc[23:16] <= ram_rdata;
-                            3'd4: bias_addr_acc[15:8]  <= ram_rdata;
-                            3'd5: bias_addr_acc[7:0]   <= ram_rdata;
+                            4'd0:  w_base_acc[23:16]    <= ram_rdata;
+                            4'd1:  w_base_acc[15:8]     <= ram_rdata;
+                            4'd2:  w_base_acc[7:0]      <= ram_rdata;
+                            4'd3:  bias_addr_acc[23:16] <= ram_rdata;
+                            4'd4:  bias_addr_acc[15:8]  <= ram_rdata;
+                            4'd5:  bias_addr_acc[7:0]   <= ram_rdata;
+                            4'd6:  activation_acc       <= ram_rdata;
+                            4'd7:  n_inputs_acc[15:8]   <= ram_rdata;
+                            4'd8:  n_inputs_acc[7:0]    <= ram_rdata;
+                            4'd9:  n_neurons_acc[15:8]  <= ram_rdata;
+                            4'd10: n_neurons_acc[7:0]   <= ram_rdata;
                         endcase
 
-                        if (desc_byte_idx == 3'd5) begin
-                            desc_byte_idx <= 3'd0;
+                        if (desc_byte_idx == 4'd10) begin
+                            desc_byte_idx <= 4'd0;
                             state         <= ST_START_LAYER;
                         end else begin
-                            desc_byte_idx <= desc_byte_idx + 3'd1;
+                            desc_byte_idx <= desc_byte_idx + 4'd1;
                             state         <= ST_READ_DESC;
                         end
 
@@ -223,8 +250,11 @@ module layer_sequencer #(
 
                 ST_START_LAYER: begin
 
-                    nm_w_base    <= w_base_acc[ADDR_WIDTH-1:0];
-                    nm_bias_addr <= bias_addr_acc[ADDR_WIDTH-1:0];
+                    nm_w_base     <= w_base_acc[ADDR_WIDTH-1:0];
+                    nm_bias_addr  <= bias_addr_acc[ADDR_WIDTH-1:0];
+                    nm_activation <= activation_acc[1:0];
+                    nm_n_inputs   <= n_inputs_acc;
+                    nm_n_neurons  <= n_neurons_acc;
 
                     nm_x_base <= (layer_idx == 8'd0)
                         ? x_base
@@ -268,7 +298,7 @@ module layer_sequencer #(
 
                     if (ram_ready) begin
 
-                        if (copy_idx == N_WIDTH-1) begin
+                        if (copy_idx == n_neurons_acc[$clog2(N_WIDTH+1)-1:0] - 1'b1) begin
 
                             if (layer_idx == num_layers_reg - 8'd1) begin
 
@@ -284,8 +314,8 @@ module layer_sequencer #(
                                 cur_sel         <= write_sel;
                                 write_sel       <= ~write_sel;
                                 layer_idx       <= layer_idx + 8'd1;
-                                desc_table_addr <= desc_table_addr + 22'd6;
-                                desc_byte_idx   <= 3'd0;
+                                desc_table_addr <= desc_table_addr + 22'd11;
+                                desc_byte_idx   <= 4'd0;
 
                                 state <= ST_READ_DESC;
 

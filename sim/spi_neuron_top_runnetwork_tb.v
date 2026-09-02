@@ -28,12 +28,12 @@
 //   n3: w=[2,2,2,2] b=120  -> 2*10+120=140 -> saturate -> 127
 //   Y0 = [10, 6, 0, 127]  (also layer 1's input, via buf_a)
 //
-// Hand-computed layer 1 (X=Y0=[10,6,0,127]):
+// Hand-computed layer 1 (X=Y0=[10,6,0,127], activation=ACT_NONE):
 //   n0: w=[1,1,1,1] b=-20  -> 10+6+0+127-20 = 123
 //   n1: w=[1,0,0,0] b=0    -> 10
-//   n2: w=[0,1,0,0] b=0    -> 6
+//   n2: w=[0,1,0,0] b=-10  -> 6-10 = -4 (ACT_NONE: NOT clamped to 0)
 //   n3: w=[0,0,0,1] b=0    -> 127
-//   Y1 = [123, 10, 6, 127]  (final output: y_bus AND buf_b)
+//   Y1 = [123, 10, -4, 127]  (final output: y_bus AND buf_b)
 // ================================================================
 
 module tb;
@@ -161,10 +161,11 @@ module tb;
     integer   poll_count;
 
     // Shared scratch buffers for the byte-array helper tasks below
-    // (max 16 bytes covers every payload used in this test: the
-    // 12-byte descriptor table and the 16-byte weight matrices).
-    reg signed [7:0] payload  [0:15];
-    reg signed [7:0] readback [0:15];
+    // (32 bytes covers every payload used in this test: the 22-byte
+    // descriptor table (2 layers x 11 bytes) and the 16-byte weight
+    // matrices).
+    reg signed [7:0] payload  [0:31];
+    reg signed [7:0] readback [0:31];
 
     // ============================================================
     // HELPER TASKS
@@ -359,12 +360,27 @@ module tb;
         payload[0] = 8'sd1; payload[1] = 8'sd2; payload[2] = 8'sd3; payload[3] = 8'sd4;
         write_ram_bytes(X_BASE, 4);
 
-        // Descriptor table: 2 x (w_base(3B) + bias_addr(3B)), MSB-first.
+        // Descriptor table: 2 x (w_base(3B) + bias_addr(3B) +
+        // activation(1B) + n_inputs_real(2B) + n_neurons_real(2B)),
+        // MSB-first. Both layers use the full build width (4/4) --
+        // runtime width reduction is exercised separately in
+        // sim/layer_sequencer_tb.v and sim/neuron_memory_tb.v; this
+        // test's own job is RUN_NETWORK/activation end to end.
+        // Layer 0 uses ACT_RELU (its neuron 2 relies on the clamp:
+        // -3 -> 0). Layer 1 uses ACT_NONE, deliberately proving the
+        // difference end to end through real RAM/SPI (see bias1
+        // below: neuron 2 goes negative and must NOT be clamped).
         payload[0]  = W0_BASE[23:16];    payload[1]  = W0_BASE[15:8];    payload[2]  = W0_BASE[7:0];
         payload[3]  = BIAS0_ADDR[23:16]; payload[4]  = BIAS0_ADDR[15:8]; payload[5]  = BIAS0_ADDR[7:0];
-        payload[6]  = W1_BASE[23:16];    payload[7]  = W1_BASE[15:8];    payload[8]  = W1_BASE[7:0];
-        payload[9]  = BIAS1_ADDR[23:16]; payload[10] = BIAS1_ADDR[15:8]; payload[11] = BIAS1_ADDR[7:0];
-        write_ram_bytes(TABLE_BASE, 12);
+        payload[6]  = 8'h01; // ACT_RELU
+        payload[7]  = 8'h00; payload[8]  = 8'd4; // n_inputs_real = 4
+        payload[9]  = 8'h00; payload[10] = 8'd4; // n_neurons_real = 4
+        payload[11] = W1_BASE[23:16];    payload[12] = W1_BASE[15:8];    payload[13] = W1_BASE[7:0];
+        payload[14] = BIAS1_ADDR[23:16]; payload[15] = BIAS1_ADDR[15:8]; payload[16] = BIAS1_ADDR[7:0];
+        payload[17] = 8'h00; // ACT_NONE
+        payload[18] = 8'h00; payload[19] = 8'd4; // n_inputs_real = 4
+        payload[20] = 8'h00; payload[21] = 8'd4; // n_neurons_real = 4
+        write_ram_bytes(TABLE_BASE, 22);
 
         // W0 (neuron-major, N_INPUTS bytes each):
         //   n0=[1,1,1,1] n1=[1,0,0,0] n2=[0,0,0,0] n3=[2,2,2,2]
@@ -385,8 +401,10 @@ module tb;
         payload[12]=8'sd0; payload[13]=8'sd0; payload[14]=8'sd0; payload[15]=8'sd1;
         write_ram_bytes(W1_BASE, 16);
 
-        // bias1 = [-20, 0, 0, 0]
-        payload[0]=-8'sd20; payload[1]=8'sd0; payload[2]=8'sd0; payload[3]=8'sd0;
+        // bias1 = [-20, 0, -10, 0]. neuron 2 = X1[1](=6) + (-10) = -4:
+        // under layer 1's ACT_NONE this must come through as -4, not
+        // clamped to 0 the way ACT_RELU would.
+        payload[0]=-8'sd20; payload[1]=8'sd0; payload[2]=-8'sd10; payload[3]=8'sd0;
         write_ram_bytes(BIAS1_ADDR, 4);
 
         report("LOAD (X / table / W0 / bias0 / W1 / bias1)");
@@ -415,13 +433,13 @@ module tb;
 
         // --------------------------------------------------------
         // READ_OUTPUT: final layer's y_bus, neuron-major
-        // Expected Y1 = [123, 10, 6, 127]
+        // Expected Y1 = [123, 10, -4, 127]
         // --------------------------------------------------------
 
         errors_before = errors;
 
         read_output_bytes(4);
-        check_bytes4("Y1(READ_OUTPUT)", 8'sd123, 8'sd10, 8'sd6, 8'sd127);
+        check_bytes4("Y1(READ_OUTPUT)", 8'sd123, 8'sd10, -8'sd4, 8'sd127);
 
         report("READ_OUTPUT matches hand-computed layer 1 output");
 
@@ -433,7 +451,7 @@ module tb;
         errors_before = errors;
 
         read_ram_bytes(BUF_B_BASE, 4);
-        check_bytes4("Y1(buf_b)", 8'sd123, 8'sd10, 8'sd6, 8'sd127);
+        check_bytes4("Y1(buf_b)", 8'sd123, 8'sd10, -8'sd4, 8'sd127);
 
         report("buf_b_base holds the same final output");
 
