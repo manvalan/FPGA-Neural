@@ -47,3 +47,26 @@
 - 2026-09-02T00:43 — [FASE 6] — Compilato ed eseguito `sim/layer_tb.v`: `iverilog -g2012 -o <tmp> rtl/*.v sim/layer_tb.v` + `vvp`. Risultato: TUTTI GLI 8 NEURONI PASSANO (32,96,0,127,5,0,22,21), busy=0, done=1 a fine test.
 - 2026-09-02T00:44 — [FASE 6] — Rigenerati gli artefatti tracciati in git `sim/neuron_sim` (da neuron_parallel_tb.v) e `sim/layer_sim` (da layer_tb.v) con i relativi `.vcd`, per coerenza con la convenzione del repo di committare i binari di simulazione insieme alle sorgenti.
 - 2026-09-02T00:45 — [FASE 7] — Nessuna modifica a rtl/ in questa fase: root cause dei due fallimenti era esclusivamente nei testbench (riferimento a un parametro FRAC_BITS rimosso da tempo dall'RTL), non nel core di calcolo. Sessione di debug neuron_memory + fix dei due test residui considerata chiusa.
+
+## Fase: Roadmap Fase 2 — Parameter Sweep (2026-09-02)
+
+- 2026-09-02T01:00 — [FASE 8] — Utente: "passiamo a fase 1 (o successiva)". Chiarito (dopo scambio) che il riferimento è al roadmap ufficiale in docs/FPGA-NeuralNetwork-Engine.md (sezione 15, "Development Roadmap"), da seguire come percorso vincolante. Letta la roadmap: Fase 1 (Parametric Layer) risulta già completamente spuntata; Fase 2 (Parameter Sweep) non ancora affrontata: "Validate multiple combinations of N_INPUTS/N_NEURONS/PARALLEL, including configurations where the number of inputs is not an exact multiple of the parallelism."
+- 2026-09-02T01:02 — [FASE 8] — Letto rtl/mac8.v per intero: PARALLEL deve essere potenza di 2 (adder tree binario con $clog2(PARALLEL) livelli). Nessun vincolo esplicito che N_INPUTS sia multiplo di PARALLEL.
+- 2026-09-02T01:03 — [FASE 8] — Ri-analizzato rtl/neuron_parallel.v: `localparam GROUPS = N_INPUTS / PARALLEL;` è divisione INTERA. Ipotesi: se N_INPUTS non è multiplo esatto di PARALLEL, gli input residui (N_INPUTS - GROUPS*PARALLEL) non vengono mai letti dall'accumulatore (nessun errore/warning a compile o runtime). Ipotesi aggiuntiva: se PARALLEL > N_INPUTS, GROUPS=0 e la condizione di terminazione del controller (`group_index == GROUPS-1`) non è mai soddisfatta -> hang permanente (busy=1, done mai asserito).
+- 2026-09-02T01:10 — [FASE 8] — Creato sim/parameter_sweep_tb.v: 5 istanze di neuron_parallel con configurazioni diverse (CONFIG A..E), watchdog a ciclo (max 500 cicli, nessun `wait` bloccante) per evitare hang reale della simulazione anche nel caso patologico:
+  - A: N_INPUTS=32 PARALLEL=8 (esatto, sanity check, atteso y=32)
+  - B: N_INPUTS=30 PARALLEL=8 (non esatto, GROUPS=3, atteso y=24 per troncamento RTL vs somma piena=30)
+  - C: N_INPUTS=20 PARALLEL=16 (non esatto, GROUPS=1, atteso y=16 per troncamento RTL vs somma piena=20)
+  - D: N_INPUTS=64 PARALLEL=32 (esatto, sanity check, atteso y=64)
+  - E: N_INPUTS=4 PARALLEL=8 (degenere, GROUPS=0, atteso TIMEOUT/hang)
+- 2026-09-02T01:12 — [FASE 8] — Compilato: `iverilog -g2012 -o <tmp> rtl/*.v sim/parameter_sweep_tb.v`. Nessun errore (anche il part-select fuori range in CONFIG E, dovuto a x_bus/w_bus da 32 bit letti come blocchi da 64 bit dentro neuron_parallel, non causa errore di elaborazione in Icarus).
+- 2026-09-02T01:13 — [FASE 8] — Eseguito `vvp`. RISULTATI (tutti confermano le ipotesi):
+  - CONFIG A: PASS, y=32.
+  - CONFIG B: y=24 (non 30) -> confermato troncamento silenzioso, 6 input su 30 ignorati.
+  - CONFIG C: y=16 (non 20) -> confermato troncamento silenzioso, 4 input su 20 ignorati.
+  - CONFIG D: PASS, y=64.
+  - CONFIG E: TIMEOUT confermato -> done mai asserito entro 500 cicli, hang reale per PARALLEL > N_INPUTS (GROUPS=0).
+  - Sweep complessivo: errors=0 (nessun comportamento imprevisto rispetto alle ipotesi), findings=3 (troncamento non-multiplo x2, hang degenerato x1).
+- 2026-09-02T01:15 — [FASE 8] — Rigenerato artefatto tracciato sim/parameter_sweep_sim + sim/parameter_sweep.vcd per coerenza con la convenzione del repo.
+- 2026-09-02T01:16 — [FASE 8] — Nessuna modifica a rtl/neuron_parallel.v in questa fase (core di calcolo non toccato, come da policy di progetto). I due limiti trovati (troncamento su non-multiplo, hang su PARALLEL>N_INPUTS) sono documentati come "Findings" nella Fase 2 della roadmap (docs/FPGA-NeuralNetwork-Engine.md) e proposti come azione futura per Fase 3/7, non risolti ora.
+- 2026-09-02T01:18 — [FASE 8] — Aggiornato docs/FPGA-NeuralNetwork-Engine.md, sezione "## Phase 2 — Parameter Sweep": aggiunta checklist di completamento e sezione "Findings" con i due limiti documentati sopra.

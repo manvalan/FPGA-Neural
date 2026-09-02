@@ -595,6 +595,31 @@ PARALLEL
 
 including configurations where the number of inputs is not an exact multiple of the parallelism.
 
+- [x] Exact-multiple sanity configs (32×8, 64×32)
+- [x] Non-exact-multiple configs (30×8, 20×16)
+- [x] Degenerate config, PARALLEL > N_INPUTS (4×8)
+- [x] Sweep testbench: `sim/parameter_sweep_tb.v`
+
+**Findings (current RTL behavior, not yet fixed):**
+
+- `neuron_parallel.v` computes `GROUPS = N_INPUTS / PARALLEL` with
+  integer division. When `N_INPUTS` is **not** an exact multiple of
+  `PARALLEL`, only the first `GROUPS * PARALLEL` inputs are ever read
+  by the accumulator — the remainder is silently dropped (no error,
+  no warning). Confirmed for 30×8 → only 24 of 30 inputs summed, and
+  20×16 → only 16 of 20 inputs summed.
+- If `PARALLEL > N_INPUTS`, `GROUPS = 0` and the controller's
+  `group_index == GROUPS-1` terminal condition is never satisfied:
+  the neuron enters `busy` and never asserts `done` (confirmed hang,
+  500-cycle watchdog in the sweep bench). This is a design
+  constraint (`PARALLEL` must not exceed `N_INPUTS`, and should
+  divide it exactly) that is not currently guarded in RTL.
+- Action: either enforce `N_INPUTS % PARALLEL == 0` and
+  `PARALLEL <= N_INPUTS` at the caller/config level, or extend
+  `neuron_parallel.v` to handle a partial final group. Not addressed
+  in this phase — core datapath left untouched per current project
+  policy; tracked here for Phase 3/7.
+
 ## Phase 3 — Memory Architecture
 
 Define:
