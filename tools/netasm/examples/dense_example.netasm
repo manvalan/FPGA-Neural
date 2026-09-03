@@ -1,0 +1,7 @@
+; Simple 3-layer dense classifier.
+NET dense
+INPUTS 256
+LAYER 64 relu
+LAYER 16 relu
+LAYER 4 none
+END

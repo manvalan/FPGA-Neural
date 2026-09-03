@@ -1034,6 +1034,7 @@ The FPGA becomes a dedicated neural-computation peripheral, analogous to other h
 | ReLU | OK |
 | 32×4 / P=8 validation | OK |
 | Dedicated RAM architecture | OK (memory_interface + psram_controller + int8_memory_access, real-PSRAM tested) |
+| PSRAM page-mode burst reads | OK (2026-09-03, `psram_page_mode_tb.v`; sequential gather bandwidth +42% measured, see `FPGA-Neural-Datapatch-Benchmark.md` Appendice D) |
 | SPI interface | OK (spi_slave + spi_engine, all 9 opcodes incl. RUN_NETWORK, real-toolchain Fmax checked in isolation) |
 | Dual SPI | Future |
 | Multi-layer engine | - RTL + unit tests + real end-to-end (simulated SPI) done; real toolchain checked (P8: FAIL 40.57 MHz, worse than Phase 4 alone) |

@@ -1,0 +1,451 @@
+
+
+Info: Logic utilisation before packing:
+Info:     Total LUT4s:      3458/43848     7%
+Info:         logic LUTs:   2682/43848     6%
+Info:         carry LUTs:    776/43848     1%
+Info:           RAM LUTs:      0/ 5481     0%
+Info:          RAMW LUTs:      0/10962     0%
+
+Info:      Total DFFs:      2399/43848     5%
+
+Info: Packing IOs..
+Info: $psram_dq[15]$iobuf_i: psram_dq_$_TBUF__Y.Y
+Info: $psram_dq[14]$iobuf_i: psram_dq_$_TBUF__Y_15.Y
+Info: $psram_dq[13]$iobuf_i: psram_dq_$_TBUF__Y_14.Y
+Info: $psram_dq[12]$iobuf_i: psram_dq_$_TBUF__Y_13.Y
+Info: $psram_dq[11]$iobuf_i: psram_dq_$_TBUF__Y_12.Y
+Info: $psram_dq[10]$iobuf_i: psram_dq_$_TBUF__Y_11.Y
+Info: $psram_dq[9]$iobuf_i: psram_dq_$_TBUF__Y_10.Y
+Info: $psram_dq[8]$iobuf_i: psram_dq_$_TBUF__Y_9.Y
+Info: $psram_dq[7]$iobuf_i: psram_dq_$_TBUF__Y_8.Y
+Info: $psram_dq[6]$iobuf_i: psram_dq_$_TBUF__Y_7.Y
+Info: $psram_dq[5]$iobuf_i: psram_dq_$_TBUF__Y_6.Y
+Info: $psram_dq[4]$iobuf_i: psram_dq_$_TBUF__Y_5.Y
+Info: $psram_dq[3]$iobuf_i: psram_dq_$_TBUF__Y_4.Y
+Info: $psram_dq[2]$iobuf_i: psram_dq_$_TBUF__Y_3.Y
+Info: $psram_dq[1]$iobuf_i: psram_dq_$_TBUF__Y_2.Y
+Info: $psram_dq[0]$iobuf_i: psram_dq_$_TBUF__Y_1.Y
+Info: Packing constants..
+Info: Packing carries...
+Info: Packing LUTs...
+Info: Packing LUT5-7s...
+Info: Packing FFs...
+Info:     536 FFs paired with LUTs.
+Info: Generating derived timing constraints...
+Info: Promoting globals...
+Info:     promoting clock net clk$TRELLIS_IO_IN to global network
+Info: Checksum: 0x513f90b6
+
+Info: Device utilisation:
+Info: 	          TRELLIS_IO:      51/    245    20%
+Info: 	                DCCA:       1/     56     1%
+Info: 	              DP16KD:       2/    108     1%
+Info: 	          MULT18X18D:      16/     72    22%
+Info: 	              ALU54B:       0/     36     0%
+Info: 	             EHXPLLL:       0/      4     0%
+Info: 	             EXTREFB:       0/      2     0%
+Info: 	                DCUA:       0/      2     0%
+Info: 	           PCSCLKDIV:       0/      2     0%
+Info: 	             IOLOGIC:       0/    160     0%
+Info: 	            SIOLOGIC:       0/     85     0%
+Info: 	                 GSR:       0/      1     0%
+Info: 	               JTAGG:       0/      1     0%
+Info: 	                OSCG:       0/      1     0%
+Info: 	               SEDGA:       0/      1     0%
+Info: 	                 DTR:       0/      1     0%
+Info: 	             USRMCLK:       0/      1     0%
+Info: 	             CLKDIVF:       0/      4     0%
+Info: 	           ECLKSYNCB:       0/     10     0%
+Info: 	             DLLDELD:       0/      8     0%
+Info: 	              DDRDLL:       0/      4     0%
+Info: 	             DQSBUFM:       0/     10     0%
+Info: 	     TRELLIS_ECLKBUF:       0/      8     0%
+Info: 	        ECLKBRIDGECS:       0/      2     0%
+Info: 	                DCSC:       0/      2     0%
+Info: 	          TRELLIS_FF:    2399/  43848     5%
+Info: 	        TRELLIS_COMB:    3636/  43848     8%
+Info: 	        TRELLIS_RAMW:       0/   5481     0%
+
+Info: Placed 0 cells based on constraints.
+Info: Creating initial analytic placement for 4055 cells, random placement wirelen = 319941.
+Info:     at initial placer iter 0, wirelen = 7010
+Info:     at initial placer iter 1, wirelen = 6087
+Info:     at initial placer iter 2, wirelen = 6012
+Info:     at initial placer iter 3, wirelen = 5729
+Info: Running main analytical placer, max placement attempts per cell = 4658878.
+Info:     at iteration #1, type ALL: wirelen solved = 5663, spread = 48527, legal = 50567; time = 0.06s
+Info:     at iteration #2, type ALL: wirelen solved = 7800, spread = 42352, legal = 44350; time = 0.05s
+Info:     at iteration #3, type ALL: wirelen solved = 9798, spread = 37432, legal = 40738; time = 0.05s
+Info:     at iteration #4, type ALL: wirelen solved = 10864, spread = 37121, legal = 39324; time = 0.05s
+Info:     at iteration #5, type ALL: wirelen solved = 12586, spread = 38907, legal = 40580; time = 0.05s
+Info:     at iteration #6, type ALL: wirelen solved = 12832, spread = 36734, legal = 37831; time = 0.05s
+Info:     at iteration #7, type ALL: wirelen solved = 13463, spread = 37848, legal = 38735; time = 0.05s
+Info:     at iteration #8, type ALL: wirelen solved = 14258, spread = 35521, legal = 37117; time = 0.05s
+Info:     at iteration #9, type ALL: wirelen solved = 15056, spread = 34010, legal = 35291; time = 0.05s
+Info:     at iteration #10, type ALL: wirelen solved = 14809, spread = 35098, legal = 38246; time = 0.05s
+Info:     at iteration #11, type ALL: wirelen solved = 14899, spread = 34596, legal = 36885; time = 0.05s
+Info:     at iteration #12, type ALL: wirelen solved = 15696, spread = 33811, legal = 36290; time = 0.04s
+Info:     at iteration #13, type ALL: wirelen solved = 16284, spread = 33928, legal = 35084; time = 0.04s
+Info:     at iteration #14, type ALL: wirelen solved = 17172, spread = 32966, legal = 34679; time = 0.04s
+Info:     at iteration #15, type ALL: wirelen solved = 17271, spread = 32386, legal = 33811; time = 0.04s
+Info:     at iteration #16, type ALL: wirelen solved = 16851, spread = 32594, legal = 33530; time = 0.04s
+Info:     at iteration #17, type ALL: wirelen solved = 17239, spread = 32264, legal = 34153; time = 0.04s
+Info:     at iteration #18, type ALL: wirelen solved = 17012, spread = 31846, legal = 33701; time = 0.05s
+Info:     at iteration #19, type ALL: wirelen solved = 17055, spread = 32272, legal = 34126; time = 0.04s
+Info:     at iteration #20, type ALL: wirelen solved = 17005, spread = 34042, legal = 35729; time = 0.04s
+Info:     at iteration #21, type ALL: wirelen solved = 18281, spread = 32377, legal = 33375; time = 0.04s
+Info:     at iteration #22, type ALL: wirelen solved = 17957, spread = 32693, legal = 34088; time = 0.04s
+Info:     at iteration #23, type ALL: wirelen solved = 18920, spread = 32498, legal = 33038; time = 0.04s
+Info:     at iteration #24, type ALL: wirelen solved = 18582, spread = 32188, legal = 33875; time = 0.04s
+Info:     at iteration #25, type ALL: wirelen solved = 18222, spread = 32667, legal = 33367; time = 0.04s
+Info:     at iteration #26, type ALL: wirelen solved = 18384, spread = 33230, legal = 33749; time = 0.04s
+Info:     at iteration #27, type ALL: wirelen solved = 18225, spread = 32407, legal = 32986; time = 0.04s
+Info:     at iteration #28, type ALL: wirelen solved = 18989, spread = 34326, legal = 35129; time = 0.04s
+Info:     at iteration #29, type ALL: wirelen solved = 18996, spread = 34984, legal = 35613; time = 0.04s
+Info:     at iteration #30, type ALL: wirelen solved = 18898, spread = 33843, legal = 34760; time = 0.04s
+Info:     at iteration #31, type ALL: wirelen solved = 18999, spread = 32158, legal = 33134; time = 0.04s
+Info:     at iteration #32, type ALL: wirelen solved = 18458, spread = 34402, legal = 36055; time = 0.04s
+Info: HeAP Placer Time: 1.87s
+Info:   of which solving equations: 1.14s
+Info:   of which spreading cells: 0.25s
+Info:   of which strict legalisation: 0.17s
+
+Info: Running simulated annealing placer for refinement.
+Info:   at iteration #1: temp = 0.000000, timing cost = 2561, wirelen = 32986
+Info:   at iteration #5: temp = 0.000000, timing cost = 2769, wirelen = 28411
+Info:   at iteration #10: temp = 0.000000, timing cost = 2615, wirelen = 27319
+Info:   at iteration #15: temp = 0.000000, timing cost = 2474, wirelen = 26677
+Info:   at iteration #20: temp = 0.000000, timing cost = 2380, wirelen = 26444
+Info:   at iteration #25: temp = 0.000000, timing cost = 2386, wirelen = 26363
+Info:   at iteration #30: temp = 0.000000, timing cost = 2370, wirelen = 26328
+Info:   at iteration #31: temp = 0.000000, timing cost = 2378, wirelen = 26323 
+Info: SA placement time 2.75s
+
+Info: Max frequency for clock '$glbnet$clk$TRELLIS_IO_IN': 43.29 MHz (FAIL at 80.00 MHz)
+
+Info: Max delay <async>                           -> posedge $glbnet$clk$TRELLIS_IO_IN: 11.08 ns
+Info: Max delay posedge $glbnet$clk$TRELLIS_IO_IN -> <async>                          : 8.64 ns
+
+Info: Slack histogram:
+Info:  legend: * represents 18 endpoint(s)
+Info:          + represents [1,18) endpoint(s)
+Info: [-10598,  -9471) |+
+Info: [ -9471,  -8344) |+
+Info: [ -8344,  -7217) |*+
+Info: [ -7217,  -6090) |*+
+Info: [ -6090,  -4963) |+
+Info: [ -4963,  -3836) |+
+Info: [ -3836,  -2709) |+
+Info: [ -2709,  -1582) |+
+Info: [ -1582,   -455) | 
+Info: [  -455,    672) | 
+Info: [   672,   1799) |*+
+Info: [  1799,   2926) |+
+Info: [  2926,   4053) |***+
+Info: [  4053,   5180) |************************+
+Info: [  5180,   6307) |*************************************+
+Info: [  6307,   7434) |*******************************************+
+Info: [  7434,   8561) |****************************************************+
+Info: [  8561,   9688) |**************************************************+
+Info: [  9688,  10815) |************************************************************ 
+Info: [ 10815,  11942) |*********************************+
+Info: Checksum: 0x1d006fc9
+Info: Routing globals...
+Info:     routing clock net $glbnet$clk$TRELLIS_IO_IN using global 0
+
+Info: Routing..
+Info: Setting up routing queue.
+Info: Routing 18744 arcs.
+Info:            |   (re-)routed arcs  |   delta    | remaining|       time spent     |
+Info:    IterCnt |  w/ripup   wo/ripup |  w/r  wo/r |      arcs| batch(sec) total(sec)|
+Info:       1000 |      576        423 |  576   423 |     18409|       0.39       0.39|
+Info:       2000 |      984       1015 |  408   592 |     17894|       0.22       0.61|
+Info:       3000 |     1463       1536 |  479   521 |     17469|       0.19       0.81|
+Info:       4000 |     1965       2034 |  502   498 |     17025|       0.14       0.95|
+Info:       5000 |     2495       2504 |  530   470 |     16679|       0.14       1.09|
+Info:       6000 |     2977       3022 |  482   518 |     16308|       0.16       1.25|
+Info:       7000 |     3416       3583 |  439   561 |     15946|       0.11       1.36|
+Info:       8000 |     3938       4061 |  522   478 |     15547|       0.15       1.51|
+Info:       9000 |     4377       4622 |  439   561 |     15126|       0.15       1.66|
+Info:      10000 |     4795       5204 |  418   582 |     14768|       0.12       1.78|
+Info:      11000 |     5203       5796 |  408   592 |     14256|       0.10       1.88|
+Info:      12000 |     5760       6239 |  557   443 |     13925|       0.11       1.99|
+Info:      13000 |     6129       6870 |  369   631 |     13405|       0.10       2.09|
+Info:      14000 |     6323       7524 |  194   654 |     12648|       0.09       2.18|
+Info:      15000 |     6692       7994 |  369   470 |     12045|       0.07       2.25|
+Info:      16000 |     7327       8321 |  635   327 |     11729|       0.09       2.34|
+Info:      17000 |     7917       8665 |  590   344 |     11397|       0.10       2.44|
+Info:      18000 |     8489       9039 |  572   374 |     10983|       0.09       2.53|
+Info:      19000 |     9019       9484 |  530   445 |     10540|       0.08       2.62|
+Info:      20000 |     9623       9880 |  604   396 |     10168|       0.09       2.71|
+Info:      21000 |    10168      10325 |  545   445 |      9743|       0.09       2.80|
+Info:      22000 |    10406      11079 |  238   754 |      9004|       0.10       2.89|
+Info:      23000 |    10542      11943 |  136   864 |      8183|       0.13       3.02|
+Info:      24000 |    10654      12830 |  112   887 |      7334|       0.13       3.16|
+Info:      25000 |    10763      13721 |  109   891 |      6488|       0.15       3.30|
+Info:      26000 |    10911      14542 |  148   821 |      5720|       0.12       3.42|
+Info:      27000 |    11036      15369 |  125   827 |      4890|       0.12       3.54|
+Info:      28000 |    11150      16166 |  114   797 |      4040|       0.09       3.63|
+Info:      29000 |    11222      16986 |   72   820 |      3118|       0.08       3.71|
+Info:      30000 |    11280      17837 |   58   851 |      2180|       0.08       3.79|
+Info:      31000 |    11371      18714 |   91   877 |      1281|       0.10       3.88|
+Info:      32000 |    11386      19610 |   15   896 |       297|       0.13       4.01|
+Info:      32306 |    11393      19890 |    7   280 |         0|       0.04       4.05|
+Info: Routing complete.
+Info: Router1 time 4.05s
+Info: Checksum: 0x79c76f3f
+
+Info: Critical path report for clock '$glbnet$clk$TRELLIS_IO_IN' (posedge -> posedge):
+Info:       type curr  total name
+Info:   clk-to-q  0.40  0.40 Source u_graph_engine.u_neuron.group_index_TRELLIS_FF_Q_1.Q
+Info:    routing  1.37  1.76 Net u_graph_engine.u_neuron.group_index[0] (21,6) -> (13,20)
+Info:                          Sink u_graph_engine.u_neuron.u_mac8.w_bus_PFUMX_Z_C0_LUT4_Z.D
+Info:                          Defined in:
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/cells_map_trellis.v:108.23-108.24
+Info:      logic  0.18  1.94 Source u_graph_engine.u_neuron.u_mac8.w_bus_PFUMX_Z_C0_LUT4_Z.F
+Info:    routing  1.50  3.44 Net u_graph_engine.u_neuron.u_mac8.w_bus_PFUMX_Z_C0[4] (13,20) -> (22,33)
+Info:                          Sink u_graph_engine.u_neuron.u_mac8.w_bus_PFUMX_Z_BLUT_LUT4_Z.M
+Info:                          Defined in:
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/cells_map_trellis.v:108.23-108.24
+Info:      logic  0.19  3.63 Source u_graph_engine.u_neuron.u_mac8.w_bus_PFUMX_Z_BLUT_LUT4_Z.OFX
+Info:    routing  1.53  5.16 Net u_graph_engine.u_neuron.w_group[23] (22,33) -> (22,46)
+Info:                          Sink u_graph_engine.u_neuron.u_mac8.GEN_MAC[2].u_mac.product_MULT18X18D_P9.B17
+Info:                          Defined in:
+Info:                               /Users/michelebigi/Development/FPGA-Neural/FPGA-Neural/rtl/neuron_parallel.v:93.43-93.50
+Info:      logic  3.07  8.23 Source u_graph_engine.u_neuron.u_mac8.GEN_MAC[2].u_mac.product_MULT18X18D_P9.P1
+Info:    routing  2.39  10.61 Net u_graph_engine.u_neuron.u_mac8.products[2][1] (22,46) -> (20,14)
+Info:                          Sink u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_S1_CCU2C_S1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_B1_LUT4_Z_D_CCU2C_S0_COUT_CCU2C_CIN_S1_CCU2C_S1_CIN_CCU2C_COUT$CCU2_COMB1.B
+Info:                          Defined in:
+Info:                               /Users/michelebigi/Development/FPGA-Neural/FPGA-Neural/rtl/mac8.v:73.9-73.13
+Info:      logic  0.35  10.97 Source u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_S1_CCU2C_S1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_B1_LUT4_Z_D_CCU2C_S0_COUT_CCU2C_CIN_S1_CCU2C_S1_CIN_CCU2C_COUT$CCU2_COMB1.FCO
+Info:    routing  0.00  10.97 Net u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_S1_CCU2C_S1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_B1_LUT4_Z_D_CCU2C_S0_COUT_CCU2C_CIN_S1_CCU2C_S1_CIN (20,14) -> (20,14)
+Info:                          Sink u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_S1_CCU2C_S1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_B1_LUT4_Z_D_CCU2C_S0_COUT_CCU2C_CIN_S1_CCU2C_S1$CCU2_COMB0.FCI
+Info:                          Defined in:
+Info:                               /Users/michelebigi/Development/FPGA-Neural/FPGA-Neural/rtl/mac8.v:101.21-102.44
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/ccu2c_sim.vh:9.9-9.13
+Info:      logic  0.06  11.03 Source u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_S1_CCU2C_S1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_B1_LUT4_Z_D_CCU2C_S0_COUT_CCU2C_CIN_S1_CCU2C_S1$CCU2_COMB0.FCO
+Info:    routing  0.00  11.03 Net u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_S1_CCU2C_S1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_B1_LUT4_Z_D_CCU2C_S0_COUT_CCU2C_CIN_S1_CCU2C_S1$CCU2_FCI_INT (20,14) -> (20,14)
+Info:                          Sink u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_S1_CCU2C_S1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_B1_LUT4_Z_D_CCU2C_S0_COUT_CCU2C_CIN_S1_CCU2C_S1$CCU2_COMB1.FCI
+Info:      logic  0.00  11.03 Source u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_S1_CCU2C_S1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_B1_LUT4_Z_D_CCU2C_S0_COUT_CCU2C_CIN_S1_CCU2C_S1$CCU2_COMB1.FCO
+Info:    routing  0.00  11.03 Net u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_S1_CCU2C_S1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_B1_LUT4_Z_D_CCU2C_S0_COUT_CCU2C_CIN_S1_CCU2C_S1_COUT (20,14) -> (20,14)
+Info:                          Sink u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_S1_CCU2C_S1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_B1_LUT4_Z_D_CCU2C_S0_COUT_CCU2C_CIN_COUT_CCU2C_CIN_S1_CCU2C_S1$CCU2_COMB0.FCI
+Info:                          Defined in:
+Info:                               /Users/michelebigi/Development/FPGA-Neural/FPGA-Neural/rtl/mac8.v:101.21-102.44
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/ccu2c_sim.vh:9.9-9.13
+Info:      logic  0.06  11.08 Source u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_S1_CCU2C_S1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_B1_LUT4_Z_D_CCU2C_S0_COUT_CCU2C_CIN_COUT_CCU2C_CIN_S1_CCU2C_S1$CCU2_COMB0.FCO
+Info:    routing  0.00  11.08 Net u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_S1_CCU2C_S1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_B1_LUT4_Z_D_CCU2C_S0_COUT_CCU2C_CIN_COUT_CCU2C_CIN_S1_CCU2C_S1$CCU2_FCI_INT (20,14) -> (20,14)
+Info:                          Sink u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_S1_CCU2C_S1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_B1_LUT4_Z_D_CCU2C_S0_COUT_CCU2C_CIN_COUT_CCU2C_CIN_S1_CCU2C_S1$CCU2_COMB1.FCI
+Info:      logic  0.00  11.08 Source u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_S1_CCU2C_S1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_B1_LUT4_Z_D_CCU2C_S0_COUT_CCU2C_CIN_COUT_CCU2C_CIN_S1_CCU2C_S1$CCU2_COMB1.FCO
+Info:    routing  0.00  11.08 Net u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_S1_CCU2C_S1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_B1_LUT4_Z_D_CCU2C_S0_COUT_CCU2C_CIN_COUT_CCU2C_CIN_S1_CCU2C_S1_COUT (20,14) -> (21,14)
+Info:                          Sink u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_S1_CCU2C_S1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_B1_LUT4_Z_D_CCU2C_S0_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_S1_CCU2C_S1$CCU2_COMB0.FCI
+Info:                          Defined in:
+Info:                               /Users/michelebigi/Development/FPGA-Neural/FPGA-Neural/rtl/mac8.v:101.21-102.44
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/ccu2c_sim.vh:9.9-9.13
+Info:      logic  0.06  11.14 Source u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_S1_CCU2C_S1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_B1_LUT4_Z_D_CCU2C_S0_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_S1_CCU2C_S1$CCU2_COMB0.FCO
+Info:    routing  0.00  11.14 Net u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_S1_CCU2C_S1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_B1_LUT4_Z_D_CCU2C_S0_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_S1_CCU2C_S1$CCU2_FCI_INT (21,14) -> (21,14)
+Info:                          Sink u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_S1_CCU2C_S1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_B1_LUT4_Z_D_CCU2C_S0_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_S1_CCU2C_S1$CCU2_COMB1.FCI
+Info:      logic  0.00  11.14 Source u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_S1_CCU2C_S1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_B1_LUT4_Z_D_CCU2C_S0_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_S1_CCU2C_S1$CCU2_COMB1.FCO
+Info:    routing  0.00  11.14 Net u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_S1_CCU2C_S1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_B1_LUT4_Z_D_CCU2C_S0_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_S1_CCU2C_S1_COUT (21,14) -> (21,14)
+Info:                          Sink u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_S1_CCU2C_S1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_B1_LUT4_Z_D_CCU2C_S0_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_S1_CCU2C_S1$CCU2_COMB0.FCI
+Info:                          Defined in:
+Info:                               /Users/michelebigi/Development/FPGA-Neural/FPGA-Neural/rtl/mac8.v:101.21-102.44
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/ccu2c_sim.vh:9.9-9.13
+Info:      logic  0.06  11.19 Source u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_S1_CCU2C_S1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_B1_LUT4_Z_D_CCU2C_S0_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_S1_CCU2C_S1$CCU2_COMB0.FCO
+Info:    routing  0.00  11.19 Net u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_S1_CCU2C_S1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_B1_LUT4_Z_D_CCU2C_S0_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_S1_CCU2C_S1$CCU2_FCI_INT (21,14) -> (21,14)
+Info:                          Sink u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_S1_CCU2C_S1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_B1_LUT4_Z_D_CCU2C_S0_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_S1_CCU2C_S1$CCU2_COMB1.FCI
+Info:      logic  0.00  11.19 Source u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_S1_CCU2C_S1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_B1_LUT4_Z_D_CCU2C_S0_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_S1_CCU2C_S1$CCU2_COMB1.FCO
+Info:    routing  0.00  11.19 Net u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_S1_CCU2C_S1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_B1_LUT4_Z_D_CCU2C_S0_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_S1_CCU2C_S1_COUT (21,14) -> (21,14)
+Info:                          Sink u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_S1_CCU2C_S1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_B1_LUT4_Z_D_CCU2C_S0_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_S1_CCU2C_S1$CCU2_COMB0.FCI
+Info:                          Defined in:
+Info:                               /Users/michelebigi/Development/FPGA-Neural/FPGA-Neural/rtl/mac8.v:101.21-102.44
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/ccu2c_sim.vh:9.9-9.13
+Info:      logic  0.06  11.25 Source u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_S1_CCU2C_S1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_B1_LUT4_Z_D_CCU2C_S0_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_S1_CCU2C_S1$CCU2_COMB0.FCO
+Info:    routing  0.00  11.25 Net u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_S1_CCU2C_S1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_B1_LUT4_Z_D_CCU2C_S0_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_S1_CCU2C_S1$CCU2_FCI_INT (21,14) -> (21,14)
+Info:                          Sink u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_S1_CCU2C_S1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_B1_LUT4_Z_D_CCU2C_S0_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_S1_CCU2C_S1$CCU2_COMB1.FCI
+Info:      logic  0.00  11.25 Source u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_S1_CCU2C_S1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_B1_LUT4_Z_D_CCU2C_S0_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_S1_CCU2C_S1$CCU2_COMB1.FCO
+Info:    routing  0.00  11.25 Net u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_S1_CCU2C_S1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_B1_LUT4_Z_D_CCU2C_S0_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_S1_CCU2C_S1_COUT (21,14) -> (21,14)
+Info:                          Sink u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_S1_CCU2C_S1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_B1_LUT4_Z_D_CCU2C_S0_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_S1_CCU2C_S1$CCU2_COMB0.FCI
+Info:                          Defined in:
+Info:                               /Users/michelebigi/Development/FPGA-Neural/FPGA-Neural/rtl/mac8.v:101.21-102.44
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/ccu2c_sim.vh:9.9-9.13
+Info:      logic  0.06  11.31 Source u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_S1_CCU2C_S1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_B1_LUT4_Z_D_CCU2C_S0_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_S1_CCU2C_S1$CCU2_COMB0.FCO
+Info:    routing  0.00  11.31 Net u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_S1_CCU2C_S1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_B1_LUT4_Z_D_CCU2C_S0_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_S1_CCU2C_S1$CCU2_FCI_INT (21,14) -> (21,14)
+Info:                          Sink u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_S1_CCU2C_S1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_B1_LUT4_Z_D_CCU2C_S0_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_S1_CCU2C_S1$CCU2_COMB1.FCI
+Info:      logic  0.29  11.60 Source u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_S1_CCU2C_S1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_B1_LUT4_Z_D_CCU2C_S0_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_S1_CCU2C_S1$CCU2_COMB1.F
+Info:    routing  1.02  12.62 Net u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_S1_CCU2C_S1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_B1_LUT4_Z_D_CCU2C_S0_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_S1[0] (21,14) -> (21,5)
+Info:                          Sink u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_S1_CCU2C_S1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_B1_LUT4_Z_D_CCU2C_S0_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_S0_PFUMX_Z_BLUT_LUT4_Z.M
+Info:                          Defined in:
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/cells_map_trellis.v:108.23-108.24
+Info:      logic  0.19  12.81 Source u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_S1_CCU2C_S1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_B1_LUT4_Z_D_CCU2C_S0_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_S0_PFUMX_Z_BLUT_LUT4_Z.OFX
+Info:    routing  0.54  13.35 Net u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_S1_CCU2C_S1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_B1_LUT4_Z_D_CCU2C_S0_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_S0[4] (21,5) -> (22,6)
+Info:                          Sink u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_S1_CCU2C_S0_S1_CCU2C_S1_B1_PFUMX_Z_BLUT_LUT4_Z.M
+Info:                          Defined in:
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/cells_map_trellis.v:108.23-108.24
+Info:      logic  0.19  13.54 Source u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_S1_CCU2C_S0_S1_CCU2C_S1_B1_PFUMX_Z_BLUT_LUT4_Z.OFX
+Info:    routing  1.03  14.57 Net u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_S1_CCU2C_S0_S1_CCU2C_S1_B1 (22,6) -> (20,9)
+Info:                          Sink u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_S1_CCU2C_S0_S1_CCU2C_S1$CCU2_COMB1.B
+Info:      logic  0.35  14.93 Source u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_S1_CCU2C_S0_S1_CCU2C_S1$CCU2_COMB1.FCO
+Info:    routing  0.00  14.93 Net u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_S1_CCU2C_S0_S1_CCU2C_S1_COUT (20,9) -> (20,9)
+Info:                          Sink u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_S1_CCU2C_S0_COUT_CCU2C_CIN_S1_CCU2C_S1$CCU2_COMB0.FCI
+Info:                          Defined in:
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/ccu2c_sim.vh:9.9-9.13
+Info:      logic  0.06  14.98 Source u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_S1_CCU2C_S0_COUT_CCU2C_CIN_S1_CCU2C_S1$CCU2_COMB0.FCO
+Info:    routing  0.00  14.98 Net u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_S1_CCU2C_S0_COUT_CCU2C_CIN_S1_CCU2C_S1$CCU2_FCI_INT (20,9) -> (20,9)
+Info:                          Sink u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_S1_CCU2C_S0_COUT_CCU2C_CIN_S1_CCU2C_S1$CCU2_COMB1.FCI
+Info:      logic  0.00  14.98 Source u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_S1_CCU2C_S0_COUT_CCU2C_CIN_S1_CCU2C_S1$CCU2_COMB1.FCO
+Info:    routing  0.00  14.98 Net u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_S1_CCU2C_S0_COUT_CCU2C_CIN_S1_CCU2C_S1_COUT (20,9) -> (20,9)
+Info:                          Sink u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_S1_CCU2C_S0_COUT_CCU2C_CIN_COUT_CCU2C_CIN_S1_CCU2C_S1$CCU2_COMB0.FCI
+Info:                          Defined in:
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/ccu2c_sim.vh:9.9-9.13
+Info:      logic  0.06  15.04 Source u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_S1_CCU2C_S0_COUT_CCU2C_CIN_COUT_CCU2C_CIN_S1_CCU2C_S1$CCU2_COMB0.FCO
+Info:    routing  0.00  15.04 Net u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_S1_CCU2C_S0_COUT_CCU2C_CIN_COUT_CCU2C_CIN_S1_CCU2C_S1$CCU2_FCI_INT (20,9) -> (20,9)
+Info:                          Sink u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_S1_CCU2C_S0_COUT_CCU2C_CIN_COUT_CCU2C_CIN_S1_CCU2C_S1$CCU2_COMB1.FCI
+Info:      logic  0.00  15.04 Source u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_S1_CCU2C_S0_COUT_CCU2C_CIN_COUT_CCU2C_CIN_S1_CCU2C_S1$CCU2_COMB1.FCO
+Info:    routing  0.00  15.04 Net u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_S1_CCU2C_S0_COUT_CCU2C_CIN_COUT_CCU2C_CIN_S1_CCU2C_S1_COUT (20,9) -> (20,9)
+Info:                          Sink u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_S1_CCU2C_S0_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_S1_CCU2C_S1$CCU2_COMB0.FCI
+Info:                          Defined in:
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/ccu2c_sim.vh:9.9-9.13
+Info:      logic  0.06  15.10 Source u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_S1_CCU2C_S0_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_S1_CCU2C_S1$CCU2_COMB0.FCO
+Info:    routing  0.00  15.10 Net u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_S1_CCU2C_S0_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_S1_CCU2C_S1$CCU2_FCI_INT (20,9) -> (20,9)
+Info:                          Sink u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_S1_CCU2C_S0_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_S1_CCU2C_S1$CCU2_COMB1.FCI
+Info:      logic  0.00  15.10 Source u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_S1_CCU2C_S0_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_S1_CCU2C_S1$CCU2_COMB1.FCO
+Info:    routing  0.00  15.10 Net u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_S1_CCU2C_S0_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_S1_CCU2C_S1_COUT (20,9) -> (21,9)
+Info:                          Sink u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_S1_CCU2C_S0_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_S1_CCU2C_S1$CCU2_COMB0.FCI
+Info:                          Defined in:
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/ccu2c_sim.vh:9.9-9.13
+Info:      logic  0.06  15.15 Source u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_S1_CCU2C_S0_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_S1_CCU2C_S1$CCU2_COMB0.FCO
+Info:    routing  0.00  15.15 Net u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_S1_CCU2C_S0_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_S1_CCU2C_S1$CCU2_FCI_INT (21,9) -> (21,9)
+Info:                          Sink u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_S1_CCU2C_S0_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_S1_CCU2C_S1$CCU2_COMB1.FCI
+Info:      logic  0.00  15.15 Source u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_S1_CCU2C_S0_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_S1_CCU2C_S1$CCU2_COMB1.FCO
+Info:    routing  0.00  15.15 Net u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_S1_CCU2C_S0_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_S1_CCU2C_S1_COUT (21,9) -> (21,9)
+Info:                          Sink u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_S1_CCU2C_S0_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_S1_CCU2C_S1$CCU2_COMB0.FCI
+Info:                          Defined in:
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/ccu2c_sim.vh:9.9-9.13
+Info:      logic  0.06  15.21 Source u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_S1_CCU2C_S0_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_S1_CCU2C_S1$CCU2_COMB0.FCO
+Info:    routing  0.00  15.21 Net u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_S1_CCU2C_S0_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_S1_CCU2C_S1$CCU2_FCI_INT (21,9) -> (21,9)
+Info:                          Sink u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_S1_CCU2C_S0_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_S1_CCU2C_S1$CCU2_COMB1.FCI
+Info:      logic  0.00  15.21 Source u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_S1_CCU2C_S0_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_S1_CCU2C_S1$CCU2_COMB1.FCO
+Info:    routing  0.00  15.21 Net u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_S1_CCU2C_S0_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_S1_CCU2C_S1_COUT (21,9) -> (21,9)
+Info:                          Sink u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_S1_CCU2C_S0_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_S1_CCU2C_S1$CCU2_COMB0.FCI
+Info:                          Defined in:
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/ccu2c_sim.vh:9.9-9.13
+Info:      logic  0.33  15.54 Source u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_S1_CCU2C_S0_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_S1_CCU2C_S1$CCU2_COMB0.F
+Info:    routing  0.82  16.35 Net u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_S1_CCU2C_S0_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_S0[1] (21,9) -> (21,11)
+Info:                          Sink u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_S1_CCU2C_S0_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN$CCU2_COMB0.B
+Info:                          Defined in:
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/cells_map_trellis.v:108.23-108.24
+Info:      logic  0.35  16.71 Source u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_S1_CCU2C_S0_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN$CCU2_COMB0.FCO
+Info:    routing  0.00  16.71 Net u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_S1_CCU2C_S0_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN$CCU2_FCI_INT (21,11) -> (21,11)
+Info:                          Sink u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_S1_CCU2C_S0_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN$CCU2_COMB1.FCI
+Info:      logic  0.00  16.71 Source u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_S1_CCU2C_S0_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN$CCU2_COMB1.FCO
+Info:    routing  0.00  16.71 Net u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_S1_CCU2C_S0_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT (21,11) -> (21,11)
+Info:                          Sink u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_S1_CCU2C_S0_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN$CCU2_COMB0.FCI
+Info:                          Defined in:
+Info:                               /Users/michelebigi/Development/FPGA-Neural/FPGA-Neural/rtl/neuron_parallel.v:128.24-128.43
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/ccu2c_sim.vh:9.9-9.13
+Info:      logic  0.33  17.04 Source u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_S1_CCU2C_S0_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN$CCU2_COMB0.F
+Info:    routing  0.61  17.65 Net u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_S1_CCU2C_S0_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_COUT_CCU2C_CIN_S0[2] (21,11) -> (22,11)
+Info:                          Sink u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_S1_CCU2C_S0_S1_LUT4_A_Z_LUT4_Z.B
+Info:                          Defined in:
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/cells_map_trellis.v:108.23-108.24
+Info:      logic  0.18  17.83 Source u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_S1_CCU2C_S0_S1_LUT4_A_Z_LUT4_Z.F
+Info:    routing  0.72  18.55 Net u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_1_S1_CCU2C_S0_S1_LUT4_A_Z[3] (22,11) -> (20,12)
+Info:                          Sink u_graph_engine.activation_reg_LUT4_D_Z_LUT4_Z_D_LUT4_Z.D
+Info:                          Defined in:
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/cells_map_trellis.v:108.23-108.24
+Info:      logic  0.18  18.73 Source u_graph_engine.activation_reg_LUT4_D_Z_LUT4_Z_D_LUT4_Z.F
+Info:    routing  0.56  19.28 Net u_graph_engine.activation_reg_LUT4_D_Z_LUT4_Z_D[3] (20,12) -> (19,13)
+Info:                          Sink u_graph_engine.activation_reg_LUT4_D_Z_LUT4_Z.D
+Info:                          Defined in:
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/cells_map_trellis.v:108.23-108.24
+Info:      logic  0.18  19.47 Source u_graph_engine.activation_reg_LUT4_D_Z_LUT4_Z.F
+Info:    routing  0.52  19.98 Net u_graph_engine.activation_reg_LUT4_D_Z[4] (19,13) -> (19,14)
+Info:                          Sink u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_S1_LUT4_C_Z_PFUMX_BLUT_Z_PFUMX_Z_4_BLUT_LUT4_Z.M
+Info:                          Defined in:
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/cells_map_trellis.v:108.23-108.24
+Info:      logic  0.19  20.17 Source u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_S1_LUT4_C_Z_PFUMX_BLUT_Z_PFUMX_Z_4_BLUT_LUT4_Z.OFX
+Info:    routing  0.35  20.53 Net u_graph_engine.activation_reg_LUT4_D_Z_CCU2C_S0_S1_LUT4_C_Z_PFUMX_BLUT_Z[0] (19,14) -> (19,14)
+Info:                          Sink u_graph_engine.u_neuron.y_TRELLIS_FF_Q_7.M
+Info:      setup  0.00  20.53 Source u_graph_engine.u_neuron.y_TRELLIS_FF_Q_7.M
+Info: 7.58 ns logic, 12.94 ns routing
+
+Info: Critical path report for cross-domain path '<async>' -> 'posedge $glbnet$clk$TRELLIS_IO_IN':
+Info:       type curr  total name
+Info:     source  0.00  0.00 Source rst$tr_io.O
+Info:    routing  2.96  2.96 Net rst$TRELLIS_IO_IN (0,17) -> (35,6)
+Info:                          Sink graph_rst_LUT4_Z.C
+Info:                          Defined in:
+Info:                               /Users/michelebigi/Development/FPGA-Neural/FPGA-Neural/rtl/spi_slave.v:23.16-23.19
+Info:      logic  0.18  3.14 Source graph_rst_LUT4_Z.F
+Info:    routing  2.27  5.41 Net graph_rst (35,6) -> (17,20)
+Info:                          Sink u_neuron_memory.access_req_TRELLIS_FF_Q_DI_LUT4_Z_D_LUT4_D_Z_LUT4_Z_1.D
+Info:                          Defined in:
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/cells_map_trellis.v:108.23-108.24
+Info:      logic  0.18  5.59 Source u_neuron_memory.access_req_TRELLIS_FF_Q_DI_LUT4_Z_D_LUT4_D_Z_LUT4_Z_1.F
+Info:    routing  2.39  7.98 Net u_neuron_memory.access_req_TRELLIS_FF_Q_DI_LUT4_Z_D_LUT4_D_Z[1] (17,20) -> (8,5)
+Info:                          Sink u_neuron_memory.w_mem[14]_TRELLIS_FF_Q_CE_LUT4_Z.D
+Info:                          Defined in:
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/cells_map_trellis.v:108.23-108.24
+Info:      logic  0.18  8.16 Source u_neuron_memory.w_mem[14]_TRELLIS_FF_Q_CE_LUT4_Z.F
+Info:    routing  0.80  8.96 Net u_neuron_memory.w_mem[14]_TRELLIS_FF_Q_CE (8,5) -> (8,2)
+Info:                          Sink u_neuron_memory.w_mem[14]_TRELLIS_FF_Q_6.CE
+Info:      setup  0.00  8.96 Source u_neuron_memory.w_mem[14]_TRELLIS_FF_Q_6.CE
+Info: 0.54 ns logic, 8.42 ns routing
+
+Info: Critical path report for cross-domain path 'posedge $glbnet$clk$TRELLIS_IO_IN' -> '<async>':
+Info:       type curr  total name
+Info:   clk-to-q  0.40  0.40 Source u_psram_ctrl.dq_oe_TRELLIS_FF_Q.Q
+Info:    routing  4.64  5.04 Net u_psram_ctrl.dq_oe (7,3) -> (88,26)
+Info:                          Sink psram_dq[10]$tr_io$invert_T.A
+Info:                          Defined in:
+Info:                               /Users/michelebigi/Development/FPGA-Neural/FPGA-Neural/rtl/psram_controller.v:90.27-90.32
+Info:      logic  0.18  5.22 Source psram_dq[10]$tr_io$invert_T.F
+Info:    routing  0.74  5.96 Net psram_dq[10]$tr_io$invert_T$conn$Z (88,26) -> (90,26)
+Info:                          Sink psram_dq[10]$tr_io.T
+Info: 0.57 ns logic, 5.39 ns routing
+
+ERROR: Max frequency for clock '$glbnet$clk$TRELLIS_IO_IN': 48.72 MHz (FAIL at 80.00 MHz)
+
+Info: Max delay <async>                           -> posedge $glbnet$clk$TRELLIS_IO_IN: 8.96 ns
+Info: Max delay posedge $glbnet$clk$TRELLIS_IO_IN -> <async>                          : 5.96 ns
+
+Info: Slack histogram:
+Info:  legend: * represents 19 endpoint(s)
+Info:          + represents [1,19) endpoint(s)
+Info: [ -8026,  -7034) |+
+Info: [ -7034,  -6042) | 
+Info: [ -6042,  -5050) |*+
+Info: [ -5050,  -4058) |*+
+Info: [ -4058,  -3066) |+
+Info: [ -3066,  -2074) |+
+Info: [ -2074,  -1082) |+
+Info: [ -1082,    -90) |+
+Info: [   -90,    902) | 
+Info: [   902,   1894) | 
+Info: [  1894,   2886) | 
+Info: [  2886,   3878) |+
+Info: [  3878,   4870) |**+
+Info: [  4870,   5862) |****************+
+Info: [  5862,   6854) |************************************+
+Info: [  6854,   7846) |**********************+
+Info: [  7846,   8838) |*****************************************+
+Info: [  8838,   9830) |************************************************************ 
+Info: [  9830,  10822) |**********************************************************+
+Info: [ 10822,  11814) |***************************************************+
+0 warnings, 1 error
+
+Info: Program finished normally.

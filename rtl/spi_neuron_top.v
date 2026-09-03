@@ -25,7 +25,9 @@ module spi_neuron_top #(
     parameter ACC_WIDTH      = 32,
     parameter MEM_DATA_WIDTH = 16,
     parameter CLK_FREQ_MHZ   = 80,
-    parameter N_LAYERS       = 4    // Phase 5: RUN_NETWORK, requires N_INPUTS==N_NEURONS
+    parameter N_LAYERS       = 4,   // Phase 5: RUN_NETWORK, requires N_INPUTS==N_NEURONS
+    parameter GRAPH_MAX_CONN = 32,  // Phase G5: graph_engine's build-time max connections/neuron
+    parameter GRAPH_N_TOTAL  = 4096 // Phase G5: graph_engine's activation buffer depth
 )(
     input wire clk,
     input wire rst,
@@ -38,6 +40,32 @@ module spi_neuron_top #(
     input  wire mosi,
     output wire miso,
     input  wire cs_n,
+
+    // ------------------------------------------------------------
+    // Host attention pins, active-LOW (open-drain-style naming, but
+    // driven push-pull here -- no other master shares these lines).
+    //
+    //   irq_n         -- low while graph_engine's `err` is set (the
+    //                     §7 load-time guard tripped; STATUS.bit2).
+    //                     Stays low until RESET or a fresh graph
+    //                     run_start clears it, exactly like the
+    //                     STATUS bit it mirrors.
+    //   data_ready_n  -- low while a run's result is waiting to be
+    //                     read (STATUS.bit1, done/sticky). Goes back
+    //                     high the moment the host reads STATUS (or
+    //                     on RESET) -- same flip-flop as the SPI
+    //                     status byte, just also wired to a pin so
+    //                     the host does not have to poll SPI to find
+    //                     out a result is ready.
+    //
+    // Both are level signals from already-registered sticky bits
+    // (spi_engine.v's status_done_sticky, graph_engine.v's err), so
+    // driving them straight onto a pin (just an inversion) needs no
+    // extra pipeline stage / debounce.
+    // ------------------------------------------------------------
+
+    output wire irq_n,
+    output wire data_ready_n,
 
     // ------------------------------------------------------------
     // PSRAM physical interface
@@ -111,12 +139,22 @@ module spi_neuron_top #(
     wire                   seq_busy;
     wire                   seq_done;
 
+    // Phase G5: net_type dispatch + graph_engine control/status.
+    wire [7:0]  net_type;
+    wire [15:0] num_neurons_graph;
+    wire [15:0] n_out;
+    wire        graph_busy;
+    wire        graph_done;
+    wire        graph_err;
+    wire        data_ready;
+
     spi_engine #(
         .ADDR_WIDTH(ADDR_WIDTH),
         .DATA_WIDTH(DATA_WIDTH),
         .N_INPUTS(N_INPUTS),
         .N_NEURONS(N_NEURONS),
-        .PARALLEL(PARALLEL)
+        .PARALLEL(PARALLEL),
+        .N_TOTAL(GRAPH_N_TOTAL)
     ) u_spi_engine (
         .clk(clk), .rst(rst),
 
@@ -139,8 +177,20 @@ module spi_neuron_top #(
 
         .table_base(table_base), .buf_a_base(buf_a_base), .buf_b_base(buf_b_base),
         .run_start(run_start), .run_num_layers(run_num_layers),
-        .seq_busy(seq_busy), .seq_done(seq_done)
+        .seq_busy(seq_busy), .seq_done(seq_done),
+
+        .net_type(net_type),
+        .num_neurons_graph(num_neurons_graph), .n_out(n_out),
+        .graph_busy(graph_busy), .graph_done(graph_done), .graph_err(graph_err),
+
+        .data_ready(data_ready)
     );
+
+    // Physical attention pins: active-low, driven straight from the
+    // already-registered sticky bits (see the port declarations
+    // above for the full rationale).
+    assign data_ready_n = ~data_ready;
+    assign irq_n         = ~graph_err;
 
     // ============================================================
     // LAYER SEQUENCER (Phase 5: RUN_NETWORK)
@@ -166,6 +216,17 @@ module spi_neuron_top #(
     wire signed [7:0]      seq_ram_rdata;
     wire                   seq_ram_ready;
 
+    // Phase G5: net_type dispatch. RUN_NETWORK pulses spi_engine's
+    // single `run_start` output; route it to whichever engine
+    // net_type selects (the two are mutually exclusive by
+    // construction -- spi_engine only accepts a new RUN_NETWORK
+    // while !busy_all, so at most one of layer_sequencer/graph_engine
+    // is ever mid-run).
+    localparam NET_TYPE_GRAPH = 8'h02;
+
+    wire seq_run_start   = (net_type == NET_TYPE_GRAPH) ? 1'b0 : run_start;
+    wire graph_run_start = (net_type == NET_TYPE_GRAPH) ? run_start : 1'b0;
+
     layer_sequencer #(
         .ADDR_WIDTH(ADDR_WIDTH),
         .DATA_WIDTH(DATA_WIDTH),
@@ -174,7 +235,7 @@ module spi_neuron_top #(
     ) u_layer_sequencer (
         .clk(clk), .rst(rst),
 
-        .run_start(run_start), .run_num_layers(run_num_layers),
+        .run_start(seq_run_start), .run_num_layers(run_num_layers),
         .seq_busy(seq_busy), .seq_done(seq_done),
 
         .x_base(x_base), .table_base(table_base),
@@ -192,6 +253,65 @@ module spi_neuron_top #(
         .ram_addr(seq_ram_addr), .ram_wdata(seq_ram_wdata),
         .ram_rdata(seq_ram_rdata), .ram_ready(seq_ram_ready)
     );
+
+    // ============================================================
+    // GRAPH ENGINE (Phase G5: RUN_NETWORK, net_type == graph)
+    //
+    // Owns its own private act_buffer and neuron_parallel instance
+    // (see rtl/graph_engine.v); shares layer_sequencer's arbiter
+    // port C below since the two never run concurrently. Register
+    // reuse (x_base/table_base/buf_a_base-as-out_base/n_inputs_real-
+    // as-N_in) documented in graph_engine.v's own header.
+    // ============================================================
+
+    wire                   graph_ram_req;
+    wire                   graph_ram_wr;
+    wire [ADDR_WIDTH-1:0]  graph_ram_addr;
+    wire signed [7:0]      graph_ram_wdata;
+    wire signed [7:0]      graph_ram_rdata;
+    wire                   graph_ram_ready;
+
+    // rst is the global reset OR'd with the SPI RESET opcode pulse,
+    // same convention as neuron_memory's nm_rst -- a host can clear
+    // a stuck `err` without a physical reset.
+    wire graph_rst = rst | nm_soft_rst;
+
+    graph_engine #(
+        .ADDR_WIDTH(ADDR_WIDTH),
+        .DATA_WIDTH(DATA_WIDTH),
+        .ACC_WIDTH(ACC_WIDTH),
+        .PARALLEL(PARALLEL),
+        .MAX_CONN(GRAPH_MAX_CONN),
+        .N_TOTAL(GRAPH_N_TOTAL)
+    ) u_graph_engine (
+        .clk(clk), .rst(graph_rst),
+
+        .run_start(graph_run_start), .busy(graph_busy), .done(graph_done), .err(graph_err),
+
+        .x_base(x_base), .table_base(table_base), .out_base(buf_a_base),
+        .n_inputs_graph(n_inputs_real),
+        .num_neurons_graph(num_neurons_graph), .n_out(n_out),
+
+        .ram_req(graph_ram_req), .ram_wr(graph_ram_wr),
+        .ram_addr(graph_ram_addr), .ram_wdata(graph_ram_wdata),
+        .ram_rdata(graph_ram_rdata), .ram_ready(graph_ram_ready)
+    );
+
+    // Arbiter port C mux: static on net_type (not on busy) -- the two
+    // engines are mutually exclusive by construction (see above), so
+    // whichever one net_type currently selects is the only one ever
+    // driving a real request through this port.
+    wire                   portc_req   = (net_type == NET_TYPE_GRAPH) ? graph_ram_req   : seq_ram_req;
+    wire                   portc_wr    = (net_type == NET_TYPE_GRAPH) ? graph_ram_wr    : seq_ram_wr;
+    wire [ADDR_WIDTH-1:0]  portc_addr  = (net_type == NET_TYPE_GRAPH) ? graph_ram_addr  : seq_ram_addr;
+    wire signed [7:0]      portc_wdata = (net_type == NET_TYPE_GRAPH) ? graph_ram_wdata : seq_ram_wdata;
+    wire signed [7:0]      portc_rdata_bus;
+    wire                   portc_ready_bus;
+
+    assign seq_ram_rdata   = portc_rdata_bus;
+    assign seq_ram_ready   = portc_ready_bus;
+    assign graph_ram_rdata = portc_rdata_bus;
+    assign graph_ram_ready = portc_ready_bus;
 
     // neuron_memory master mux: the sequencer owns it for the whole
     // duration of a RUN_NETWORK job (seq_busy), otherwise spi_engine
@@ -265,9 +385,9 @@ module spi_neuron_top #(
         .b_addr(nm_ram_addr), .b_wdata(nm_ram_wdata),
         .b_rdata(nm_ram_rdata), .b_ready(nm_ram_ready),
 
-        .c_req(seq_ram_req), .c_wr(seq_ram_wr),
-        .c_addr(seq_ram_addr), .c_wdata(seq_ram_wdata),
-        .c_rdata(seq_ram_rdata), .c_ready(seq_ram_ready),
+        .c_req(portc_req), .c_wr(portc_wr),
+        .c_addr(portc_addr), .c_wdata(portc_wdata),
+        .c_rdata(portc_rdata_bus), .c_ready(portc_ready_bus),
 
         .m_req(arb_req), .m_wr(arb_wr),
         .m_addr(arb_addr), .m_wdata(arb_wdata),

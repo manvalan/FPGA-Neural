@@ -923,7 +923,129 @@ PARALLEL=2                  87.88 MHz
 Target 80 MHz, P2           PASS
 Target 100 MHz              FAIL
 
-Memory Interface            DA IMPLEMENTARE
-PSRAM controller            DA IMPLEMENTARE
+Memory Interface            PASS (implementata, vedi Appendice D)
+PSRAM controller            PASS (implementata, page mode incluso dal 2026-09-03, vedi Appendice D)
 Host SPI interface          DA IMPLEMENTARE
 Layer engine reale          PROSSIMA FASE
+
+Appendice D — PSRAM page mode (2026-09-03)
+
+Contesto: il chip di memoria previsto (ISSI IS66WVE4M16EBLL-70BLI,
+§19) è "asynchronous/page mode", ma `rtl/psram_controller.v` fino a
+questa data usava solo l'accesso asincrono a parola singola — ogni
+transazione pagava sempre i 70ns pieni (`tAA`), il page mode non era
+usato. Verificato leggendo il datasheet reale della famiglia
+(IS66WVE1M16BLL, stesso layout di registro di configurazione/CR
+della famiglia BLL — 4M×16 vs 1M×16 cambia solo la densità
+dell'array, non la logica di page mode/CR): pagina di 16 word
+(`A[3:0]`), `tAPA`/`tPC` = 20ns per accessi successivi nella stessa
+pagina invece di `tAA` = 70ns, page mode disabilitato di default
+all'accensione (serve un caricamento esplicito del registro di
+configurazione).
+
+Implementato in `rtl/psram_controller.v` (dettagli in WORKLOG.md,
+sezione "PSRAM page mode"), interamente interno al controller —
+nessuna modifica a `memory_interface.v`/`int8_memory_access.v`/
+`mem_arbiter.v` o a chi li usa.
+
+Banda del gather `graph_engine` (`sim/graph_engine_bandwidth_tb.v`,
+stesso benchmark già citato in "Bitstream reale + banda del gather"),
+misurata prima/dopo isolando i soli due file toccati con `git
+stash`:
+
+```text
+                  PRIMA (no page mode)   DOPO (page mode)   Δ
+cicli/edge        53.25                  37.53              -29.5%
+edge/s  @80MHz     1 502 347              2 131 557          +41.9%
+banda   @80MHz     6.01 MB/s              8.53 MB/s          +41.9%
+edge/s  @16MHz*      300 469                426 311          +41.9%
+banda   @16MHz*    1.20 MB/s              1.71 MB/s          +41.9%
+```
+\* oscillatore reale raccomandato, `docs/FPGA-Neural-Hardware-Design.md` §4.
+
+Nota: il primo tentativo di implementazione (chiusura pagina anche
+sul cambio di `LB#`/`UB#`) misurava **61.25 cicli/edge, peggio del
+"prima"** — regressione reale, trovata proprio grazie a questo
+benchmark prima di considerare il lavoro finito, poi corretta (vedi
+WORKLOG.md per il dettaglio).
+
+Impatto risorse ECP5 (Yosys `synth_ecp5`):
+
+```text
+                     PRIMA         DOPO          Δ
+psram_controller.v (isolato)
+  LUT4               63            290           +227
+  TRELLIS_FF         83            141           +58
+  CCU2C               7             12           +5
+
+spi_neuron_top (sistema completo, Tipo #2, PARALLEL=2)
+  LUT4              2367          2619           +252
+  TRELLIS_FF        2406          2467           +61
+  DP16KD               2             2            0
+  MULT18X18D           4             4            0
+```
+
+Su un dispositivo da ~43.8k LUT4 equivalenti l'incremento resta sotto
+il 6% di utilizzo totale — nessun impatto pratico sul budget
+risorse. Nessuna DP16KD/MULT18X18D aggiuntiva (il page mode è pura
+logica di controllo, non tocca la datapath).
+
+Fmax reale (`nextpnr-ecp5`, stesso comando/vincoli già validati in
+"Bitstream reale + banda del gather" e nell'entry "Pin fisici
+IRQ_N/DATA_READY_N", `spi_neuron_top`, Tipo #2), misurata sia a
+PARALLEL=2 sia a PARALLEL=8 per completezza (prima c'era solo P2):
+
+```text
+            PRIMA (sessione precedente)   DOPO (con page mode)
+P2          55.59 MHz                     75.73 MHz
+P8          non misurato in questa serie  65.13 MHz
+```
+
+Entrambe ancora FAIL all'obiettivo 80MHz, ma P2 è **migliore**, non
+peggiore, rispetto a prima di questa sessione. Il percorso critico è
+stato verificato esplicitamente leggendo il report `nextpnr-ecp5` per
+entrambe le configurazioni, non assunto: la sorgente in entrambi i
+casi è `u_graph_engine.u_neuron.group_index` → catena
+`mac8`/`neuron_parallel` (lo stesso accumulatore CCU2C già
+identificato in Fase 7) — **`psram_controller` non compare mai nel
+percorso critico**, nonostante la crescita di risorse del page mode.
+Coerente con quanto stabilito nello sweep di seed di Fase 7
+(`FPGA-NeuralNetwork-Engine.md` §15): il collo di bottiglia resta la
+catena di accumulo di `neuron_parallel.v`, non lo stack PSRAM.
+
+**Verifica `tCEM` rafforzata** (richiesta esplicita dell'utente, dopo
+il lavoro sopra): `sim/psram_model.v` non aveva un controllo
+indipendente sul limite di 8µs di CE# basso — solo il controller lo
+rispettava, senza una rete di sicurezza nel modello di test.
+Aggiunto un check dedicato (`TCEM_NS = 8000.0`, verificato sia a fine
+sessione sia a metà burst) e un test dedicato che tiene una pagina
+aperta per centinaia di letture consecutive, mai idle, fino a
+superare il budget interno del controller: split confermato (8
+chiusure di CE# durante il singolo burst), nessuna violazione
+rispetto al limite reale del modello — margine reale, non per
+coincidenza. Aggiungere questo controllo ha smascherato una race
+Verilog genuina nel modello stesso (due processi indipendenti
+triggerati nello stesso istante di simulazione, ordine di esecuzione
+non definito dallo standard — non un bug del controller), corretta
+con la tecnica standard (`#0` di sincronizzazione). Dettagli completi
+in `WORKLOG.md`, sezione "PSRAM page mode — giro di rigore
+aggiuntivo".
+
+Tentata anche la ri-esecuzione del benchmark di parallelizzazione
+P2/P4/P8 isolato (`tools/fpga_benchmark.py`) per completezza — quel
+benchmark sintetizza solo
+`mac_unit.v`/`mac8.v`/`neuron_parallel.v`/`layer.v`, non tocca
+`psram_controller.v`. Il sotto-processo Yosys per P8 è incappato in
+una patologia nota di `abc -g simple` sul netlist completamente
+srotolato (256×4×32 MAC), superando le 2 ore di CPU senza terminare;
+interrotto, non riprodotto in questa sessione. **Verificato non
+essere un effetto del lavoro di oggi** (stesso script, stesso RTL di
+input di prima, nessuna modifica su quel percorso). I numeri storici
+restano validi perché deterministici su input invariati:
+
+```text
+PARALLEL=16   52.13 MHz
+PARALLEL=8    61.71 MHz
+PARALLEL=4    75.01 MHz
+PARALLEL=2    87.88 MHz
+```

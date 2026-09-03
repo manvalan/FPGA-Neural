@@ -1,0 +1,21 @@
+read_verilog -sv \
+/Users/michelebigi/Development/FPGA-Neural/FPGA-Neural/rtl/spi_slave.v \
+/Users/michelebigi/Development/FPGA-Neural/FPGA-Neural/rtl/spi_engine.v \
+/Users/michelebigi/Development/FPGA-Neural/FPGA-Neural/rtl/layer_sequencer.v \
+/Users/michelebigi/Development/FPGA-Neural/FPGA-Neural/rtl/act_buffer.v \
+/Users/michelebigi/Development/FPGA-Neural/FPGA-Neural/rtl/graph_engine.v \
+/Users/michelebigi/Development/FPGA-Neural/FPGA-Neural/rtl/mem_arbiter.v \
+/Users/michelebigi/Development/FPGA-Neural/FPGA-Neural/rtl/neuron_memory.v \
+/Users/michelebigi/Development/FPGA-Neural/FPGA-Neural/rtl/int8_memory_access.v \
+/Users/michelebigi/Development/FPGA-Neural/FPGA-Neural/rtl/memory_interface.v \
+/Users/michelebigi/Development/FPGA-Neural/FPGA-Neural/rtl/psram_controller.v \
+/tmp/before_rewrite/neuron_parallel.v \
+/Users/michelebigi/Development/FPGA-Neural/FPGA-Neural/rtl/mac8.v \
+/Users/michelebigi/Development/FPGA-Neural/FPGA-Neural/rtl/mac_unit.v \
+/Users/michelebigi/Development/FPGA-Neural/FPGA-Neural/rtl/spi_neuron_top.v
+
+chparam -set PARALLEL 8 spi_neuron_top
+
+hierarchy -top spi_neuron_top
+synth_ecp5 -top spi_neuron_top -json /Users/michelebigi/Development/FPGA-Neural/FPGA-Neural/synth/ecp5/timing_closure/before/top_p8.json
+stat

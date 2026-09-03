@@ -125,7 +125,71 @@ module neuron_parallel #(
         {{(ACC_WIDTH-DATA_WIDTH){bias[DATA_WIDTH-1]}}, bias};
 
     // Accumulazione finale + bias
-    assign final_acc = acc_next + bias_ext;
+    //
+    // PIPELINE STAGE (timing closure, step 2): this now adds bias to
+    // the ALREADY-REGISTERED `acc` (the complete sum, latched at the
+    // end of the last MAC group -- see the `finishing` stage below),
+    // not to `acc_next` combinationally chained onto the same cycle
+    // as the last group's own MAC-tree add. Measured on real
+    // place&route (see WORKLOG.md "Timing closure"): the previous
+    // same-cycle chain [mac8 tree add] -> [bias add] -> [saturate]
+    // was the critical path; splitting the bias-add+saturate half
+    // into its own cycle (operating on a value already settled in a
+    // register) breaks that chain by construction, independent of
+    // synthesis/placement heuristics -- unlike the bit-test rewrite
+    // below, which measurably shortens the logic but was swamped by
+    // seed-to-seed placement noise on its own. Adds exactly one
+    // cycle of latency per neuron (`start` to `done`), transparent
+    // to every caller's busy/done handshake (neuron_memory.v,
+    // layer_sequencer.v, graph_engine.v) -- no protocol change, no
+    // caller-visible interface change, only one extra `finishing`
+    // clock edge already absorbed by that handshake.
+    assign final_acc = acc + bias_ext;
+
+    // ============================================================
+    // SATURATION / ACTIVATION -- bit-test form (timing closure)
+    //
+    // final_acc (ACC_WIDTH bits) fits the signed DATA_WIDTH range
+    // iff bits [ACC_WIDTH-1:DATA_WIDTH-1] are all equal (all 0 ->
+    // non-negative and in range, all 1 -> negative and in range) --
+    // exactly what sign-extending the truncated DATA_WIDTH-bit value
+    // back up to ACC_WIDTH bits would reproduce. Bit-exact
+    // equivalent of the previous arithmetic comparisons in every
+    // case (verified in sim/neuron_parallel_saturation_bounds_tb.v);
+    // no ACT_NONE/ACT_RELU behavior change. NOTE (measured, see
+    // WORKLOG.md): on this device/toolchain, Yosys's abc9 mapper
+    // maps this wide AND/OR reduction onto CCU2C carry-chain cells
+    // too, not a shallow LUT tree -- so on its own this rewrite only
+    // trims the chain slightly (fewer CCU2C hops, ~0.2-0.9ns less
+    // logic delay measured) rather than eliminating it; kept anyway
+    // as a genuine, bit-exact-verified simplification, with the
+    // pipeline stage above doing the real timing-closure work.
+    // ============================================================
+
+    wire final_acc_sign       = final_acc[ACC_WIDTH-1];
+    wire final_acc_upper_all0 = ~(|final_acc[ACC_WIDTH-1:DATA_WIDTH-1]);
+    wire final_acc_upper_all1 =  &final_acc[ACC_WIDTH-1:DATA_WIDTH-1];
+    wire final_acc_in_range   = final_acc_upper_all0 | final_acc_upper_all1;
+    wire final_acc_le_zero    = final_acc_sign | ~(|final_acc);
+
+    // ACT_NONE: saturate to [-2^(DATA_WIDTH-1), 2^(DATA_WIDTH-1)-1]
+    wire signed [DATA_WIDTH-1:0] y_none =
+        final_acc_in_range ? final_acc[DATA_WIDTH-1:0]
+                            : (final_acc_sign ? {1'b1, {(DATA_WIDTH-1){1'b0}}}
+                                               : {1'b0, {(DATA_WIDTH-1){1'b1}}});
+
+    // ACT_RELU: max(0, final_acc), then saturate positive
+    wire signed [DATA_WIDTH-1:0] y_relu =
+        final_acc_le_zero ? {DATA_WIDTH{1'b0}}
+                           : (final_acc_upper_all0 ? final_acc[DATA_WIDTH-1:0]
+                                                    : {1'b0, {(DATA_WIDTH-1){1'b1}}});
+
+    // `finishing`: one-cycle pipeline stage between the last MAC
+    // group's accumulate and the bias-add+saturate/activation step
+    // (see the `final_acc` comment above). `busy` stays high through
+    // it, so it is invisible to every existing start/busy/done
+    // caller -- just one extra clock of latency.
+    reg finishing;
 
     always @(posedge clk) begin
 
@@ -136,6 +200,7 @@ module neuron_parallel #(
             y           <= 0;
             busy        <= 0;
             done        <= 0;
+            finishing   <= 0;
 
         end else begin
 
@@ -146,47 +211,28 @@ module neuron_parallel #(
                 group_index <= 0;
                 acc         <= 0;
                 busy        <= 1;
+                finishing   <= 0;
+
+            end else if (finishing) begin
+
+                case (activation)
+
+                    ACT_NONE: y <= y_none; // linear: saturate both directions
+
+                    default:  y <= y_relu; // ACT_RELU (also the fallback for any reserved encoding)
+
+                endcase
+
+                busy      <= 0;
+                done      <= 1;
+                finishing <= 0;
 
             end else if (busy) begin
 
                 if (group_index == groups_real[GROUP_INDEX_WIDTH-1:0] - 1'b1) begin
 
-                    acc <= final_acc;
-
-                    case (activation)
-
-                        ACT_NONE: begin
-
-                            // Linear: no zero-clamp, saturate both
-                            // directions to the INT8 range.
-
-                            if (final_acc > 127) begin
-                                y <= 8'sd127;
-                            end else if (final_acc < -128) begin
-                                y <= -8'sd128;
-                            end else begin
-                                y <= final_acc[DATA_WIDTH-1:0];
-                            end
-
-                        end
-
-                        default: begin // ACT_RELU (also the fallback
-                                        // for any reserved encoding)
-
-                            if (final_acc <= 0) begin
-                                y <= 0;
-                            end else if (final_acc > 127) begin
-                                y <= 8'sd127;
-                            end else begin
-                                y <= final_acc[DATA_WIDTH-1:0];
-                            end
-
-                        end
-
-                    endcase
-
-                    busy <= 0;
-                    done <= 1;
+                    acc       <= acc_next; // complete sum, bias not yet added
+                    finishing <= 1;
 
                 end else begin
 

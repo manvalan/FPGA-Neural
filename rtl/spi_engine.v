@@ -36,7 +36,8 @@ module spi_engine #(
     parameter DATA_WIDTH = 8,
     parameter N_INPUTS   = 32,
     parameter N_NEURONS  = 1,
-    parameter PARALLEL   = 8
+    parameter PARALLEL   = 8,
+    parameter N_TOTAL    = 4096  // Phase G5: graph (Type #2) activation buffer depth, exposed via READ_CONFIG
 )(
     input wire clk,
     input wire rst,
@@ -96,7 +97,35 @@ module spi_engine #(
     output reg  [7:0]            run_num_layers,
 
     input  wire                  seq_busy,
-    input  wire                  seq_done        // one-cycle pulse
+    input  wire                  seq_done,       // one-cycle pulse
+
+    // ------------------------------------------------------------
+    // graph_engine control (Phase G5: Type #2 network, dispatched by
+    // RUN_NETWORK alongside layer_sequencer based on `net_type`; the
+    // top level routes the `run_start` pulse above to whichever of
+    // layer_sequencer/graph_engine is selected -- see
+    // rtl/spi_neuron_top.v)
+    // ------------------------------------------------------------
+
+    output reg  [7:0]            net_type,        // 0x01=dense(#1) 0x02=graph(#2), default dense
+    output reg  [15:0]           num_neurons_graph, // SET_BASE sel 9
+    output reg  [15:0]           n_out,             // SET_BASE sel 10
+
+    input  wire                  graph_busy,
+    input  wire                  graph_done,      // one-cycle pulse
+    input  wire                  graph_err,       // sticky guard-violation flag (§7)
+
+    // ------------------------------------------------------------
+    // Host attention signal (active-HIGH here; spi_neuron_top.v
+    // inverts it to drive the physical active-low DATA_READY_N pin).
+    // Mirrors STATUS.bit1 exactly -- same sticky-until-STATUS-read
+    // latch (status_done_sticky below), so the host can either poll
+    // STATUS or watch this pin (or both: reading STATUS clears the
+    // pin too, they are the same flip-flop). IRQ_N is NOT driven
+    // from here -- see spi_neuron_top.v, it comes straight from
+    // graph_engine's own `err` (STATUS.bit2), a separate condition.
+    // ------------------------------------------------------------
+    output wire                  data_ready
 );
 
     // ============================================================
@@ -108,6 +137,7 @@ module spi_engine #(
     localparam OP_READ_RAM    = 8'h02;
     localparam OP_RESET       = 8'h0F;
     localparam OP_SET_BASE    = 8'h10;
+    localparam OP_SET_NET_TYPE = 8'h11;
     localparam OP_START       = 8'h20;
     localparam OP_STATUS      = 8'h21;
     localparam OP_READ_OUTPUT = 8'h22;
@@ -124,6 +154,15 @@ module spi_engine #(
     localparam SEL_ACTIVATION = 8'h06;
     localparam SEL_N_INPUTS   = 8'h07;
     localparam SEL_N_NEURONS  = 8'h08;
+    localparam SEL_NUM_NEURONS_GRAPH = 8'h09;
+    localparam SEL_N_OUT             = 8'h0A;
+
+    // net_type register values (§5)
+    localparam NET_TYPE_DENSE = 8'h01;
+    localparam NET_TYPE_GRAPH = 8'h02;
+
+    // READ_CONFIG capability flags (byte 10, bit0)
+    localparam GRAPH_SUPPORTED = 1'b1;
 
     // ============================================================
     // STATES
@@ -142,6 +181,7 @@ module spi_engine #(
     localparam ST_RESP         = 4'd10; // STATUS / READ_OUTPUT / READ_CONFIG
     localparam ST_IGNORE       = 4'd11;
     localparam ST_RUNNET       = 4'd12; // RUN_NETWORK: 1 payload byte (num_layers)
+    localparam ST_SET_NET_TYPE = 4'd13; // SET_NET_TYPE: 1 payload byte (type)
 
     reg [3:0] state;
     reg [7:0] opcode;
@@ -173,15 +213,25 @@ module spi_engine #(
 
     reg status_done_sticky;
 
-    // net_mode: set while a RUN_NETWORK (multi-layer) job is in
-    // flight (from the accepted opcode until layer_sequencer's
+    // Physical DATA_READY pin: the exact same flip-flop as
+    // STATUS.bit1, just also wired straight to a pin. No separate
+    // latch/clear logic needed -- it clears exactly when STATUS.bit1
+    // does (host reads STATUS with the sticky bit set, or RESET).
+    assign data_ready = status_done_sticky;
+
+    // net_mode: set while a RUN_NETWORK (multi-layer, dense) job is
+    // in flight (from the accepted opcode until layer_sequencer's
     // final seq_done), so STATUS.done latches on the sequencer's
     // seq_done rather than on each intermediate per-layer nm_done
-    // pulse -- see done_event below.
+    // pulse -- see done_event below. graph_mode is the analogous
+    // flag for a RUN_NETWORK job dispatched to graph_engine instead
+    // (net_type == graph); the two are mutually exclusive by
+    // construction (RUN_NETWORK sets exactly one of them, §5).
     reg net_mode;
+    reg graph_mode;
 
-    wire busy_all   = nm_busy | seq_busy;
-    wire done_event = net_mode ? seq_done : nm_done;
+    wire busy_all   = nm_busy | seq_busy | graph_busy;
+    wire done_event = graph_mode ? graph_done : (net_mode ? seq_done : nm_done);
 
     wire status_read_now = (state == ST_RESP) && (opcode == OP_STATUS) && rx_valid;
 
@@ -200,6 +250,11 @@ module spi_engine #(
     // closes the race: a done_event that lands too late to make it
     // into this snapshot is simply reported on the next poll
     // instead of being lost.
+    //
+    // bit2 = graph_err (§7 guard violation), snapshotted the same
+    // way -- graph_engine.err is itself sticky until rst or the next
+    // graph run_start, so no separate clear-on-read latch is needed
+    // for it here (unlike status_done_sticky).
     reg [7:0] status_snapshot;
 
     always @(posedge clk) begin
@@ -252,6 +307,9 @@ module spi_engine #(
                             4'd5: tx_byte_comb = DATA_WIDTH[7:0];
                             4'd6: tx_byte_comb = 8'h00; // protocol version 0x0001, high byte
                             4'd7: tx_byte_comb = 8'h01; // protocol version 0x0001, low byte
+                            4'd8: tx_byte_comb = N_TOTAL[15:8];  // Phase G5: graph activation buffer depth
+                            4'd9: tx_byte_comb = N_TOTAL[7:0];
+                            4'd10: tx_byte_comb = {7'b0, GRAPH_SUPPORTED}; // capability flags, bit0=graph
                             default: tx_byte_comb = 8'h00;
                         endcase
                     end
@@ -312,6 +370,11 @@ module spi_engine #(
             run_num_layers <= 8'h00;
             net_mode       <= 1'b0;
 
+            net_type          <= NET_TYPE_DENSE; // default after RESET (§5): Type #1 tests need never emit SET_NET_TYPE
+            num_neurons_graph <= 16'h0;
+            n_out             <= 16'h0;
+            graph_mode        <= 1'b0;
+
         end else begin
 
             // --------------------------------------------------
@@ -324,6 +387,10 @@ module spi_engine #(
 
             if (seq_done) begin
                 net_mode <= 1'b0;
+            end
+
+            if (graph_done) begin
+                graph_mode <= 1'b0;
             end
 
             if (cs_end) begin
@@ -372,13 +439,19 @@ module spi_engine #(
                                 OP_RESET: begin
                                     nm_soft_rst <= 1'b1;
                                     net_mode    <= 1'b0;
+                                    graph_mode  <= 1'b0;
+                                    net_type    <= NET_TYPE_DENSE;
                                     state       <= ST_IGNORE;
+                                end
+
+                                OP_SET_NET_TYPE: begin
+                                    state <= ST_SET_NET_TYPE;
                                 end
 
                                 OP_STATUS: begin
                                     resp_index     <= 4'd0;
                                     resp_len       <= 4'd1;
-                                    status_snapshot <= {6'b0, status_done_sticky, busy_all};
+                                    status_snapshot <= {5'b0, graph_err, status_done_sticky, busy_all};
                                     state          <= ST_RESP;
                                 end
 
@@ -390,7 +463,7 @@ module spi_engine #(
 
                                 OP_READ_CONFIG: begin
                                     resp_index <= 4'd0;
-                                    resp_len   <= 4'd8;
+                                    resp_len   <= 4'd11;
                                     state      <= ST_RESP;
                                 end
 
@@ -447,6 +520,8 @@ module spi_engine #(
                                         SEL_ACTIVATION: activation <= rx_byte[1:0]; // low 2 bits of the low addr byte
                                         SEL_N_INPUTS:   n_inputs_real  <= {addr_acc[7:0], rx_byte}; // low 2 of the 3 addr bytes, BE
                                         SEL_N_NEURONS:  n_neurons_real <= {addr_acc[7:0], rx_byte}; // low 2 of the 3 addr bytes, BE
+                                        SEL_NUM_NEURONS_GRAPH: num_neurons_graph <= {addr_acc[7:0], rx_byte}; // Phase G5, graph mode
+                                        SEL_N_OUT:              n_out             <= {addr_acc[7:0], rx_byte}; // Phase G5, graph mode
                                         default: ; // reserved selector: ignored
                                     endcase
 
@@ -594,8 +669,15 @@ module spi_engine #(
                     end
 
                     // =============================================
-                    // RUN_NETWORK: 1 payload byte (num_layers),
-                    // then pulse run_start for layer_sequencer.
+                    // RUN_NETWORK: 1 payload byte (num_layers, dense
+                    // only -- ignored for graph, whose neuron count
+                    // comes from SET_BASE sel 9 instead so this
+                    // opcode's framing stays byte-identical for both
+                    // net_type values, §5), then pulse run_start and
+                    // dispatch to layer_sequencer or graph_engine
+                    // based on net_type. The top level routes this
+                    // single run_start pulse to whichever engine
+                    // net_type selects (see rtl/spi_neuron_top.v).
                     // No-op (ignored, like OP_START) if the compute
                     // engine is already busy in any form.
                     // =============================================
@@ -607,11 +689,27 @@ module spi_engine #(
                             if (!busy_all) begin
                                 run_start      <= 1'b1;
                                 run_num_layers <= rx_byte;
-                                net_mode       <= 1'b1;
+                                if (net_type == NET_TYPE_GRAPH)
+                                    graph_mode <= 1'b1;
+                                else
+                                    net_mode   <= 1'b1;
                             end
 
                             state <= ST_IGNORE;
 
+                        end
+
+                    end
+
+                    // =============================================
+                    // SET_NET_TYPE: 1 payload byte (§5)
+                    // =============================================
+
+                    ST_SET_NET_TYPE: begin
+
+                        if (rx_valid) begin
+                            net_type <= rx_byte;
+                            state    <= ST_IGNORE;
                         end
 
                     end

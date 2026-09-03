@@ -25,6 +25,19 @@ module psram_model #(
     localparam realtime TOE_NS  = 20.0;
     localparam realtime TOH_NS  = 5.0;
 
+    // Page mode (Fig. 4): once CE#/OE# are already asserted, a
+    // same-page address change only needs tAPA before the next
+    // word is valid; crossing into a different page (A[4] or
+    // above changes) still needs a full tAA.
+    localparam realtime TAPA_NS = 20.0;
+
+    // Maximum CE# LOW pulse width (refresh-related). A page held open
+    // longer than this, whether idle or mid-burst, corrupts data on
+    // real silicon -- checked explicitly here (not just trusted of
+    // the controller) because a controller bug that overruns this
+    // would otherwise go completely unnoticed in simulation.
+    localparam realtime TCEM_NS = 8000.0;
+
     localparam realtime TLZ_NS  = 10.0;
     localparam realtime THZ_NS  = 8.0;
 
@@ -79,6 +92,16 @@ module psram_model #(
     reg [ADDR_WIDTH-1:0] active_addr;
     reg [DATA_WIDTH-1:0] active_wdata;
 
+    // Page-mode continuation tracking (address changes while
+    // CE#/OE# stay asserted low). last_word_time is when the
+    // current word's address became valid; pending_min_t is how
+    // long *that* word must be held (tAA if it crossed into a new
+    // page relative to the previous word, tAPA if not) before the
+    // controller may move on to the next address or close CE#.
+    realtime last_word_time;
+    realtime pending_min_t;
+    reg [ADDR_WIDTH-1:0] prev_word_addr;
+
     // ============================================================
     // Initialization
     // ============================================================
@@ -113,6 +136,10 @@ module psram_model #(
 
         active_addr  = 0;
         active_wdata = 0;
+
+        last_word_time = -1.0;
+        pending_min_t  = 0.0;
+        prev_word_addr = 0;
     end
 
     // ============================================================
@@ -198,6 +225,14 @@ module psram_model #(
             last_read_start = $realtime;
 
             read_active = 1'b1;
+
+            // Reference point for the page-mode continuation
+            // check below (first word of the session). Word 0 is
+            // always a full random access, so it must be held for
+            // a full tAA before anything else may happen.
+            last_word_time = $realtime;
+            pending_min_t  = TAA_NS;
+            prev_word_addr = a;
         end
 
         // --------------------------------------------------------
@@ -247,6 +282,23 @@ module psram_model #(
         access_time = $realtime - ce_low_time;
 
         // --------------------------------------------------------
+        // tCEM -- applies to any CE# LOW pulse, read or write.
+        // --------------------------------------------------------
+
+        if (access_time > TCEM_NS) begin
+
+            $display("");
+            $display("========================================");
+            $display("PSRAM TIMING ERROR");
+            $display("tCEM violation (CE# held LOW too long)");
+            $display("limit    = %0.2f ns", TCEM_NS);
+            $display("actual   = %0.2f ns", access_time);
+            $display("========================================");
+
+            $fatal;
+        end
+
+        // --------------------------------------------------------
         // READ END
         // --------------------------------------------------------
 
@@ -276,6 +328,23 @@ module psram_model #(
                 $display("required = %0.2f ns", TOE_NS);
                 $display("actual   = %0.2f ns",
                          $realtime - oe_low_time);
+                $display("========================================");
+
+                $fatal;
+            end
+
+            // Page mode: the last word of a (possibly multi-word)
+            // session must also have been held for its own
+            // pending_min_t before CE# is allowed to rise.
+            if (($realtime - last_word_time) < pending_min_t) begin
+
+                $display("");
+                $display("========================================");
+                $display("PSRAM TIMING ERROR");
+                $display("page-mode access violation (session end)");
+                $display("required = %0.2f ns", pending_min_t);
+                $display("actual   = %0.2f ns",
+                         $realtime - last_word_time);
                 $display("========================================");
 
                 $fatal;
@@ -478,6 +547,83 @@ module psram_model #(
             end
 
             write_active = 1'b0;
+        end
+    end
+
+    // ============================================================
+    // PAGE MODE: address change while CE#/OE# held low
+    //
+    // A continuation read inside an open session (Fig. 4): the
+    // controller changes only the address bus, CE#/OE# stay
+    // asserted. "Any change in addresses A[4] or higher initiates
+    // a new tAA access time" (datasheet) describes the ARRIVING
+    // word's own access time, not the departing word's hold time
+    // -- so the check here is deferred: what's enforced on THIS
+    // address change is pending_min_t, the requirement left behind
+    // by the PREVIOUS word (itself set from comparing that word
+    // to the one before it). The strict "$realtime > ce_low_time"
+    // guard excludes the session's own first address (which
+    // arrives at exactly ce_low_time and is already checked via
+    // tAA/tRC above).
+    // ============================================================
+
+    always @(a) begin
+
+        realtime delta;
+
+        // At a fresh session's first address, "a" changes in the
+        // exact same simulation instant as ce_n's negedge (both
+        // driven by the same NBA update in the controller). Verilog
+        // does not define which of two independently-triggered
+        // always blocks runs first at that instant, so without this
+        // #0 this block could observe a stale (not-yet-updated)
+        // ce_low_time from the negedge ce_n handler and misfire.
+        // The #0 defers evaluation until every zero-delay process
+        // triggered at this same time step -- including that
+        // handler -- has finished.
+        #0;
+
+        if (!ce_n && !oe_n && we_n && ($realtime > ce_low_time)) begin
+
+            // tCEM -- catch a session that has already overrun the
+            // limit mid-burst, not only once it eventually closes.
+            if (($realtime - ce_low_time) > TCEM_NS) begin
+
+                $display("");
+                $display("========================================");
+                $display("PSRAM TIMING ERROR");
+                $display("tCEM violation (CE# held LOW too long, mid-burst)");
+                $display("limit    = %0.2f ns", TCEM_NS);
+                $display("actual   = %0.2f ns", $realtime - ce_low_time);
+                $display("========================================");
+
+                $fatal;
+            end
+
+            delta = $realtime - last_word_time;
+
+            if (delta < pending_min_t) begin
+
+                $display("");
+                $display("========================================");
+                $display("PSRAM TIMING ERROR");
+                $display("page-mode access violation");
+                $display("required = %0.2f ns", pending_min_t);
+                $display("actual   = %0.2f ns", delta);
+                $display("========================================");
+
+                $fatal;
+            end
+
+            // This word's own requirement, to be enforced on the
+            // *next* address change (or session close).
+            pending_min_t =
+                (a[ADDR_WIDTH-1:4] == prev_word_addr[ADDR_WIDTH-1:4]) ?
+                TAPA_NS : TAA_NS;
+
+            last_word_time = $realtime;
+            prev_word_addr = a;
+
         end
     end
 

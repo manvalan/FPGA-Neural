@@ -108,6 +108,17 @@ module tb;
     reg seq_busy = 1'b0;
     reg seq_done = 1'b0;
 
+    // Phase G5 graph_engine ports: same reasoning as seq_busy/
+    // seq_done above -- this testbench never exercises net_type=
+    // graph, but graph_busy/graph_done/graph_err feed busy_all/
+    // done_event/status_snapshot directly, so they must be tied to
+    // known-idle values rather than left floating. net_type/
+    // num_neurons_graph/n_out are outputs, left unconnected like the
+    // other SET_BASE-driven outputs above.
+    reg graph_busy = 1'b0;
+    reg graph_done = 1'b0;
+    reg graph_err  = 1'b0;
+
     wire [ADDR_WIDTH-1:0] table_base;
     wire [ADDR_WIDTH-1:0] buf_a_base;
     wire [ADDR_WIDTH-1:0] buf_b_base;
@@ -144,7 +155,10 @@ module tb;
 
         .table_base(table_base), .buf_a_base(buf_a_base), .buf_b_base(buf_b_base),
         .run_start(run_start), .run_num_layers(run_num_layers),
-        .seq_busy(seq_busy), .seq_done(seq_done)
+        .seq_busy(seq_busy), .seq_done(seq_done),
+
+        .net_type(), .num_neurons_graph(), .n_out(),
+        .graph_busy(graph_busy), .graph_done(graph_done), .graph_err(graph_err)
     );
 
     // ============================================================
