@@ -1355,3 +1355,19 @@ integrazione nel top level (F5), verifica consolidata e misure reali (F6).
 - **Deliverable**: `docs/validation/06-graph-engine.md`, `bugs.md` con BUG-006.
 - **Prossimo passo**: C.7 (SPI slave + engine — CDC, opcode, `STATUS` sticky/clear-on-read,
   `READ_CONFIG`).
+
+## Campagna di ri-certificazione — C.7: SPI slave + engine (2026-09-04)
+
+- **Certificato citando copertura pre-esistente estesa** (10 test A-J in
+  `spi_engine_tb.v`, test CDC a rapporto SCLK/clk variabile in `spi_slave_tb.v`, opcode
+  sconosciuti gestiti esplicitamente come NOP), riverificata PASS in Fase 0.
+- **Controllo mirato positivo**: dato il pattern ricorrente di questa campagna (guard
+  mancante sui valori "reale=0", BUG-002-006), verificato se lo stesso buco esistesse per
+  `len=0` su WRITE_RAM/READ_RAM. **Non esiste**: `rtl/spi_engine.v:817` ha un guard
+  esplicito (`len==0` → `ST_IGNORE`), verificabile per ispezione diretta. Nota positiva:
+  il progetto non manca sistematicamente di queste guardie, il buco è specifico ai moduli
+  già segnalati.
+- **Nessun nuovo bug trovato in questo aspetto.**
+- **Deliverable**: `docs/validation/07-spi.md`.
+- **Prossimo passo**: C.8 (top-level `spi_neuron_top` — mux `seq_busy`, reset soft, pin
+  `data_ready_n`/`irq_n`).
