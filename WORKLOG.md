@@ -1293,3 +1293,22 @@ integrazione nel top level (F5), verifica consolidata e misure reali (F6).
 - **Regressione completa**: 39/39 test reali PASS (38 precedenti + 1 nuovo), 0 regressioni.
 - **Deliverable**: `docs/validation/03-memoria.md`.
 - **Prossimo passo**: C.4 (`mem_arbiter` — priorità B>C>A, starvation, contesa).
+
+## Campagna di ri-certificazione — C.4: Arbitro (2026-09-04)
+
+- **Priorità B>C>A>D certificata**: nuovo test (`sim/mem_arbiter_priority_tb.v`), 4 scenari
+  di contesa decrescente, dati distinguibili per confermare l'instradamento al richiedente
+  corretto (non solo che qualcuno venga servito). Tutti PASS.
+- **Race trovata e corretta nella mia stessa testbench**: assegnazioni bloccanti per
+  ritirare le richieste dei "perdenti" nello stesso fronte di clock che concede la
+  richiesta — race reale con il blocco sincrono del DUT, `dut.owner` mai usciva da
+  `SEL_NONE`. Non un difetto RTL. Corretto con assegnazioni non bloccanti.
+- **Finding su starvation di D**: sotto contesa continua e sostenuta da B (500 cicli), D
+  non viene mai concesso — non classificato come bug (arbitro a priorità fissa senza aging
+  è design standard, e la contesa continua testata è esplicitamente fuori dallo scenario
+  operativo previsto dall'header), ma segnalata un'ambiguità nella frase dell'header
+  ("never starves or corrupts A/B/C" può essere letta come garanzia su D stesso o solo su
+  A/B/C — il comportamento osservato è coerente solo con la seconda lettura).
+- **Regressione completa**: 40/40 test reali PASS (39 precedenti + 1 nuovo), 0 regressioni.
+- **Deliverable**: `docs/validation/04-arbiter.md`.
+- **Prossimo passo**: C.5 (`layer_sequencer` — ping-pong, tabella descrittori, catena layer).

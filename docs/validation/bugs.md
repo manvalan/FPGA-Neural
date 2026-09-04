@@ -142,3 +142,8 @@ perché siano difetti.
   precedente), e uno stub di memoria comportamentale che ignorava le byte-lane
   `mem_lb_n`/`mem_ub_n` durante la scrittura. Entrambi difetti della testbench, non
   dell'RTL — vedi `docs/validation/03-memoria.md` §3.1.
+- **C.4 (`mem_arbiter` mai concedeva nulla nella mia prima testbench)**: assegnazioni
+  bloccanti per ritirare le richieste dei "perdenti" nello stesso fronte di clock che
+  doveva concedere la richiesta — race reale con il blocco sincrono del DUT. Diagnosticato
+  con `dut.owner` mai uscito da `SEL_NONE`. Corretto passando ad assegnazioni non bloccanti.
+  Vedi `docs/validation/04-arbiter.md` §4.1.
