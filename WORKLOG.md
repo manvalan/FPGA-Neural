@@ -1194,3 +1194,45 @@ integrazione nel top level (F5), verifica consolidata e misure reali (F6).
   modulo→testbench, discrepanze doc↔codice), `docs/validation/bugs.md` (registro aperto).
 - **Prossimo passo**: aspetti C.1–C.14 uno alla volta, ciascuno con test avversari e oracolo
   Python indipendente, verdetto tracciato in un capitolo dedicato.
+
+## Campagna di ri-certificazione — C.1: Datapath aritmetico (2026-09-04)
+
+- **`tools/validation/mac_oracle.py`**: oracolo Python indipendente per `mac_unit.v`/
+  `mac8.v` (complemento a due da zero, non trascritto dall'RTL), auto-verificato contro 6
+  casi derivati a mano prima dell'uso.
+- **`mac_unit.v` certificato ESAUSTIVAMENTE**: `sim/mac_unit_tb.v`, tutte le 65536
+  combinazioni possibili di `(x,w)` a DATA_WIDTH=8 (non un campione) + 486 vettori a
+  `acc_in` di bordo per il contratto di porta completo. **66022/66022 PASS, 0 mismatch.**
+- **`mac8.v` certificato** (mai testato isolatamente prima, Fase 0 §0.4): `sim/mac8_tree_tb.v`
+  a PARALLEL=2/8/32, 939 vettori — pattern strutturale avversariale (somma nota
+  `PARALLEL×(PARALLEL+1)/2`, cattura cablaggi scambiati), 300 coppie INT8 casuali/PARALLEL
+  con `acc_in` realistico (accumulatore multi-gruppo, non 0 come si potrebbe assumere), e
+  casi avversariali di grandezza massima del prodotto. **939/939 PASS, 0 mismatch.**
+- **BUG-002 (guard `N_INPUTS%PARALLEL` non copre `N_INPUTS=0`) confermato reale**, con una
+  narrativa di autocorrezione degna di nota: il primo tentativo di verifica ha riportato
+  "hang" con un metodo di test **invalido** (controllo tardivo e singolo di `done`, che è un
+  impulso di un solo ciclo — lo stesso falso "hang" si riproduceva anche su una config
+  nota-buona, N_INPUTS=2/PARALLEL=2, il che ha smascherato il problema). Corretto il metodo
+  (osservare `done` ogni ciclo), riverificata la config nota-buona (ora PASS
+  correttamente), e **confermato** il sintomo reale per N_INPUTS=0: `start` viene accettato
+  ma `busy` non si alza mai, `done` non pulsa mai in 200 cicli — un sintomo diverso da
+  quello descritto nel commento originale del guard ("busy alto per sempre"). **Causa
+  radice trovata**: `x_bus`/`w_bus` dichiarati `[-1:0]` per N_INPUTS=0 non collassano a
+  larghezza zero — sia Icarus sia Yosys li trattano come vettori reali a 2 bit non
+  pilotati (confermato dai warning di Yosys stesso). **Confermato su ENTRAMBI i piani di
+  verifica** (§A.4): sintesi reale Yosys elabora la config con 0 problemi CHECK, stesso
+  silenzio del simulatore. Creato test di regressione permanente
+  (`sim/neuron_parallel_bug002_n_inputs_zero_tb.v`) che documenta il sintomo attuale come
+  APERTO, non come comportamento accettabile. Impatto pratico basso (N_INPUTS è fissato in
+  sintesi, non raggiungibile via SPI a runtime) ma il buco nella protezione è reale, non
+  teorico.
+- **Regressione completa ri-eseguita** con `tools/run_regression.py` dopo l'aggiunta dei 3
+  nuovi testbench: **36/36 test reali PASS**, 0 regressioni, 1 benchmark invariato.
+- **Deliverable**: `docs/validation/01-datapath.md` (verdetto per sotto-aspetto: mac_unit
+  CERTIFICATO, mac8 CERTIFICATO, saturazione CERTIFICATO CON RISERVA — test pre-esistente
+  riverificato, guard NON CERTIFICATO per N_INPUTS=0), `docs/validation/bugs.md` aggiornato
+  con evidenza completa per BUG-002.
+- **Prossimo passo**: C.2 (larghezza runtime `n_inputs_real`/`n_neurons_real`) — nota:
+  l'header di `neuron_parallel.v` dichiara esplicitamente che `n_inputs_real=0` riproduce lo
+  stesso rischio di BUG-002 "per responsabilità del chiamante" — da verificare se questo
+  claim tiene, con lo stesso rigore.

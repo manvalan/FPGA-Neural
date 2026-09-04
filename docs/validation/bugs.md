@@ -24,22 +24,35 @@ funzionale pratico), **INFO** (non un bug: gap di copertura, ambiguità document
 - **Stato**: aperto, non corretto per policy §E (analisi separata dalla correzione). Azione
   proposta: rimuovere il file o aggiornarlo, decisione da confermare con l'utente.
 
-### BUG-002 (da classificare, indagine formale in C.1) — guard `N_INPUTS % PARALLEL` non copre `N_INPUTS=0`
+### BUG-002 (MEDIA, CONFERMATO su sim + sintesi reale) — `N_INPUTS=0` bypassa il guard, `start` viene silenziosamente ignorato
 
-- **Sintomo potenziale**: se `N_INPUTS=0`, il guard elaboration-time in
-  `rtl/neuron_parallel.v:71` (`if (N_INPUTS % PARALLEL != 0)`) non scatta (`0 % PARALLEL ==
-  0` per ogni `PARALLEL`), ma `GROUPS = N_INPUTS / PARALLEL = 0` — la stessa condizione di
-  hang (`group_index == GROUPS-1` mai soddisfatta) che il guard dichiara di prevenire nel
-  proprio commento (righe 55-58).
-- **Causa radice (ipotesi, non ancora confermata su hardware simulato)**: il guard controlla
-  solo la divisibilità, non `N_INPUTS > 0` esplicitamente.
-- **Evidenza**: lettura diretta di `rtl/neuron_parallel.v:55-73` — vedi
-  `docs/validation/00-inventario.md` §0.6 per il testo esatto.
-- **Stato**: **APERTO, non ancora verificato con un test reale**. Non è ancora chiaro se
-  `N_INPUTS=0` sia una configurazione raggiungibile nella pratica (nessun layer con zero
-  ingressi ha senso a livello di sistema) — da chiudere in C.1 con un test avversariale
-  dedicato e un oracolo indipendente, prima di classificarlo come bug vero o come rischio
-  teorico non rilevante.
+- **Sintomo confermato** (non più un'ipotesi — vedi `docs/validation/01-datapath.md` §1.4 per
+  la narrativa completa, incl. un falso positivo iniziale nella mia stessa metodologia di
+  test, corretto e ridocumentato per trasparenza): con
+  `neuron_parallel #(.N_INPUTS(0), .PARALLEL(P))`, il guard elaboration-time
+  (`rtl/neuron_parallel.v:71`, `if (N_INPUTS % PARALLEL != 0)`) **non scatta** (`0 % P == 0`
+  per ogni `P`), il modulo **elabora con successo** (sia in simulazione Icarus sia in sintesi
+  reale Yosys, 0 problemi CHECK). A runtime: `start` viene accettato ma **`busy` non si alza
+  mai e `done` non pulsa mai** — non l'hang "busy resta alto per sempre" descritto nel
+  commento originale del guard (righe 55-58), un sintomo diverso, osservato per la prima
+  volta in questa campagna.
+- **Causa radice, confermata (non più ipotesi)**: `x_bus`/`w_bus` sono dichiarati
+  `[DATA_WIDTH*N_INPUTS-1:0]`, che per `N_INPUTS=0` diventa `[-1:0]` — un range che **non
+  collassa a larghezza zero**: sia Icarus sia Yosys lo trattano come un vettore reale a
+  **2 bit** (larghezza = |MSB-LSB|+1 = 2), lasciato non pilotato. Confermato dai warning di
+  Yosys: `Wire ...x_bus[1] is used but has no driver` (×2, per x_bus e w_bus).
+- **Evidenza**:
+  - `iverilog -g2012 -o /tmp/n0proper.out rtl/neuron_parallel.v rtl/mac8.v rtl/mac_unit.v sim/neuron_parallel_bug002_n_inputs_zero_tb.v && vvp /tmp/n0proper.out` → conferma il sintomo, ogni volta.
+  - `yosys -p "synth_ecp5 -json /tmp/n0.json -top n0_synth_wrap" rtl/neuron_parallel.v rtl/mac8.v rtl/mac_unit.v <wrapper>` → **0 problemi CHECK**, 4 warning "no driver" su x_bus/w_bus[1:0].
+  - Test di regressione permanente: `sim/neuron_parallel_bug002_n_inputs_zero_tb.v`.
+- **Impatto pratico**: `N_INPUTS` è un parametro Verilog fissato in fase di sintesi (non un
+  registro configurabile via SPI a runtime) — per essere raggiunto, qualcuno deve
+  deliberatamente istanziare il modulo con `N_INPUTS=0`, cosa che non ha senso semantico per
+  un layer reale. Rischio quindi basso in pratica (nessun percorso runtime/host-controllato
+  può innescarlo), ma è un buco reale e confermato nella protezione, non solo teorico.
+- **Fix proposto** (non applicato — analisi separata dalla correzione, §E del prompt di
+  certificazione): estendere il guard a `if (N_INPUTS == 0 || N_INPUTS % PARALLEL != 0)`.
+- **Stato**: **APERTO, confermato, non corretto.**
 
 ---
 
