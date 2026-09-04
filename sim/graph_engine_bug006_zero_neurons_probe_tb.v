@@ -1,21 +1,28 @@
 `timescale 1ns/1ps
 
 // ================================================================
-// C.6 probe (NOT a certified bug entry by itself -- see file header
-// note below and docs/validation/06-graph-engine.md): does
-// num_neurons_graph=0 reproduce the same class of issue as BUG-005
-// (rtl/layer_sequencer.v)?
+// C.6 / BUG-006 REGRESSION TEST (docs/validation/bugs.md), now FIXED:
+// does num_neurons_graph=0 reproduce the same class of issue as
+// BUG-005 (rtl/layer_sequencer.v)?
 //
 // Structural analysis: rtl/graph_engine.v's neuron_idx (line 159) is
 // a full 16-bit register, and the termination check
 // `neuron_idx == num_neurons_graph-16'd1` (lines 527/561) wraps to
 // 65535 for num_neurons_graph=0 -- a value neuron_idx CAN naturally
-// reach, structurally identical to BUG-005's layer_idx pattern. This
-// probe checks empirically what actually happens within a BOUNDED
-// window (a full 65536-iteration run was not attempted -- would take
-// far longer per iteration than layer_sequencer's simpler dispatch,
-// impractical for this campaign's effort budget; see docs/validation/
-// 06-graph-engine.md for the honesty note about this limitation).
+// reach, structurally identical to BUG-005's layer_idx pattern.
+// Before the fix, this was observed to terminate via the incidental
+// src_id<out_id/N_TOTAL guard tripping on garbage descriptor data at
+// cycle 58 -- self-limiting only for that particular PSRAM content,
+// not a real guarantee.
+//
+// Fix (rtl/graph_engine.v, ST_COPY_IN_WAIT, at the input-copy-complete
+// transition): num_neurons_graph==0 is now an explicit, immediate
+// no-op -- done pulses right after the input copy finishes, without
+// ever entering ST_DESC_RD / the neuron-descriptor loop, same
+// convention as layer_sequencer.v's BUG-005 fix. This test now
+// hard-asserts done fires quickly with no err and neuron_idx never
+// leaves 0, instead of only observing which of several
+// already-known-wrong symptoms showed up.
 // ================================================================
 
 module tb;
@@ -73,7 +80,7 @@ module tb;
         rst <= 0;
         @(posedge clk);
 
-        $display("--- num_neurons_graph=0, bounded 5000-cycle observation window ---");
+        $display("--- num_neurons_graph=0: must complete as an immediate no-op right after input copy, no garbage descriptor iterations ---");
         run_start <= 1;
         @(posedge clk);
         run_start <= 0;
@@ -84,12 +91,17 @@ module tb;
             watchdog = watchdog + 1;
         end
 
-        if (err)
-            $display("RESULT: err fired at cycle %0d (neuron_idx=%0d) -- the src_id<out_id/N_TOTAL guard caught the garbage descriptor data before completion. Self-limiting for THIS data pattern (not proof it always does for every possible PSRAM content).", watchdog, dut.neuron_idx);
-        else if (done)
-            $display("RESULT: done fired at cycle %0d (neuron_idx=%0d) -- completed without err", watchdog, dut.neuron_idx);
-        else
-            $display("RESULT: neither done nor err in %0d cycles -- neuron_idx=%0d, busy=%b (consistent with BUG-005's pattern: running through many garbage iterations rather than hanging outright; NOT run to full completion, see docs/validation/06-graph-engine.md for why)", watchdog, dut.neuron_idx, busy);
+        if (err) begin
+            $display("FAIL: err fired at cycle %0d (neuron_idx=%0d) -- BUG-006 fix regressed, still falling through to the descriptor loop and tripping the src_id guard instead of taking the immediate no-op path", watchdog, dut.neuron_idx);
+        end else if (!done) begin
+            $display("FAIL: neither done nor err in %0d cycles -- neuron_idx=%0d, busy=%b (BUG-006 fix regressed, back to running through garbage descriptor iterations)", watchdog, dut.neuron_idx, busy);
+        end else if (dut.neuron_idx !== 16'd0) begin
+            $display("FAIL: done fired at cycle %0d but neuron_idx=%0d (expected 0 -- the descriptor loop was entered instead of taking the immediate no-op path, BUG-006 fix regressed)", watchdog, dut.neuron_idx);
+        end else if (watchdog > 30) begin
+            $display("FAIL: done fired at cycle %0d with neuron_idx=0, but that is far more than the handful of cycles an immediate no-op (after copying %0d input(s)) should take -- worth re-examining", watchdog, n_inputs_graph);
+        end else begin
+            $display("PASS: num_neurons_graph=0 completed as an immediate no-op at cycle %0d, neuron_idx stayed 0, no err -- BUG-006 fix confirmed, no garbage descriptor iterations executed", watchdog);
+        end
         $finish;
     end
 

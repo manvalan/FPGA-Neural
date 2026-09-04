@@ -12,7 +12,13 @@ funzionale pratico), **INFO** (non un bug: gap di copertura, ambiguità document
 
 ## Aperti
 
-### BUG-001 (INFO, non ancora classificato) — `sim/top.v` non compila contro l'RTL corrente
+(nessuno — tutti i bug della campagna sono stati corretti e verificati, vedi "Risolti" sotto)
+
+---
+
+## Risolti
+
+### BUG-001 (INFO) — `sim/top.v` non compila contro l'RTL corrente
 
 - **Sintomo**: `iverilog` fallisce con `parameter FRAC_BITS not found in top.dut`.
 - **Causa radice**: `sim/top.v` è un residuo della versione Q8.8 a virgola fissa del
@@ -20,9 +26,12 @@ funzionale pratico), **INFO** (non un bug: gap di copertura, ambiguità document
   `docs/validation/00-inventario.md` §0.2).
 - **Evidenza**: `iverilog -g2012 -o /tmp/topcheck.out rtl/neuron_parallel.v rtl/mac8.v rtl/mac_unit.v sim/top.v` → 2 errori di elaborazione.
 - **Impatto**: nessuno sulla regressione (il file non è referenziato da alcun testbench o
-  tool) — è dead code, non un difetto funzionale del design.
-- **Stato**: aperto, non corretto per policy §E (analisi separata dalla correzione). Azione
-  proposta: rimuovere il file o aggiornarlo, decisione da confermare con l'utente.
+  tool) — era dead code, non un difetto funzionale del design.
+- **Fix applicato**: file rimosso (`git rm sim/top.v`) — confermato non referenziato da alcun
+  testbench o tool (`tools/run_regression.py` lo esclude esplicitamente dal proprio elenco
+  sorgenti anche prima della rimozione).
+- **Stato**: **RISOLTO** — file eliminato, nessun test di regressione necessario (non c'era
+  comportamento da preservare).
 
 ### BUG-002 (MEDIA, CONFERMATO su sim + sintesi reale) — `N_INPUTS=0` bypassa il guard, `start` viene silenziosamente ignorato
 
@@ -50,9 +59,16 @@ funzionale pratico), **INFO** (non un bug: gap di copertura, ambiguità document
   deliberatamente istanziare il modulo con `N_INPUTS=0`, cosa che non ha senso semantico per
   un layer reale. Rischio quindi basso in pratica (nessun percorso runtime/host-controllato
   può innescarlo), ma è un buco reale e confermato nella protezione, non solo teorico.
-- **Fix proposto** (non applicato — analisi separata dalla correzione, §E del prompt di
-  certificazione): estendere il guard a `if (N_INPUTS == 0 || N_INPUTS % PARALLEL != 0)`.
-- **Stato**: **APERTO, confermato, non corretto.**
+- **Fix applicato** (`rtl/neuron_parallel.v`, guard di elaborazione): esteso a
+  `if (N_INPUTS == 0 || N_INPUTS % PARALLEL != 0)` — `N_INPUTS=0` ora fa fallire
+  l'elaborazione con lo stesso errore `Unknown module type:
+  neuron_parallel_requires_N_INPUTS_multiple_of_PARALLEL` dei due test negativi già
+  esistenti, invece di elaborare con successo e produrre `start` silenziosamente ignorato.
+- **Test di regressione**: `sim/neuron_parallel_bug002_n_inputs_zero_tb.v`, riscritto per
+  asserire il fallimento di compilazione (stesso pattern di
+  `neuron_parallel_guard_negative_*_tb.v`), aggiunto a `EXPECTED_COMPILE_FAIL` in
+  `tools/run_regression.py`. Verificato: `iverilog -g2012 -o /tmp/out rtl/neuron_parallel.v sim/neuron_parallel_bug002_n_inputs_zero_tb.v` → errore di elaborazione atteso, exit code 3.
+- **Stato**: **RISOLTO, verificato.**
 
 ### BUG-003 (MEDIA, CONFERMATO ma NON pienamente caratterizzato) — `n_inputs_real=0` a runtime, comportamento incoerente tra ripetizioni
 
@@ -82,11 +98,24 @@ funzionale pratico), **INFO** (non un bug: gap di copertura, ambiguità document
   `n_inputs_real=0` per un caso limite (es. un layer con zero neuroni in una topologia
   degenere) potrebbe innescarlo, con un esito imprevedibile tra hang e risultato
   silenziosamente sbagliato.
-- **Stato**: **APERTO, confermato come comportamento scorretto in ogni caso osservato, ma
-  meccanismo esatto NON isolato** — dichiarato esplicitamente come limite di questa verifica
-  (§A.5), non presentato come pienamente compreso. Richiederebbe un'indagine dedicata
-  (probabilmente a livello gate/timing reale, non solo comportamentale) per chiudere con
-  certezza il meccanismo, non solo il sintomo.
+- **Fix applicato** (`rtl/neuron_parallel.v`, dentro `if (start && !busy)`):
+  `finishing <= (n_inputs_real == 16'h0);` (era `finishing <= 0;`) — riusa il percorso di
+  completamento "finishing" già corretto ed esistente nel modulo invece di introdurre nuova
+  logica per il caso degenere, stessa convenzione già usata altrove nel progetto. Per zero
+  input reali il risultato matematico è `y = activation(bias)`: con `bias=0` e ACT_RELU nel
+  test di regressione, `expect_y=0`.
+- **Nota onestà**: il meccanismo esatto per cui il comportamento pre-fix variava tra
+  ripetizioni (hang vs. risultato sbagliato silenzioso) **non è stato isolato bit-per-bit**
+  neppure in fase di correzione — il fix è un early-out esplicito che bypassa
+  l'intero percorso ambiguo, verificato corretto e deterministico sul nuovo comportamento,
+  non una spiegazione a posteriori del vecchio meccanismo.
+- **Test di regressione**: `sim/neuron_parallel_bug003_n_inputs_real_zero_tb.v` TEST 4,
+  riscritto da osservazione ad asserzione hard (done entro 8 cicli, `y===0`). Verificato:
+  `n_inputs_real=0` completa in **1 ciclo**, `y=0` — TUTTI I TEST PASSED (incluse le TEST
+  1-3 di non-regressione sulla regione "poison").
+- **Stato**: **RISOLTO, verificato** (il meccanismo esatto del comportamento PRE-fix resta
+  non isolato per intero, per trasparenza, ma non è più rilevante: il nuovo percorso è
+  deterministico e verificato indipendentemente).
 
 ### BUG-004 (MEDIA, CONFERMATO scorretto, NON pienamente caratterizzato) — `n_neurons_real=0` non blocca, ma non fa nemmeno quello che ci si aspetterebbe in modo coerente
 
@@ -108,8 +137,24 @@ funzionale pratico), **INFO** (non un bug: gap di copertura, ambiguità document
 - **Impatto pratico**: come BUG-002/003, richiede che l'host imposti deliberatamente (o per
   bug proprio) `n_neurons_real=0` — non raggiungibile da un input esterno arbitrario, ma
   raggiungibile da un bug nel software host senza bisogno di ricompilare il bitstream.
-- **Stato**: **APERTO, confermato, causa esatta non isolata** (stesso limite dichiarato di
-  BUG-003).
+- **Fix applicato** (`rtl/neuron_memory.v`, tre punti coordinati, non uno solo): il pattern
+  vulnerabile esisteva in TRE punti distinti, non uno — scoperto durante la correzione stessa
+  (un primo tentativo di guard solo al dispatch `STATE_IDLE`→`STATE_READ_X` è stato
+  riconosciuto insufficiente perché copriva un solo dei tre punti d'ingresso nello stato
+  vulnerabile `STATE_READ_W`, che viene rientrato indipendentemente una volta per neurone nel
+  loop). Fix corretto (single-point-of-truth sulle CONDIZIONI di terminazione, non sui punti
+  di dispatch): `STATE_READ_X` e `STATE_READ_W` guadagnano entrambe un prefisso
+  `n_inputs_real == 16'h0 ||`/`n_neurons_real == 16'h0 ||` sulla propria condizione di
+  terminazione, e il punto di transizione X→W guadagna un ramo esplicito
+  `if (n_neurons_real == 16'h0) begin busy<=0; done<=1; state<=STATE_IDLE; end`.
+- **Test di regressione**: `sim/neuron_memory_bug004_n_neurons_real_zero_tb.v` TEST 4,
+  riscritto per asserire `done` entro il baseline a piena larghezza (`cyc_full`, stabilito
+  dinamicamente da TEST 3). Verificato: `n_neurons_real=0` completa in **32 cicli** contro
+  **155** per il build completo a 3 neuroni (X viene ancora letto una volta, condiviso tra
+  neuroni, ma nessun calcolo per-neurone viene eseguito) — TUTTI I TEST PASSED.
+- **Stato**: **RISOLTO, verificato** (stessa nota di onestà di BUG-003: il meccanismo esatto
+  del comportamento PRE-fix — 114 vs 196 cicli a seconda di `N_NEURONS` — non è stato isolato
+  bit-per-bit, ma il nuovo percorso è deterministico e verificato indipendentemente).
 
 ### BUG-005 (CRITICA, CONFERMATO) — `RUN_NETWORK(0)` esegue 256 layer fasulli leggendo dati arbitrari come descrittori
 
@@ -138,13 +183,15 @@ funzionale pratico), **INFO** (non un bug: gap di copertura, ambiguità document
   rischio non è solo un risultato sbagliato o un hang, ma **scritture reali in PSRAM a
   indirizzi non controllati**, derivati da dati che non erano mai stati pensati per essere
   interpretati come indirizzi.
-- **Fix proposto** (non applicato — analisi separata dalla correzione): guard a runtime in
-  `layer_sequencer.v` analogo a quello di `neuron_parallel.v`, es. rifiutare
-  `run_num_layers==0` prima di avviare la sequenza (riportando un errore osservabile invece
-  di procedere).
-- **Stato**: **APERTO, confermato, causa isolata con certezza** (a differenza di
-  BUG-003/004, qui il meccanismo esatto è stato individuato precisamente, non solo il
-  sintomo).
+- **Fix applicato** (`rtl/layer_sequencer.v`, `ST_IDLE`): `run_num_layers==0` è ora un
+  no-op esplicito e immediato — `seq_done` pulsa senza mai entrare in `ST_READ_DESC`,
+  stessa convenzione già usata da `spi_engine.v` per `WRITE_RAM`/`READ_RAM` con `len==0`
+  (accetta il comando, non fa nulla, nessun errore riportato).
+- **Test di regressione**: `sim/layer_sequencer_bug005_zero_layers_tb.v`, riscritto da
+  osservazione ad asserzione hard (seq_done entro 5 cicli, `layer_idx===0`). Verificato:
+  `run_num_layers=0` completa in **1 ciclo** con `layer_idx` rimasto a 0 (era 21761 cicli,
+  `layer_idx` terminato a 255, prima del fix) — PASS.
+- **Stato**: **RISOLTO, verificato.**
 
 ### BUG-006 (BASSA, stessa causa radice di BUG-005, protezione incidentale) — `num_neurons_graph=0` in `graph_engine.v`
 
@@ -160,10 +207,18 @@ funzionale pratico), **INFO** (non un bug: gap di copertura, ambiguità document
 - **Evidenza**: `sim/graph_engine_bug006_zero_neurons_probe_tb.v` — finestra di 5000 cicli,
   non fatto girare a completamento (limite dichiarato, vedi
   `docs/validation/06-graph-engine.md` §6.2).
-- **Impatto pratico**: basso ma non nullo — la protezione osservata è incidentale, non
-  garantita per ogni possibile contenuto PSRAM. Il buco strutturale è reale.
-- **Stato**: **APERTO**, severità inferiore a BUG-005 per la protezione incidentale
-  osservata, non pienamente verificato su ogni pattern di dati possibile.
+- **Impatto pratico**: basso ma non nullo — la protezione PRE-fix era incidentale, non
+  garantita per ogni possibile contenuto PSRAM. Il buco strutturale era reale.
+- **Fix applicato** (`rtl/graph_engine.v`, `ST_COPY_IN_WAIT`, alla transizione di fine copia
+  input): `num_neurons_graph==0` è ora un no-op esplicito e immediato — `done` pulsa subito
+  dopo il completamento della copia input, senza mai entrare in `ST_DESC_RD`/il loop
+  descrittori, stessa convenzione del fix BUG-005.
+- **Test di regressione**: `sim/graph_engine_bug006_zero_neurons_probe_tb.v`, riscritto da
+  osservazione a asserzione hard (`done` entro 30 cicli, nessun `err`, `neuron_idx===0`).
+  Verificato: `num_neurons_graph=0` completa in **13 cicli** senza `err`, `neuron_idx` rimasto
+  a 0 (era 58 cicli tramite l'intercettazione incidentale del guard src_id/out_id, prima del
+  fix) — PASS.
+- **Stato**: **RISOLTO, verificato.**
 
 ### BUG-007 (CRITICA, CONFERMATO end-to-end via SPI reale) — `SET_NET_TYPE` durante un `RUN_NETWORK` in corso blocca permanentemente il motore in esecuzione
 
@@ -200,18 +255,46 @@ funzionale pratico), **INFO** (non un bug: gap di copertura, ambiguità document
   permanente**, ma un host che si limita a fare polling di `STATUS` senza un timeout e un
   `RESET` di ripiego resterebbe bloccato indefinitamente comunque, dato che l'hardware non
   segnala mai da solo che qualcosa è andato storto.
-- **Fix proposto** (non applicato — analisi separata dalla correzione): in
-  `rtl/spi_engine.v`, rifiutare/accodare `SET_NET_TYPE` mentre `graph_busy||seq_busy` è
-  asserto, oppure latchare `net_type` in `spi_neuron_top.v` solo all'avvio di un run
-  (non renderlo immediatamente combinazionale sul mux dell'arbitro).
-- **Stato**: **APERTO, confermato end-to-end, causa isolata con certezza, recupero via
-  RESET verificato.**
+- **Fix applicato** (`rtl/spi_engine.v`, `ST_SET_NET_TYPE`): `net_type <= rx_byte` ora
+  condizionato a `if (!graph_busy && !seq_busy)` — la scrittura viene silenziosamente
+  rifiutata (comando accettato via SPI come prima, ma senza effetto) mentre un run è in
+  corso, invece di rimappare il mux dell'arbitro a metà esecuzione.
+- **Test di regressione**: `sim/spi_neuron_top_bug007_mid_run_net_type_tb.v`, riscritto per
+  asserire end-to-end su SPI reale sia (a) che il run in corso completi normalmente
+  nonostante lo `SET_NET_TYPE` avversariale a metà esecuzione, sia (b) che la scrittura sia
+  stata VERAMENTE rifiutata e non parzialmente applicata (una successiva `RUN_NETWORK` senza
+  re-inviare `SET_NET_TYPE(graph)` completa comunque correttamente). Verificato: il run grafo
+  completa con `out_base[0]=126` dopo 1 solo polling nonostante lo `SET_NET_TYPE(dense)`
+  avversariale; `net_type` confermato ancora `GRAPH` internamente — PASS su entrambi i
+  controlli.
+- **Stato**: **RISOLTO, verificato end-to-end su SPI reale.**
 
 ---
 
-## Risolti
+## Verifica post-fix su entrambi i piani (§A.4)
 
-(nessuno ancora in questa campagna — la Fase 0 è analisi/inventario, non correzione)
+Dopo l'applicazione di tutti e 7 i fix (RTL: `rtl/neuron_parallel.v`, `rtl/neuron_memory.v`,
+`rtl/layer_sequencer.v`, `rtl/graph_engine.v`, `rtl/spi_engine.v`; rimozione:
+`sim/top.v`):
+
+- **Regressione Icarus completa** (`python3 tools/run_regression.py`): 44 testbench, **43
+  PASS**, 0 FAIL/ERROR, 1 BENCHMARK (nessun verdetto per progetto, invariato). Nessuna
+  regressione sui 37 test già certificati pre-fix.
+- **Sintesi reale** (`yosys synth_ecp5`, sistema completo `spi_neuron_top` con sottosistema
+  flash, PARALLEL=8, stessi file/comando già validati in Fase 15/F7 di WORKLOG.md): **0
+  problemi CHECK**, 1 warning atteso/preesistente (tri-state limitato in
+  `psram_controller.v`, invariato). TRELLIS_FF: 4900 (era 4855 — +45, coerente con la nuova
+  logica di guard/controllo introdotta dai fix, nessuna crescita anomala).
+- **Place&route reale** (`nextpnr-ecp5 --45k --package CABGA381 --speed 8 --freq 80
+  --lpf synth/ecp5/spi_neuron_top.lpf`): **0 errori di vincolo, 0 pin non vincolati,
+  "Program finished normally"**. Fmax: **68.65 MHz** (era 67.91 MHz — leggermente meglio,
+  entro il rumore di piazzamento già documentato in Fase 7/WORKLOG.md, non una regressione).
+  Percorso critico verificato esplicitamente **strutturalmente identico** a prima del fix:
+  `u_neuron_memory.u_neuron.group_index` → `u_mac8` → catena di riporto CCU2C
+  dell'accumulatore (`rtl/mac8.v`) — nessun modulo toccato dai fix (che sono tutti
+  aggiunte al percorso di controllo, non al datapath MAC/accumulatore) compare nel
+  percorso critico. Margine sull'oscillatore reale 16MHz: 4.29× (invariato).
+  Log: `synth/ecp5/post_fix_verify/yosys.log`, `synth/ecp5/post_fix_verify/nextpnr.log`.
 
 ---
 

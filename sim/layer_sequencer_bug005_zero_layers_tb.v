@@ -1,23 +1,23 @@
 `timescale 1ns/1ps
 
 // ================================================================
-// C.5 certification: rtl/layer_sequencer.v with run_num_layers=0.
+// C.5 / BUG-005 REGRESSION TEST: rtl/layer_sequencer.v with
+// run_num_layers=0.
 //
-// The header documents run_num_layers as "1..N_LAYERS" but there is
-// no elaboration-time or runtime guard visible in the RTL enforcing
-// that range (unlike rtl/neuron_parallel.v's PARAMETER GUARD for
-// N_INPUTS%PARALLEL). layer_idx (rtl/layer_sequencer.v:121) is a full
-// 8-bit register, and the loop terminates on
-// `layer_idx == num_layers_reg - 8'd1` (line 303). For
-// num_layers_reg=0, that wraps to `layer_idx == 255` -- a value
-// layer_idx CAN naturally reach by counting up from 0 (unlike
-// BUG-002's 1-bit group_index, which could never represent the
-// wrapped value at all) -- so this is hypothesized to NOT hang, but
-// instead run through all 256 possible layer indices, each one
-// dispatching a full neuron_memory run with whatever garbage
-// descriptor bytes it reads from far beyond the real, N_LAYERS-sized
-// table. This test checks that hypothesis empirically rather than
-// asserting it.
+// BUG-005 (docs/validation/bugs.md), now FIXED: run_num_layers=0
+// used to make layer_idx (a full 8-bit register) wrap the termination
+// check to 255, running through all 256 possible layer indices and
+// executing 256 fabricated "layers" from garbage PSRAM bytes far past
+// the real, N_LAYERS-sized descriptor table -- confirmed via this
+// exact test before the fix: 21761 cycles, layer_idx ending at 255.
+//
+// Fix (rtl/layer_sequencer.v, ST_IDLE): run_num_layers==0 is now an
+// explicit, immediate no-op -- seq_done pulses without ever entering
+// ST_READ_DESC, same convention as spi_engine.v's WRITE_RAM/READ_RAM
+// len==0 guard. This test now ASSERTS that behavior (previously it
+// only observed and reported, since the pre-fix outcome was the bug
+// itself, not a pass/fail condition).
+// ================================================================
 //
 // neuron_memory is NOT instantiated -- layer_sequencer only needs
 // nm_busy/nm_done as far as its own control-flow is concerned, so a
@@ -102,7 +102,7 @@ module tb;
         rst <= 0;
         @(posedge clk);
 
-        $display("--- run_num_layers=0: does it hang, or run through 256 garbage layers? ---");
+        $display("--- run_num_layers=0: must complete immediately, must NOT run through 256 garbage layers ---");
         run_num_layers <= 8'd0;
         run_start <= 1;
         @(posedge clk);
@@ -115,9 +115,13 @@ module tb;
         end
 
         if (!seq_done) begin
-            $display("RESULT: run_num_layers=0 HANGS -- no seq_done in %0d cycles, seq_busy=%b, layer_idx=%0d", watchdog, seq_busy, dut.layer_idx);
+            $display("FAIL: run_num_layers=0 HANGS -- no seq_done in %0d cycles, seq_busy=%b, layer_idx=%0d (BUG-005 fix regressed)", watchdog, seq_busy, dut.layer_idx);
+        end else if (dut.layer_idx !== 8'd0) begin
+            $display("FAIL: seq_done reached after %0d cycles but layer_idx=%0d (expected 0 -- the sequencer entered the descriptor-read loop instead of taking the immediate no-op path, BUG-005 fix regressed)", watchdog, dut.layer_idx);
+        end else if (watchdog > 5) begin
+            $display("FAIL: seq_done reached in %0d cycles with layer_idx=0, but that is far more than the ~1-2 cycles an immediate no-op should take -- worth re-examining even though layer_idx itself looks correct", watchdog);
         end else begin
-            $display("RESULT: run_num_layers=0 completed after %0d cycles -- dut.layer_idx ended at %0d (0=terminated immediately as if 0 real layers, 255=ran all 256 possible indices before the wraparound check fired, something else=partial)", watchdog, dut.layer_idx);
+            $display("PASS: run_num_layers=0 completed as an immediate no-op in %0d cycle(s), layer_idx stayed 0 -- BUG-005 fix confirmed, no garbage layers executed", watchdog);
         end
         $finish;
     end

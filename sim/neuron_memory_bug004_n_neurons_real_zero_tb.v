@@ -1,21 +1,29 @@
 `timescale 1ns/1ps
 
 // ================================================================
-// C.2 CERTIFICATION + BUG-004 OBSERVATION (certification campaign,
-// docs/validation/bugs.md / docs/validation/02-runtime-width.md §2.4/§2.5).
+// C.2 CERTIFICATION + BUG-004 REGRESSION TEST (certification
+// campaign, docs/validation/bugs.md / docs/validation/02-runtime-width.md §2.4/§2.5).
 //
-// TESTS 1-3 (SOLID, CERTIFIED): n_neurons_real early termination for
-// valid values (1, 2, 3 out of a N_NEURONS=3 build) completes in a
-// cycle count that scales proportionally (~41 cycles/neuron) -- these
-// DO fail the run if early termination breaks.
+// TESTS 1-3 (CERTIFIED): n_neurons_real early termination for valid
+// values (1, 2, 3 out of a N_NEURONS=3 build) completes in a cycle
+// count that scales proportionally (~41 cycles/neuron) -- these fail
+// the run if early termination breaks.
 //
-// TEST 4 (n_neurons_real=0) is an OBSERVATION, not a hard assertion:
-// unlike the hang pattern of BUG-002/003, this one does NOT hang --
-// it completes in the SAME cycle count as processing the full
-// N_NEURONS build width, meaning the requested "zero neurons" limit
-// was silently ignored. Confirmed with a minimal always-ready memory
-// stub (content is irrelevant to this specific check -- only whether
-// the loop terminates, and in how many cycles, matters here).
+// TEST 4 (n_neurons_real=0), now FIXED. Previously did NOT hang (unlike
+// BUG-002/003) -- it silently completed in the SAME cycle count as
+// processing the full N_NEURONS build width, ignoring the requested
+// "zero neurons" limit entirely.
+//
+// Fix (rtl/neuron_memory.v): the vulnerable termination pattern
+// existed at THREE points (STATE_READ_X's own termination check,
+// STATE_READ_W's termination check -- re-entered once per neuron in
+// the loop, and the X-read-to-W-read dispatch point) -- all three now
+// carry an explicit n_neurons_real==0 / n_inputs_real==0 early-out. For
+// n_neurons_real=0 specifically, X is still read once (shared across
+// neurons) but the loop then exits immediately instead of entering
+// STATE_READ_W at all -- so this test now hard-asserts TEST 4
+// completes with `done` in far fewer cycles than the full-width
+// baseline (cyc_full, established by TEST 3), not the same count.
 // ================================================================
 
 module tb;
@@ -71,7 +79,7 @@ module tb;
 
     task automatic run_case(
         input [15:0] nreal,
-        input integer is_bug004_probe  // 1 = TEST 4: observe-only
+        input integer is_bug004_zero  // 1 = TEST 4: must complete FAR faster than cyc_full
     );
         begin
             n_neurons_real = nreal;
@@ -88,21 +96,19 @@ module tb;
                 @(posedge clk);
                 cyc = cyc + 1;
             end
-            if (is_bug004_probe) begin
-                if (!done)
-                    $display("n_neurons_real=%0d: OBSERVED -- no done in 500 cycles (would match a BUG-002/003-style hang -- NOT what was found when this was last investigated, see docs/validation/02-runtime-width.md §2.5)", nreal);
-                else if (cyc == cyc_full)
-                    $display("n_neurons_real=%0d: OBSERVED -- completed at cycle %0d, IDENTICAL to n_neurons_real=%0d (full build width) -- limit silently ignored, matches BUG-004 as documented. NOT counted as pass or fail here.", nreal, cyc, N_NEURONS);
-                else
-                    $display("n_neurons_real=%0d: OBSERVED -- completed at cycle %0d (differs from full-width cycle count %0d -- behavior may have changed since BUG-004 was documented, re-check docs/validation/02-runtime-width.md §2.5)", nreal, cyc, cyc_full);
-            end else begin
-                if (!done) begin
-                    $display("n_neurons_real=%0d: FAIL -- expected done, got none in 500 cycles", nreal);
+            if (!done) begin
+                $display("n_neurons_real=%0d: FAIL -- expected done, got none in 500 cycles", nreal);
+                errors = errors + 1;
+            end else if (is_bug004_zero) begin
+                if (cyc >= cyc_full) begin
+                    $display("n_neurons_real=%0d: FAIL -- completed at cycle %0d, NOT faster than the full-width baseline (%0d cycles) -- BUG-004 fix regressed, the zero-neurons limit is being silently ignored again", nreal, cyc, cyc_full);
                     errors = errors + 1;
                 end else begin
-                    $display("n_neurons_real=%0d: PASS -- done at cycle %0d", nreal, cyc);
-                    if (nreal == N_NEURONS) cyc_full = cyc;
+                    $display("n_neurons_real=%0d: PASS -- done at cycle %0d, well under the full-width baseline (%0d cycles) -- BUG-004 fix confirmed, no neuron computation was performed", nreal, cyc, cyc_full);
                 end
+            end else begin
+                $display("n_neurons_real=%0d: PASS -- done at cycle %0d", nreal, cyc);
+                if (nreal == N_NEURONS) cyc_full = cyc;
             end
         end
     endtask
@@ -118,13 +124,13 @@ module tb;
         $display("--- TEST 3: n_neurons_real=3 (full build width, establishes cyc_full baseline) ---");
         run_case(N_NEURONS[15:0], 0);
 
-        $display("--- TEST 4 (BUG-004 probe, observe-only): n_neurons_real=0 ---");
+        $display("--- TEST 4 (BUG-004 fix): n_neurons_real=0 -- must complete far faster than the full-width baseline ---");
         run_case(16'd0, 1);
 
         if (errors == 0)
-            $display("ALL TESTS PASSED (early termination certified correct for valid n_neurons_real values, TESTS 1-3; TEST 4 is an observe-only BUG-004 probe -- not scored)");
+            $display("ALL TESTS PASSED (early termination certified correct for valid n_neurons_real values, TESTS 1-3; TEST 4 confirms BUG-004 fix -- n_neurons_real=0 skips all neuron computation)");
         else
-            $display("FAILED: %0d unexpected result(s) in TESTS 1-3 -- see messages above", errors);
+            $display("FAILED: %0d unexpected result(s) -- see messages above", errors);
         $finish;
     end
 

@@ -29,6 +29,7 @@ REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 EXPECTED_COMPILE_FAIL = {
     "neuron_parallel_guard_negative_degenerate",
     "neuron_parallel_guard_negative_nonmultiple",
+    "neuron_parallel_bug002_n_inputs_zero",
 }
 # Benchmarks: print measured numbers, no PASS/FAIL verdict by design (see
 # each file's own header -- same category as sim/flash_latency_bench.v,
@@ -36,7 +37,6 @@ EXPECTED_COMPILE_FAIL = {
 # an inconsistent naming convention worth flagging in the inventory).
 BENCHMARK_NO_VERDICT = {
     "graph_engine_bandwidth",
-    "layer_sequencer_bug005_zero_layers",  # confirmed-bug reproduction, prints a RESULT line, no PASS/FAIL by design
 }
 
 # Every module-defining file under rtl/ and the sim/ behavioral models used

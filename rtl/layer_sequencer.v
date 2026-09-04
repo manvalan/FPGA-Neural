@@ -187,14 +187,34 @@ module layer_sequencer #(
 
                     if (run_start) begin
 
-                        seq_busy        <= 1'b1;
-                        layer_idx       <= 8'd0;
-                        num_layers_reg  <= run_num_layers;
-                        desc_table_addr <= table_base;
-                        desc_byte_idx   <= 4'd0;
-                        write_sel       <= 1'b0;
+                        // BUG-005 fix (docs/validation/bugs.md): with
+                        // no guard, run_num_layers=0 made layer_idx
+                        // (a full 8-bit counter) wrap the termination
+                        // check to 255, reading and executing 256
+                        // fabricated "layers" from PSRAM bytes far
+                        // past the real descriptor table. There is
+                        // nothing to sequence for zero layers -- treat
+                        // it as an immediate, safe no-op completion
+                        // instead (same convention as spi_engine.v's
+                        // WRITE_RAM/READ_RAM len==0 guard: accept the
+                        // command, do nothing, report done/no error).
+                        if (run_num_layers == 8'd0) begin
 
-                        state <= ST_READ_DESC;
+                            seq_done <= 1'b1;
+                            state    <= ST_IDLE;
+
+                        end else begin
+
+                            seq_busy        <= 1'b1;
+                            layer_idx       <= 8'd0;
+                            num_layers_reg  <= run_num_layers;
+                            desc_table_addr <= table_base;
+                            desc_byte_idx   <= 4'd0;
+                            write_sel       <= 1'b0;
+
+                            state <= ST_READ_DESC;
+
+                        end
 
                     end
 

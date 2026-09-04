@@ -1,34 +1,24 @@
 `timescale 1ns/1ps
 
 // ================================================================
-// C.8 certification: does SET_NET_TYPE mid-run corrupt an in-flight
-// RUN_NETWORK?
+// C.8 / BUG-007 REGRESSION TEST: does SET_NET_TYPE mid-run corrupt an
+// in-flight RUN_NETWORK?
 //
-// Code-inspection finding: rtl/spi_engine.v's ST_SET_NET_TYPE state
-// (around line 961) accepts `net_type <= rx_byte` unconditionally on
-// any rx_valid -- no check against graph_busy or seq_busy anywhere.
-// rtl/spi_neuron_top.v's arbiter Port C mux (lines 394-397) selects
-// between graph_engine's and layer_sequencer's ram_req/rdata/ready
-// signals PURELY combinationally on the CURRENT value of `net_type`
-// -- not latched to "whichever engine started this run". The
-// header comment at line 390 calls the two engines "mutually
-// exclusive by construction", but that construction only prevents
-// both engines from being STARTED at once -- it says nothing about a
-// net_type write arriving mid-run.
+// BUG-007 (docs/validation/bugs.md), now FIXED: rtl/spi_engine.v's
+// ST_SET_NET_TYPE used to accept `net_type <= rx_byte`
+// unconditionally, with no check against graph_busy/seq_busy --
+// confirmed via this exact test before the fix to permanently hang
+// graph_engine (STATUS.busy stuck for 400+ consecutive polls) by
+// re-routing the arbiter Port C mux (spi_neuron_top.v) away from its
+// in-flight memory transaction mid-flight. RESET was shown to recover
+// the system, but plain STATUS polling alone never would have.
 //
-// Hypothesis: starting a graph RUN_NETWORK, then sending
-// SET_NET_TYPE(dense) before it completes, re-routes Port C away from
-// graph_engine's in-flight memory transaction mid-flight -- graph_engine
-// would be left waiting for a ram_ready that can never arrive via its
-// now-disconnected mux path (permanent hang, STATUS.busy stuck,
-// STATUS.done never sets), while the freshly-selected dense path sees
-// spurious traffic not meant for it.
-//
-// Full end-to-end setup identical to the proven, passing
-// sim/spi_neuron_top_graph_tb.v (same graph, same addresses, same SPI
-// BFM tasks) -- only the test sequence differs, so any failure here is
-// attributable to the net_type switch, not to a setup difference from
-// the already-certified happy path.
+// Fix (rtl/spi_engine.v, ST_SET_NET_TYPE): the net_type write is now
+// silently ignored while `graph_busy || seq_busy` -- same
+// "accept the command, safe no-op" convention as WRITE_RAM/READ_RAM's
+// len==0 guard. This test now ASSERTS the graph run completes
+// normally with the correct output (126) despite the adversarial
+// mid-run switch, instead of only observing whether it hung.
 // ================================================================
 
 module tb;
@@ -238,66 +228,70 @@ module tb;
         set_base(8'h0A, 24'h000001);
 
         $display("--- starting graph RUN_NETWORK, then immediately SET_NET_TYPE(dense) before it completes ---");
-        $display("t=%0t before run_network", $time);
         run_network(8'h00);
-        $display("t=%0t after run_network, before set_net_type", $time);
 
         // Do NOT wait for done/err -- immediately issue the adversarial
-        // net_type switch while graph_engine should still be busy.
-        set_net_type(8'h01); // NET_TYPE_DENSE, mid-flight
-        $display("t=%0t after mid-flight set_net_type, before short confirm-hang poll ---", $time);
+        // net_type switch while graph_engine should still be busy. The
+        // fix makes spi_engine.v silently ignore this write while
+        // graph_busy/seq_busy is set, so the in-flight run should be
+        // completely unaffected.
+        set_net_type(8'h01); // NET_TYPE_DENSE, mid-flight -- must be rejected
 
-        // 30 polls (~150 cycles' worth of clk_wait plus SPI overhead,
-        // roughly 20-30us of simulated time) is already several times
-        // longer than this exact graph normally takes to complete
-        // (~12-25us, per the certified sim/spi_neuron_top_graph_tb.v) --
-        // enough to confirm the hang without waiting for the full
-        // 2000-poll budget.
+        // 30 polls (~150 cycles' worth of clk_wait plus SPI overhead)
+        // is comfortably more than this exact graph normally takes to
+        // complete (~12-25us, per the certified
+        // sim/spi_neuron_top_graph_tb.v) -- enough margin to call a
+        // FAIL if done hasn't landed by then.
         poll_count = 0; last_status = 8'h00;
         while (!last_status[1] && !last_status[2] && poll_count < 30) begin
             clk_wait(20); read_status(last_status); poll_count = poll_count + 1;
         end
-        $display("after 30 polls: last_status=0x%02x (bit0=busy) -- expected 0x01 stuck if the hang reproduces", last_status);
 
         if (!last_status[1] && !last_status[2]) begin
-            $display("RESULT: HANG CONFIRMED -- STATUS.busy stuck, no done/err after 30 polls (vs. ~12-25us normal completion time for this graph)");
-
-            // --------------------------------------------------------
-            // Recovery check: does RESET bring the system back to a
-            // usable state, or is this a permanent lockup requiring a
-            // power cycle? Not assumed either way -- checked directly
-            // with a subsequent legitimate legacy dense operation.
-            // --------------------------------------------------------
-            $display("--- recovery check: RESET, then a legitimate legacy dense START ---");
-            do_reset;
-
-            payload[0]=8'sd1; payload[1]=8'sd2; payload[2]=8'sd3; payload[3]=8'sd4;
-            write_ram_bytes(X_BASE, 4);
-            payload[0]=8'sd1; payload[1]=8'sd1; payload[2]=8'sd1; payload[3]=8'sd1;
-            write_ram_bytes(22'h000400, 4); // W_BASE, single neuron n0=[1,1,1,1]
-            payload[0]=8'sd0;
-            write_ram_bytes(22'h000420, 1); // BIAS_ADDR
-
-            set_base(8'h00, X_BASE);
-            set_base(8'h01, 22'h000400);
-            set_base(8'h02, 22'h000420);
-
-            spi_begin(HB_REG); spi_xfer_byte(8'h20, HB_REG, rx_tmp); spi_end(HB_REG); // START
-
-            poll_count = 0; last_status = 8'h00;
-            while (!last_status[1] && poll_count < 200) begin
-                clk_wait(20); read_status(last_status); poll_count = poll_count + 1;
-            end
-
-            if (!last_status[1]) begin
-                $display("RECOVERY RESULT: FAILED -- legitimate dense START never completed after RESET (status=0x%02x, poll_count=%0d) -- the hang from BUG-007 is NOT cleanly recoverable via RESET alone", last_status, poll_count);
-            end else begin
-                read_ram_bytes(22'h000000, 1); // harmless if this doesn't match READ_OUTPUT semantics -- just probing responsiveness
-                $display("RECOVERY RESULT: RESET DOES recover the system -- a subsequent legitimate dense op completed normally (status=0x%02x after %0d polls)", last_status, poll_count);
-            end
+            $display("FAIL: STATUS.busy stuck, no done/err after 30 polls (status=0x%02x) -- BUG-007 fix regressed, the mid-run net_type switch hung the engine again", last_status);
+            errors = errors + 1;
+        end else if (last_status[2]) begin
+            $display("FAIL: STATUS.err latched (status=0x%02x) on a graph that is valid and was already certified to complete cleanly -- unexpected side effect of the fix", last_status);
+            errors = errors + 1;
         end else begin
-            $display("RESULT: UNEXPECTED -- done or err latched within 30 polls (status=0x%02x) -- the hang did NOT reproduce this run. Re-examine before assuming BUG-007 is fixed or was a fluke.", last_status);
+            read_ram_bytes(OUT_BASE, 1);
+            if (readback[0] !== 8'sd126) begin
+                $display("FAIL: done latched but out_base[0]=%0d, expected 126 -- the mid-run switch still corrupted the result even though it didn't hang", readback[0]);
+                errors = errors + 1;
+            end else begin
+                $display("PASS: graph run completed normally (out_base[0]=126) after %0d polls despite the adversarial mid-run SET_NET_TYPE -- BUG-007 fix confirmed, the switch was correctly rejected while graph_busy", poll_count);
+            end
         end
+
+        // --------------------------------------------------------
+        // Confirm the rejected write really left net_type alone: a
+        // second graph RUN_NETWORK (net_type must still read as
+        // GRAPH internally) should work exactly like the first, not
+        // require SET_NET_TYPE(graph) to be re-sent.
+        // --------------------------------------------------------
+        errors_before = errors;
+        run_network(8'h00);
+        poll_count = 0; last_status = 8'h00;
+        while (!last_status[1] && !last_status[2] && poll_count < 30) begin
+            clk_wait(20); read_status(last_status); poll_count = poll_count + 1;
+        end
+        if (!last_status[1]) begin
+            $display("FAIL: second graph RUN_NETWORK (net_type never re-set) did not complete (status=0x%02x) -- the rejected SET_NET_TYPE may have partially applied", last_status);
+            errors = errors + 1;
+        end else begin
+            read_ram_bytes(OUT_BASE, 1);
+            if (readback[0] !== 8'sd126) begin
+                $display("FAIL: second graph run out_base[0]=%0d, expected 126", readback[0]);
+                errors = errors + 1;
+            end else begin
+                $display("PASS: net_type correctly still reads as GRAPH internally -- the rejected mid-run write left it untouched, not partially applied");
+            end
+        end
+
+        if (errors == 0)
+            $display("ALL TESTS PASSED -- BUG-007 fix confirmed end-to-end over real SPI");
+        else
+            $display("FAILED: %0d error(s) -- see messages above", errors);
 
         $finish;
     end

@@ -68,7 +68,18 @@ module neuron_parallel #(
     // ============================================================
 
     generate
-        if (N_INPUTS % PARALLEL != 0) begin : PARAMETER_ERROR_N_INPUTS_NOT_MULTIPLE_OF_PARALLEL
+        // BUG-002 fix (docs/validation/bugs.md): N_INPUTS=0 satisfies
+        // `0 % PARALLEL == 0` for any PARALLEL, so the original
+        // modulo-only check never fired for this case -- yet GROUPS
+        // = 0/PARALLEL = 0 is exactly the degenerate condition this
+        // guard exists to prevent. x_bus/w_bus (declared
+        // [DATA_WIDTH*N_INPUTS-1:0]) also do not collapse to a true
+        // zero-width vector for N_INPUTS=0 ([-1:0] is treated as a
+        // real 2-bit vector by both Icarus and Yosys), confirmed to
+        // leave `start` silently ineffective on both simulation and
+        // real synthesis. Explicit `N_INPUTS == 0` check closes the
+        // gap without changing behavior for any N_INPUTS >= 1.
+        if (N_INPUTS == 0 || N_INPUTS % PARALLEL != 0) begin : PARAMETER_ERROR_N_INPUTS_NOT_MULTIPLE_OF_PARALLEL
             neuron_parallel_requires_N_INPUTS_multiple_of_PARALLEL invalid_parameter_combination();
         end
     endgenerate
@@ -211,7 +222,21 @@ module neuron_parallel #(
                 group_index <= 0;
                 acc         <= 0;
                 busy        <= 1;
-                finishing   <= 0;
+
+                // BUG-003 fix (docs/validation/bugs.md): with no
+                // guard, n_inputs_real=0 made groups_real=0 wrap the
+                // group-loop termination check to an unreachable (or,
+                // depending on GROUP_INDEX_WIDTH, silently
+                // full-width-processing) value -- confirmed
+                // inconsistent behavior across repeated runs, never a
+                // correct one. Zero real inputs has a well-defined
+                // correct answer (the empty sum is 0, so
+                // final_acc=bias_ext alone) -- go straight to
+                // `finishing` next cycle with acc still at its
+                // just-cleared 0, reusing the existing
+                // activation/saturation logic unchanged instead of
+                // entering the group-processing loop at all.
+                finishing <= (n_inputs_real == 16'h0);
 
             end else if (finishing) begin
 

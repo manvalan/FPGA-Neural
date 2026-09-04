@@ -1461,3 +1461,82 @@ integrazione nel top level (F5), verifica consolidata e misure reali (F6).
 - **Campagna completa**: Fase 0 + C.1-C.14 + D, tutti i capitoli in `docs/validation/`,
   registro bug in `bugs.md`, harness di regressione riutilizzabile in
   `tools/run_regression.py` (40 test reali, rieseguibile da chiunque con un comando).
+
+## Campagna di correzione bug post-certificazione (2026-09-04)
+
+Richiesta esplicita dell'utente dopo il certificato finale: "esegui le correzioni dei bug e
+certifica quello che hai corretto. aggiorna il datasheet e ci siamo". Per policy §E del
+prompt di certificazione originale, questa è un commit separato dal lavoro di analisi
+(`77e74db` e precedenti).
+
+- 2026-09-04T — **BUG-005 (CRITICA)**: `rtl/layer_sequencer.v`, `ST_IDLE` — aggiunto un
+  ramo esplicito `run_num_layers==8'd0` che pulsa `seq_done` immediatamente senza mai
+  entrare in `ST_READ_DESC`, stessa convenzione di `WRITE_RAM`/`READ_RAM` `len==0`.
+  Verificato con `sim/layer_sequencer_bug005_zero_layers_tb.v` riscritto per asserire
+  (non solo osservare): `run_num_layers=0` completa ora in **1 ciclo**, `layer_idx` resta a
+  0 (era 21761 cicli, `layer_idx` terminato a 255, pre-fix).
+- 2026-09-04T — **BUG-007 (CRITICA)**: `rtl/spi_engine.v`, `ST_SET_NET_TYPE` — la scrittura
+  `net_type <= rx_byte` ora condizionata a `if (!graph_busy && !seq_busy)`, rifiutata
+  silenziosamente (comando accettato via SPI, nessun effetto) mentre un run è in corso.
+  Verificato end-to-end su SPI reale con `sim/spi_neuron_top_bug007_mid_run_net_type_tb.v`
+  riscritto: (a) il run grafo in corso completa normalmente (`out_base[0]=126`) nonostante
+  uno `SET_NET_TYPE(dense)` avversariale a metà esecuzione, (b) un successivo
+  `RUN_NETWORK` senza re-inviare `SET_NET_TYPE(graph)` completa comunque correttamente,
+  confermando che la scrittura rifiutata non è stata applicata parzialmente.
+- 2026-09-04T — **BUG-002 (MEDIA)**: `rtl/neuron_parallel.v` — guard di elaborazione esteso
+  da `if (N_INPUTS % PARALLEL != 0)` a `if (N_INPUTS == 0 || N_INPUTS % PARALLEL != 0)`.
+  `sim/neuron_parallel_bug002_n_inputs_zero_tb.v` riscritto come terzo test negativo (stesso
+  pattern di `neuron_parallel_guard_negative_*_tb.v`), aggiunto a `EXPECTED_COMPILE_FAIL`
+  in `tools/run_regression.py`. Verificato: `N_INPUTS=0` ora fallisce l'elaborazione con
+  l'errore atteso (`Unknown module type: neuron_parallel_requires_N_INPUTS_multiple_of_PARALLEL`).
+- 2026-09-04T — **BUG-003 (MEDIA)**: `rtl/neuron_parallel.v`, dentro
+  `if (start && !busy)` — `finishing <= (n_inputs_real == 16'h0);` (era `finishing <= 0;`),
+  riusa il percorso "finishing" già corretto invece di nuova logica per il caso degenere.
+  `sim/neuron_parallel_bug003_n_inputs_real_zero_tb.v` TEST 4 riscritto da osservazione ad
+  asserzione hard. Verificato: `n_inputs_real=0` completa in **1 ciclo**, `y=0` (=
+  `activation(bias)` con bias=0, ACT_RELU) — coerente con TEST 1-3 di non-regressione sulla
+  regione "poison".
+- 2026-09-04T — **BUG-004 (BASSA)**: `rtl/neuron_memory.v` — pattern vulnerabile trovato in
+  TRE punti coordinati (non uno solo, scoperto durante la correzione stessa: un primo
+  tentativo di guard solo al dispatch `STATE_IDLE`→`STATE_READ_X` copriva un solo dei tre
+  punti d'ingresso in `STATE_READ_W`, rientrato indipendentemente una volta per neurone nel
+  loop — corretto prima di eseguire alcun test). Fix: `STATE_READ_X`/`STATE_READ_W`
+  guadagnano un prefisso `n_inputs_real==0`/`n_neurons_real==0` sulla propria condizione di
+  terminazione; il punto di transizione X→W guadagna un ramo esplicito per
+  `n_neurons_real==0`. `sim/neuron_memory_bug004_n_neurons_real_zero_tb.v` TEST 4 riscritto
+  per asserire `done` entro il baseline a piena larghezza. Verificato: `n_neurons_real=0`
+  completa in **32 cicli** contro **155** per il build completo a 3 neuroni.
+- 2026-09-04T — **BUG-006 (BASSA)**: `rtl/graph_engine.v`, `ST_COPY_IN_WAIT`, alla
+  transizione di fine copia input — aggiunto un ramo esplicito `num_neurons_graph==0` che
+  pulsa `done` immediatamente senza mai entrare in `ST_DESC_RD`, stessa convenzione del fix
+  BUG-005. `sim/graph_engine_bug006_zero_neurons_probe_tb.v` riscritto per asserire (non
+  solo osservare): `num_neurons_graph=0` completa ora in **13 cicli** senza `err`,
+  `neuron_idx` resta a 0 (era 58 cicli tramite l'intercettazione incidentale del guard
+  src_id/out_id, pre-fix).
+- 2026-09-04T — **BUG-001 (INFO)**: `sim/top.v` rimosso (`git rm`) — confermato dead code,
+  non referenziato da alcun testbench o tool, residuo pre-conversione INT8.
+- 2026-09-04T — **Regressione completa post-fix**: `python3 tools/run_regression.py` — 44
+  testbench, **43 PASS**, 0 FAIL/ERROR, 1 BENCHMARK (nessun verdetto per progetto,
+  invariato). Nessuna regressione sui 37 test già certificati pre-fix.
+- 2026-09-04T — **Sintesi reale post-fix** (piano di verifica duale, §A.4): `yosys
+  synth_ecp5` su `spi_neuron_top` completo (sottosistema flash incl., PARALLEL=8, stessi
+  file/comando di Fase 15/F7) → **0 problemi CHECK**, 1 warning atteso/preesistente
+  (tri-state `psram_controller.v`, invariato), TRELLIS_FF 4900 (era 4855, +45 coerente con
+  la nuova logica di guard). `nextpnr-ecp5 --45k --package CABGA381 --speed 8 --freq 80
+  --lpf synth/ecp5/spi_neuron_top.lpf` → **0 errori di vincolo, 0 pin non vincolati,
+  "Program finished normally"**. Fmax: **68.65 MHz** (era 67.91 MHz — leggermente meglio,
+  entro il rumore di piazzamento già documentato in Fase 7, non una regressione). Percorso
+  critico verificato esplicitamente **strutturalmente identico** a prima del fix
+  (`u_neuron_memory.u_neuron.group_index` → `u_mac8` → catena di riporto CCU2C
+  dell'accumulatore) — nessun modulo toccato dai fix compare nel percorso critico. Log:
+  `synth/ecp5/post_fix_verify/`.
+- 2026-09-04T — **Documentazione aggiornata**: `docs/validation/bugs.md` (tutti e 7 i bug
+  spostati da "Aperti" a "Risolti" con evidenza del fix), `docs/validation/CERTIFICATION.md`
+  (verdetto rivisto: nessuna riserva CRITICA/MEDIA residua, progetto certificabile con
+  riserve minori), `docs/FPGA-NeuralNetwork-Engine.md` (note "FIXED (2026-09-04)" inline
+  nelle sezioni pertinenti — guard `N_INPUTS=0`, larghezza runtime zero, `RUN_NETWORK(0)`,
+  `num_neurons_graph=0`, `SET_NET_TYPE` mid-run — colmando lo scostamento C.13 segnalato
+  nel certificato iniziale), datasheet LaTeX IT/EN.
+- **Conclusione**: tutti e 7 i bug della campagna di ri-certificazione sono corretti,
+  verificati indipendentemente (regressione + sintesi reale), e documentati. Nessuna
+  regressione funzionale o di timing introdotta dai fix.

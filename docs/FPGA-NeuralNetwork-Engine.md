@@ -464,6 +464,42 @@ when the host issues `STATUS` (or `RESET`), not sample the raw
 `neuron_memory.done` signal directly. `busy` has no such problem
 (it is level-held for the whole computation) and can be read live.
 
+**`SET_BASE` sel=9 (`num_neurons_graph`)=0 — FIXED (2026-09-04,
+re-certification campaign, BUG-006):** same structural issue as
+BUG-005 above, in `graph_engine.v` — `neuron_idx` is a full 16-bit
+register whose termination check wraps to 65535 for
+`num_neurons_graph=0`, a value the counter can naturally reach.
+Before the fix, `graph_engine` happened to be protected *incidentally*
+(not by design) by its own per-edge `src_id`/`out_id` guard tripping
+on non-trivial garbage descriptor data (`err` at cycle 58 in the
+regression test) — a real but data-dependent mitigation, not a
+guarantee for every possible PSRAM content. Fixed the same way as
+BUG-005: an explicit `num_neurons_graph==0` early-out right after the
+input copy completes, `done` pulses immediately without entering the
+descriptor loop. See `docs/validation/bugs.md` BUG-006 and
+`sim/graph_engine_bug006_zero_neurons_probe_tb.v`.
+
+**`SET_NET_TYPE` mid-run — FIXED (2026-09-04, re-certification
+campaign, BUG-007, CRITICAL):** `spi_engine.v`'s `ST_SET_NET_TYPE`
+used to accept `net_type <= rx_byte` unconditionally on any
+`rx_valid`, with no check on `graph_busy`/`seq_busy`. `net_type`
+purely-combinationally drives `spi_neuron_top.v`'s arbiter Port C mux
+between `graph_engine` and `layer_sequencer` — so a `SET_NET_TYPE`
+that landed mid-`RUN_NETWORK` retargeted the mux to the *other*
+engine while the original one was still mid-computation, permanently
+disconnecting it from its own RAM master port. Confirmed end-to-end
+over real simulated SPI before the fix: `STATUS.busy` stuck at 1 for
+400+ consecutive reads (a real hang, not a slowdown) — recoverable
+only via `RESET`. Reachable with two documented opcodes in a plausible
+host sequence (`RUN_NETWORK` immediately followed by `SET_NET_TYPE`
+before completion), no malformed input required. Fixed by gating the
+write: `net_type` is now only updated `if (!graph_busy && !seq_busy)`
+— a `SET_NET_TYPE` received mid-run is accepted at the SPI level (no
+protocol error) but silently has no effect, verified to leave
+`net_type` genuinely untouched (not partially applied) rather than
+just rejecting the read-back. See `docs/validation/bugs.md` BUG-007
+and `sim/spi_neuron_top_bug007_mid_run_net_type_tb.v`.
+
 **READ_CONFIG payload** (fixed 11 bytes — widened from the original 8-byte
 draft in Phase G5 to add graph-engine capability info, §16 below —
 lets one host firmware build work across different bitstreams
@@ -508,6 +544,19 @@ just "as if" narrower. No zero-padding of RAM is needed for the
 unused tail (contrast with the old padding-only convention this
 replaced) — data beyond `n_inputs_real`/`n_neurons_real` is simply
 never read.
+
+**Zero is a safe no-op — FIXED (2026-09-04, re-certification campaign,
+BUG-003/BUG-004):** `n_inputs_real=0` and `n_neurons_real=0` are now
+explicit, safe early-outs, not just small values. `n_inputs_real=0`
+completes in 1 cycle with `y = activation(bias)` (the mathematically
+correct result for zero real inputs). `n_neurons_real=0` completes
+after the (shared) X read with no per-neuron computation performed,
+far faster than a full-width run. Before this fix, both values reached
+undocumented, inconsistent behavior (sometimes a hang, sometimes the
+limit silently ignored and the full build width processed instead) —
+see `docs/validation/bugs.md` BUG-003/BUG-004 for the full history.
+`N_INPUTS=0` itself (the build-time parameter, not this runtime field)
+is a separate, elaboration-time-rejected case — see BUG-002 above.
 
 **Example session** (fills in the conceptual sequence above with
 concrete opcodes):
@@ -849,6 +898,19 @@ including configurations where the number of inputs is not an exact multiple of 
   `PARALLEL=2` and `PARALLEL=4`, the two best-performing values from
   `docs/FPGA-Neural-Datapatch-Benchmark.md`).
 
+**Follow-up finding — FIXED (2026-09-04, re-certification campaign,
+BUG-002):** the guard above checked only `N_INPUTS % PARALLEL != 0`,
+which is `true`-when-invalid for every non-degenerate case but happens
+to read as **valid** for `N_INPUTS=0` (`0 % PARALLEL == 0` for any
+`PARALLEL`). `N_INPUTS=0` therefore elaborated cleanly (in both Icarus
+and real `yosys synth_ecp5`) while leaving `x_bus`/`w_bus` completely
+undriven and `start` silently ineffective (`busy`/`done` never move).
+The guard is now `if (N_INPUTS == 0 || N_INPUTS % PARALLEL != 0)` —
+`N_INPUTS=0` is rejected at elaboration time exactly like the other
+degenerate cases above. See `docs/validation/bugs.md` BUG-002 and
+`sim/neuron_parallel_bug002_n_inputs_zero_tb.v` for the regression
+test (a third negative-compile test, same pattern as the two above).
+
 ## Phase 3 — Memory Architecture
 
 Define:
@@ -961,6 +1023,27 @@ transition forever, hanging any host polling STATUS in a tight loop. Fixed in
 next poll instead of being lost. All existing testbenches (`spi_slave_tb.v`,
 `spi_engine_tb.v`, `spi_neuron_top_tb.v`, `layer_sequencer_tb.v`) still pass
 unchanged.
+
+**`RUN_NETWORK(num_layers=0)` — FIXED (2026-09-04, re-certification
+campaign, BUG-005, CRITICAL):** `layer_idx` (`layer_sequencer.v`) is a
+full 8-bit register, and its termination check
+(`layer_idx == num_layers_reg-1`) wraps to 255 for
+`num_layers_reg=0` — a value the counter can naturally reach.
+Confirmed before the fix: `RUN_NETWORK(0)` did **not** stop — it ran
+through all 256 possible layer indices (21761 simulated cycles),
+reading 11 "descriptor" bytes per index far past the real,
+build-sized table, and interpreting arbitrary PSRAM content (weights,
+other network data, or uninitialized memory) as layer
+addresses/parameters — including real writes to the ping-pong output
+buffers at addresses derived from that arbitrary data. This was
+reachable with a single documented opcode (`RUN_NETWORK`,
+`num_layers=0`), no non-default build or manual register poke needed.
+Fixed with an explicit `run_num_layers==0` early-out in `ST_IDLE`:
+`seq_done` pulses immediately, without ever entering the
+descriptor-read loop — same convention as `WRITE_RAM`/`READ_RAM`'s
+`len==0` no-op (§8, `len==0` warning above). See
+`docs/validation/bugs.md` BUG-005 and
+`sim/layer_sequencer_bug005_zero_layers_tb.v`.
 
 ## Phase 6 — Host Software
 

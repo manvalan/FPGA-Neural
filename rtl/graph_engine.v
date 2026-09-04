@@ -344,8 +344,33 @@ module graph_engine #(
                         act_wr_data <= ram_rdata;
 
                         if (in_idx == n_inputs_graph - 16'd1) begin
-                            desc_byte_idx <= 4'h0;
-                            state         <= ST_DESC_RD;
+
+                            // BUG-006 fix (docs/validation/bugs.md):
+                            // num_neurons_graph==0 has no neuron to
+                            // process at all -- the original code
+                            // always computed at least "neuron 0"
+                            // before its own termination check
+                            // (`neuron_idx == num_neurons_graph-1`,
+                            // further down) could even run, and that
+                            // check had the same unguarded-wraparound
+                            // structure as BUG-002/003/004/005. Report
+                            // done immediately instead of entering the
+                            // descriptor-read loop (real-edge-guard
+                            // protection incidentally limited the
+                            // practical damage here, per
+                            // docs/validation/06-graph-engine.md, but
+                            // the structural gap is closed properly
+                            // now rather than left to that
+                            // side-effect).
+                            if (num_neurons_graph == 16'h0) begin
+                                busy  <= 1'b0;
+                                done  <= 1'b1;
+                                state <= ST_IDLE;
+                            end else begin
+                                desc_byte_idx <= 4'h0;
+                                state         <= ST_DESC_RD;
+                            end
+
                         end else begin
                             in_idx <= in_idx + 16'd1;
                             state  <= ST_COPY_IN_RD;

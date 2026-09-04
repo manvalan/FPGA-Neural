@@ -962,8 +962,26 @@ module spi_engine #(
                     ST_SET_NET_TYPE: begin
 
                         if (rx_valid) begin
-                            net_type <= rx_byte;
-                            state    <= ST_IGNORE;
+                            // BUG-007 fix (docs/validation/bugs.md):
+                            // net_type combinationally drives the
+                            // arbiter Port C mux in spi_neuron_top.v
+                            // (graph_engine vs. layer_sequencer) with
+                            // no latch to "whichever engine started
+                            // the in-flight run" -- accepting a new
+                            // net_type while one of them is busy
+                            // re-routes Port C out from under it
+                            // mid-transaction, permanently hanging it
+                            // (STATUS.busy stuck, confirmed
+                            // end-to-end). Silently ignore the write
+                            // while either engine is busy, same
+                            // "accept the command, safe no-op"
+                            // convention as WRITE_RAM/READ_RAM's
+                            // len==0 guard -- the transaction still
+                            // completes normally over SPI, net_type
+                            // simply keeps its current value.
+                            if (!graph_busy && !seq_busy)
+                                net_type <= rx_byte;
+                            state <= ST_IGNORE;
                         end
 
                     end

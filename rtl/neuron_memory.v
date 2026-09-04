@@ -335,7 +335,17 @@ module neuron_memory #(
                         w_group_base    <= w_base;
                         bias_group_addr <= bias_addr;
 
-                        // First X byte
+                        // First X byte. (BUG-004 fix, docs/validation/
+                        // bugs.md: STATE_READ_X/STATE_READ_W's own
+                        // termination checks are patched below to
+                        // treat n_inputs_real==0 as "done after this
+                        // one byte" instead of wrapping -- see those
+                        // states for the full rationale. One harmless
+                        // extra byte is still read here for n_inputs_
+                        // real==0 before the fixed check short-
+                        // circuits; x_base/w_group_base are always
+                        // valid addresses, so this costs one cycle,
+                        // not correctness.)
                         access_addr <= x_base;
                         access_wr   <= 1'b0;
                         access_req  <= 1'b1;
@@ -356,15 +366,49 @@ module neuron_memory #(
 
                         x_mem[index] <= access_rdata;
 
-                        if (index == n_inputs_real[$clog2(N_INPUTS+1)-1:0]-1'b1) begin
+                        // BUG-004 fix (docs/validation/bugs.md):
+                        // `n_inputs_real[...]-1'b1` wraps for
+                        // n_inputs_real==0 to a value `index` (sized
+                        // to the SAME width) could reach by counting
+                        // up from 0, reading well past the intended
+                        // (empty) real region. Explicit `==0` check
+                        // terminates after this one already-issued
+                        // byte instead.
+                        if (n_inputs_real == 16'h0 ||
+                            index == n_inputs_real[$clog2(N_INPUTS+1)-1:0]-1'b1) begin
 
                             index <= 0;
 
-                            access_addr <= w_group_base;
-                            access_wr   <= 1'b0;
-                            access_req  <= 1'b1;
+                            // BUG-004 fix (docs/validation/bugs.md):
+                            // n_neurons_real==0 means there is no
+                            // neuron 0 to compute at all -- the
+                            // original code always ran at least one
+                            // full neuron (W/bias read + a real
+                            // neuron_parallel invocation) before its
+                            // own termination check could even be
+                            // reached, and that check
+                            // (`neuron_index == n_neurons_real-1`)
+                            // had the same unguarded-wraparound issue
+                            // as the other BUG-00x cases besides.
+                            // Report done immediately, y_reg/y_bus
+                            // left untouched (nothing was asked to be
+                            // computed), instead of entering the
+                            // neuron loop at all.
+                            if (n_neurons_real == 16'h0) begin
 
-                            state <= STATE_READ_W;
+                                busy <= 1'b0;
+                                done <= 1'b1;
+                                state <= STATE_IDLE;
+
+                            end else begin
+
+                                access_addr <= w_group_base;
+                                access_wr   <= 1'b0;
+                                access_req  <= 1'b1;
+
+                                state <= STATE_READ_W;
+
+                            end
 
                         end else begin
 
@@ -389,7 +433,14 @@ module neuron_memory #(
 
                         w_mem[index] <= access_rdata;
 
-                        if (index == n_inputs_real[$clog2(N_INPUTS+1)-1:0]-1'b1) begin
+                        // BUG-004 fix (docs/validation/bugs.md): same
+                        // wraparound issue and same fix as
+                        // STATE_READ_X above -- this state is
+                        // re-entered once per neuron (the per-neuron
+                        // loop-back), so the guard matters on every
+                        // iteration, not just the first.
+                        if (n_inputs_real == 16'h0 ||
+                            index == n_inputs_real[$clog2(N_INPUTS+1)-1:0]-1'b1) begin
 
                             access_addr <= bias_group_addr;
                             access_wr   <= 1'b0;
