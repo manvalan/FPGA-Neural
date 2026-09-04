@@ -77,19 +77,23 @@ def assign(rows):
     # Application SPI + reset + host attention pins (irq_n/data_ready_n,
     # added 2026-09-03), all in bank 7 alongside clk -- kept away from
     # the PSRAM bus (banks 2+3) per the same "opposite edges" rationale
-    # as the SPI signals. flash_mosi/flash_miso/flash_cs_n (added
-    # 2026-09-04, flash-subsystem F5) join the same pool for the same
-    # reason -- this is the APPLICATION-side master toward the
-    # boot/persistence flash (rtl/spi_flash_master.v), physically
-    # distinct pins from both the host SPI above and the dedicated
-    # config-SPI pins (never touched by user logic, see
-    # docs/FPGA-Neural-Hardware-Design.md §6). No flash_sclk pin here:
-    # that clock is generated internally via the USRMCLK primitive
-    # (see rtl/spi_flash_master.v's header for the full ECP5
-    # rationale), not a normal constrainable I/O.
+    # as the SPI signals. flash_sclk/flash_mosi/flash_miso/flash_cs_n
+    # (added 2026-09-04, revised same day to drop the USRMCLK/CCLK
+    # coupling -- see rtl/spi_flash_master.v's header) join the same
+    # pool for the same reason -- this is a fully independent,
+    # ordinary-GPIO SPI bus toward the boot/persistence flash
+    # (rtl/spi_flash_master.v), physically distinct from both the host
+    # SPI above and the dedicated config-SPI pins (never touched by
+    # user logic, see docs/FPGA-Neural-Hardware-Design.md §6). No pin
+    # is shared with any ECP5 config primitive.
+    # flash_sclk appended LAST (not inserted among the other flash
+    # signals) so this regeneration stays additive: flash_mosi/
+    # flash_miso/flash_cs_n keep the exact balls already committed to
+    # the datasheet/schematic notes, only one genuinely new ball is
+    # allocated for flash_sclk.
     spi_names = ["sclk", "mosi", "miso", "cs_n", "rst", "irq_n", "data_ready_n",
-                 "flash_mosi", "flash_miso", "flash_cs_n"]
-    for name, (ball, _) in zip(spi_names, ctrl_pool[0:10]):
+                 "flash_mosi", "flash_miso", "flash_cs_n", "flash_sclk"]
+    for name, (ball, _) in zip(spi_names, ctrl_pool[0:11]):
         a[name] = ball
     a["clk"] = CLK_BALL
     return a

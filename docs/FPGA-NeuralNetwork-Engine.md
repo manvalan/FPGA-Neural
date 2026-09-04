@@ -556,9 +556,18 @@ flash sector (sector 0) — no dynamic allocation, no garbage collection.
 
 **Layering** (each level reusable/testable on its own):
 - `rtl/spi_flash_master.v` — raw SPI master toward the flash chip
-  (RDID/READ/WREN/PP/SE/RDSR-1), owns the ECP5 `USRMCLK` primitive
-  internally (the flash's SCLK is not a normal I/O pin post-configuration
-  — see that file's own header for the full citation trail).
+  (RDID/READ/WREN/PP/SE/RDSR-1). All 4 pins (`sclk`/`mosi`/`miso`/`cs_n`)
+  are ordinary GPIO (`flash_sclk`/`flash_mosi`/`flash_miso`/`flash_cs_n`
+  at the top level) — a **fully independent** SPI bus, no pin shared
+  with the dedicated boot config-SPI path, no ECP5 config-primitive
+  involved. **Revised 2026-09-04**: an earlier version reused the
+  boot `CCLK` pad via the `USRMCLK` primitive to save one pin — dropped
+  because it made the "exclusive flash bus" claim electrically
+  misleading (SCLK depended on the same pad as the config engine) and
+  carried an unresolved verification gap (`USRMCLKTS` pad-enable timing
+  was never checked against the primary Lattice sysCONFIG Usage Guide,
+  FPGA-TN-02039, not present in this project's local document set).
+  See `WORKLOG.md`'s Phase F7 entry.
 - `rtl/flash_copy_engine.v` — block-streaming engine on top: flash→PSRAM
   (`DIR_LOAD`), PSRAM→flash with internal erase-before-write + ≤256B
   Page Program loop + WIP polling (`DIR_SAVE`), standalone sector erase

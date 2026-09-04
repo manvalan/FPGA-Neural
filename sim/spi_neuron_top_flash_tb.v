@@ -66,7 +66,7 @@ module tb;
     wire miso;
     reg  cs_n;
 
-    wire flash_mosi, flash_miso, flash_cs_n, flash_sclk_sim;
+    wire flash_mosi, flash_miso, flash_cs_n, flash_sclk;
 
     wire [ADDR_WIDTH-1:0]     psram_a;
     wire [MEM_DATA_WIDTH-1:0] psram_dq;
@@ -90,7 +90,7 @@ module tb;
         .sclk(sclk), .mosi(mosi), .miso(miso), .cs_n(cs_n),
 
         .flash_mosi(flash_mosi), .flash_miso(flash_miso), .flash_cs_n(flash_cs_n),
-        .flash_sclk_sim(flash_sclk_sim),
+        .flash_sclk(flash_sclk),
 
         .psram_a(psram_a), .psram_dq(psram_dq),
         .psram_ce_n(psram_ce_n), .psram_oe_n(psram_oe_n), .psram_we_n(psram_we_n),
@@ -108,7 +108,7 @@ module tb;
     flash_model #(
         .DEPTH(32'h0002_0000), .TIME_SCALE(100000)
     ) u_flash (
-        .sclk(flash_sclk_sim), .mosi(flash_mosi), .miso(flash_miso), .cs_n(flash_cs_n)
+        .sclk(flash_sclk), .mosi(flash_mosi), .miso(flash_miso), .cs_n(flash_cs_n)
     );
 
     // ============================================================

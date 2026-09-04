@@ -1,5 +1,5 @@
 $date
-	Fri Sep  4 07:39:02 2026
+	Fri Sep  4 10:02:04 2026
 $end
 $version
 	Icarus Verilog
@@ -145,7 +145,7 @@ $var wire 1 ;" graph_err $end
 $var wire 1 <" graph_done $end
 $var wire 1 =" graph_busy $end
 $var wire 4 >" flash_slot_id [3:0] $end
-$var wire 1 ?" flash_sclk_sim $end
+$var wire 1 ?" flash_sclk $end
 $var wire 24 @" flash_raw_flash_addr [23:0] $end
 $var wire 1 A" flash_op_start $end
 $var wire 3 B" flash_op_code [2:0] $end
@@ -249,7 +249,7 @@ $var wire 1 N" d_ready $end
 $var wire 1 @ miso $end
 $var wire 1 8 rst $end
 $var wire 4 /# slot_id [3:0] $end
-$var wire 1 ?" sclk_sim $end
+$var wire 1 ?" sclk $end
 $var wire 24 0# raw_flash_addr [23:0] $end
 $var wire 1 A" op_start $end
 $var wire 3 1# op_code [2:0] $end
@@ -350,7 +350,7 @@ $var wire 2 !$ op_dir [1:0] $end
 $var wire 1 n# op_start $end
 $var wire 23 "$ psram_addr [22:0] $end
 $var wire 1 8 rst $end
-$var wire 1 ?" sclk_sim $end
+$var wire 1 ?" sclk $end
 $var wire 1 F" mosi $end
 $var wire 1 #$ fm_wdata_req $end
 $var wire 1 $$ fm_rdata_valid $end
@@ -432,7 +432,7 @@ $var wire 16 f$ n_data [15:0] $end
 $var wire 8 g$ opcode [7:0] $end
 $var wire 1 X$ rdata_ack $end
 $var wire 1 8 rst $end
-$var wire 1 ?" sclk_sim $end
+$var wire 1 ?" sclk $end
 $var wire 1 h$ sclk_will_fall $end
 $var wire 1 i$ sclk_will_rise $end
 $var wire 1 Y$ start $end
@@ -1644,14 +1644,14 @@ $var real 1 |, pending_min_t $end
 $var real 1 }, powerup_time $end
 $var real 1 ~, we_high_time $end
 $var real 1 !- we_low_time $end
-$scope begin $unm_blk_423 $end
+$scope begin $unm_blk_413 $end
 $var real 1 "- access_time $end
 $upscope $end
-$scope begin $unm_blk_437 $end
+$scope begin $unm_blk_427 $end
 $var real 1 #- data_setup $end
 $var real 1 $- write_width $end
 $upscope $end
-$scope begin $unm_blk_445 $end
+$scope begin $unm_blk_435 $end
 $var real 1 %- delta $end
 $upscope $end
 $upscope $end

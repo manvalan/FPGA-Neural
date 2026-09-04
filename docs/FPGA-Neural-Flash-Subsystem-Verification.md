@@ -15,8 +15,9 @@ Yosys+nextpnr-ecp5), test avversari oltre al caso positivo, tracciabilità delle
 ## `rtl/spi_flash_master.v` — master SPI verso la flash (F1)
 
 **Cosa è coperto**: RDID, READ, WREN, PP (incl. la regola "solo AND, mai OR" del datasheet),
-SE, RDSR-1; gestione USRMCLK per CCLK post-configurazione; opcode non implementato non causa
-hang.
+SE, RDSR-1; opcode non implementato non causa hang. **Revisionato in Fase F7 (2026-09-04)**:
+`sclk` è ora GPIO ordinaria sempre presente (non più dietro `USRMCLK`/CCLK-reuse — vedi
+`WORKLOG.md` Fase F7 per il perché), bus a 4 fili genuinamente indipendente.
 
 **Come**: `sim/spi_flash_master_tb.v`, 5 test contro `sim/flash_model.v`.
 
@@ -31,13 +32,15 @@ ingenuo che passerebbe un test più debole.
 nessun hang, il master shifta un numero fisso di bit indipendentemente dalla semantica.
 
 **Sintesi reale**: `yosys synth_ecp5` (0 problemi) + `nextpnr-ecp5` reale, modulo isolato:
-Fmax 181.72 MHz (PASS a 80MHz), `USRMCLK` 1/1 piazzata.
+Fmax 181.36 MHz (PASS a 80MHz, ri-misurato in Fase F7 dopo la rimozione di `USRMCLK` —
+181.72 MHz il numero precedente, differenza nel rumore di piazzamento), `USRMCLK` **0/1
+(0%)** — conferma diretta che la primitiva non è più usata.
 
 **NON coperto (§A.6)**: nessun test di power-loss (arriva a livello catalogo, F4); nessun
 timeout RDSR a questo livello (responsabilità del chiamante, F3); nessuna verifica
-elettrica/analogica reale (setup/hold, rise/fall) — solo comportamentale; polarità di
-`USRMCLKTS` basata sulla convenzione open-source comune, non verificata contro la Technical
-Note Lattice primaria (non presente nel set documentale locale).
+elettrica/analogica reale (setup/hold, rise/fall) — solo comportamentale. Il gap di
+verifica su `USRMCLKTS` (mai verificato contro la Technical Note Lattice primaria) è stato
+**chiuso rimuovendo la dipendenza stessa** in Fase F7, non colmando la verifica mancante.
 
 ---
 
@@ -225,6 +228,20 @@ regressione — confermato dal percorso critico invariato.
 Occupazione (sistema completo): `TRELLIS_IO` 56/245 (22%), `TRELLIS_FF` 4855/43848 (11%),
 `TRELLIS_COMB` 9060/43848 (20%), `DP16KD` 2/108, `MULT18X18D` 16/72, `USRMCLK` 1/1 (100%) —
 nessuna pressione sulle risorse del dispositivo.
+
+**Fase F7 (2026-09-04, stesso giorno): bus flash reso indipendente, ri-sintetizzato.**
+Rimosso `USRMCLK`/riuso di CCLK per SCLK (richiesta esplicita dell'utente: il bus deve essere
+esclusivo anche elettricamente, non solo di controllo — vedi `WORKLOG.md` Fase F7 per il
+razionale completo). `flash_sclk` è ora una 4ª ball GPIO ordinaria (`E3`, banco 7), aggiunta
+in modo puramente additivo (`git diff` sul `.lpf`: solo 1 riga in più, nessuna ball esistente
+spostata). Ri-sintesi completa del sistema: **0 errori di vincolo**, `TRELLIS_IO` 57/245
+(23%), **`USRMCLK` 0/1 (0%)** — conferma diretta che la primitiva non è più usata affatto.
+Fmax **67.91 MHz** (leggermente meglio dei 66.68MHz precedenti, rumore di piazzamento, non
+regressione), percorso critico confermato ancora identico (nessun modulo flash coinvolto).
+Regressione completa dei 33 testbench del progetto ripetuta da zero dopo il fix: tutti PASS,
+incluso il test end-to-end mandatorio con lo stesso output atteso (126) e le stesse latenze
+misurate (ERASE≈400.003ms, SAVE≈403.004ms, LOAD=1.743ms — invariate, la rinomina del pin non
+tocca la temporizzazione).
 
 ---
 

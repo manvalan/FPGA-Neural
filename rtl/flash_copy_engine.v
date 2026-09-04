@@ -98,9 +98,7 @@ module flash_copy_engine #(
     output wire mosi,
     input  wire miso,
     output wire cs_n,
-`ifdef SIMULATION
-    output wire sclk_sim,
-`endif
+    output wire sclk,   // ordinary GPIO, real in both sim and synthesis
 
     // ------------------------------------------------------------
     // Command interface
@@ -189,10 +187,7 @@ module flash_copy_engine #(
     ) u_spi_flash_master (
         .clk(clk), .rst(rst),
 
-        .mosi(mosi), .miso(miso), .cs_n(cs_n),
-`ifdef SIMULATION
-        .sclk_sim(sclk_sim),
-`endif
+        .mosi(mosi), .miso(miso), .cs_n(cs_n), .sclk(sclk),
 
         .start(fm_start), .opcode(fm_opcode), .has_addr(fm_has_addr),
         .addr(fm_addr), .dir(fm_dir), .n_data(fm_n_data),

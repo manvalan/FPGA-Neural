@@ -68,26 +68,24 @@ module spi_neuron_top #(
     output wire data_ready_n,
 
     // ------------------------------------------------------------
-    // Flash physical interface (Phase F5) -- separate pins from the
-    // host SPI above, per docs/FPGA-Neural-Hardware-Design.md's own
-    // §6 lesson ("must land on separate, ordinary I/O pins -- never
-    // the config-SPI pins"): this is the APPLICATION-side master
-    // toward the boot/persistence flash (rtl/spi_flash_master.v,
-    // owned internally by flash_slot_manager), a completely
-    // different physical bus from the host-facing sclk/mosi/miso/
-    // cs_n above. No sclk pin here in real synthesis -- CCLK-
-    // equivalent timing is generated internally via USRMCLK (see
-    // rtl/spi_flash_master.v's header for the full ECP5 rationale);
-    // `flash_sclk_sim` only exists under SIMULATION, to feed
-    // sim/flash_model.v in testbenches.
+    // Flash physical interface (Phase F5, revised 2026-09-04) --
+    // fully independent 4-wire SPI bus, separate from the host SPI
+    // above AND from the dedicated boot config-SPI pins: this is the
+    // APPLICATION-side master toward the boot/persistence flash
+    // (rtl/spi_flash_master.v, owned internally by flash_slot_manager).
+    // All 4 signals (sclk/mosi/miso/cs_n) are ordinary GPIO, real in
+    // both simulation and synthesis -- no ECP5 config-primitive
+    // (USRMCLK/CCLK) involved, so no pin is shared with the boot
+    // path. See docs/FPGA-Neural-Hardware-Design.md §6/§7 for the
+    // board-level implication (the flash chip needs its own second
+    // physical connection for this bus, separate from its boot-SPI
+    // wiring).
     // ------------------------------------------------------------
 
     output wire flash_mosi,
     input  wire flash_miso,
     output wire flash_cs_n,
-`ifdef SIMULATION
-    output wire flash_sclk_sim,
-`endif
+    output wire flash_sclk,
 
     // ------------------------------------------------------------
     // PSRAM physical interface
@@ -261,10 +259,7 @@ module spi_neuron_top #(
     ) u_flash_slot_manager (
         .clk(clk), .rst(rst),
 
-        .mosi(flash_mosi), .miso(flash_miso), .cs_n(flash_cs_n),
-`ifdef SIMULATION
-        .sclk_sim(flash_sclk_sim),
-`endif
+        .mosi(flash_mosi), .miso(flash_miso), .cs_n(flash_cs_n), .sclk(flash_sclk),
 
         .op_start(flash_op_start), .op_code(flash_op_code), .slot_id(flash_slot_id),
         .new_offset(flash_new_offset), .new_length(flash_new_length), .new_type(flash_new_type),

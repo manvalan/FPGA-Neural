@@ -113,7 +113,7 @@ module tb;
         .clk(clk), .rst(rst),
 
         .mosi(mosi), .miso(miso), .cs_n(cs_n),
-        .sclk_sim(sclk_w),
+        .sclk(sclk_w),
 
         .op_start(op_start), .op_dir(op_dir),
         .flash_addr(flash_addr), .psram_addr(psram_addr), .len(len),

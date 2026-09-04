@@ -63,7 +63,7 @@ module tb;
         .CATALOG_PSRAM_ADDR(23'h000000)
     ) dut (
         .clk(clk), .rst(rst),
-        .mosi(mosi), .miso(miso), .cs_n(cs_n), .sclk_sim(sclk_w),
+        .mosi(mosi), .miso(miso), .cs_n(cs_n), .sclk(sclk_w),
         .op_start(op_start), .op_code(op_code), .slot_id(slot_id),
         .new_offset(new_offset), .new_length(new_length), .new_type(new_type),
         .ext_psram_addr(ext_psram_addr), .ext_length(ext_length),

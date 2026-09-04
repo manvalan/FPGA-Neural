@@ -1106,3 +1106,57 @@ Il sottosistema flash come richiesto dal piano originale (§0-§9) è completo: 
 copy engine bidirezionale flash↔PSRAM con erase-before-write e loop page-program (F2/F3),
 catalogo a slot fissi con CRC32 e rilevamento power-loss (F4), opcode SPI completi e
 integrazione nel top level (F5), verifica consolidata e misure reali (F6).
+
+## Fase F7 — Bus SPI flash reso davvero indipendente, rimosso USRMCLK/CCLK (2026-09-04)
+
+- 2026-09-04T00:00 — [FASE F7] — Richiesta esplicita dell'utente: il bus SPI verso la flash
+  deve essere **esclusivo** anche a livello elettrico, non solo di controllo software. Il
+  design F1-F6 riusava il pad `CCLK` di boot (via primitiva ECP5 `USRMCLK`) per il segnale
+  SCLK del sottosistema flash, per risparmiare un pin — soluzione corretta ma fuorviante
+  rispetto al requisito "bus esclusivo": elettricamente quel SCLK dipendeva dallo stesso pad
+  del motore di configurazione, e portava con sé un gap di verifica reale mai chiuso (timing
+  di pad-enable di `USRMCLKTS` non verificato contro la guida Lattice primaria
+  `FPGA-TN-02039`, assente dal set di documenti locali — dichiarato come limite fin
+  dall'header di `rtl/spi_flash_master.v`).
+- **Fix**: rimossa `USRMCLK` da `rtl/spi_flash_master.v`; `sclk` diventa una porta GPIO
+  ordinaria sempre presente (`output wire sclk`, non più dietro `` `ifdef SIMULATION ``),
+  esattamente come `mosi`/`miso`/`cs_n`. Propagato attraverso tutta la catena di possesso
+  (`flash_copy_engine.v` → `flash_slot_manager.v` → `spi_neuron_top.v`, porta top-level
+  `flash_sclk`, prima `flash_sclk_sim` condizionale). Aggiornate tutte le 8 testbench che
+  referenziavano il vecchio nome di porta (`spi_flash_master_tb`, `flash_copy_engine_{load,
+  save,erase}_tb`, `flash_slot_manager_{tb,raw_tb}`, `flash_latency_bench`,
+  `spi_neuron_top_flash_tb`).
+- **Pinout**: `tools/pinout/gen_lpf.py` esteso con `flash_sclk` **in coda** alla lista dei
+  segnali flash (non inserito in mezzo) proprio per non far slittare le ball già assegnate a
+  `flash_mosi`/`flash_miso`/`flash_cs_n` — rigenerato `synth/ecp5/spi_neuron_top.lpf`,
+  confermato via `git diff` **puramente additivo**: 3 righe in più, `flash_sclk`→E3 (banco 7),
+  nessuna ball esistente riassegnata. Totale segnali reali: 56→**57**.
+- **Regressione completa**: tutti i 33 testbench del progetto ricompilati ed eseguiti da zero
+  dopo il fix — **tutti PASS**, incluso il test end-to-end mandatorio
+  (`spi_neuron_top_flash_tb` TEST4: `netasm`→`SAVE_SLOT`→`LOAD_SLOT`→`RUN_NETWORK`,
+  output=126 confermato invariato) e il benchmark di latenza (numeri identici:
+  ERASE≈400.003ms, SAVE≈403.004ms, LOAD=1.743ms — la rinomina della porta non tocca la
+  temporizzazione, solo il nome del segnale).
+- **Sintesi reale ri-eseguita da capo** sul sistema completo (`yosys synth_ecp5` +
+  `nextpnr-ecp5`, stessi comandi già validati, PARALLEL=8 default — stesso conteggio
+  TRELLIS_FF=4855 del build precedente, confermando che è la stessa configurazione già
+  misurata, non una diversa): **0 problemi CHECK**, **0 errori di vincolo**, "Program
+  finished normally". Risultati chiave (`synth/ecp5/spi_neuron_top_flash/nextpnr.log`):
+  - `TRELLIS_IO`: 57/245 (23%, +1 rispetto a prima).
+  - **`USRMCLK`: 0/1 (0%)** — conferma diretta che la primitiva non è più usata affatto:
+    il bus flash è ora GPIO ordinario al 100%, nessuna dipendenza dal motore di
+    configurazione.
+  - Fmax: **67.91 MHz** (FAIL a 80MHz atteso, invariato) — leggermente meglio dei 66.68MHz
+    precedenti (rumore di piazzamento, un pin in più non peggiora nulla), non una
+    regressione.
+  - Percorso critico verificato esplicitamente identico a prima (`u_graph_engine.u_neuron.
+    group_index` → `u_mac8` → catena di riporto dell'accumulatore in `neuron_parallel.v`):
+    nessun modulo del sottosistema flash, né il nuovo pin, compare nel percorso critico.
+  - Margine sull'oscillatore reale 16MHz: 4.24×, sostanzialmente invariato.
+- **Conclusione**: il sottosistema flash ha ora un bus SPI a 4 fili (sclk/mosi/miso/cs_n)
+  genuinamente indipendente lato FPGA/RTL — zero segnali condivisi con il percorso di boot a
+  livello di logica/vincoli. Resta, per costruzione (stesso chip fisico W25Q128JV usato sia
+  per il boot sia per la persistenza), un doppio collegamento a livello di **scheda**: i pin
+  DI/DO/CS/CLK della flash vanno cablati sia ai pin dedicati di config sia a questi 4 pin
+  GPIO ordinari — non ancora catturato in uno schematico (nessuno schematico esiste ancora
+  per questa combinazione dispositivo/package), dichiarato come voce aperta.

@@ -52,7 +52,7 @@ module tb;
         .PSRAM_ADDR_WIDTH(23), .CLK_FREQ_MHZ(80), .SCLK_DIV(2)
     ) dut (
         .clk(clk), .rst(rst),
-        .mosi(mosi), .miso(miso), .cs_n(cs_n), .sclk_sim(sclk_w),
+        .mosi(mosi), .miso(miso), .cs_n(cs_n), .sclk(sclk_w),
         .op_start(op_start), .op_dir(op_dir),
         .flash_addr(flash_addr), .psram_addr(psram_addr), .len(len),
         .busy(busy), .done(done), .err(err),

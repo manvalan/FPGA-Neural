@@ -1,7 +1,4 @@
 `timescale 1ns/1ps
-// Compile with -DSIMULATION (see rtl/spi_flash_master.v header: this
-// exposes sclk_sim as a normal port in place of the real USRMCLK
-// primitive, which has no Icarus simulation model).
 
 // ================================================================
 // SPI_FLASH_MASTER TESTBENCH (Phase F1)
@@ -100,7 +97,7 @@ module tb;
         .clk(clk), .rst(rst),
 
         .mosi(mosi), .miso(miso), .cs_n(cs_n),
-        .sclk_sim(sclk_w),
+        .sclk(sclk_w),
 
         .start(start), .opcode(opcode), .has_addr(has_addr), .addr(addr),
         .dir(dir), .n_data(n_data),

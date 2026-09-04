@@ -19,6 +19,9 @@ IOBUF PORT "flash_miso" IO_TYPE=LVCMOS33;
 LOCATE COMP "flash_mosi" SITE "D3";
 IOBUF PORT "flash_mosi" IO_TYPE=LVCMOS33;
 
+LOCATE COMP "flash_sclk" SITE "E3";
+IOBUF PORT "flash_sclk" IO_TYPE=LVCMOS33;
+
 LOCATE COMP "irq_n" SITE "C4";
 IOBUF PORT "irq_n" IO_TYPE=LVCMOS33;
 

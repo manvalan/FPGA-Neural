@@ -105,9 +105,7 @@ module flash_slot_manager #(
     output wire mosi,
     input  wire miso,
     output wire cs_n,
-`ifdef SIMULATION
-    output wire sclk_sim,
-`endif
+    output wire sclk,   // ordinary GPIO, real in both sim and synthesis
 
     // ------------------------------------------------------------
     // Command interface. op_code 0-3 are the F4 catalog/slot ops;
@@ -216,10 +214,7 @@ module flash_slot_manager #(
     ) u_fce (
         .clk(clk), .rst(rst),
 
-        .mosi(mosi), .miso(miso), .cs_n(cs_n),
-`ifdef SIMULATION
-        .sclk_sim(sclk_sim),
-`endif
+        .mosi(mosi), .miso(miso), .cs_n(cs_n), .sclk(sclk),
 
         .op_start(fce_start), .op_dir(fce_dir),
         .flash_addr(fce_flash_addr), .psram_addr(fce_psram_addr), .len(fce_len),

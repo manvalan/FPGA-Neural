@@ -72,11 +72,11 @@ Signal budget this design actually needs:
 | Application SPI (`sclk/mosi/miso/cs_n`) | 4 |
 | `clk`, `rst` | 2 |
 | Host attention (`irq_n`, `data_ready_n`, added 2026-09-03 — §7) | 2 |
-| Config SPI (to onboard FLASH) | 3 (`flash_mosi`/`flash_miso`/`flash_cs_n` — SCLK shared via `USRMCLK`, no dedicated pin, confirmed against yosys's own `cells_bb.v` blackbox; implemented Phases F1-F6) |
+| Flash runtime SPI bus (`flash_sclk`/`flash_mosi`/`flash_miso`/`flash_cs_n` — fully independent, all ordinary GPIO, no config-primitive shared; implemented Phases F1-F7) | 4 |
 | JTAG (recommended, for bring-up/debug) | 4 |
-| **Total** | **~59** |
+| **Total** | **~60** |
 
-~59 of ~232 usable I/O used (56 actually placed and place&route-verified
+~60 of ~232 usable I/O used (57 actually placed and place&route-verified
 in the flash-subsystem synthesis, `synth/ecp5/spi_neuron_top_flash/
 nextpnr.log`) — **plenty of headroom** (~170+ spare
 pins) for LEDs, buttons, a debug PMOD-style header, or a second SPI
@@ -280,16 +280,28 @@ usage: 53/245 (21%) — still confirms the §2 headroom estimate.
 `WORKLOG.md`) added 3 real pins (`flash_mosi`, `flash_miso`, `flash_cs_n`
 — bank 7, generated additively by `tools/pinout/gen_lpf.py`, confirmed via
 `git diff` on `synth/ecp5/spi_neuron_top.lpf` to leave every existing ball
-unchanged; no dedicated flash SCLK pin — it reuses the same `USRMCLK`
-primitive already driving the application-SPI/config path, per §7):
-full-system real Yosys+nextpnr-ecp5 synthesis (`synth/ecp5/
+unchanged). Full-system real Yosys+nextpnr-ecp5 synthesis (`synth/ecp5/
 spi_neuron_top_flash/nextpnr.log`), **0 constraint errors**, full route
-completes, Fmax **66.68&nbsp;MHz**. The critical path is confirmed
-unchanged from the pre-existing `neuron_parallel` accumulator carry chain
-(no flash-subsystem module appears in the reported critical path) — the
-66.68 vs 73.88&nbsp;MHz difference is attributed to placement/routing
-noise from the added I/O and logic, not a new bottleneck. TRELLIS_IO
-usage: 56/245 (23%).
+completes, Fmax **66.68&nbsp;MHz**. TRELLIS_IO usage: 56/245 (23%).
+
+**Superseded again the same day (Phase F7)**: the flash bus's SCLK
+originally reused the boot `CCLK` pad via the ECP5 `USRMCLK` primitive
+(no dedicated pin) — dropped after the user pointed out this made the
+"exclusive flash bus" claim electrically misleading (SCLK still
+depended on the same pad as the config engine) and it carried an
+unresolved verification gap (`USRMCLKTS` pad-enable timing never
+checked against the primary Lattice sysCONFIG Usage Guide,
+FPGA-TN-02039, absent from this project's document set). `flash_sclk`
+is now a 4th ordinary GPIO ball (`E3`, bank 7), added purely additively
+(`git diff` confirms only the new line, no existing ball moved) — the
+flash bus is now 4 independent wires (`sclk`/`mosi`/`miso`/`cs_n`), zero
+pins shared with any ECP5 config primitive. Re-verified with a fresh
+full-system synthesis: **0 constraint errors**, Fmax **67.91&nbsp;MHz**
+(slightly better than 66.68, placement noise, not a regression),
+critical path confirmed unchanged (`neuron_parallel` accumulator carry
+chain, no flash module involved), `USRMCLK` utilisation now **0/1
+(0%)** — direct confirmation the primitive is no longer used at all.
+TRELLIS_IO usage: 57/245 (23%). See `WORKLOG.md`'s Phase F7 entry.
 
 **Cross-checked against the real Lattice datasheet (2026-09-03, user-
 provided `FPGA-DS-02012-3-4-ECP5-ECP5G-Family-Data-Sheet.pdf`)**: its §4.3.2
@@ -374,9 +386,10 @@ the exact rationale):
 | `irq_n` | C4 | 7 | low while `graph_engine`'s load-time guard has tripped (mirrors STATUS.bit2 / §7 of the network-engine spec); clears only on RESET or a fresh graph `run_start`, NOT on a plain STATUS read |
 
 **Flash subsystem — runtime SPI to the onboard W25Q128JV** (added
-2026-09-04, Phases F1-F6 — `rtl/spi_flash_master.v`, `WORKLOG.md`; ordinary
-GPIO, generated the same additive way as every other row here, confirmed
-by `git diff` against the pre-flash `.lpf` to leave every existing ball
+2026-09-04, Phases F1-F6, made fully independent in Phase F7 same day —
+`rtl/spi_flash_master.v`, `WORKLOG.md`; all 4 signals ordinary GPIO,
+generated the same additive way as every other row here, confirmed by
+`git diff` against the pre-flash `.lpf` to leave every existing ball
 unchanged):
 
 | Signal | Ball | Bank | Note |
@@ -384,12 +397,23 @@ unchanged):
 | `flash_cs_n` | E4 | 7 |  |
 | `flash_miso` | D5 | 7 |  |
 | `flash_mosi` | D3 | 7 |  |
+| `flash_sclk` | E3 | 7 | added Phase F7 — see below |
 
-No `flash_sclk` ball: SCLK is driven through the `USRMCLK` primitive,
-reclaiming the same physical CCLK net already used for bitstream boot —
-see §6/§9 for the board-level wiring implication (the flash chip's
-DI/DO/CS pins must be dual-wired to both the dedicated sysCONFIG pins and
-these 3 ordinary balls).
+**Phase F7 (2026-09-04): `flash_sclk` is now a real, independent GPIO
+ball, not a CCLK/`USRMCLK` reuse.** An earlier version drove SCLK
+through the ECP5 `USRMCLK` primitive, reclaiming the same physical CCLK
+net already used for bitstream boot, to save one pin. Dropped: it made
+the "exclusive flash bus" claim electrically misleading (SCLK still
+depended on the config engine's own pad) and carried an unresolved
+verification gap (`USRMCLKTS` pad-enable timing never checked against
+the primary Lattice sysCONFIG Usage Guide, FPGA-TN-02039, absent from
+this project's document set). Re-synthesized full system: `USRMCLK`
+utilisation now 0/1 (0%), directly confirming the primitive is no
+longer used at all. See §6/§9 for the board-level wiring implication
+(the flash chip's DI/DO/CS/CLK pins must be dual-wired to both the
+dedicated sysCONFIG pins and these 4 ordinary balls — a board-level
+duplication inherent to using one physical chip for both boot and
+runtime persistence, not something Phase F7 changed).
 
 **PSRAM address:**
 
@@ -485,9 +509,10 @@ sizes are decided.
       real Lattice datasheet (§7, matches on 6/7 banks exactly). Fmax
       54.58&nbsp;MHz when this pinout was first verified, 75.30&nbsp;MHz
       after the `neuron_parallel` timing-closure work, 73.88&nbsp;MHz
-      after adding the host-attention pins, and **66.68&nbsp;MHz** for
-      the current full system including the flash subsystem (§7,
-      2026-09-04) — see §7 for the full history and why each change is
+      after adding the host-attention pins, 66.68&nbsp;MHz after adding
+      the flash subsystem, and **67.91&nbsp;MHz** for the current full
+      system after making the flash SPI bus fully independent (Phase F7,
+      §7, 2026-09-04) — see §7 for the full history and why each change is
       pin-placement noise, not a regression.
       **Config-SPI and JTAG ball numbers are still not pinned down**
       (§7) — confirmed by reading the full real datasheet that it has
@@ -504,21 +529,21 @@ sizes are decided.
       in-progress KiCad work, not something this repo's synthesis
       flow needs to resolve.
       **Distinct from this open item** (do not conflate the two): the
-      flash subsystem's own runtime SPI pins (`flash_mosi`, `flash_miso`,
-      `flash_cs_n` — Phases F1-F6, `WORKLOG.md`) **are** real, pinned,
-      place&route-verified ordinary GPIO on bank 7 (`flash_mosi`=D3,
+      flash subsystem's own runtime SPI pins (`flash_sclk`, `flash_mosi`,
+      `flash_miso`, `flash_cs_n` — Phases F1-F6, made fully independent
+      in Phase F7, `WORKLOG.md`) **are** real, pinned, place&route-
+      verified ordinary GPIO on bank 7 (`flash_sclk`=E3, `flash_mosi`=D3,
       `flash_miso`=D5, `flash_cs_n`=E4), generated the same way as every
-      other signal in this table. Only SCLK is shared with the dedicated
-      config-boot clock, reclaimed post-configuration via the `USRMCLK`
-      primitive (confirmed against yosys's own `cells_bb.v` blackbox) —
-      it needs no `.lpf` entry of its own, same reasoning as the
-      dedicated pins discussed above. §5's PCB-level implication: the
-      W25Q128JV's DI/DO/CS pins must be wired to *both* the dedicated
-      sysCONFIG pins (for boot) *and* these 3 ordinary GPIO balls (for
+      other signal in this table — **no pin shared with any ECP5 config
+      primitive** (Phase F7 removed the earlier `USRMCLK`/CCLK reuse for
+      SCLK; `USRMCLK` utilisation in the current full-system synthesis
+      is 0/1, confirming it). §5's PCB-level implication: the
+      W25Q128JV's DI/DO/CS/CLK pins must be wired to *both* the dedicated
+      sysCONFIG pins (for boot) *and* these 4 ordinary GPIO balls (for
       runtime access after configuration completes) — a board-level
-      dual-wiring the same shape as the CCLK-reuse workaround already
-      noted above, not yet reflected in a schematic since none exists
-      yet (see the KiCad item below).
+      duplication inherent to using one physical chip for both roles,
+      not yet reflected in a schematic since none exists yet (see the
+      KiCad item below).
 - [ ] Confirm PSRAM/SPI signal integrity at whatever clock is
       actually fitted (§4) — no signal integrity analysis done yet
 - [ ] JTAG header footprint choice (blocked on the JTAG ball question

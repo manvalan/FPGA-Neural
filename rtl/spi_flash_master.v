@@ -21,48 +21,31 @@
 // rising edge (the flash drove it on the previous falling edge).
 //
 // ----------------------------------------------------------------
-// ECP5 CCLK GOTCHA (USRMCLK) -- §1 of the phase-plan prompt
+// DEDICATED BUS, NO CCLK/USRMCLK SHARING (revised 2026-09-04)
 // ----------------------------------------------------------------
-// After bitstream configuration, the ECP5's dedicated CCLK pad is
-// NOT an ordinary user I/O and cannot be driven by fabric logic
-// through a normal top-level port:
+// This master's 4 pins (sclk/mosi/miso/cs_n) are ALL ordinary GPIO,
+// wired to a second, independent connection on the same flash chip
+// -- the runtime persistence path is fully separate from the boot
+// config-SPI path (which still uses the dedicated CCLK/DQ0/DQ1/CS
+// sysCONFIG pins on their own, untouched by this module). No pin is
+// shared between the two, and no ECP5 config-primitive (`USRMCLK`)
+// is involved: `sclk` is driven the same way `mosi`/`cs_n` already
+// are, a plain synchronous output, real from simulation straight
+// through to place&route -- one identical `.lpf` entry like every
+// other signal in this design, not a special MCLK-site placement.
 //
-//   - Lattice FPGA-DS-02012-3.4 "ECP5 and ECP5-5G Family Data
-//     Sheet", §2.18 "Device Configuration" (p.48): "There are 11
-//     dedicated pins for TAP and sysConfig support (TDI, TDO, TCK,
-//     TMS, CFG[2:0], PROGRAMN, DONE, INITN, and CCLK). The
-//     remaining sysCONFIG pins are used as dual function pins."
-//     -- CCLK is explicitly in the DEDICATED list, not the
-//     dual-function list that "can be released" as user I/O
-//     (§2.14.1, p.42, re: Bank 8 dual-function pins in general).
-//     This is why MOSI/MISO/CS_N (bank 8 dual-function pins) CAN be
-//     ordinary top-level ports here, but SCLK cannot.
-//   - The mechanism to drive it anyway is the `USRMCLK` primitive.
-//     Its port list (USRMCLKI, USRMCLKTS) is confirmed directly
-//     from the open-source toolchain's own cell library --
-//     /opt/homebrew/Cellar/yosys/*/share/yosys/ecp5/cells_bb.v,
-//     `module USRMCLK(USRMCLKI, USRMCLKTS)` -- the same blackbox
-//     yosys/nextpnr-ecp5 use to place it at the dedicated MCLK
-//     site; not a guessed API.
-//   - Full behavioral details of USRMCLK (e.g. the exact polarity
-//     of USRMCLKTS, pad enable timing) live in Lattice's "ECP5 and
-//     ECP5-5G sysCONFIG Usage Guide" (FPGA-TN-02039), referenced
-//     repeatedly by the family datasheet (p.42/48/49) but NOT
-//     present in this project's local document set -- flagged as a
-//     limitation (§A.6): USRMCLKTS is tied low here (driver
-//     enabled, matching the common open-source-toolchain usage
-//     pattern for this primitive), unverified against the primary
-//     Lattice TN. Real hardware bring-up must confirm this pin
-//     actually toggles CCLK as expected -- simulation cannot: see
-//     below.
-//   - USRMCLK is a synthesis blackbox with NO Icarus simulation
-//     model. Simulating this module therefore needs an escape hatch
-//     for the physical clock pin: under `SIMULATION`, `sclk_sim` is
-//     exposed as an ordinary output port (driving sim/flash_model.v
-//     directly); under real synthesis, no such port exists at all
-//     -- the module instantiates USRMCLK internally instead, and
-//     nextpnr-ecp5 places it at the dedicated MCLK site with no LPF
-//     entry needed (it is not a regular constrainable I/O pin).
+// This design was originally built reusing the CCLK pad via
+// `USRMCLK` (see git history / WORKLOG.md's Phase F1 entry for that
+// version) to save one pin. That coupling was dropped: sharing the
+// boot clock pad made the "exclusive flash SPI bus" claim misleading
+// (electrically it wasn't independent of the config engine at all),
+// and it carried a real unresolved verification gap (`USRMCLKTS`
+// pad-enable timing was never checked against the primary Lattice
+// sysCONFIG Usage Guide, FPGA-TN-02039 -- not present in this
+// project's local document set). A 4th ordinary GPIO ball costs
+// nothing on this part (huge pin headroom, docs/FPGA-Neural-
+// Hardware-Design.md §2) and removes the coupling and the
+// verification gap entirely.
 // ----------------------------------------------------------------
 //
 // Command interface (byte-oriented, req/valid handshakes matching
@@ -125,9 +108,7 @@ module spi_flash_master #(
     output reg  mosi,
     input  wire miso,
     output reg  cs_n,
-`ifdef SIMULATION
-    output wire sclk_sim,   // simulation-only escape hatch, see header
-`endif
+    output wire sclk,   // ordinary GPIO, real in both sim and synthesis -- see header
 
     // ------------------------------------------------------------
     // Command interface
@@ -183,16 +164,7 @@ module spi_flash_master #(
     wire sclk_will_rise  = shifting & sclk_half_reached & ~sclk_reg; // about to go 0->1
     wire sclk_will_fall  = shifting & sclk_half_reached &  sclk_reg; // about to go 1->0
 
-`ifdef SIMULATION
-    assign sclk_sim = sclk_reg;
-`else
-    // USRMCLKTS tied low (driver enabled) -- see header for the
-    // documented-but-unverified-against-the-primary-TN caveat.
-    USRMCLK u_usrmclk (
-        .USRMCLKI(sclk_reg),
-        .USRMCLKTS(1'b0)
-    );
-`endif
+    assign sclk = sclk_reg;
 
     // ============================================================
     // Main FSM

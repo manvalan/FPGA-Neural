@@ -124,7 +124,7 @@ module tb;
         .clk(clk), .rst(rst),
 
         .mosi(mosi), .miso(miso), .cs_n(cs_n),
-        .sclk_sim(sclk_w),
+        .sclk(sclk_w),
 
         .op_start(op_start), .op_code(op_code), .slot_id(slot_id),
         .new_offset(new_offset), .new_length(new_length), .new_type(new_type),
