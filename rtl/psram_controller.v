@@ -153,6 +153,34 @@ module psram_controller #(
     reg [2:0] cr_step;
 
     // ============================================================
+    // Early-request latch (bug found + fixed 2026-09-04, see
+    // WORKLOG.md flash-subsystem F2 entry for the full writeup)
+    //
+    // STATE_INIT (150us power-up wait) and STATE_CR_INIT (the 4-step
+    // software-access sequence) do not check `mem_req` at all -- an
+    // external request arriving during that window was previously
+    // silently LOST (mem_req is a one-cycle pulse from
+    // int8_memory_access.v with no retry), while the caller sat in
+    // its own WAIT state watching for `mem_ready`. Meanwhile
+    // STATE_READ/STATE_WRITE_WAIT's completion unconditionally
+    // pulsed the SAME external `mem_ready` for CR_INIT's own 4
+    // internal dummy-read/write steps too -- so the waiting caller
+    // would see one of THOSE stray pulses, believe its own (never
+    // actually issued) request had completed, and move on with
+    // garbage/no data. Two independent effects of the same root
+    // cause (CR_INIT reusing the external-facing datapath for
+    // internal housekeeping): fixed together below (this latch) and
+    // at both `mem_ready <= 1'b1` sites (guarded on `!cr_init_active`).
+    // ============================================================
+
+    reg                   req_pending;
+    reg [ADDR_WIDTH-1:0]  pending_addr;
+    reg [DATA_WIDTH-1:0]  pending_wdata;
+    reg                   pending_wr;
+    reg                   pending_lb_n;
+    reg                   pending_ub_n;
+
+    // ============================================================
     // PSRAM data bus control
     // ============================================================
 
@@ -199,6 +227,13 @@ module psram_controller #(
             cr_init_active <= 1'b0;
             cr_step         <= 0;
 
+            req_pending   <= 1'b0;
+            pending_addr  <= {ADDR_WIDTH{1'b0}};
+            pending_wdata <= {DATA_WIDTH{1'b0}};
+            pending_wr    <= 1'b0;
+            pending_lb_n  <= 1'b1;
+            pending_ub_n  <= 1'b1;
+
             // ----------------------------------------------------
             // Memory interface
             // ----------------------------------------------------
@@ -236,6 +271,24 @@ module psram_controller #(
 
             // mem_ready is a one-cycle pulse
             mem_ready <= 1'b0;
+
+            // Latch (don't drop) a request that arrives while the
+            // controller is still busy with its own power-up/CR-init
+            // sequence -- see the req_pending declaration above for
+            // why this is needed. Only ever latches ONE request (the
+            // arbiter + int8_memory_access contract guarantees no
+            // caller issues a second req before its first is
+            // acknowledged, so this window can only ever have at
+            // most one outstanding request to remember).
+            if ((state == STATE_INIT || state == STATE_CR_INIT) &&
+                mem_req && !req_pending) begin
+                req_pending   <= 1'b1;
+                pending_addr  <= mem_addr;
+                pending_wdata <= mem_wdata;
+                pending_wr    <= mem_wr;
+                pending_lb_n  <= mem_lb_n;
+                pending_ub_n  <= mem_ub_n;
+            end
 
             case (state)
 
@@ -356,22 +409,32 @@ module psram_controller #(
 
                     dq_oe <= 1'b0;
 
-                    if (mem_req) begin
+                    if (mem_req || req_pending) begin
 
                         // ------------------------------------------------
-                        // Latch transaction
+                        // Latch transaction -- from the live port if a
+                        // fresh request arrived this cycle, otherwise
+                        // from the early-request latch (see above)
+                        // captured while STATE_INIT/STATE_CR_INIT was
+                        // still running. `mem_req` takes priority
+                        // (cannot both be true from a real caller given
+                        // the one-outstanding-request contract, but if
+                        // they ever were, the live request is the more
+                        // recent one).
                         // ------------------------------------------------
 
-                        address_reg <= mem_addr;
-                        wdata_reg   <= mem_wdata;
-                        wr_reg      <= mem_wr;
+                        address_reg <= mem_req ? mem_addr   : pending_addr;
+                        wdata_reg   <= mem_req ? mem_wdata  : pending_wdata;
+                        wr_reg      <= mem_req ? mem_wr     : pending_wr;
 
                         // ------------------------------------------------
                         // Latch byte enables
                         // ------------------------------------------------
 
-                        lb_reg <= mem_lb_n;
-                        ub_reg <= mem_ub_n;
+                        lb_reg <= mem_req ? mem_lb_n : pending_lb_n;
+                        ub_reg <= mem_req ? mem_ub_n : pending_ub_n;
+
+                        req_pending <= 1'b0;
 
                         // ------------------------------------------------
                         // Address
@@ -457,7 +520,16 @@ module psram_controller #(
                         // ------------------------------------------------
 
                         mem_rdata <= psram_dq;
-                        mem_ready <= 1'b1;
+
+                        // Only a REAL external transaction's
+                        // completion may pulse the external
+                        // mem_ready -- CR_INIT's own 2 dummy-read
+                        // steps reuse this same state but must never
+                        // be visible to whatever caller happens to
+                        // be waiting (see req_pending's declaration
+                        // above for the full incident writeup).
+                        if (!cr_init_active)
+                            mem_ready <= 1'b1;
 
                         counter <= 0;
 
@@ -737,10 +809,14 @@ module psram_controller #(
                     psram_ub_n <= 1'b1;
 
                     // ------------------------------------------------
-                    // Transaction complete
+                    // Transaction complete -- same cr_init_active
+                    // guard as the STATE_READ completion above (this
+                    // is CR_INIT's own 2 write steps reusing this
+                    // state too).
                     // ------------------------------------------------
 
-                    mem_ready <= 1'b1;
+                    if (!cr_init_active)
+                        mem_ready <= 1'b1;
 
                     state <= cr_init_active ? STATE_CR_INIT : STATE_IDLE;
                 end

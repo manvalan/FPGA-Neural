@@ -429,3 +429,680 @@ L'utente ha fornito una nota tecnica dettagliata con requisiti di verifica speci
 - **Nuovo test dedicato**: un burst di centinaia di letture consecutive nella stessa pagina, mai idle, per dimostrare che la spaccatura del burst avviene anche quando il contatore si esaurisce **durante** un burst attivo (non solo nel caso idle già coperto) — con margine reale sotto il limite `tCEM` del modello (8µs), non per coincidenza. Risultato: split confermato (8 chiusure di CE# durante il loop), nessun `$fatal` dal modello. Regressione completa (26 testbench) ripetuta con il modello aggiornato: **0 `$fatal`**.
 - **Fmax a P8** (mancava, avevo solo P2): sintetizzato e piazzato/instradato `spi_neuron_top` (Tipo #2, `PARALLEL=8`) con lo stesso comando/vincoli validati: **65.13 MHz**, FAIL a 80MHz come P2, coerente. **Natura del percorso critico verificata esplicitamente** (non assunta) leggendo il report di `nextpnr-ecp5` per entrambi P2 e P8: in entrambi i casi la sorgente è `u_graph_engine.u_neuron.group_index` → `mac8`/`neuron_parallel` (stessa catena CCU2C dell'accumulatore già nota dalla Fase 7) — **`psram_controller` non compare mai nel percorso critico**, nonostante la crescita di risorse del page mode.
 - **Ri-esecuzione del benchmark P2/P4/P8 isolato** (`tools/fpga_benchmark.py`, richiesta esplicita di rieseguire "anche quelli sulla parallelizzazione"): tentata, ma il sotto-processo Yosys per P8 è andato in una patologia di `abc -g simple` sul netlist srotolato (256×4×32 MAC), consumando >144 minuti di CPU senza terminare — **verificato non essere un effetto del lavoro di questa sessione** (lo script sintetizza solo `mac_unit`/`mac8`/`neuron_parallel`/`layer.v`, mai toccati; stesso script, stesso RTL di input di prima). Processo terminato (kill). I numeri storici (P16 52.13, P8 61.71, P4 75.01, P2 87.88 MHz) restano validi perché deterministici su input invariati; non riprodotti in questa sessione per il blocco del toolchain. La verifica realmente rilevante per il lavoro di oggi — Fmax del **sistema integrato con PSRAM** a P2 e P8 — è stata comunque fatta con successo sopra, tramite sintesi diretta (non lo script).
+
+## Sottosistema FLASH — F1: SPI master + modello comportamentale (2026-09-04)
+
+Avvio del piano a fasi richiesto dall'utente per dare alla FPGA accesso esclusivo alla
+flash di boot/persistenza (Winbond W25Q128JV, SPI NOR 16MB). §A del prompt utente (standard
+di verifica: oracolo indipendente, due piani — sim + sintesi reale, test avversari, tracciabilità)
+è vincolante per ogni fase; questa entry documenta F1 secondo quello standard.
+
+**Fonti usate (nessun numero a memoria, tutti citati)**:
+- Datasheet locale `~/Development/HubAudio/datasheets/W25Q128JVS.pdf` — la prima pagina lo
+  identifica come **"W25Q128JV-DTR"** (variante Double Transfer Rate), non il part number
+  liscio "W25Q128JV" che `docs/FPGA-Neural-Hardware-Design.md` §6/§7 e
+  `docs/FPGA-Neural-Datapatch-Benchmark.md` specificano come componente reale montato in
+  BOM. **Discrepanza dichiarata esplicitamente** (non ignorata): il set di istruzioni SPI
+  standard (§8.1.2 Tabella 1, p.26 — WREN 06h, READ 03h, PP 02h, SE 20h, RDSR-1 05h) e i
+  tempi in §9.6 AC Electrical Characteristics (p.90) sono condivisi da tutta la famiglia
+  W25Q128JV (DTR aggiunge solo istruzioni/modalità extra sopra, non cambia questi), quindi
+  usabili senza riserve. Il **JEDEC ID** invece NON coincide: questo PDF (§8.1.1, p.24) dà
+  `EF7018h` (memory type 70h, variante DTR); il part liscio W25Q128JV pubblicamente
+  documentato è `EF4018h` (memory type 40h). `sim/flash_model.v` usa **EF4018h**, coerente
+  col part realmente specificato nei documenti hardware del progetto, con la discrepanza
+  commentata inline nel sorgente — **il bring-up su hardware reale deve confermare l'RDID
+  effettivo del chip montato prima di fidarsi oltre di questa costante**.
+- ECP5: Lattice `FPGA-DS-02012-3.4` "ECP5 and ECP5-5G Family Data Sheet" (locale,
+  `~/Downloads/`), §2.18 "Device Configuration" (p.48): CCLK è uno degli **11 pin dedicati**
+  (non un pin dual-function bank-8 "rilasciabile" come MOSI/MISO/CS_N, §2.14.1 p.42) — da qui
+  la necessità della primitiva `USRMCLK` per pilotarlo da fabric dopo la configurazione. Il
+  documento che descrive `USRMCLK` in dettaglio (Lattice "ECP5 and ECP5-5G sysCONFIG Usage
+  Guide", FPGA-TN-02039, citato ripetutamente dal datasheet stesso) **non è presente nel set
+  documentale locale** — limite dichiarato (§A.6): la polarità di `USRMCLKTS` (qui legata a
+  0) segue la convenzione comune dei progetti open-source ECP5, non verificata contro il TN
+  primario. Il port-list della primitiva stessa (`USRMCLKI`, `USRMCLKTS`) è invece confermato
+  da una fonte indipendente e non indovinata: `/opt/homebrew/Cellar/yosys/*/share/yosys/ecp5/cells_bb.v`,
+  `module USRMCLK(USRMCLKI, USRMCLKTS)` — la stessa blackbox che yosys/nextpnr-ecp5 usano
+  davvero per il piazzamento.
+
+**RTL creato**:
+- `rtl/spi_flash_master.v` — master SPI generico verso la flash (mode 0, MSB-first),
+  interfaccia a comando singolo (`opcode`/`has_addr`/`addr`/`dir`/`n_data`) con handshake
+  byte-a-byte (`wdata_req`/`wdata_valid`, `rdata_valid`/`rdata_ack`) nello stesso stile
+  req/ready già usato da `mem_arbiter.v`/`spi_slave.v`. `SCLK_DIV=2` di default a
+  `CLK_FREQ_MHZ=80` → sclk=20MHz, scelto per stare sotto il limite **fR=50MHz** che il
+  datasheet impone specificamente all'istruzione READ (03h) (§9.6 p.90 — le altre istruzioni
+  permettono fino a 104-133MHz, ma un solo generatore di clock fisso deve rispettare il più
+  stretto). Sotto `` `ifdef SIMULATION `` espone `sclk_sim` come porta normale (per
+  `sim/flash_model.v`, che non può simulare la blackbox `USRMCLK`); altrimenti istanzia
+  `USRMCLK` internamente, nessun vincolo LPF necessario (non è un pin I/O normale).
+  **Bug trovato e corretto PRIMA della prima simulazione** (derivazione manuale bit-per-bit
+  della logica di shift, non per tentativi): l'aggiornamento di MOSI sul fronte di discesa
+  usava un indice `bit_idx+1` invece di `bit_idx`, saltando un bit e disallineando l'intero
+  byte — corretto in entrambi i punti (header opcode+addr, byte dati) prima di compilare.
+- `sim/flash_model.v` (SOLO simulazione) — modella le regole del datasheet: erase→0xFF
+  (§8.2.18 p.56), program **solo AND** mai OR (§8.2.16/Tabella1 p.29/53), WIP/BUSY =
+  RDSR-1 bit0, WEL = bit1 (ordine da §7.1.1/7.1.2 p.15 + convenzione universale Winbond,
+  non c'è un'unica tabella-bit consolidata in questo PDF — dichiarato). Timing tPP/tSE usa i
+  valori **MAX** (peggiore caso, non tipico) del datasheet, scalati da `TIME_SCALE` per non
+  bruciare tempo reale di simulazione — scelta deliberata: un design che funziona solo col
+  caso tipico non è corretto. `DEPTH` ridotto (128KB, non i 16MB reali) per velocità di
+  simulazione, stesso precedente già stabilito da `sim/psram_model.v`. Limiti dichiarati nel
+  header: nessuna istruzione Fast/Dual/Quad/QPI/DTR, nessuna gestione dei bit di protezione
+  (fuori scope: la flash è esclusiva della FPGA), nessun timing analogico, e il power-loss
+  simulato può rappresentare solo "operazione mai committata" non "committata a metà" (limite
+  del modello, non del design).
+- `sim/spi_flash_master_tb.v` — 5 test:
+  - **TEST1 (RDID)**: oracolo = valore del datasheet scritto indipendentemente nel testbench
+    (non letto dalla costante di `flash_model.v`) → **PASS** (EF/40/18h).
+  - **TEST2 (READ, oracolo indipendente vero)**: pattern piantato per riferimento
+    gerarchico DIRETTAMENTE nell'array `mem[]` di `flash_model` (mai passato attraverso
+    l'RTL sotto test), poi letto via `spi_flash_master` e confrontato byte-esatto → **PASS**,
+    16/16 byte.
+  - **TEST3/3b (WREN+PP+poll RDSR+READ round-trip, AND-only)**: TEST3 programma un pattern
+    su una regione erasa e lo rilegge (round-trip, non indipendente dall'RTL — dichiarato
+    esplicitamente come tale nel commento del tb); TEST3b riprogramma la STESSA regione con
+    `0xFF` e verifica che il valore letto **non cambi** (la regola AND-only non è
+    distinguibile da un "program sovrascrive" ingenuo col solo TEST3) → **PASS** entrambi.
+  - **TEST4 (WREN+SE+poll RDSR+READ)**: la regione lasciata deliberatamente non-FF da
+    TEST3/3b viene cancellata e riletta, tutta a `0xFF` → **PASS** (non può passare per
+    coincidenza, la regione non era già bianca).
+  - **TEST5 (avversario §A.3, opcode illegale)**: emesso `0xAB` (istruzione reale W25Q128JV
+    ma non implementata né dal master né dal modello) — requisito: `done` deve comunque
+    arrivare entro il watchdog del testbench (il master shifta un numero fisso di bit
+    indipendentemente dalla semantica dell'opcode) → **PASS**, nessun hang.
+  - Compilato: `iverilog -g2012 -DSIMULATION -o <tmp> rtl/spi_flash_master.v sim/flash_model.v sim/spi_flash_master_tb.v`.
+    Nessun errore/warning. Eseguito (`vvp`): **ALL TESTS PASSED**.
+- **Sintesi reale** (secondo piano indipendente, §A.2): `yosys synth_ecp5` pulito (0
+  problemi da CHECK, 1 cella `USRMCLK` come atteso) + **`nextpnr-ecp5` reale** (binario
+  trovato in `/private/tmp/nextpnr/build/nextpnr-ecp5`, versione 0.11.1-19-g8dbcee5c — NON
+  installato via Homebrew su questa macchina, percorso assoluto necessario finché non viene
+  reinstallato in un posto stabile) sul modulo isolato (`--45k --package CABGA381 --speed 8
+  --freq 80 --lpf-allow-unconstrained`): **Program finished normally**, Fmax **181.72 MHz**
+  (PASS a 80MHz — numero di solo modulo, non riflette il collo di bottiglia noto di
+  `neuron_parallel.v` che dominerà il sistema integrato, da rimisurare in F6), `USRMCLK 1/1
+  100%` piazzata correttamente, `TRELLIS_IO 79/245 32%` (porte non ancora integrate in un top
+  reale — atteso a questo stadio).
+
+**Cosa NON è coperto da F1 (dichiarato, §A.6)**: nessun test di power-loss vero (arriva in
+F4 col catalogo/CRC), nessun timeout RDSR (il master non ne impone uno — responsabilità del
+copy engine in F3), nessuna integrazione in `spi_neuron_top`/`mem_arbiter` (F5), nessuna
+verifica elettrica/analogica reale (rise/fall, setup/hold) — solo comportamentale.
+
+**Prossimo passo**: F2, copy engine flash→PSRAM (load) sopra questo master, integrato come
+nuovo master a bassa priorità su `mem_arbiter`.
+
+## Sottosistema FLASH — F2: copy engine flash→PSRAM (load) + DUE BUG REALI trovati e corretti (2026-09-04)
+
+Costruito `rtl/flash_copy_engine.v` sopra il master F1: comando singolo (`op_start`,
+`flash_addr`, `psram_addr`, `len`), streaming byte-a-byte flash→PSRAM tramite un nuovo
+**Port D a priorità più bassa** su `mem_arbiter.v` (priorità finale: B>C>A>D, come richiesto
+dal piano — le operazioni flash sono ms-scale e non devono mai competere con l'inferenza).
+`spi_flash_master` è istanziato INTERNAMENTE (il copy engine possiede il bus fisico verso la
+flash); verso l'alto espone solo il comando + le porte fisiche flash + Port D.
+
+Il READ (03h) non ha vincoli di pagina (solo PP/SE li hanno, §8 intro p.24 del datasheet),
+quindi F2 non ha bisogno del loop erase+page-program — quello arriva in F3 per la direzione
+PSRAM→flash. `len` è però a 24 bit (come da bozza opcode §5) mentre `n_data` del master F1 è
+a 16 bit: il copy engine spezza automaticamente in chunk da max 65535 byte, chiudendo un
+potenziale bug latente prima ancora di scriverne il test.
+
+**Bounds checking (§A.3, "len fuori range")**: `flash_addr+len` oltre i 16MB modellati o
+`psram_addr+len` oltre 8MB → `err` + `done` immediato, NESSUNA transazione flash o PSRAM
+tentata. `len==0` è anch'esso un errore esplicito (non un no-op silenzioso — un host che
+manda una lunghezza sbagliata deve vederlo, non essere coperto).
+
+### I due bug (nessuno dei due nel design del giorno prima — trovati DURANTE il bring-up di F2)
+
+Il test F2 (TEST1, round-trip byte-esatto con dato piantato indipendentemente in
+`flash_model.mem[]`) falliva alla primissima esecuzione: lettura 0x00 invece di 0x50. Invece
+di aggiustare il test per farlo passare (vietato da §A.1), ho isolato la causa con tracce
+mirate fino al segnale, non fermandomi al primo sospetto plausibile:
+
+**BUG #1 — `rtl/psram_controller.v`, PRE-ESISTENTE, non del subsystem flash.** Riprodotto con
+un testbench minimale che usa SOLO la Porta A esistente (`/tmp/portA_repro_tb.v`, nessun
+codice flash coinvolto) — confermato non essere un problema mio. Meccanismo:
+1. `STATE_INIT` (power-up, 150µs @ 80MHz) non controlla affatto `mem_req`: una richiesta
+   esterna che arriva in questa finestra è persa per sempre (`mem_req` è un impulso di un
+   solo ciclo da `int8_memory_access.v`, senza retry).
+2. `STATE_CR_INIT` (sequenza software-access del datasheet PSRAM, 2 read + 2 write interne)
+   riusa gli stessi stati `STATE_READ`/`STATE_WRITE` del percorso ESTERNO, e la loro
+   condizione di completamento pulsava `mem_ready` **incondizionatamente** — nessuna guardia
+   per distinguere "questo è un passo interno di CR_INIT" da "questa è la transazione reale
+   del chiamante". Un chiamante in attesa durante quella finestra vedeva uno di quegli
+   impulsi spuri, credeva che la SUA richiesta (mai davvero eseguita) fosse completata, e
+   proseguiva con dati sbagliati/mai scritti.
+   Nel caso di F2 (accesso quasi immediato dopo reset, ben dentro la finestra vulnerabile —
+   a differenza dei test esistenti che iniziano il primo accesso reale più tardi, incidentalmente
+   fuori dalla finestra), l'effetto era esattamente questo: `wb(0x100, 0x50)` sembrava
+   riuscire (handshake completato) ma la scrittura reale non avveniva mai.
+   **Corretto** con: (a) un latch "early request" (`req_pending` + registri ombra) che cattura
+   una richiesta arrivata durante `STATE_INIT`/`STATE_CR_INIT` invece di perderla, consumata
+   non appena `STATE_IDLE` viene raggiunto per davvero; (b) `mem_ready <= 1'b1` ora guardato
+   con `if (!cr_init_active)` in ENTRAMBI i punti di completamento (`STATE_READ` e
+   `STATE_WRITE_WAIT`), così i passi interni di CR_INIT non trapelano mai verso l'esterno.
+   **Rischio reale, non accademico**: lo scenario "boot standalone" del piano (§6 del prompt
+   di fase) è ESATTAMENTE un caricamento da flash a PSRAM molto presto dopo il power-on — il
+   caso che questo bug avrebbe colpito su silicio vero.
+
+Verificato con lo stesso repro minimale (Port A pura, nessun codice flash coinvolto): scrittura
+   singola e doppia scrittura adiacente (stesso word PSRAM, byte basso poi alto) ora byte-
+   esatte. Rieseguita l'INTERA regressione esistente (elencata sotto): tutti i numeri
+   (banda gather, cicli, Fmax) restano IDENTICI a prima del fix — conferma che il bug
+   colpiva solo la finestra di avvio, non il comportamento a regime già misurato.
+
+**BUG #2 — `rtl/flash_copy_engine.v`, nel MIO nuovo codice, introdotto mentre correggevo il
+Bug #1 e poi ricontrollato con lo stesso rigore.** La richiesta Port D (`d_req`) era
+originariamente un impulso di un solo ciclo (stesso stile degli altri master). Ma
+`mem_arbiter` campiona `req` di un richiedente SOLO mentre `owner==SEL_NONE` — se l'impulso
+di un solo ciclo cade esattamente sullo stesso ciclo in cui la Porta A (priorità più alta)
+richiede anch'essa, l'arbitro concede alla Porta A e l'impulso di Port D è perso per sempre
+(deadlock: il motore resta in attesa di un `d_ready` che non arriverà mai). Riprodotto
+esplicitamente con TEST5 (contesa attiva di Port A durante un LOAD).
+**Corretto** rendendo `d_req` un segnale di LIVELLO (`assign d_req = (state==ST_PSRAM_WAIT) &&
+!d_ready`), tenuto alto finché non viene davvero servito — non serve toccare
+`mem_arbiter.v` (che serve gli altri tre master già validati). **Sotto-bug scoperto nel fix
+stesso**: la prima versione (`d_req = state==ST_PSRAM_WAIT`, senza `&& !d_ready`) lasciava
+`d_req` combinazionalmente alto per un ciclo in più esatto in cui l'arbitro tornava a
+`SEL_NONE` dopo il completamento — causando una RI-concessione spuria con indirizzo/dato
+ormai stantii. Trovato ripetendo la stessa tecnica di tracciamento ciclo-per-ciclo usata per
+il Bug #1, non per tentativi.
+
+### Verifica F2 (secondo §A)
+
+- `sim/flash_copy_engine_load_tb.v`, 5 test — **ALL TESTS PASSED**:
+  - TEST1: LOAD byte-esatto, dato piantato indipendentemente in `flash_model.mem[]` (oracolo
+    indipendente vero, non passato per l'RTL sotto test).
+  - TEST2: due LOAD separati back-to-back (rientranza IDLE-dopo-DONE).
+  - TEST3 (avversario §A.3): `flash_addr+len` oltre 16MB → `err`, sentinella PSRAM
+    intatta, nessuna transazione flash tentata.
+  - TEST4 (avversario §A.3): `len==0` → `err` esplicito, non un no-op silenzioso.
+  - TEST5: contesa reale con un "nibbler" Port A in background durante un intero LOAD da 64
+    byte — Port A vince sempre l'arbitraggio (priorità), il LOAD comunque completa
+    byte-esatto (dimostra "Port D allungato, mai perso", l'intento di design dichiarato in
+    `mem_arbiter.v`).
+- **Regressione completa** ripetuta dopo ENTRAMBI i fix (non solo alla fine): tutti i
+  testbench che toccano `psram_controller.v`/`mem_arbiter.v` (`psram_controller_tb`,
+  `psram_page_mode_tb`, `int8_psram_integration_tb`, `neuron_memory_tb`,
+  `neuron_memory_multi_tb`, `spi_neuron_top_tb`, `spi_neuron_top_graph_tb`,
+  `spi_neuron_top_runnetwork_tb`, `spi_neuron_top_irq_tb`, `graph_engine_tb`,
+  `graph_engine_guard_tb`, `graph_engine_bandwidth_tb`, `graph_format_tb`) più i test guardia
+  negativi (`neuron_parallel_guard_negative_*`, ancora falliscono in elaborazione **come
+  previsto**) — **tutti PASS**, nessuna regressione, numeri di banda/ciclo identici a prima
+  (37.53 cicli/edge, 8.53MB/s@80MHz, 1.71MB/s@16MHz — invariati, confermando che il fix non
+  tocca il comportamento a regime). I testbench che non toccano né `psram_controller.v` né
+  `mem_arbiter.v` (verificato via `grep`) sono stati lasciati fuori da questa ri-esecuzione
+  mirata perché il fix non può averli toccati.
+- **Sintesi reale** (yosys `synth_ecp5` + `nextpnr-ecp5` reale, `--lpf-allow-unconstrained`,
+  a livello di modulo isolato):
+  - `psram_controller.v` (con fix): 0 problemi CHECK, Fmax **244.74 MHz** (PASS a 80MHz).
+  - `flash_copy_engine.v`: 0 problemi CHECK, `USRMCLK 1/1 100%`, Fmax **172.98 MHz** (PASS a
+    80MHz) — numeri di solo modulo, l'integrazione reale nel sistema arriva in F5/F6.
+
+**Cosa NON è coperto da F2 (dichiarato, §A.6)**: nessun blocco >65535 byte testato a piena
+dimensione (chunking implementato e ragionato ma non esercitato oltre un singolo chunk, per
+tempo di simulazione — dichiarato come gap di copertura, non nascosto); nessuna direzione
+SAVE (arriva in F3); nessuna integrazione col catalogo (F4) né con gli opcode SPI (F5).
+
+**Lezione per le fasi successive**: il Bug #1 dimostra che "il codice esistente è già
+validato" non è una garanzia assoluta quando cambia il PATTERN di accesso (qui: accesso
+molto presto dopo reset, mai esercitato prima). F3 (SAVE, con erase+program+poll WIP) e F4
+(catalogo, letto al boot) andranno verificati con la STESSA attenzione alla tempistica di
+avvio, non solo alla logica a regime.
+
+**Prossimo passo**: F3, direzione PSRAM→flash (erase settore + loop page-program ≤256B +
+poll WIP), estendendo lo stesso `flash_copy_engine.v`.
+
+## Sottosistema FLASH — F3: copy engine PSRAM→flash (save), erase+program+poll WIP (2026-09-04)
+
+Estesa `rtl/flash_copy_engine.v` (stesso file di F2, path LOAD invariato — nessuna riga del
+percorso F2 toccata) con la direzione `DIR_SAVE`: erase settore + loop Page Program ≤256B +
+poll RDSR-1 (WIP), tutto orchestrato dalla FPGA come richiesto dal piano (§2.2 — "Il loop lo
+fa la FPGA: è il valore rispetto a 'host un registro alla volta'").
+
+**Decisione di design dichiarata (§2.1 del piano chiede esplicitamente di sceglierne una e
+motivarla)**: `flash_addr` per una SAVE **deve** essere allineato a settore (4KB, bit bassi
+a zero) — rifiutato come errore altrimenti, invece di un read-modify-erase-write del settore
+parziale. Motivo: il progetto non ha un buffer di scratch abbastanza grande da tenere un
+intero settore da 4KB di dati circostanti non correlati mentre lo si cancella/riprogramma, e
+il design del sottosistema flash stesso (slot di catalogo a dimensione fissa, §4 del piano)
+implica che ogni vera `SAVE_SLOT` (F5) scriverà già slot interi e allineati a settore — quindi
+l'allineamento non è una restrizione reale, solo un caso patologico respinto esplicitamente.
+
+**Struttura della macchina a stati (interamente additiva rispetto a F2)**:
+- Fase erase: per ogni settore da 4KB che si sovrappone a `[flash_addr, flash_addr+len)` →
+  WREN + SE + poll RDSR-1 fino a WIP libero, prima di iniziare qualunque programmazione. Una
+  `len` non multipla di 4096 cancella comunque l'INTERO ultimo settore parziale (l'erase non
+  ha granularità più fine, Tabella 1 p.26) — la coda non scritta resta a 0xFF, corretto per
+  design (il flag valido+CRC del catalogo, F4, marcherà la lunghezza significativa, non "tutto
+  il settore è significativo").
+- Fase program: loop di Page Program (02h) da max 256B ciascuno, ognuno con il proprio WREN e
+  poll RDSR-1 fino a completamento prima del successivo (mai un'unica PP che attraversi una
+  pagina — garantito dall'allineamento a settore/pagina di `flash_addr` più il tetto di 256B
+  per chunk). I byte di ogni pagina sono letti UNO ALLA VOLTA dalla PSRAM (Port D) e passati
+  direttamente all'handshake `wdata_req`/`wdata_valid` di `spi_flash_master` (F1) — nessun
+  buffer locale, stesso stile "streaming" del percorso LOAD.
+- Poll RDSR-1 (WIP) condiviso tra erase e program (stessi 3 stati, un registro `save_phase`
+  decide cosa fare quando WIP si libera) — **nessun timeout sul numero di poll**: dichiarato
+  esplicitamente nel modulo e qui, perché il datasheet non impone un limite superiore reale
+  oltre tSE/tPP MAX, e un timeout applicato qui (piuttosto che a livello host/STATUS, F5)
+  rischierebbe di abortire un'operazione ancora legittimamente in corso su silicio più lento
+  del previsto — TEST 5 sotto dimostra che il poll NON si arrende mai da solo.
+- `d_req` verso l'arbitro: la stessa lezione di F2 (segnale di livello, non impulso) si
+  applica anche alla nuova lettura PSRAM sorgente della fase program — l'espressione
+  `assign d_req` è stata estesa per coprire anche questo nuovo stato di attesa, stessa
+  motivazione, nessuna sorpresa in più.
+
+### Verifica F3 (secondo §A)
+
+`sim/flash_copy_engine_save_tb.v`, 5 test — **ALL TESTS PASSED** (primo tentativo pulito,
+grazie alle lezioni di tempistica/arbitraggio già imparate in F2):
+- **TEST1/1b**: round-trip byte-esatto (SAVE poi LOAD, riusando il percorso F2 già verificato
+  come metà dell'oracolo) **più** un oracolo indipendente vero (TEST1b: lettura diretta di
+  `flash_model.mem[]` via riferimento gerarchico, mai passata per l'RTL sotto test) — 40 byte,
+  entrambi PASS.
+- **TEST2 (avversario §A.3, attraversamento pagina)**: SAVE di 300 byte (attraversa il
+  confine 256B dentro lo stesso settore) — verificato byte-esatto su tutti i 300 byte,
+  dimostrando che il loop interno emette WREN+PP+poll separati per ciascuna pagina invece di
+  un singolo PP che tronchi/corrompa al confine.
+- **TEST3 (avversario §A.3, blocco non allineato al settore)**: `flash_addr=0x5100` (non
+  multiplo di 0x1000) → `err`, nessun SE tentato (confermato indirettamente: il guardiano
+  `$fatal` di `flash_model.v` su un SE non allineato non scatta mai).
+- **TEST4 (avversario §A.3, verifica erase reale)**: settore avvelenato con `0x55` (non
+  0xFF), SAVE di soli 20 byte, poi verificato che il PREFISSO programmato sia esatto E che
+  la CODA non scritta del settore (byte 20..4095) sia tutta 0xFF — prova che è avvenuto un
+  vero erase, non solo un program in-place sopra il vecchio contenuto avvelenato (che
+  avrebbe lasciato la coda com'era).
+- **TEST5 (avversario §A.3, WIP prolungato)**: MISO forzato a riportare BUSY per una finestra
+  di 300µs (simulata) durante il primo poll dopo l'erase, poi rilasciato — il motore continua
+  a fare polling (nessun timeout, nessun abbandono) e completa correttamente non appena BUSY
+  si libera davvero. Nessun bit/byte corrotto nel resto del comando durante la finestra
+  forzata (verificato: MISO forzato non altera MOSI né le fasi non-lettura di WREN/SE/PP, che
+  non campionano MISO affatto).
+- **Regressione**: F1 + F2 rieseguiti insieme a F3 (**tutti ALL TESTS PASSED**), più
+  `spi_neuron_top_tb`, `spi_neuron_top_graph_tb`, `graph_engine_bandwidth_tb`,
+  `psram_controller_tb` (nessuna riga toccata da F3 in questi percorsi, ri-verificati per
+  completezza) — numeri invariati, nessuna regressione.
+- **Sintesi reale**: `yosys synth_ecp5` pulito (0 problemi CHECK) + `nextpnr-ecp5` reale
+  (`--lpf-allow-unconstrained`, modulo isolato): **Program finished normally**, Fmax
+  **158.28–158.55 MHz** (PASS a 80MHz, numero di solo modulo), `USRMCLK 1/1 100%`. Risorse
+  cresciute rispetto a F2 (306→582 LUT4, 259→407 TRELLIS_FF, 80→143 CCU2C) — atteso, la FSM è
+  quasi raddoppiata in stati per la logica erase/program/poll.
+
+**Cosa NON è coperto da F3 (dichiarato, §A.6)**: nessun test di power-loss vero a metà
+erase/program (arriva in F4, dove il meccanismo valido_flag+CRC del catalogo lo rende
+osservabile) — qui il timing del modello resta quello dichiarato nel header di
+`sim/flash_model.v` (commit tutto-o-niente, non parziale, limite di fedeltà già dichiarato in
+F1); nessuna integrazione col catalogo (F4) né con gli opcode SPI (F5); nessuna verifica che
+due SAVE consecutive su settori ADIACENTI non si disturbino a vicenda (non richiesto dal
+piano per F3, ma da tenere presente quando il catalogo scriverà slot vicini in F4).
+
+**Prossimo passo**: F4, catalogo a slot fissi + CRC (calcolata anche in Python come oracolo
+indipendente, §A.1) — read/write del catalogo, `LOAD_SLOT`/`SAVE_SLOT`, test di slot con CRC
+corrotta e power-loss simulato.
+
+## Sottosistema FLASH — F4: catalogo a slot fissi + CRC32 (2026-09-04)
+
+**Layout del catalogo** (documentato anche in `tools/flash_catalog/oracle.py`, la fonte di
+verità per la codifica byte — l'RTL e lo script sono tenuti sincronizzati a mano, verificati
+confrontando i byte reali prodotti dall'hardware, non fidandosi della prosa dell'uno o
+dell'altro): 16 slot × 16 byte = 256 byte, dentro il settore 0 (riservato, mai usato per dati
+di slot). Ogni voce: `offset[24b] | length[24b] | type[8b] | valid[8b] (0x01=valido) |
+crc32[32b] | riservato[32b]`. Un settore appena cancellato è tutto 0xFF, quindi ogni slot non
+scritto decodifica automaticamente come non valido (0xFF≠0x01) — nessun passo di formattazione
+necessario, coerente col comportamento reale di erase Winbond già citato in F1.
+
+**Oracolo indipendente (§A.1)**: `tools/flash_catalog/oracle.py`, CRC32 = `zlib.crc32` di
+Python (libreria standard, implementazione completamente separata da `rtl/crc32.v`, non
+derivata dalla stessa comprensione di design). `rtl/crc32.v` implementa il classico CRC32
+riflesso (polinomio 0xEDB88320, IEEE 802.3/zlib) — verificato con `sim/crc32_tb.v` contro
+**tre fonti indipendenti**: (1) l'identità matematica del messaggio vuoto (init XOR final =
+0), (2) il valore di controllo testuale standard "123456789" → `0xCBF43926` (pubblicato in
+ogni tabella di riferimento CRC32, non calcolato da nessuno dei due lati), (3) l'output dello
+script Python per un payload di 32 byte. **Tutti e tre PASS**, incluso al primo tentativo
+(algoritmo da manuale, rischio di errore basso ma comunque verificato, non assunto).
+
+**Architettura** (`rtl/flash_slot_manager.v`, nuovo modulo sopra `flash_copy_engine.v` di
+F2/F3, riusato **senza modifiche** — zero rischio di regressione sui percorsi LOAD/SAVE già
+verificati):
+- Il catalogo viene "messo in scena" in una piccola regione PSRAM riservata
+  (`CATALOG_PSRAM_ADDR`) usando `flash_copy_engine` COSÌ COM'È (nessuna terza direzione
+  aggiunta): `CAT_READ` = un `DIR_LOAD` del settore 0 nella regione di staging, poi lettura
+  byte-a-byte in registri on-chip; la persistenza di una voce aggiornata = serializzazione
+  byte-a-byte nella regione di staging, poi un `DIR_SAVE` del settore 0 (riusa l'intero
+  erase+loop-page-program+poll-WIP di F3, invariato).
+- La Port D verso l'arbitro PSRAM è condivisa tra l'uso interno di `flash_copy_engine` e
+  l'uso diretto di `flash_slot_manager` per la propria regione di staging, tramite un mux
+  statico su `fce_busy` — sicuro perché i due usi sono temporalmente disgiunti per
+  costruzione (nessuna nuova porta sull'arbitro necessaria).
+- Il CRC32 viene calcolato **osservando** (tap) il traffico Port D che `flash_copy_engine`
+  già genera durante un `LOAD_SLOT`/`SAVE_SLOT` (il byte scritto in PSRAM per un LOAD, il
+  byte letto da PSRAM per un SAVE) — di nuovo zero modifiche a `flash_copy_engine.v`.
+- **Bug trovato e corretto PRIMA della prima simulazione** (revisione attenta del codice
+  appena scritto, non per tentativi): la condizione di aggiornamento del CRC controllava
+  `fce_d_req && d_ready`, ma `d_req` di `flash_copy_engine` è definito (in F2) come
+  `(stato_attesa) && !d_ready` — quindi quella condizione era una contraddizione, sempre
+  falsa, il CRC non si sarebbe MAI aggiornato. Corretta in `fce_busy && d_ready` (lo stesso
+  ragionamento di tempistica "un ciclo di ritardo" già documentato in `flash_copy_engine.v`).
+  Anche il decode di una voce di catalogo dalla CAT_READ era incompleto nella prima stesura
+  (solo l'offset, mancavano length/type/valid/crc) — completato prima di compilare.
+
+**Semantica `CAT_WRITE_SLOT`/`SAVE_SLOT`/`LOAD_SLOT`** (nessun campo CRC nell'opcode
+`CAT_WRITE_SLOT` per bozza §5 del piano → decisione di design): `CAT_WRITE_SLOT` registra
+offset/length/type ma marca lo slot **non valido** (nessun dato verificato ancora dietro);
+`SAVE_SLOT` (che non riceve un offset, solo `slot_id`+`psram_addr`+`length`) risolve
+l'offset già registrato dal catalogo, scrive i dati, calcola il CRC dal vero stream, e SOLO
+al termine marca lo slot valido + persiste; `LOAD_SLOT` (che non riceve una length, solo
+`slot_id`+`psram_addr`) rifiuta immediatamente (nessuna transazione flash/PSRAM tentata) se
+lo slot non è valido, altrimenti carica e verifica il CRC dal vero stream contro quello
+salvato — se non combacia, segnala errore (i dati restano comunque in PSRAM, stesso stile
+"flag di errore non rollback transazionale" già usato altrove nel progetto, es. STATUS.bit2).
+
+### Verifica F4 (secondo §A)
+
+`sim/flash_slot_manager_tb.v`, 6 test — **ALL TESTS PASSED** (primo tentativo pulito dopo i
+due bug corretti in revisione):
+- **TEST1**: `CAT_WRITE_SLOT` + persistenza + `CAT_READ` round-trip — i byte REALI persistiti
+  in `flash_model.mem[]` confrontati byte-a-byte con `oracle.py.pack_entry(...)` (oracolo
+  indipendente, non il decode dell'RTL stesso); poi una `CAT_READ` fresca (simula un reboot)
+  ricostruisce la stessa voce on-chip.
+- **TEST2/3**: `SAVE_SLOT` con pattern noto — voce di catalogo persistita (CRC incluso)
+  confrontata byte-a-byte con l'oracolo Python; `LOAD_SLOT` byte-esatto con CRC accettato.
+- **TEST4 (avversario §A.3, CRC corrotto → invalido)**: un bit del dato flash dello slot
+  salvato viene capovolto direttamente (`flash_model.mem[]`, indipendente dall'RTL sotto
+  test) → `LOAD_SLOT` successivo segnala errore.
+- **TEST5 (avversario §A.3, slot mai salvato → invalido)**: `CAT_WRITE_SLOT` senza mai una
+  `SAVE_SLOT` → `LOAD_SLOT` rifiuta immediatamente, sentinella PSRAM intatta (nessuna
+  transazione tentata).
+- **TEST6 (avversario §A.3, power-loss simulato)**: il Sector Erase di una `SAVE_SLOT` viene
+  abortito a metà usando l'hook di power-loss già documentato in `sim/flash_model.v`
+  (`pending_se`+`busy` forzati bassi via riferimento gerarchico), con il settore target
+  pre-avvelenato con un pattern DIVERSO da quello atteso. Il poll WIP di `flash_copy_engine`,
+  ingannato dal `busy` forzato, fa apparentemente "completare con successo" l'intera
+  `SAVE_SLOT` (nessun `err` sulla SAVE stessa — corretto, dal punto di vista del motore
+  l'operazione È completata secondo RDSR) — ma il CRC persistito è quello dei dati
+  INTENZIONATI, che non combacia più con i byte REALI (avvelenati, mai davvero cancellati).
+  Una `LOAD_SLOT` successiva rileva correttamente l'incoerenza → errore. Dimostra esattamente
+  il meccanismo per cui "regione invalida rilevata" funziona anche quando un'operazione
+  sottostante non ha fatto silenziosamente quel che dichiarava: il CRC verifica i byte
+  realmente committed, non si fida di un segnale di completamento.
+- **Regressione**: `crc32_tb.v` + F1 + F2 + F3 rieseguiti insieme a F4 (**tutti ALL TESTS
+  PASSED**), più `spi_neuron_top_tb`/`psram_controller_tb` (nessuna riga toccata da F4 in
+  questi percorsi) — nessuna regressione.
+- **Sintesi reale**: `yosys synth_ecp5` pulito (0 problemi CHECK) per `flash_slot_manager.v`
+  completo. **`nextpnr-ecp5` reale a livello di modulo isolato NON eseguibile per questo
+  modulo specifico** — dichiarato onestamente, non nascosto: la lista di porte a livello di
+  modulo (253 bit — ogni campo del comando/ispezione catalogo diventa un "pin" quando il
+  modulo è trattato come top fittizio) supera i 245 pin TRELLIS_IO fisici del package,
+  `nextpnr-ecp5` fallisce con "no BELs remaining to implement TRELLIS_IO" — artefatto del
+  testare un modulo INTERNO come se fosse il top reale (F1/F2/F3 erano abbastanza piccoli da
+  non avere questo limite), non un problema del design. La verifica reale di piazzamento
+  arriva in F5, quando il modulo è integrato in `spi_neuron_top` e la maggior parte di queste
+  porte diventa segnale interno, non pin fisico.
+
+**Cosa NON è coperto da F4 (dichiarato, §A.6)**: nessun test di due slot che si sovrappongano
+in flash (l'host è responsabile di offset/length coerenti via `CAT_WRITE_SLOT`, come da
+modello "nessun filesystem" del piano); `CATALOG_PSRAM_ADDR` è una convenzione non applicata
+altrove — nulla impedisce ad un altro master di scrivere quella regione PSRAM durante
+un'operazione di catalogo (dichiarato, non un problema nello scope attuale poiché nessun
+altro master è integrato prima di F5); nessuna integrazione con gli opcode SPI (F5) —
+`flash_slot_manager` è verificato come modulo standalone col proprio testbench diretto, non
+ancora pilotato da `spi_engine`.
+
+**Prossimo passo**: F5, opcode SPI (§5 del piano) + integrazione in `spi_neuron_top` —
+`FLASH_READ_BLOCK`/`FLASH_WRITE_BLOCK`/`FLASH_ERASE`/`CAT_READ`/`CAT_WRITE_SLOT`/
+`LOAD_SLOT`/`SAVE_SLOT`, `data_ready_n` a fine operazione, test end-to-end
+`netasm → SAVE_SLOT → LOAD_SLOT → RUN_NETWORK`; anche la vera sintesi/place&route a livello
+di sistema (Fmax, occupazione) per `flash_slot_manager.v` arriva qui.
+
+## Sottosistema FLASH — F5: opcode SPI + integrazione in spi_neuron_top (2026-09-04)
+
+Ultima fase di integrazione: gli 8 opcode SPI (7 dal piano §5 + 1 aggiunto, motivato sotto),
+`rtl/spi_engine.v` esteso per decodificarli, `rtl/spi_neuron_top.v` esteso per istanziare
+`flash_slot_manager.v` e portare i pin fisici della flash (`flash_mosi`/`flash_miso`/
+`flash_cs_n`, distinti dai pin SPI host esistenti — stesso principio di
+`docs/FPGA-Neural-Hardware-Design.md` §6: mai condividere i pin della config-flash), pinout
+reale aggiornato.
+
+**Opcode aggiunti** (`rtl/spi_engine.v`, range 0x40-0x47):
+```
+0x40 FLASH_READ_BLOCK   flash_addr(3) psram_addr(3) len(3)
+0x41 FLASH_WRITE_BLOCK  psram_addr(3) flash_addr(3) len(3)
+0x42 FLASH_ERASE        sector_addr(3)
+0x43 CAT_READ           (nessun payload — ricarica il catalogo on-chip da flash)
+0x44 CAT_WRITE_SLOT     slot_id(1) offset(3) length(3) type(1)
+0x45 LOAD_SLOT          slot_id(1) psram_addr(3)
+0x46 SAVE_SLOT          slot_id(1) psram_addr(3) length(3)
+0x47 CAT_INSPECT        slot_id(1) → risposta sincrona 16 byte (voce di catalogo)
+```
+`CAT_INSPECT` **non è nella bozza originale del piano** — aggiunto e motivato esplicitamente
+(commento nel sorgente): `CAT_READ` non porta byte di risposta nella bozza (coerente col
+resto del protocollo, "fire-and-forget poi polla STATUS/data_ready_n", mai "tieni CS basso
+per millisecondi"), quindi serviva un meccanismo SEPARATO per il "-> host" che il piano
+stesso menziona — `CAT_INSPECT` è quel meccanismo, nello stesso stile sincrono già usato da
+STATUS/READ_OUTPUT/READ_CONFIG.
+
+**Decodifica del payload**: un unico accumulatore a scorrimento condiviso da tutti gli
+opcode flash (stesso pattern "shift ogni byte, decodifica sull'ultimo con slice a bit fissi"
+già usato per il decode delle voci di catalogo in `flash_slot_manager.v`), non uno stato
+dedicato per opcode — payload da 0 a 9 byte a seconda dell'opcode.
+**Bug trovato e corretto PRIMA di compilare** (derivazione a mano bit-per-bit, stesso
+metodo già validato in F1): l'estrazione di `slot_id` per `CAT_WRITE_SLOT` prendeva il
+nibble ALTO del suo byte invece del nibble BASSO (convenzione usata coerentemente da
+`LOAD_SLOT`/`SAVE_SLOT`/`CAT_INSPECT`) — corretto confrontando ogni singolo campo con una
+derivazione indipendente dei bit del registro di accumulo, non solo quello sbagliato.
+
+**Bug trovato e corretto DALLA REGRESSIONE, non dalla progettazione** (la ragione per cui la
+regressione va sempre rieseguita, non solo assunta): `done_event` in `spi_engine.v` era
+un multiplexer a priorità (`graph_mode ? graph_done : (net_mode ? seq_done : nm_done)`) che
+NON sceglie semplicemente "una fonte tra varie mutuamente esclusive" — MASCHERA
+deliberatamente gli `nm_done` intermedi (uno per layer) durante una `RUN_NETWORK` multi-layer,
+altrimenti STATUS.bit1 si alzerebbe troppo presto. La prima versione del supporto flash
+sostituiva questo con un semplice OR di tutte e quattro le sorgenti (`nm_done|seq_done|
+graph_done|flash_done`) — sbagliato: **`sim/spi_engine_tb.v` (test esistente, invariato)
+ha fallito immediatamente** ("done bit set by an intermediate nm_done during RUN_NETWORK").
+Corretto separando: la maschera esistente resta `inference_done_event` **invariata**, e
+`flash_done` viene aggiunto in OR **fuori** da quella maschera (i due domini sono ora
+genuinamente indipendenti — le operazioni flash sull'arbitro a bassa priorità possono
+sovrapporsi a un'inferenza per design, F2). Rieseguito subito dopo: PASS pulito.
+
+**STATUS byte esteso** (bit3=`flash_err_sticky`, sticky-fino-a-lettura come `status_done_sticky`
+— scelta motivata nel sorgente: `graph_err` NON viene riusato perché confonderebbe due domini
+di errore non correlati; bit4=`flash_busy`, livello non sticky) — `resp_index`/`resp_len`
+allargati da 4 a 5 bit per accomodare la risposta a 16 byte di `CAT_INSPECT` (le esigenze
+degli opcode esistenti, tutte ≤11 byte, restano immutate).
+
+**Bug (gap) trovato in revisione e corretto in `flash_slot_manager.v` durante F5, non un
+bug di F5 stesso**: `ST_SLOT_FCE_WAIT` per `SAVE_SLOT` aggiornava e persisteva il catalogo
+come "valido" incondizionatamente al completamento di `flash_copy_engine`, **senza mai
+controllare `fce_err`** — una `SAVE_SLOT` il cui `flash_copy_engine` sottostante fosse stato
+rifiutato internamente (es. lunghezza fuori range) sarebbe stata comunque marcata valida nel
+catalogo. Trovato rileggendo il codice mentre si aggiungevano gli opcode raw (che DOVEVANO
+propagare `fce_err`, il che ha fatto notare l'assenza dello stesso controllo nel ramo
+`SAVE_SLOT` già esistente). Corretto: `SAVE_SLOT` ora salta l'aggiornamento/persistenza del
+catalogo se `fce_err` è alto.
+
+### Una scoperta reale, non specifica alla flash (§A.5 — tracciabilità di un rischio)
+
+Durante il debug del test end-to-end (sotto) è emerso un problema REALE e generale, non un
+bug di questa sessione: **`WRITE_RAM`/`READ_RAM` non hanno alcun backpressure verso il master
+SPI** — limite già dichiarato nell'header di `spi_engine.v` ("v1 LIMITATION... reasonable
+constraint... not a real-time path") ma la cui conseguenza pratica non era mai stata esposta
+prima. Riprodotto con un test minimo, SENZA alcun opcode flash coinvolto: un primo `WRITE_RAM`
+emesso troppo presto dopo il reset (prima che `psram_controller` esca dal suo power-up,
+~150µs) fa sì che l'host, non essendo rallentato da alcun handshake, continui a scorrere byte
+SPI mentre `spi_engine` è ancora bloccato ad aspettare il PRIMO `ram_ready` — i byte ricevuti
+in quella finestra vengono scartati silenziosamente, **senza errore, senza hang**: solo dati
+sbagliati. **Perché è emerso solo ora**: prima del fix del Bug #1 di F2
+(`psram_controller.v`), una richiesta che arrivava durante il power-up veniva soddisfatta
+"per sbaglio, ma presto" da un impulso `mem_ready` spurio della sequenza CR_INIT — un
+comportamento SBAGLIATO che però, per coincidenza, dava all'host abbastanza poco tempo da non
+disallinearsi. Il fix CORRETTO (F2) fa aspettare la richiesta per l'intera, vera durata del
+power-up — tempo sufficiente perché l'host si disallinei davvero. **Non è una regressione**:
+è un rischio pre-esistente, mascherato da un bug pre-esistente diverso, ora scoperto per la
+prima volta. **Mitigazione applicata qui**: ogni testbench che tocca la PSRAM aspetta
+esplicitamente `psram_ctrl.state == STATE_IDLE` prima del primo accesso (pattern già usato da
+`sim/spi_neuron_top_graph_tb.v` e simili, solo non ancora copiato nei nuovi testbench di
+questa sessione). **Non risolto nell'RTL** (fuori scope per il sottosistema flash — servirebbe
+un vero backpressure su `WRITE_RAM`/`READ_RAM`, una modifica di protocollo più ampia):
+dichiarato esplicitamente come rischio aperto per qualunque host reale, non solo per i test.
+
+### Verifica F5 (secondo §A)
+
+`sim/spi_neuron_top_flash_tb.v`, 4 test sopra lo stack REALE completo (spi_slave+spi_engine+
+flash_slot_manager+flash_copy_engine+spi_flash_master+mem_arbiter+int8_memory_access+
+memory_interface+psram_controller+psram_model+flash_model), pilotato via SPI bit-banged
+realistico — **ALL TESTS PASSED**:
+- TEST1: `FLASH_ERASE`+`FLASH_WRITE_BLOCK`+`FLASH_READ_BLOCK` via SPI reale (la correttezza
+  profonda di questi primitivi è già coperta a livello di modulo da F2/F3/F5-raw — questo
+  prova che la DECODIFICA SPI in `spi_engine.v` li invoca correttamente, cosa che i test di
+  modulo non possono provare).
+- TEST2: `CAT_WRITE_SLOT`+`CAT_READ`+`CAT_INSPECT` via SPI reale.
+- TEST3 (avversario §A.3): `LOAD_SLOT` su uno slot mai salvato → `STATUS.bit3` osservato via
+  SPI reale.
+- **TEST4 — il requisito esplicito §6 del piano**: `netasm → WRITE_RAM → SAVE_SLOT →
+  (sovrascrittura PSRAM con garbage) → LOAD_SLOT → RUN_NETWORK → READ_RAM` = **126**, lo
+  stesso valore atteso indipendente già usato in `sim/graph_engine_tb.v`/
+  `sim/spi_neuron_top_graph_tb.v` (esempio da manuale §3, x=[10,1,4,0]), non ri-derivato qui.
+
+**Tre intoppi reali nella COSTRUZIONE del TEST4** (nessuno un bug RTL — tutti dichiarati per
+esteso nei commenti del testbench, perché sono esattamente il tipo di errore un utente reale
+di questo sistema potrebbe fare):
+1. Il blob di rete (tabella descrittore + edge) piazzato a PSRAM 0x000000 collide col
+   `CATALOG_PSRAM_ADDR` di `flash_slot_manager` (default, anch'esso 0x000000) — la
+   serializzazione del catalogo durante il passo di persistenza di `SAVE_SLOT` sovrascriveva
+   silenziosamente il blob. Esattamente il limite già dichiarato nell'header di
+   `flash_slot_manager.v` ("nothing else in this design may use that PSRAM range").
+2. Prima generazione con `netasm` usava `--parallel` di default (8), ma questo testbench usa
+   `PARALLEL=2` (come `spi_neuron_top_graph_tb.v`) — il padding delle connessioni non
+   corrispondeva a `GRAPH_MAX_CONN`/`PARALLEL` reali dell'hardware sotto test.
+3. **La scoperta più insidiosa**: `netasm` incorpora nella tabella descrittore l'indirizzo
+   ASSOLUTO di ogni blocco edge, calcolato a tempo di compilazione da `--table-base`/
+   `--edges-base` — NON un offset relativo a `table_base`. Spostare il blob compilato a un
+   indirizzo PSRAM diverso da quello dato a `netasm` lascia questi puntatori incorporati
+   "stantii", puntando silenziosamente a byte non correlati (qui, tutti zero) invece dei
+   veri edge. **Nessun errore, nessun hang**: `graph_engine` legge edge azzerati e calcola un
+   risultato sbagliato (0 invece di 126) con STATUS che riporta un completamento
+   perfettamente pulito — motivo per cui è documentato per esteso nel commento del test:
+   argomenti di indirizzo base sbagliati a un generatore di codice possono produrre un
+   risultato "riuscito" ma completamente sbagliato, senza alcun sintomo visibile
+   dall'hardware. Risolto rigenerando con `--table-base`/`--edges-base` che corrispondono
+   davvero a dove il blob viene piazzato.
+- **Regressione completa**: tutti i testbench del sottosistema flash (crc32, F1, F2, F3,
+  erase, F4, F5-raw, F5-top) più i testbench esistenti del progetto
+  (`spi_neuron_top_tb`, `spi_neuron_top_graph_tb`, `spi_neuron_top_runnetwork_tb`,
+  `spi_neuron_top_irq_tb`, `spi_engine_tb`, `spi_slave_tb`, `psram_controller_tb`) —
+  **tutti PASS**, nessuna regressione.
+- **Sintesi reale, livello di SISTEMA COMPLETO** (prima volta per il sottosistema flash
+  integrato): `yosys synth_ecp5` pulito (0 problemi CHECK) su `spi_neuron_top` intero.
+  Pinout reale rigenerato (`tools/pinout/gen_lpf.py` esteso con `flash_mosi`/`flash_miso`/
+  `flash_cs_n`, stesso banco 7, nessun pin `flash_sclk` — quel clock resta interno via
+  `USRMCLK`) — **0 errori di vincolo**, 56/56 celle piazzate secondo vincoli.
+  `nextpnr-ecp5` reale: **Program finished normally**, Fmax **66.68 MHz** (FAIL a 80MHz,
+  atteso). **Percorso critico verificato esplicitamente identico a quello già noto** (non
+  assunto): `u_graph_engine.u_neuron.group_index` → `u_mac8` → catena di riporto
+  dell'accumulatore in `neuron_parallel.v` — la STESSA catena documentata fin dalla Fase 7,
+  **nessun modulo del sottosistema flash compare nel percorso critico**. Il calo rispetto ai
+  73.88MHz precedenti è rumore di piazzamento (floorplanning automatico, banda già
+  caratterizzata nello sweep di seed), non una regressione di design — confermato dal
+  percorso critico invariato. Occupazione: `TRELLIS_IO` 56/245 (22%), `TRELLIS_FF` 4855/43848
+  (11%), `TRELLIS_COMB` 9060/43848 (20%), `USRMCLK` 1/1 (100%, piazzata correttamente) —
+  nessuna pressione sulle risorse del dispositivo.
+
+**Cosa NON è coperto da F5 (dichiarato, §A.6)**: nessun backpressure reale su
+`WRITE_RAM`/`READ_RAM` (limite pre-esistente, rischio dichiarato sopra, non risolto — fuori
+scope); nessuna verifica timing reale a 16MHz/80MHz delle latenze di load/save/erase con
+metodologia di misura dedicata (arriva in F6); nessun documento di verifica consolidato
+per-modulo (arriva in F6); `CATALOG_PSRAM_ADDR` resta una convenzione non imposta altrove
+(dichiarato già in F4, confermato qui come causa reale di un intoppo — non un bug, ma un
+rischio noto per l'host).
+
+**Prossimo passo**: F6 — regressione completa finale, report di sintesi consolidato (Fmax,
+occupazione), documento di verifica per modulo (cosa è coperto, come, contro quale oracolo),
+misura reale delle latenze di load/save/erase a 16MHz e 80MHz con metodologia dichiarata.
+
+## Sottosistema FLASH — F6: regressione finale, documento di verifica, latenze reali (2026-09-04)
+
+Ultima fase: nessun RTL nuovo, solo verifica consolidata e misure — i deliverable finali di
+§9 del piano.
+
+**Regressione completa finale**: tutti i **33 testbench** del progetto (elenco completo via
+`find sim -name "*_tb.v"`), ognuno compilato ed eseguito da zero (`iverilog -g2012
+-DSIMULATION -o <tmp> rtl/*.v sim/psram_model.v sim/flash_model.v <tb>.v` + `vvp`) — **32
+PASS + 2 fallimenti di elaborazione ATTESI** (`neuron_parallel_guard_negative_*`, il cui
+"fallire a compilare" È il test, per costruzione — comportamento invariato dalla Fase 9,
+mai toccato da questa sessione). **Zero regressioni** su un progetto che ora comprende 8
+nuovi file RTL (`spi_flash_master.v`, `crc32.v`, `flash_copy_engine.v`,
+`flash_slot_manager.v` + le modifiche a `mem_arbiter.v`, `psram_controller.v`,
+`spi_engine.v`, `spi_neuron_top.v`) e 9 nuovi testbench, oltre a un file Python
+(`tools/flash_catalog/oracle.py`) e uno di benchmark timing
+(`sim/flash_latency_bench.v`).
+
+**Misure reali di latenza a 16MHz e 80MHz** — metodologia dichiarata per esteso in
+`docs/FPGA-Neural-Flash-Subsystem-Verification.md` (sintesi qui): simulare l'attesa WIP
+INTERA a scala temporale reale con il vero loop di poll RDSR è stato **tentato e
+abbandonato** — a timing reale, coprire un'attesa di 400ms (tSE MAX) con poll SPI reali
+richiede ~100.000+ transazioni, decine di milioni di eventi Icarus, oltre il limite pratico
+di tempo macchina (limite del simulatore, dichiarato esplicitamente come tale — non un
+limite dell'hardware reale, dove il poll non costa nulla). Sostituito con: fase di "issue"
+(WREN+SE/PP) misurata direttamente in simulazione (accurata indipendentemente dalla scala
+temporale del modello flash, che scala solo l'attesa POST-issue) + durata dell'attesa WIP
+presa dal valore MAX del datasheet (già citato in F1/F2, §9.6 p.90) sommata analiticamente —
+lo stesso numero totale che un host reale vedrebbe, scomposto in una parte misurata e una
+citata invece di forzare un singolo numero simulato che costerebbe più di quanto vale
+ottenere onestamente.
+
+| Operazione | @16MHz | @80MHz |
+|---|---|---|
+| ERASE (un settore 4KB) | 400.014 ms | 400.003 ms |
+| SAVE (256B, incl. proprio erase) | 403.019 ms | 403.004 ms |
+| LOAD (4096B) | 8.713 ms (0.470 MB/s) | 1.743 ms (2.351 MB/s) |
+
+ERASE/SAVE dominati quasi interamente dal timing FISICO interno della flash (indipendente
+dalla frequenza host, come atteso — tSE/tPP sono proprietà del chip, non dell'interfaccia);
+LOAD invece puramente limitato dal clock SPI (READ non ha attesa WIP, §8 intro p.24) — la
+banda scala linearmente con la frequenza, confermando che il modello di temporizzazione è
+internamente coerente (nessuna sorpresa, il numero atteso fisicamente è quello misurato).
+
+**Documento di verifica consolidato**: `docs/FPGA-Neural-Flash-Subsystem-Verification.md` —
+per ogni modulo (`spi_flash_master.v`, `flash_model.v`, `flash_copy_engine.v`, `crc32.v`,
+`flash_slot_manager.v`, le estensioni di `spi_engine.v`/`spi_neuron_top.v`): cosa è
+coperto, come, contro quale oracolo indipendente, cosa NON è coperto (§A.6), più le due
+scoperte trasversali di questa sessione (il bug di `psram_controller.v` e il limite di
+backpressure di `WRITE_RAM`/`READ_RAM`) e le latenze reali sopra.
+
+### Riepilogo del sottosistema flash (F1→F6)
+
+- **RTL nuovo**: `rtl/spi_flash_master.v`, `rtl/crc32.v`, `rtl/flash_copy_engine.v`,
+  `rtl/flash_slot_manager.v` (4 file, ~1100 righe totali).
+- **RTL esteso, additivamente**: `rtl/mem_arbiter.v` (+ Port D), `rtl/psram_controller.v`
+  (fix di un bug pre-esistente reale, non un'estensione funzionale), `rtl/spi_engine.v`
+  (+ 8 opcode), `rtl/spi_neuron_top.v` (+ istanza `flash_slot_manager` + pin fisici).
+  **Nessuna interfaccia esistente ha cambiato comportamento** (verificato dalla regressione
+  completa ripetuta ad ogni fase, non solo alla fine).
+  **Un secondo bug pre-esistente e non-flash trovato e documentato ma NON risolto nell'RTL**
+  (fuori scope, richiederebbe un vero protocollo di backpressure): il limite di
+  `WRITE_RAM`/`READ_RAM` — dichiarato apertamente, non nascosto.
+- **Oracoli indipendenti usati**: datasheet W25Q128JV(-DTR) (citato riga per riga in
+  `flash_model.v`), datasheet ECP5 (per USRMCLK), cell library reale di yosys (per la
+  primitiva `USRMCLK`, non indovinata), `tools/flash_catalog/oracle.py` (Python `zlib.crc32`
+  + layout catalogo, indipendente dall'RTL), valore di controllo testuale standard CRC32
+  ("123456789"), il valore atteso 126 già stabilito indipendentemente da
+  `sim/graph_engine_tb.v`.
+- **9 nuovi testbench**, tutti con test avversari oltre al caso positivo (lunghezza fuori
+  range, blocco non allineato, attraversamento pagina 256B, CRC corrotto, slot mai salvato,
+  power-loss simulato, contesa reale dell'arbitro, opcode illegale).
+- **Sintesi reale** (Yosys + nextpnr-ecp5, non solo simulazione) ad ogni fase; sintesi di
+  SISTEMA COMPLETO in F5: 0 errori di vincolo, Fmax 66.68MHz (percorso critico verificato
+  identico a quello pre-esistente dalla Fase 7, nessun modulo flash coinvolto), nessuna
+  pressione sulle risorse.
+- **Limiti dichiarati esplicitamente** (§A.6, mai nascosti): blocco >65535B non esercitato a
+  piena scala; due slot/SAVE adiacenti non testati; `CATALOG_PSRAM_ADDR` è una convenzione
+  non imposta a livello di sistema; nessuna verifica elettrica/analogica reale (fuori portata
+  di una simulazione comportamentale); il limite di backpressure di WRITE_RAM/READ_RAM
+  resta un rischio aperto per qualunque host.
+
+Il sottosistema flash come richiesto dal piano originale (§0-§9) è completo: SPI master (F1),
+copy engine bidirezionale flash↔PSRAM con erase-before-write e loop page-program (F2/F3),
+catalogo a slot fissi con CRC32 e rilevamento power-loss (F4), opcode SPI completi e
+integrazione nel top level (F5), verifica consolidata e misure reali (F6).

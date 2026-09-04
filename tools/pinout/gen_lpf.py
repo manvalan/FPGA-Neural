@@ -77,9 +77,19 @@ def assign(rows):
     # Application SPI + reset + host attention pins (irq_n/data_ready_n,
     # added 2026-09-03), all in bank 7 alongside clk -- kept away from
     # the PSRAM bus (banks 2+3) per the same "opposite edges" rationale
-    # as the SPI signals.
-    spi_names = ["sclk", "mosi", "miso", "cs_n", "rst", "irq_n", "data_ready_n"]
-    for name, (ball, _) in zip(spi_names, ctrl_pool[0:7]):
+    # as the SPI signals. flash_mosi/flash_miso/flash_cs_n (added
+    # 2026-09-04, flash-subsystem F5) join the same pool for the same
+    # reason -- this is the APPLICATION-side master toward the
+    # boot/persistence flash (rtl/spi_flash_master.v), physically
+    # distinct pins from both the host SPI above and the dedicated
+    # config-SPI pins (never touched by user logic, see
+    # docs/FPGA-Neural-Hardware-Design.md §6). No flash_sclk pin here:
+    # that clock is generated internally via the USRMCLK primitive
+    # (see rtl/spi_flash_master.v's header for the full ECP5
+    # rationale), not a normal constrainable I/O.
+    spi_names = ["sclk", "mosi", "miso", "cs_n", "rst", "irq_n", "data_ready_n",
+                 "flash_mosi", "flash_miso", "flash_cs_n"]
+    for name, (ball, _) in zip(spi_names, ctrl_pool[0:10]):
         a[name] = ball
     a["clk"] = CLK_BALL
     return a

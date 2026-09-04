@@ -414,15 +414,45 @@ counter, not CS-edge detection mid-transfer.
 | Opcode | Name | Payload (host → FPGA) | Response (FPGA → host) | Function |
 |---|---|---|---|---|
 | 0x00 | NOP | — | — | No operation (idle/dummy clocking) |
-| 0x01 | WRITE_RAM | addr(3B) + len(2B) + `len` data bytes | — | Write a block into PSRAM (X, weights, bias, network params) |
+| 0x01 | WRITE_RAM | addr(3B) + len(2B) + `len` data bytes | — | Write a block into PSRAM (X, weights, bias, network params). **No backpressure to the host** (known v1 limitation) — see the warning right after this table. |
 | 0x02 | READ_RAM | addr(3B) + len(2B) | `len` data bytes | Read a block back from PSRAM |
 | 0x0F | RESET | — | — | Synchronous reset pulse to the compute engine (`neuron_memory`) and clears the STATUS latch below. Does **not** erase PSRAM contents. Kept as a distinct opcode from NOP. |
-| 0x10 | SET_BASE | sel(1B) + addr(3B) | — | Sets `x_base`(sel=0) / `w_base`(sel=1) / `bias_addr`(sel=2) / `table_base`(sel=3) / `buf_a_base`(sel=4) / `buf_b_base`(sel=5) / `activation`(sel=6) / `n_inputs_real`(sel=7) / `n_neurons_real`(sel=8) — sel=6..8 are single-layer/manual-path registers only (RUN_NETWORK reads the equivalent fields per-layer from the descriptor table instead). sel=6 uses only the low 2 bits of the low address byte (see `neuron_parallel.v`'s `ACT_*` localparams; reset default `ACT_RELU`). sel=7/8 use the low 2 of the 3 address bytes as a 16-bit BE value (reset default = this bitstream's build-time `N_INPUTS`/`N_NEURONS`) — see "Runtime network width" below. |
+| 0x10 | SET_BASE | sel(1B) + addr(3B) | — | Sets `x_base`(sel=0) / `w_base`(sel=1) / `bias_addr`(sel=2) / `table_base`(sel=3) / `buf_a_base`(sel=4) / `buf_b_base`(sel=5) / `activation`(sel=6) / `n_inputs_real`(sel=7) / `n_neurons_real`(sel=8) / `num_neurons_graph`(sel=9) / `n_out`(sel=10) — sel=6..8 are single-layer/manual-path registers only (RUN_NETWORK reads the equivalent fields per-layer from the descriptor table instead, dense mode). sel=6 uses only the low 2 bits of the low address byte (see `neuron_parallel.v`'s `ACT_*` localparams; reset default `ACT_RELU`). sel=7/8 use the low 2 of the 3 address bytes as a 16-bit BE value (reset default = this bitstream's build-time `N_INPUTS`/`N_NEURONS`) — see "Runtime network width" below. sel=9/10 (Phase G5, graph/Type#2 only) set `num_neurons_graph`/`n_out` the same 16-bit-BE-in-low-2-bytes way; `buf_a_base` (sel=4) is reused as `out_base` in graph mode (see `rtl/graph_engine.v`'s header). |
+| 0x11 | SET_NET_TYPE | type(1B) | — | Phase G5: selects the network type `RUN_NETWORK` dispatches to — `0x01`=dense/Type#1 (`layer_sequencer`, default after RESET), `0x02`=graph/Type#2 (`graph_engine`). |
 | 0x20 | START | — | — | Pulses `start` on `neuron_memory` directly (single-layer/manual path); ignored (no-op) if the engine is busy in any form (single-layer or a RUN_NETWORK job) |
-| 0x21 | STATUS | — | 1 byte | bit0=`busy` (live, OR of the single-layer and RUN_NETWORK busy signals), bit1=`done` (**sticky, clear-on-read**; latches on the *final* layer's completion for a RUN_NETWORK job, not each intermediate layer), bits7:2 reserved=0 |
-| 0x22 | READ_OUTPUT | — | `N_NEURONS` bytes | `y_bus`, neuron-major (byte 0 = neuron 0) |
-| 0x23 | RUN_NETWORK | num_layers(1B) | — | Phase 5: pulses `layer_sequencer`'s `run_start` to chain `num_layers` (1..N_LAYERS) runs of `neuron_memory` using the descriptor table at `table_base` and the ping-pong buffers at `buf_a_base`/`buf_b_base`; layer 0 reads from `x_base`. Each layer's activation (see below) is read per-layer from the descriptor table, independent of the single-layer path's `activation` register. Ignored (no-op) if the engine is already busy. |
-| 0x30 | READ_CONFIG | — | 8 bytes | Hardware config record, see below |
+| 0x21 | STATUS | — | 1 byte | bit0=`busy` (live, OR of the single-layer, RUN_NETWORK, and graph busy signals), bit1=`done` (**sticky, clear-on-read**; latches on the *final* layer's completion for a RUN_NETWORK job, not each intermediate layer — and now also on a completed flash op, see bit3), bit2=`graph_err` (Phase G5, §7 load-time guard; sticky until RESET or the next graph `run_start`, **not** clear-on-read), bit3=`flash_err` (flash subsystem, §8.3 below; **sticky, clear-on-read** like bit1), bit4=`flash_busy` (flash subsystem; **live**, not sticky), bits7:5 reserved=0 |
+| 0x22 | READ_OUTPUT | — | `N_NEURONS` bytes | `y_bus`, neuron-major (byte 0 = neuron 0). Dense/Type#1 only — graph/Type#2 results are read back from PSRAM at `out_base` via `READ_RAM` instead (`graph_engine` has no `y_bus`). |
+| 0x23 | RUN_NETWORK | num_layers(1B) | — | Dispatches to `layer_sequencer` (dense) or `graph_engine` (graph) based on the current `SET_NET_TYPE` selection. Dense (Phase 5): pulses `layer_sequencer`'s `run_start` to chain `num_layers` (1..N_LAYERS) runs of `neuron_memory` using the descriptor table at `table_base` and the ping-pong buffers at `buf_a_base`/`buf_b_base`; layer 0 reads from `x_base`. Each layer's activation (see below) is read per-layer from the descriptor table, independent of the single-layer path's `activation` register. Graph (Phase G5): `num_layers` payload byte is ignored (neuron count comes from `SET_BASE` sel=9 instead, so this opcode's byte framing stays identical for both types); pulses `graph_engine`'s own `run_start`. Ignored (no-op) if the engine is already busy in any form. |
+| 0x30 | READ_CONFIG | — | 11 bytes | Hardware config record, see below |
+| 0x40 | FLASH_READ_BLOCK | flash_addr(3B) + psram_addr(3B) + len(3B) | — | Flash subsystem (§8.3): copies `len` bytes flash→PSRAM, raw (no catalog/CRC). |
+| 0x41 | FLASH_WRITE_BLOCK | psram_addr(3B) + flash_addr(3B) + len(3B) | — | Copies `len` bytes PSRAM→flash, raw — internal erase-before-write + ≤256B Page Program loop + WIP poll, transparent to the host. |
+| 0x42 | FLASH_ERASE | sector_addr(3B) | — | Standalone 4KB sector erase (`sector_addr` must be sector-aligned). |
+| 0x43 | CAT_READ | — | — | Reloads the on-chip slot catalog (16 entries) from the flash's reserved catalog sector. Fire-and-forget like every other flash op below — poll STATUS/`data_ready_n` for completion, then use `CAT_INSPECT` to actually read a slot's metadata back. |
+| 0x44 | CAT_WRITE_SLOT | slot_id(1B) + offset(3B) + length(3B) + type(1B) | — | Registers/updates slot `slot_id`'s (offset, length, type) in the on-chip catalog and persists the whole catalog to flash. Marks the slot **invalid** (no verified data behind it yet) — `SAVE_SLOT` is what marks it valid. |
+| 0x45 | LOAD_SLOT | slot_id(1B) + psram_addr(3B) | — | Resolves `slot_id`'s offset+length from the on-chip catalog and streams flash→PSRAM, verifying the CRC32 live against the catalog's stored value. `flash_err` (STATUS bit3) if the slot is invalid (no transaction attempted) or the CRC doesn't match. |
+| 0x46 | SAVE_SLOT | slot_id(1B) + psram_addr(3B) + length(3B) | — | Streams `length` bytes PSRAM→flash at `slot_id`'s already-registered offset (via a prior `CAT_WRITE_SLOT`), computing the CRC32 live; on success updates the catalog entry (length, CRC, valid=1) and persists it. |
+| 0x47 | CAT_INSPECT | slot_id(1B) | 16 bytes | **Added beyond the original catalog opcode draft** (not `CAT_READ` itself, which has no payload/response — see its own row above): synchronous read of one already-loaded catalog entry, same byte layout as the raw catalog-sector bytes (offset[3] + length[3] + type[1] + valid[1] + crc32[4] + reserved[4], MSB-first). |
+
+**`WRITE_RAM`/`READ_RAM` have no backpressure to the host (known v1
+limitation, real consequence found 2026-09-04):** each received/produced
+byte must be fully processed by `spi_engine` before the next SCLK-driven
+byte boundary arrives — reasonable for bulk-loading weights/inputs at
+init, not a real-time path (see `rtl/spi_engine.v`'s own header). The
+concrete risk this creates: if a host issues `WRITE_RAM`/`READ_RAM`
+before `psram_controller`'s power-up sequence has completed
+(~150µs after reset, `rtl/psram_controller.v`'s `STATE_INIT`+
+`STATE_CR_INIT`), `spi_engine` stalls waiting for the very first PSRAM
+access to complete while the host — not slowed by any handshake —
+keeps clocking bytes. Bytes received during that stall are **silently
+dropped**, with no error and no hang, just wrong data in PSRAM. Found
+during the flash-subsystem work (`WORKLOG.md`, phase F5) via a minimal
+`WRITE_RAM`-only reproduction with no flash opcodes involved at all —
+this is a general hazard for any host, not specific to the flash
+opcodes below. **Mitigation for now: a host must wait for PSRAM
+power-up (or otherwise ensure the FPGA is fully out of reset for
+>150µs) before its first `WRITE_RAM`/`READ_RAM`.** Not fixed at the
+protocol level (would need real backpressure, a larger change) —
+declared here as an open risk, not silently worked around.
 
 **Why STATUS.done is sticky / clear-on-read:** in `rtl/neuron_memory.v`
 `done` is a single-cycle pulse (asserted for exactly one clock in
@@ -434,8 +464,10 @@ when the host issues `STATUS` (or `RESET`), not sample the raw
 `neuron_memory.done` signal directly. `busy` has no such problem
 (it is level-held for the whole computation) and can be read live.
 
-**READ_CONFIG payload** (fixed 8 bytes, lets one host firmware build
-work across different bitstreams without recompiling):
+**READ_CONFIG payload** (fixed 11 bytes — widened from the original 8-byte
+draft in Phase G5 to add graph-engine capability info, §16 below —
+lets one host firmware build work across different bitstreams
+without recompiling):
 
 | Byte(s) | Field | Source |
 |---|---|---|
@@ -445,6 +477,8 @@ work across different bitstreams without recompiling):
 | 4 | `PARALLEL` | `neuron_memory.PARALLEL` |
 | 5 | `DATA_WIDTH` (bits) | `neuron_memory.DATA_WIDTH` |
 | 6–7 | protocol version (16-bit BE) | `0x0001` for this spec |
+| 8–9 | `N_TOTAL` (16-bit BE) — graph engine's activation-buffer depth (Phase G5) | `spi_engine.N_TOTAL` |
+| 10 | capability flags — bit0=1 (graph/Type#2 supported) | `spi_engine.v`'s `GRAPH_SUPPORTED` |
 
 **Runtime network width — one bitstream, any topology up to its
 build-time max (2026-09-02):** `READ_CONFIG`'s `N_INPUTS`/`N_NEURONS`
@@ -506,6 +540,61 @@ a CRC/checksum on transfers (SPI is assumed reliable for a
 board-level trace in v1). Multi-layer sequencing itself (RUN_NETWORK,
 opcode 0x23) is implemented per `rtl/layer_sequencer.v` and the table
 above.
+
+---
+
+## 8.3 Flash Subsystem (opcodes 0x40-0x47, completed 2026-09-04)
+
+The FPGA has **exclusive** access to the onboard boot/persistence flash
+(Winbond W25Q128JV, 16MB SPI NOR — confirmed part,
+`docs/FPGA-Neural-Hardware-Design.md` §6/§7) through a dedicated,
+physically separate SPI master (`rtl/spi_flash_master.v`), never
+through direct host access to the flash pins. This is **not** a
+filesystem: a small, fixed-size catalog (16 slots, `rtl/flash_slot_manager.v`)
+maps `slot_id → (offset, length, type, valid, CRC32)` in a reserved
+flash sector (sector 0) — no dynamic allocation, no garbage collection.
+
+**Layering** (each level reusable/testable on its own):
+- `rtl/spi_flash_master.v` — raw SPI master toward the flash chip
+  (RDID/READ/WREN/PP/SE/RDSR-1), owns the ECP5 `USRMCLK` primitive
+  internally (the flash's SCLK is not a normal I/O pin post-configuration
+  — see that file's own header for the full citation trail).
+- `rtl/flash_copy_engine.v` — block-streaming engine on top: flash→PSRAM
+  (`DIR_LOAD`), PSRAM→flash with internal erase-before-write + ≤256B
+  Page Program loop + WIP polling (`DIR_SAVE`), standalone sector erase
+  (`DIR_ERASE`). A low-priority master (Port D) on `rtl/mem_arbiter.v` —
+  flash operations are ms-scale and never block inference.
+- `rtl/flash_slot_manager.v` — the slot catalog on top of that, plus a
+  CRC32 (`rtl/crc32.v`, IEEE 802.3/zlib) computed live over the actual
+  byte stream during `LOAD_SLOT`/`SAVE_SLOT`, so a corrupted or
+  partially-written slot (e.g. power lost mid-erase) is detected even
+  when the underlying flash operation itself reported success.
+
+**Opcodes**: see the table above (0x40-0x47) — all fire-and-forget
+(poll `STATUS`/`data_ready_n` for completion, exactly like `RUN_NETWORK`),
+except `CAT_INSPECT` (0x47, synchronous response, added beyond the
+original catalog-opcode draft to actually deliver `CAT_READ`'s
+"-> host" — see that opcode's own table row).
+
+**Design decision worth citing here**: `SAVE_SLOT` (and the raw
+`FLASH_WRITE_BLOCK`/`FLASH_ERASE`) require their target flash address to
+be 4KB-sector-aligned — rejected as an error otherwise, rather than a
+silent read-modify-erase-write of a partial sector (no scratch buffer
+large enough exists for that, and every real `SAVE_SLOT` already writes
+a whole, sector-aligned slot by construction). Full rationale, every
+datasheet citation, every adversarial test (CRC mismatch, never-saved
+slot, page-boundary crossing, simulated power-loss, arbiter contention),
+and the two real bugs found and fixed during bring-up (one pre-existing
+in `psram_controller.v`, one in the new arbiter-request handshake) are
+in `WORKLOG.md`'s F1-F6 entries and
+`docs/FPGA-Neural-Flash-Subsystem-Verification.md` (per-module coverage
+summary, not repeated here).
+
+**Measured real latency** (methodology in the verification doc): ERASE
+(4KB sector) ≈400ms, SAVE (256B page, incl. its own erase) ≈403ms —
+both dominated by the flash chip's own internal timing (tSE/tPP MAX,
+independent of host clock frequency); LOAD (4096B) is purely SPI-clock-
+bound: 1.74ms (2.35MB/s) @80MHz, 8.71ms (0.47MB/s) @16MHz.
 
 ---
 
@@ -1035,9 +1124,11 @@ The FPGA becomes a dedicated neural-computation peripheral, analogous to other h
 | 32×4 / P=8 validation | OK |
 | Dedicated RAM architecture | OK (memory_interface + psram_controller + int8_memory_access, real-PSRAM tested) |
 | PSRAM page-mode burst reads | OK (2026-09-03, `psram_page_mode_tb.v`; sequential gather bandwidth +42% measured, see `FPGA-Neural-Datapatch-Benchmark.md` Appendice D) |
-| SPI interface | OK (spi_slave + spi_engine, all 9 opcodes incl. RUN_NETWORK, real-toolchain Fmax checked in isolation) |
+| SPI interface | OK (spi_slave + spi_engine, 17 opcodes incl. RUN_NETWORK + flash subsystem, real-toolchain Fmax checked at system level) |
 | Dual SPI | Future |
-| Multi-layer engine | - RTL + unit tests + real end-to-end (simulated SPI) done; real toolchain checked (P8: FAIL 40.57 MHz, worse than Phase 4 alone) |
+| Multi-layer engine (Type#1, dense) | OK — RTL + unit tests + real end-to-end (simulated SPI) done; real toolchain checked (P8: FAIL 40.57 MHz, worse than Phase 4 alone) |
+| Graph engine (Type#2, sparse arbitrary graph) | OK (Phase G5 — `graph_engine.v`, load-time guard §7, real end-to-end SPI test, real toolchain Fmax checked at system level) |
+| Flash subsystem (boot/persistence, exclusive FPGA access) | OK (Phases F1-F6, 2026-09-04 — SPI master, bidirectional copy engine, slot catalog + CRC32, 8 opcodes, full real-toolchain synthesis; see §8.3 and `WORKLOG.md`) |
 | Configurable activation functions | OK (ACT_NONE / ACT_RELU, per-layer via descriptor table or per-run via SET_BASE) |
 | Runtime network width (one bitstream, any topology up to build max) | OK (per-layer or per-run `n_inputs_real`/`n_neurons_real`, real cycle savings measured end to end) |
 | Linux host driver | Planned |

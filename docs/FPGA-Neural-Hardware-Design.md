@@ -72,12 +72,13 @@ Signal budget this design actually needs:
 | Application SPI (`sclk/mosi/miso/cs_n`) | 4 |
 | `clk`, `rst` | 2 |
 | Host attention (`irq_n`, `data_ready_n`, added 2026-09-03 — §7) | 2 |
-| Config SPI (to onboard FLASH) | 4 |
+| Config SPI (to onboard FLASH) | 3 (`flash_mosi`/`flash_miso`/`flash_cs_n` — SCLK shared via `USRMCLK`, no dedicated pin, confirmed against yosys's own `cells_bb.v` blackbox; implemented Phases F1-F6) |
 | JTAG (recommended, for bring-up/debug) | 4 |
-| **Total** | **~60** |
+| **Total** | **~59** |
 
-~60 of ~232 usable I/O used (53 actually placed and place&route-verified
-in §7's real `.lpf`) — **plenty of headroom** (~170+ spare
+~59 of ~232 usable I/O used (56 actually placed and place&route-verified
+in the flash-subsystem synthesis, `synth/ecp5/spi_neuron_top_flash/
+nextpnr.log`) — **plenty of headroom** (~170+ spare
 pins) for LEDs, buttons, a debug PMOD-style header, or a second SPI
 host, without any pin-count pressure. This board does not need to be
 pin-constrained the way a 256-ball/PMOD-only design would.
@@ -275,6 +276,21 @@ same noise band already characterized for this pin count in
 `WORKLOG.md`'s timing-closure seed sweep — not a regression). TRELLIS_IO
 usage: 53/245 (21%) — still confirms the §2 headroom estimate.
 
+**Further updated 2026-09-04** after the flash subsystem (Phases F1-F6,
+`WORKLOG.md`) added 3 real pins (`flash_mosi`, `flash_miso`, `flash_cs_n`
+— bank 7, generated additively by `tools/pinout/gen_lpf.py`, confirmed via
+`git diff` on `synth/ecp5/spi_neuron_top.lpf` to leave every existing ball
+unchanged; no dedicated flash SCLK pin — it reuses the same `USRMCLK`
+primitive already driving the application-SPI/config path, per §7):
+full-system real Yosys+nextpnr-ecp5 synthesis (`synth/ecp5/
+spi_neuron_top_flash/nextpnr.log`), **0 constraint errors**, full route
+completes, Fmax **66.68&nbsp;MHz**. The critical path is confirmed
+unchanged from the pre-existing `neuron_parallel` accumulator carry chain
+(no flash-subsystem module appears in the reported critical path) — the
+66.68 vs 73.88&nbsp;MHz difference is attributed to placement/routing
+noise from the added I/O and logic, not a new bottleneck. TRELLIS_IO
+usage: 56/245 (23%).
+
 **Cross-checked against the real Lattice datasheet (2026-09-03, user-
 provided `FPGA-DS-02012-3-4-ECP5-ECP5G-Family-Data-Sheet.pdf`)**: its §4.3.2
 "LFE5U" Pin Information Summary table gives, for LFE5U-45 / 381caBGA, GPIO
@@ -356,6 +372,24 @@ the exact rationale):
 |---|---|---|---|
 | `data_ready_n` | C3 | 7 | low while a result is waiting to be read (mirrors STATUS.bit1, clear-on-STATUS-read) |
 | `irq_n` | C4 | 7 | low while `graph_engine`'s load-time guard has tripped (mirrors STATUS.bit2 / §7 of the network-engine spec); clears only on RESET or a fresh graph `run_start`, NOT on a plain STATUS read |
+
+**Flash subsystem — runtime SPI to the onboard W25Q128JV** (added
+2026-09-04, Phases F1-F6 — `rtl/spi_flash_master.v`, `WORKLOG.md`; ordinary
+GPIO, generated the same additive way as every other row here, confirmed
+by `git diff` against the pre-flash `.lpf` to leave every existing ball
+unchanged):
+
+| Signal | Ball | Bank | Note |
+|---|---|---|---|
+| `flash_cs_n` | E4 | 7 |  |
+| `flash_miso` | D5 | 7 |  |
+| `flash_mosi` | D3 | 7 |  |
+
+No `flash_sclk` ball: SCLK is driven through the `USRMCLK` primitive,
+reclaiming the same physical CCLK net already used for bitstream boot —
+see §6/§9 for the board-level wiring implication (the flash chip's
+DI/DO/CS pins must be dual-wired to both the dedicated sysCONFIG pins and
+these 3 ordinary balls).
 
 **PSRAM address:**
 
@@ -449,9 +483,12 @@ sizes are decided.
       (§7, `synth/ecp5/spi_neuron_top.lpf`), place&route-verified
       (2026-09-03) — 0 constraint errors; cross-checked against the
       real Lattice datasheet (§7, matches on 6/7 banks exactly). Fmax
-      75.30&nbsp;MHz with real fixed pins as of the timing-closure work
-      (`WORKLOG.md`), up from the 54.58&nbsp;MHz measured when this
-      pinout was first verified.
+      54.58&nbsp;MHz when this pinout was first verified, 75.30&nbsp;MHz
+      after the `neuron_parallel` timing-closure work, 73.88&nbsp;MHz
+      after adding the host-attention pins, and **66.68&nbsp;MHz** for
+      the current full system including the flash subsystem (§7,
+      2026-09-04) — see §7 for the full history and why each change is
+      pin-placement noise, not a regression.
       **Config-SPI and JTAG ball numbers are still not pinned down**
       (§7) — confirmed by reading the full real datasheet that it has
       no per-ball table at all (only functional descriptions and
@@ -466,6 +503,22 @@ sizes are decided.
       header + config-flash routing) — the user's own separate,
       in-progress KiCad work, not something this repo's synthesis
       flow needs to resolve.
+      **Distinct from this open item** (do not conflate the two): the
+      flash subsystem's own runtime SPI pins (`flash_mosi`, `flash_miso`,
+      `flash_cs_n` — Phases F1-F6, `WORKLOG.md`) **are** real, pinned,
+      place&route-verified ordinary GPIO on bank 7 (`flash_mosi`=D3,
+      `flash_miso`=D5, `flash_cs_n`=E4), generated the same way as every
+      other signal in this table. Only SCLK is shared with the dedicated
+      config-boot clock, reclaimed post-configuration via the `USRMCLK`
+      primitive (confirmed against yosys's own `cells_bb.v` blackbox) —
+      it needs no `.lpf` entry of its own, same reasoning as the
+      dedicated pins discussed above. §5's PCB-level implication: the
+      W25Q128JV's DI/DO/CS pins must be wired to *both* the dedicated
+      sysCONFIG pins (for boot) *and* these 3 ordinary GPIO balls (for
+      runtime access after configuration completes) — a board-level
+      dual-wiring the same shape as the CCLK-reuse workaround already
+      noted above, not yet reflected in a schematic since none exists
+      yet (see the KiCad item below).
 - [ ] Confirm PSRAM/SPI signal integrity at whatever clock is
       actually fitted (§4) — no signal integrity analysis done yet
 - [ ] JTAG header footprint choice (blocked on the JTAG ball question

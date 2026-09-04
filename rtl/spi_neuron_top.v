@@ -68,6 +68,28 @@ module spi_neuron_top #(
     output wire data_ready_n,
 
     // ------------------------------------------------------------
+    // Flash physical interface (Phase F5) -- separate pins from the
+    // host SPI above, per docs/FPGA-Neural-Hardware-Design.md's own
+    // §6 lesson ("must land on separate, ordinary I/O pins -- never
+    // the config-SPI pins"): this is the APPLICATION-side master
+    // toward the boot/persistence flash (rtl/spi_flash_master.v,
+    // owned internally by flash_slot_manager), a completely
+    // different physical bus from the host-facing sclk/mosi/miso/
+    // cs_n above. No sclk pin here in real synthesis -- CCLK-
+    // equivalent timing is generated internally via USRMCLK (see
+    // rtl/spi_flash_master.v's header for the full ECP5 rationale);
+    // `flash_sclk_sim` only exists under SIMULATION, to feed
+    // sim/flash_model.v in testbenches.
+    // ------------------------------------------------------------
+
+    output wire flash_mosi,
+    input  wire flash_miso,
+    output wire flash_cs_n,
+`ifdef SIMULATION
+    output wire flash_sclk_sim,
+`endif
+
+    // ------------------------------------------------------------
     // PSRAM physical interface
     // ------------------------------------------------------------
 
@@ -148,6 +170,27 @@ module spi_neuron_top #(
     wire        graph_err;
     wire        data_ready;
 
+    // Phase F5: flash_slot_manager command interface, driven by
+    // spi_engine's flash-subsystem opcodes.
+    wire         flash_op_start;
+    wire [2:0]   flash_op_code;
+    wire [3:0]   flash_slot_id;
+    wire [23:0]  flash_new_offset;
+    wire [23:0]  flash_new_length;
+    wire [7:0]   flash_new_type;
+    wire [ADDR_WIDTH-1:0] flash_ext_psram_addr;
+    wire [23:0]  flash_ext_length;
+    wire [23:0]  flash_raw_flash_addr;
+    wire         flash_busy;
+    wire         flash_done;
+    wire         flash_err;
+    wire [3:0]   flash_cat_read_sel;
+    wire [23:0]  flash_cat_out_offset;
+    wire [23:0]  flash_cat_out_length;
+    wire [7:0]   flash_cat_out_type;
+    wire         flash_cat_out_valid;
+    wire [31:0]  flash_cat_out_crc;
+
     spi_engine #(
         .ADDR_WIDTH(ADDR_WIDTH),
         .DATA_WIDTH(DATA_WIDTH),
@@ -183,7 +226,59 @@ module spi_neuron_top #(
         .num_neurons_graph(num_neurons_graph), .n_out(n_out),
         .graph_busy(graph_busy), .graph_done(graph_done), .graph_err(graph_err),
 
+        .flash_op_start(flash_op_start), .flash_op_code(flash_op_code),
+        .flash_slot_id(flash_slot_id),
+        .flash_new_offset(flash_new_offset), .flash_new_length(flash_new_length),
+        .flash_new_type(flash_new_type),
+        .flash_ext_psram_addr(flash_ext_psram_addr), .flash_ext_length(flash_ext_length),
+        .flash_raw_flash_addr(flash_raw_flash_addr),
+        .flash_busy(flash_busy), .flash_done(flash_done), .flash_err(flash_err),
+        .flash_cat_read_sel(flash_cat_read_sel),
+        .flash_cat_out_offset(flash_cat_out_offset), .flash_cat_out_length(flash_cat_out_length),
+        .flash_cat_out_type(flash_cat_out_type), .flash_cat_out_valid(flash_cat_out_valid),
+        .flash_cat_out_crc(flash_cat_out_crc),
+
         .data_ready(data_ready)
+    );
+
+    // ============================================================
+    // FLASH_SLOT_MANAGER (Phase F5): owns the flash-facing SPI
+    // master (rtl/spi_flash_master.v) internally through
+    // rtl/flash_copy_engine.v; PSRAM access goes through
+    // mem_arbiter's Port D below.
+    // ============================================================
+
+    wire                   flash_d_req;
+    wire                   flash_d_wr;
+    wire [ADDR_WIDTH-1:0]  flash_d_addr;
+    wire signed [7:0]      flash_d_wdata;
+    wire signed [7:0]      flash_d_rdata;
+    wire                   flash_d_ready;
+
+    flash_slot_manager #(
+        .PSRAM_ADDR_WIDTH(ADDR_WIDTH),
+        .CLK_FREQ_MHZ(CLK_FREQ_MHZ)
+    ) u_flash_slot_manager (
+        .clk(clk), .rst(rst),
+
+        .mosi(flash_mosi), .miso(flash_miso), .cs_n(flash_cs_n),
+`ifdef SIMULATION
+        .sclk_sim(flash_sclk_sim),
+`endif
+
+        .op_start(flash_op_start), .op_code(flash_op_code), .slot_id(flash_slot_id),
+        .new_offset(flash_new_offset), .new_length(flash_new_length), .new_type(flash_new_type),
+        .ext_psram_addr(flash_ext_psram_addr), .ext_length(flash_ext_length),
+        .raw_flash_addr(flash_raw_flash_addr),
+        .busy(flash_busy), .done(flash_done), .err(flash_err),
+
+        .cat_read_sel(flash_cat_read_sel),
+        .cat_out_offset(flash_cat_out_offset), .cat_out_length(flash_cat_out_length),
+        .cat_out_type(flash_cat_out_type), .cat_out_valid(flash_cat_out_valid),
+        .cat_out_crc(flash_cat_out_crc),
+
+        .d_req(flash_d_req), .d_wr(flash_d_wr), .d_addr(flash_d_addr), .d_wdata(flash_d_wdata),
+        .d_rdata(flash_d_rdata), .d_ready(flash_d_ready)
     );
 
     // Physical attention pins: active-low, driven straight from the
@@ -388,6 +483,12 @@ module spi_neuron_top #(
         .c_req(portc_req), .c_wr(portc_wr),
         .c_addr(portc_addr), .c_wdata(portc_wdata),
         .c_rdata(portc_rdata_bus), .c_ready(portc_ready_bus),
+
+        // Port D: flash_slot_manager (Phase F5), lowest priority --
+        // see mem_arbiter.v's own header for the full rationale.
+        .d_req(flash_d_req), .d_wr(flash_d_wr),
+        .d_addr(flash_d_addr), .d_wdata(flash_d_wdata),
+        .d_rdata(flash_d_rdata), .d_ready(flash_d_ready),
 
         .m_req(arb_req), .m_wr(arb_wr),
         .m_addr(arb_addr), .m_wdata(arb_wdata),

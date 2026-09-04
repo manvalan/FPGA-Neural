@@ -11,18 +11,33 @@
 //   Port B: neuron_memory.v    (its own X/W/bias reads during a run)
 //   Port C: layer_sequencer.v  (Phase 5: descriptor reads + output
 //                                buffer writes between layers)
+//   Port D: flash_copy_engine.v (flash-subsystem F2: flash<->PSRAM
+//                                block DMA, LOWEST priority -- see
+//                                below)
 //
-// Fixed priority B > C > A when more than one requests on the same
-// idle cycle (an in-progress inference is treated as more
+// Fixed priority B > C > A > D when more than one requests on the
+// same idle cycle (an in-progress inference is treated as more
 // time-critical than the sequencer's own bookkeeping, which in turn
 // is treated as more time-critical than a newly-arriving manual SPI
-// RAM access). In normal operation B and C are temporally disjoint
-// anyway -- neuron_memory only requests while running, and
-// layer_sequencer only requests in the gaps between layers -- so
-// this priority mostly matters for the edge case of a manual
+// RAM access, which in turn is treated as more time-critical than
+// the flash copy engine -- flash operations are ms-scale and never
+// meant to compete with inference for memory bandwidth, per the
+// flash-subsystem phase-plan's explicit "priorita bassa" requirement:
+// a flash load/save simply waits its turn, one byte-transaction at a
+// time, behind anything else that wants the shared PSRAM port).
+// In normal operation B and C are temporally disjoint anyway --
+// neuron_memory only requests while running, and layer_sequencer
+// only requests in the gaps between layers -- so priority among
+// A/B/C mostly matters for the edge case of a manual
 // WRITE_RAM/READ_RAM arriving while a Phase 5 run is in progress.
+// Port D is expected to be active only during flash load/save,
+// which this design assumes does not overlap real-time inference
+// (the same "not the hot path" assumption the flash phase-plan
+// states explicitly) -- if it ever did overlap, its lowest-priority
+// placement here means it simply gets stretched out, never starves
+// or corrupts A/B/C.
 // Once a port is granted, the arbiter holds ownership until that
-// single transaction's m_ready pulse, then releases -- all three
+// single transaction's m_ready pulse, then releases -- all four
 // masters already issue `req` as a clean one-cycle pulse (matching
 // int8_memory_access's own contract), so a simple grant-and-forward
 // design is sufficient; no request queuing/pipelining is needed.
@@ -68,6 +83,17 @@ module mem_arbiter #(
     output reg                    c_ready,
 
     // ------------------------------------------------------------
+    // Port D - flash_copy_engine (F2, lowest priority)
+    // ------------------------------------------------------------
+
+    input  wire                   d_req,
+    input  wire                   d_wr,
+    input  wire [ADDR_WIDTH-1:0]  d_addr,
+    input  wire signed [7:0]      d_wdata,
+    output reg  signed [7:0]      d_rdata,
+    output reg                    d_ready,
+
+    // ------------------------------------------------------------
     // Shared master port
     // ------------------------------------------------------------
 
@@ -80,12 +106,13 @@ module mem_arbiter #(
     input wire                   m_ready
 );
 
-    localparam SEL_NONE = 2'd0;
-    localparam SEL_A    = 2'd1;
-    localparam SEL_B    = 2'd2;
-    localparam SEL_C    = 2'd3;
+    localparam SEL_NONE = 3'd0;
+    localparam SEL_A    = 3'd1;
+    localparam SEL_B    = 3'd2;
+    localparam SEL_C    = 3'd3;
+    localparam SEL_D    = 3'd4;
 
-    reg [1:0] owner;
+    reg [2:0] owner;
 
     always @(posedge clk) begin
 
@@ -107,12 +134,16 @@ module mem_arbiter #(
             c_rdata <= 8'sd0;
             c_ready <= 1'b0;
 
+            d_rdata <= 8'sd0;
+            d_ready <= 1'b0;
+
         end else begin
 
             m_req   <= 1'b0;
             a_ready <= 1'b0;
             b_ready <= 1'b0;
             c_ready <= 1'b0;
+            d_ready <= 1'b0;
 
             case (owner)
 
@@ -141,6 +172,14 @@ module mem_arbiter #(
                         m_wr    <= a_wr;
                         m_addr  <= a_addr;
                         m_wdata <= a_wdata;
+
+                    end else if (d_req) begin
+
+                        owner   <= SEL_D;
+                        m_req   <= 1'b1;
+                        m_wr    <= d_wr;
+                        m_addr  <= d_addr;
+                        m_wdata <= d_wdata;
 
                     end
 
@@ -171,6 +210,16 @@ module mem_arbiter #(
                     if (m_ready) begin
                         c_rdata <= m_rdata;
                         c_ready <= 1'b1;
+                        owner   <= SEL_NONE;
+                    end
+
+                end
+
+                SEL_D: begin
+
+                    if (m_ready) begin
+                        d_rdata <= m_rdata;
+                        d_ready <= 1'b1;
                         owner   <= SEL_NONE;
                     end
 

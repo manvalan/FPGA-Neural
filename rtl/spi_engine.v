@@ -116,6 +116,42 @@ module spi_engine #(
     input  wire                  graph_err,       // sticky guard-violation flag (§7)
 
     // ------------------------------------------------------------
+    // flash_slot_manager control (Phase F5, flash-subsystem opcodes
+    // §5 of the phase-plan). Command interface mirrors
+    // flash_slot_manager.v's own port list directly -- see that
+    // file's header for op_code 0-6 semantics. `flash_err` is a
+    // STATUS-bit-only error report (STATUS.bit3, sticky-until-read,
+    // same convention as status_done_sticky below) -- explicitly
+    // NOT wired to irq_n/graph_err: reusing graph_err would conflate
+    // two unrelated error domains (Type#2 guard violations vs flash
+    // subsystem errors) into one ambiguous signal, and a flash op is
+    // always host-initiated with a known opcode just issued, so
+    // polling STATUS right after (as the phase-plan's own
+    // "data_ready_n a fine op" convention already implies) is a
+    // natural fit -- no extra async pin needed.
+    // ------------------------------------------------------------
+    output reg                   flash_op_start,
+    output reg  [2:0]            flash_op_code,
+    output reg  [3:0]            flash_slot_id,
+    output reg  [23:0]           flash_new_offset,
+    output reg  [23:0]           flash_new_length,
+    output reg  [7:0]            flash_new_type,
+    output reg  [ADDR_WIDTH-1:0] flash_ext_psram_addr,
+    output reg  [23:0]           flash_ext_length,
+    output reg  [23:0]           flash_raw_flash_addr,
+
+    input  wire                  flash_busy,
+    input  wire                  flash_done,      // one-cycle pulse
+    input  wire                  flash_err,       // held until next flash_op_start
+
+    output reg  [3:0]            flash_cat_read_sel, // CAT_INSPECT (added opcode, see below)
+    input  wire [23:0]           flash_cat_out_offset,
+    input  wire [23:0]           flash_cat_out_length,
+    input  wire [7:0]            flash_cat_out_type,
+    input  wire                  flash_cat_out_valid,
+    input  wire [31:0]           flash_cat_out_crc,
+
+    // ------------------------------------------------------------
     // Host attention signal (active-HIGH here; spi_neuron_top.v
     // inverts it to drive the physical active-low DATA_READY_N pin).
     // Mirrors STATUS.bit1 exactly -- same sticky-until-STATUS-read
@@ -143,6 +179,30 @@ module spi_engine #(
     localparam OP_READ_OUTPUT = 8'h22;
     localparam OP_RUN_NETWORK = 8'h23;
     localparam OP_READ_CONFIG = 8'h30;
+
+    // Flash-subsystem opcodes (Phase F5, §5 of the phase-plan draft;
+    // OP_CAT_INSPECT is an ADDED opcode, not in the literal draft --
+    // see its own comment at ST_FLASH_PAYLOAD below for why it was
+    // needed to actually deliver CAT_READ's "-> host" wording).
+    localparam OP_FLASH_READ_BLOCK  = 8'h40;
+    localparam OP_FLASH_WRITE_BLOCK = 8'h41;
+    localparam OP_FLASH_ERASE       = 8'h42;
+    localparam OP_CAT_READ          = 8'h43;
+    localparam OP_CAT_WRITE_SLOT    = 8'h44;
+    localparam OP_LOAD_SLOT         = 8'h45;
+    localparam OP_SAVE_SLOT         = 8'h46;
+    localparam OP_CAT_INSPECT       = 8'h47;
+
+    // flash_op_code values, matching flash_slot_manager.v's own
+    // op_code encoding exactly (0-3 catalog/slot ops, 4-6 raw block
+    // ops -- see that file's header).
+    localparam FOP_CAT_READ          = 3'd0;
+    localparam FOP_CAT_WRITE_SLOT    = 3'd1;
+    localparam FOP_LOAD_SLOT         = 3'd2;
+    localparam FOP_SAVE_SLOT         = 3'd3;
+    localparam FOP_FLASH_READ_BLOCK  = 3'd4;
+    localparam FOP_FLASH_WRITE_BLOCK = 3'd5;
+    localparam FOP_FLASH_ERASE       = 3'd6;
 
     // SET_BASE selector values
     localparam SEL_X_BASE     = 8'h00;
@@ -182,9 +242,51 @@ module spi_engine #(
     localparam ST_IGNORE       = 4'd11;
     localparam ST_RUNNET       = 4'd12; // RUN_NETWORK: 1 payload byte (num_layers)
     localparam ST_SET_NET_TYPE = 4'd13; // SET_NET_TYPE: 1 payload byte (type)
+    localparam ST_FLASH_PAYLOAD = 4'd14; // flash opcodes: 0-9 payload bytes, see below
 
     reg [3:0] state;
     reg [7:0] opcode;
+
+    // ============================================================
+    // Flash-subsystem opcode payload accumulator (Phase F5).
+    //
+    // All flash opcodes share ONE generic byte-shift accumulator
+    // (same pattern as rtl/flash_slot_manager.v's own catalog-entry
+    // decode: shift every incoming byte in, decode the fixed-width
+    // fields out of the accumulated value on the LAST byte using
+    // opcode-specific bit slices) rather than a bespoke per-opcode
+    // state, since the payloads only differ in field COUNT/ORDER,
+    // not in the byte-at-a-time framing mechanics.
+    //
+    //   FLASH_READ_BLOCK / FLASH_WRITE_BLOCK: 9 bytes (3+3+3)
+    //   FLASH_ERASE:                          3 bytes
+    //   CAT_READ:                             0 bytes (dispatched
+    //                                          immediately at ST_OPCODE)
+    //   CAT_WRITE_SLOT:                       8 bytes (1+3+3+1)
+    //   LOAD_SLOT:                            4 bytes (1+3)
+    //   SAVE_SLOT:                            7 bytes (1+3+3)
+    //   CAT_INSPECT:                          1 byte (slot_id) --
+    //     this is the ADDED opcode (not in the phase-plan's literal
+    //     draft, see OP_CAT_INSPECT above): CAT_READ (0 payload
+    //     bytes, matches the draft exactly) triggers a flash reload
+    //     of the on-chip catalog register file and reports
+    //     completion via data_ready_n like every other flash op --
+    //     it does NOT itself return catalog bytes (flash ops are
+    //     ms-scale and this project's whole SPI protocol is
+    //     "fire-and-forget, then poll STATUS/data_ready_n", never
+    //     "hold CS low across a multi-millisecond wait", so a
+    //     synchronous in-transaction response wouldn't fit that
+    //     model). CAT_INSPECT is the natural, already-established-
+    //     pattern way to actually deliver the draft's own "-> host"
+    //     wording: a SEPARATE, ordinary synchronous response opcode
+    //     (like STATUS/READ_OUTPUT/READ_CONFIG already are) that
+    //     reads the ALREADY-loaded on-chip register file for one
+    //     slot, instantly, no wait needed.
+    // ============================================================
+
+    reg [71:0] flash_payload;     // 9-byte shift accumulator
+    reg [3:0]  flash_byte_pos;    // 0..8
+    reg [3:0]  flash_payload_len; // opcode-specific total byte count (0..9)
 
     // Generic byte-position counter for ADDR (0..2) / LEN (0..1)
     reg [1:0] byte_pos;
@@ -200,8 +302,13 @@ module spi_engine #(
 
     reg [7:0] cur_read_byte;
 
-    reg [3:0] resp_index;  // response byte index (max needed: 8, READ_CONFIG)
-    reg [3:0] resp_len;    // total bytes for the current response opcode
+    // Widened from [3:0] (max 15) to [4:0] (max 31) in F5: existing
+    // opcodes' needs (STATUS=1, READ_OUTPUT<=N_NEURONS, READ_CONFIG=11)
+    // are all still well within range, no behavior change for them --
+    // only CAT_INSPECT's new 16-byte response actually needs the
+    // extra bit (16 does not fit in 4 bits).
+    reg [4:0] resp_index;  // response byte index
+    reg [4:0] resp_len;    // total bytes for the current response opcode
 
     // ============================================================
     // STICKY STATUS.done LATCH
@@ -231,7 +338,28 @@ module spi_engine #(
     reg graph_mode;
 
     wire busy_all   = nm_busy | seq_busy | graph_busy;
-    wire done_event = graph_mode ? graph_done : (net_mode ? seq_done : nm_done);
+
+    // inference_done_event: UNCHANGED from before F5 -- this is a
+    // MASK, not just a mutually-exclusive-source picker: while
+    // net_mode is set, layer_sequencer drives neuron_memory once per
+    // layer internally, so nm_done pulses once per layer too, and
+    // those intermediate pulses must NOT surface as "the whole
+    // RUN_NETWORK job is done" -- only the final seq_done may. Same
+    // for graph_mode over both seq_done and nm_done. Verified this
+    // masking is load-bearing by regressing sim/spi_engine_tb.v
+    // against a naive flat OR of all four sources: TEST L
+    // (RUN_NETWORK) failed immediately ("done bit set by an
+    // intermediate nm_done during RUN_NETWORK") -- caught before
+    // this ever reached WORKLOG.md as a false "PASS".
+    wire inference_done_event = graph_mode ? graph_done : (net_mode ? seq_done : nm_done);
+
+    // F5: flash ops run on Port D at low priority precisely so they
+    // CAN overlap an inference run (mem_arbiter.v's own design
+    // intent, F2's WORKLOG entry) -- flash_done is therefore ORed in
+    // as a fully separate, orthogonal completion source, outside the
+    // inference mask above (a flash completion must be visible
+    // whether or not an inference job also happens to be in flight).
+    wire done_event = inference_done_event | flash_done;
 
     wire status_read_now = (state == ST_RESP) && (opcode == OP_STATUS) && rx_valid;
 
@@ -255,17 +383,42 @@ module spi_engine #(
     // way -- graph_engine.err is itself sticky until rst or the next
     // graph run_start, so no separate clear-on-read latch is needed
     // for it here (unlike status_done_sticky).
+    //
+    // bit3 = flash_err_sticky (F5): DOES need its own clear-on-read
+    // latch, same reasoning/race as status_done_sticky itself --
+    // flash_slot_manager.err is only held until the NEXT
+    // flash_op_start (F4's own convention, see that file), not
+    // until read, so without a sticky wrapper here a fast poll could
+    // miss a one-shot error the same way a bare done pulse could.
+    //
+    // bit4 = flash_busy (F5): a live level, not sticky/latched --
+    // deliberately NOT snapshotted, so it always reflects the
+    // CURRENT state rather than the state at STATUS-opcode-accept
+    // time (unlike bits 0-3, which describe a completed/completing
+    // event this same STATUS read must not race).
     reg [7:0] status_snapshot;
+
+    reg flash_err_sticky;
 
     always @(posedge clk) begin
         if (rst) begin
             status_done_sticky <= 1'b0;
+            flash_err_sticky   <= 1'b0;
         end else if (nm_soft_rst) begin
             status_done_sticky <= 1'b0;
-        end else if (done_event) begin
-            status_done_sticky <= 1'b1;
-        end else if (status_read_now && status_snapshot[1]) begin
-            status_done_sticky <= 1'b0;
+            flash_err_sticky   <= 1'b0;
+        end else begin
+            if (done_event) begin
+                status_done_sticky <= 1'b1;
+            end else if (status_read_now && status_snapshot[1]) begin
+                status_done_sticky <= 1'b0;
+            end
+
+            if (flash_done && flash_err) begin
+                flash_err_sticky <= 1'b1;
+            end else if (status_read_now && status_snapshot[3]) begin
+                flash_err_sticky <= 1'b0;
+            end
         end
     end
 
@@ -314,6 +467,31 @@ module spi_engine #(
                         endcase
                     end
 
+                    // CAT_INSPECT (F5, added opcode -- see
+                    // flash_payload's declaration comment): 16-byte
+                    // response, SAME byte layout as the raw catalog
+                    // entry itself (tools/flash_catalog/oracle.py /
+                    // rtl/flash_slot_manager.v's own header) -- MSB-
+                    // first offset[3], length[3], type[1], valid[1]
+                    // (0x01/0x00), crc32[4] MSB-first, reserved[4]=0.
+                    OP_CAT_INSPECT: begin
+                        case (resp_index)
+                            5'd0:  tx_byte_comb = flash_cat_out_offset[23:16];
+                            5'd1:  tx_byte_comb = flash_cat_out_offset[15:8];
+                            5'd2:  tx_byte_comb = flash_cat_out_offset[7:0];
+                            5'd3:  tx_byte_comb = flash_cat_out_length[23:16];
+                            5'd4:  tx_byte_comb = flash_cat_out_length[15:8];
+                            5'd5:  tx_byte_comb = flash_cat_out_length[7:0];
+                            5'd6:  tx_byte_comb = flash_cat_out_type;
+                            5'd7:  tx_byte_comb = flash_cat_out_valid ? 8'h01 : 8'h00;
+                            5'd8:  tx_byte_comb = flash_cat_out_crc[31:24];
+                            5'd9:  tx_byte_comb = flash_cat_out_crc[23:16];
+                            5'd10: tx_byte_comb = flash_cat_out_crc[15:8];
+                            5'd11: tx_byte_comb = flash_cat_out_crc[7:0];
+                            default: tx_byte_comb = 8'h00; // reserved, bytes 12-15
+                        endcase
+                    end
+
                     default: tx_byte_comb = 8'h00;
 
                 endcase
@@ -344,9 +522,23 @@ module spi_engine #(
             pending_write  <= 1'b0;
             pending_wdata  <= 8'h00;
             cur_read_byte  <= 8'h00;
-            resp_index     <= 4'd0;
-            resp_len       <= 4'd0;
+            resp_index     <= 5'd0;
+            resp_len       <= 5'd0;
             status_snapshot <= 8'h00;
+
+            flash_payload      <= 72'h0;
+            flash_byte_pos     <= 4'h0;
+            flash_payload_len  <= 4'h0;
+            flash_op_start     <= 1'b0;
+            flash_op_code      <= 3'h0;
+            flash_slot_id      <= 4'h0;
+            flash_new_offset   <= 24'h0;
+            flash_new_length   <= 24'h0;
+            flash_new_type     <= 8'h0;
+            flash_ext_psram_addr <= {ADDR_WIDTH{1'b0}};
+            flash_ext_length     <= 24'h0;
+            flash_raw_flash_addr <= 24'h0;
+            flash_cat_read_sel   <= 4'h0;
 
             ram_req        <= 1'b0;
             ram_wr         <= 1'b0;
@@ -384,6 +576,7 @@ module spi_engine #(
             nm_start    <= 1'b0;
             nm_soft_rst <= 1'b0;
             run_start   <= 1'b0;
+            flash_op_start <= 1'b0;
 
             if (seq_done) begin
                 net_mode <= 1'b0;
@@ -449,9 +642,9 @@ module spi_engine #(
                                 end
 
                                 OP_STATUS: begin
-                                    resp_index     <= 4'd0;
-                                    resp_len       <= 4'd1;
-                                    status_snapshot <= {5'b0, graph_err, status_done_sticky, busy_all};
+                                    resp_index     <= 5'd0;
+                                    resp_len       <= 5'd1;
+                                    status_snapshot <= {3'b0, flash_busy, flash_err_sticky, graph_err, status_done_sticky, busy_all};
                                     state          <= ST_RESP;
                                 end
 
@@ -465,6 +658,67 @@ module spi_engine #(
                                     resp_index <= 4'd0;
                                     resp_len   <= 4'd11;
                                     state      <= ST_RESP;
+                                end
+
+                                // =====================================
+                                // Flash-subsystem opcodes (F5). All
+                                // but CAT_READ (0 payload bytes) and
+                                // CAT_INSPECT (dispatched, see below,
+                                // straight to a synchronous ST_RESP)
+                                // accumulate their payload in
+                                // ST_FLASH_PAYLOAD and dispatch on
+                                // its last byte.
+                                // =====================================
+
+                                OP_FLASH_READ_BLOCK, OP_FLASH_WRITE_BLOCK: begin
+                                    flash_byte_pos    <= 4'h0;
+                                    flash_payload_len <= 4'd9;
+                                    state             <= ST_FLASH_PAYLOAD;
+                                end
+
+                                OP_FLASH_ERASE: begin
+                                    flash_byte_pos    <= 4'h0;
+                                    flash_payload_len <= 4'd3;
+                                    state             <= ST_FLASH_PAYLOAD;
+                                end
+
+                                OP_CAT_READ: begin
+                                    // 0 payload bytes: dispatch right
+                                    // away. Mirrors OP_START's own
+                                    // "if already busy, just ignore
+                                    // the redundant start" convention
+                                    // -- a well-behaved host always
+                                    // waits for data_ready_n before
+                                    // issuing a new flash op anyway.
+                                    if (!flash_busy) begin
+                                        flash_op_start <= 1'b1;
+                                        flash_op_code  <= FOP_CAT_READ;
+                                    end
+                                    state <= ST_IGNORE;
+                                end
+
+                                OP_CAT_WRITE_SLOT: begin
+                                    flash_byte_pos    <= 4'h0;
+                                    flash_payload_len <= 4'd8;
+                                    state             <= ST_FLASH_PAYLOAD;
+                                end
+
+                                OP_LOAD_SLOT: begin
+                                    flash_byte_pos    <= 4'h0;
+                                    flash_payload_len <= 4'd4;
+                                    state             <= ST_FLASH_PAYLOAD;
+                                end
+
+                                OP_SAVE_SLOT: begin
+                                    flash_byte_pos    <= 4'h0;
+                                    flash_payload_len <= 4'd7;
+                                    state             <= ST_FLASH_PAYLOAD;
+                                end
+
+                                OP_CAT_INSPECT: begin
+                                    flash_byte_pos    <= 4'h0;
+                                    flash_payload_len <= 4'd1;
+                                    state             <= ST_FLASH_PAYLOAD;
                                 end
 
                                 default: begin // OP_NOP and unknown opcodes
@@ -715,6 +969,127 @@ module spi_engine #(
                     end
 
                     // =============================================
+                    // Flash-subsystem opcode payload (F5). See the
+                    // flash_payload/flash_byte_pos/flash_payload_len
+                    // declarations above for the shared-accumulator
+                    // rationale.
+                    //
+                    // `flash_payload` shifts on EVERY byte including
+                    // the last; the last byte's decode below reads
+                    // the PRE-update `flash_payload` (this cycle's
+                    // old value, still holding the previous bytes)
+                    // together with the current `rx_byte` directly --
+                    // same "pre-update accumulator + current byte"
+                    // pattern as rtl/flash_slot_manager.v's own
+                    // catalog-entry decode, and for the same reason
+                    // (the shift for THIS byte hasn't taken effect
+                    // yet when this same always-block evaluation
+                    // reads flash_payload combinationally).
+                    // =============================================
+
+                    ST_FLASH_PAYLOAD: begin
+
+                        if (rx_valid) begin
+
+                            flash_payload <= {flash_payload[63:0], rx_byte};
+
+                            if (flash_byte_pos == flash_payload_len - 4'd1) begin
+
+                                case (opcode)
+
+                                    OP_FLASH_READ_BLOCK: begin
+                                        if (!flash_busy) begin
+                                            flash_op_start       <= 1'b1;
+                                            flash_op_code         <= FOP_FLASH_READ_BLOCK;
+                                            flash_raw_flash_addr  <= flash_payload[63:40];
+                                            flash_ext_psram_addr  <= flash_payload[39:16];
+                                            flash_ext_length      <= {flash_payload[15:0], rx_byte};
+                                        end
+                                    end
+
+                                    OP_FLASH_WRITE_BLOCK: begin
+                                        if (!flash_busy) begin
+                                            flash_op_start       <= 1'b1;
+                                            flash_op_code         <= FOP_FLASH_WRITE_BLOCK;
+                                            flash_ext_psram_addr  <= flash_payload[63:40];
+                                            flash_raw_flash_addr  <= flash_payload[39:16];
+                                            flash_ext_length      <= {flash_payload[15:0], rx_byte};
+                                        end
+                                    end
+
+                                    OP_FLASH_ERASE: begin
+                                        if (!flash_busy) begin
+                                            flash_op_start       <= 1'b1;
+                                            flash_op_code         <= FOP_FLASH_ERASE;
+                                            flash_raw_flash_addr  <= {flash_payload[15:0], rx_byte};
+                                        end
+                                    end
+
+                                    OP_CAT_WRITE_SLOT: begin
+                                        if (!flash_busy) begin
+                                            flash_op_start   <= 1'b1;
+                                            flash_op_code     <= FOP_CAT_WRITE_SLOT;
+                                            // slot_id's byte occupies flash_payload[55:48];
+                                            // slot_id itself is that byte's LOW nibble
+                                            // (same host convention as LOAD_SLOT/SAVE_SLOT/
+                                            // CAT_INSPECT's slot_id bytes below).
+                                            flash_slot_id     <= flash_payload[51:48];
+                                            flash_new_offset  <= flash_payload[47:24];
+                                            flash_new_length  <= flash_payload[23:0];
+                                            flash_new_type    <= rx_byte;
+                                        end
+                                    end
+
+                                    OP_LOAD_SLOT: begin
+                                        if (!flash_busy) begin
+                                            flash_op_start        <= 1'b1;
+                                            flash_op_code          <= FOP_LOAD_SLOT;
+                                            flash_slot_id          <= flash_payload[19:16];
+                                            flash_ext_psram_addr   <= {flash_payload[15:0], rx_byte};
+                                        end
+                                    end
+
+                                    OP_SAVE_SLOT: begin
+                                        if (!flash_busy) begin
+                                            flash_op_start        <= 1'b1;
+                                            flash_op_code          <= FOP_SAVE_SLOT;
+                                            flash_slot_id          <= flash_payload[43:40];
+                                            flash_ext_psram_addr   <= flash_payload[39:16];
+                                            flash_ext_length       <= {flash_payload[15:0], rx_byte};
+                                        end
+                                    end
+
+                                    OP_CAT_INSPECT: begin
+                                        // Synchronous response, NOT a
+                                        // flash_op_start -- reads the
+                                        // already-loaded on-chip
+                                        // catalog register file
+                                        // directly. See the header
+                                        // note at flash_payload's
+                                        // declaration for why this
+                                        // opcode exists.
+                                        flash_cat_read_sel <= rx_byte[3:0];
+                                        resp_index         <= 5'd0;
+                                        resp_len            <= 5'd16;
+                                    end
+
+                                    default: ; // unreachable: only flash opcodes reach this state
+
+                                endcase
+
+                                state <= (opcode == OP_CAT_INSPECT) ? ST_RESP : ST_IGNORE;
+
+                            end else begin
+
+                                flash_byte_pos <= flash_byte_pos + 4'd1;
+
+                            end
+
+                        end
+
+                    end
+
+                    // =============================================
                     // STATUS / READ_OUTPUT / READ_CONFIG response
                     // =============================================
 
@@ -722,10 +1097,10 @@ module spi_engine #(
 
                         if (rx_valid) begin
 
-                            if (resp_index == resp_len - 4'd1)
+                            if (resp_index == resp_len - 5'd1)
                                 state <= ST_IGNORE;
                             else
-                                resp_index <= resp_index + 4'd1;
+                                resp_index <= resp_index + 5'd1;
 
                         end
 
