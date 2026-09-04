@@ -1442,3 +1442,22 @@ integrazione nel top level (F5), verifica consolidata e misure reali (F6).
 - **Deliverable**: `docs/validation/09-pinout.md`, `10-timing.md`, `11-toolchain.md`,
   `12-netasm.md`, `13-coerenza-datasheet.md`, `14-lavori-in-corso.md`, `D-trasversali.md`.
 - **Prossimo passo**: certificato finale consolidato (`docs/validation/CERTIFICATION.md`).
+
+## Campagna di ri-certificazione — CERTIFICATO FINALE (2026-09-04)
+
+- **`docs/validation/CERTIFICATION.md`**: verdetto complessivo onesto — il progetto **NON
+  è certificabile senza riserve nel suo complesso**. Datapath aritmetico solido e
+  certificato esaustivamente dove possibile; controllo/sequenziamento/arbitraggio corretto
+  sul percorso felice (40 test reali PASS); **7 bug reali trovati, tutti riconducibili a un
+  unico pattern sistemico** (valori limite "reale=0" non protetti + una scrittura di
+  configurazione non protetta durante un'operazione in corso). **2 su 7 sono CRITICI**
+  (BUG-005, BUG-007), raggiungibili con opcode SPI documentati in condizioni plausibili,
+  con rischio di corruzione dati reale o hang dell'inferenza. Nessuno dei 7 bug era
+  documentato prima di questa campagna.
+- Priorità di correzione raccomandata (non applicata, analisi separata dalla correzione
+  per policy §E): BUG-005/007 prima di ogni uso in produzione con un host non
+  completamente fidato, poi BUG-002/003/004, poi BUG-006, poi la decisione su `sim/top.v`
+  (BUG-001), poi l'aggiornamento del datasheet.
+- **Campagna completa**: Fase 0 + C.1-C.14 + D, tutti i capitoli in `docs/validation/`,
+  registro bug in `bugs.md`, harness di regressione riutilizzabile in
+  `tools/run_regression.py` (40 test reali, rieseguibile da chiunque con un comando).
