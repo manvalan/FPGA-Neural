@@ -111,6 +111,41 @@ funzionale pratico), **INFO** (non un bug: gap di copertura, ambiguità document
 - **Stato**: **APERTO, confermato, causa esatta non isolata** (stesso limite dichiarato di
   BUG-003).
 
+### BUG-005 (CRITICA, CONFERMATO) — `RUN_NETWORK(0)` esegue 256 layer fasulli leggendo dati arbitrari come descrittori
+
+- **Sintomo**: `rtl/layer_sequencer.v` documenta `run_num_layers` come "1..N_LAYERS" ma
+  **non esiste alcun guard**, né a tempo di elaborazione né a runtime, che lo imponga.
+  `layer_idx` (riga 121) è un registro a 8 bit PIENO (non ristretto come il
+  `group_index` a 1 bit di BUG-002) — per `run_num_layers=0`, la condizione di
+  terminazione `layer_idx == num_layers_reg-1` (riga 303) avvolge a `layer_idx==255`, un
+  valore che il contatore RAGGIUNGE naturalmente contando da 0. Risultato confermato
+  empiricamente: **`RUN_NETWORK(0)` non si blocca — esegue tutti e 256 gli indici di
+  layer possibili** (21761 cicli in simulazione) prima di terminare, ciascuno leggendo 11
+  byte di "descrittore" da `table_base + layer_idx×11` — ben oltre la vera tabella
+  descrittori (dimensionata per il build reale, tipicamente poche decine di byte) — e
+  interpretando dati PSRAM arbitrari (pesi, altri dati di rete, o memoria non
+  inizializzata) come indirizzi/parametri di layer validi, eseguendo run reali di
+  `neuron_memory` con quei parametri e **scrivendo i risultati nei buffer ping-pong a
+  indirizzi derivati da quei dati arbitrari**.
+- **Causa radice**: nessun guard su `run_num_layers`, né a tempo di elaborazione (come
+  invece esiste per `N_INPUTS%PARALLEL` in `neuron_parallel.v`) né a runtime (come invece
+  esiste, sia pure incompleto, per `n_inputs_real`/`n_neurons_real`, BUG-003/004).
+- **Evidenza**: `sim/layer_sequencer_bug005_zero_layers_tb.v` — `iverilog -g2012 -o /tmp/ls0.out rtl/layer_sequencer.v sim/layer_sequencer_bug005_zero_layers_tb.v && vvp /tmp/ls0.out` →
+  `dut.layer_idx` termina a 255, non a 0.
+- **Impatto pratico**: **più severo di BUG-002/003/004** — raggiungibile con un singolo
+  opcode SPI documentato (`RUN_NETWORK`, `num_layers=0`) senza bisogno di ricompilare il
+  bitstream né di impostare un valore "runtime" degenere in un percorso secondario; il
+  rischio non è solo un risultato sbagliato o un hang, ma **scritture reali in PSRAM a
+  indirizzi non controllati**, derivati da dati che non erano mai stati pensati per essere
+  interpretati come indirizzi.
+- **Fix proposto** (non applicato — analisi separata dalla correzione): guard a runtime in
+  `layer_sequencer.v` analogo a quello di `neuron_parallel.v`, es. rifiutare
+  `run_num_layers==0` prima di avviare la sequenza (riportando un errore osservabile invece
+  di procedere).
+- **Stato**: **APERTO, confermato, causa isolata con certezza** (a differenza di
+  BUG-003/004, qui il meccanismo esatto è stato individuato precisamente, non solo il
+  sintomo).
+
 ---
 
 ## Risolti

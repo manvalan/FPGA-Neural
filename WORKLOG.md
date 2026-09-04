@@ -1312,3 +1312,28 @@ integrazione nel top level (F5), verifica consolidata e misure reali (F6).
 - **Regressione completa**: 40/40 test reali PASS (39 precedenti + 1 nuovo), 0 regressioni.
 - **Deliverable**: `docs/validation/04-arbiter.md`.
 - **Prossimo passo**: C.5 (`layer_sequencer` — ping-pong, tabella descrittori, catena layer).
+
+## Campagna di ri-certificazione — C.5: Sequencer dense (2026-09-04)
+
+- **Catena layer/ping-pong/busy-done certificata** citando il test pre-esistente
+  (`layer_sequencer_tb.v`), già solido: verifica l'indirizzo del buffer ping-pong
+  effettivamente usato (non solo il valore), `seq_busy` continuo su 2 layer, `seq_done`
+  esattamente una volta dopo l'ultimo layer.
+- **BUG-005 (CRITICO) trovato e confermato**: `run_num_layers=0` non ha alcun guard (né
+  compile-time né runtime), e a differenza di BUG-002 (`group_index` a 1 bit, mai
+  raggiunge il valore di avvolgimento) qui `layer_idx` è un registro a 8 bit PIENI —
+  raggiunge naturalmente il valore di avvolgimento 255. Verificato empiricamente con uno
+  stub minimale di `neuron_memory` (nessun bisogno dello stack di memoria reale per isolare
+  il comportamento di sequenziamento): **`RUN_NETWORK(0)` esegue tutti e 256 gli indici di
+  layer possibili** (21761 cicli), leggendo byte arbitrari da PSRAM ben oltre la vera
+  tabella descrittori come se fossero descrittori validi, eseguendo run reali di
+  `neuron_memory` e **scrivendo risultati a indirizzi PSRAM derivati da quei dati
+  arbitrari**. Più severo di BUG-002/003/004: raggiungibile con un singolo opcode SPI
+  documentato (`RUN_NETWORK`), rischio di corruzione dati reale non solo hang/risultato
+  sbagliato. Causa isolata con certezza (non solo il sintomo, a differenza di BUG-003/004).
+- **Regressione completa**: 40/40 test reali PASS invariati, 1 nuovo test osservazionale
+  (non un pass/fail) che riproduce BUG-005 in modo deterministico.
+- **Deliverable**: `docs/validation/05-layer-sequencer.md`, `bugs.md` aggiornato con
+  BUG-005.
+- **Prossimo passo**: C.6 (motore grafo — `graph_engine`, `act_buffer`, guard
+  `src_id<out_id`).

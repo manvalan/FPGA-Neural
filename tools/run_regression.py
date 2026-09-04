@@ -36,6 +36,7 @@ EXPECTED_COMPILE_FAIL = {
 # an inconsistent naming convention worth flagging in the inventory).
 BENCHMARK_NO_VERDICT = {
     "graph_engine_bandwidth",
+    "layer_sequencer_bug005_zero_layers",  # confirmed-bug reproduction, prints a RESULT line, no PASS/FAIL by design
 }
 
 # Every module-defining file under rtl/ and the sim/ behavioral models used
