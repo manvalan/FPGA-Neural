@@ -1393,3 +1393,52 @@ integrazione nel top level (F5), verifica consolidata e misure reali (F6).
 - **Deliverable**: `docs/validation/08-top-level.md`, `bugs.md` con BUG-007.
 - **Prossimo passo**: C.9 (pinout/.lpf — già ampiamente verificato in sessioni precedenti,
   citazione + eventuale riverifica mirata).
+
+## Campagna di ri-certificazione — C.9-C.14 + D (2026-09-04)
+
+- **C.9 (pinout/.lpf)**: certificato citando il lavoro reale già svolto in questa stessa
+  sessione (Fasi F1-F7): place&route reale 0 errori, cross-check contro il datasheet
+  Lattice, `USRMCLK` verificato e poi rimosso in F7. **Bitstream reale rigenerato per il
+  build corrente** (post-F7, non solo per un build più vecchio): `ecppack` 0 errori,
+  header verificato (`Part: LFE5U-45F-8CABGA381`).
+- **C.10 (timing)**: certificato citando le Fmax rimisurate ad ogni passaggio strutturale
+  in questa sessione (54.58→75.30→73.88→66.68→**67.91 MHz**), percorso critico verificato
+  identico ad ogni ri-sintesi, non assunto.
+- **C.11 (toolchain)**: flusso completo RTL→Yosys→nextpnr-ecp5→`ecppack` rieseguito sul
+  build corrente, 0 errori ad ogni stadio. Dichiarato esplicitamente NON CERTIFICABILE il
+  comportamento su silicio reale (nessun hardware fisico disponibile).
+- **C.12 (netasm)**: certificato citando i 20/20 test (Fase 0), incl. round-trip reale con
+  l'hardware già dimostrato in sessione precedente (test end-to-end mandatorio, output=126).
+- **C.13 (coerenza datasheet↔RTL)**: **scostamento reale trovato e dichiarato**: nessuno
+  dei 7 bug di questa campagna (BUG-001-007) è ancora menzionato nel datasheet o in
+  `docs/FPGA-NeuralNetwork-Engine.md` — corretto e atteso (scoperti dopo l'ultimo
+  aggiornamento di quei documenti), ma segnalato esplicitamente come azione di follow-up
+  necessaria dopo il completamento della campagna.
+- **C.14 (lavori in corso)**: page-mode PSRAM e sottosistema flash risultano **completi**,
+  non "in corso" come il prompt di certificazione presupponeva — verificato per lo stato
+  reale della repo, nessun residuo TODO/incompleto trovato.
+- **D (analisi trasversali)**:
+  - **CDC**: certificato citando C.7 (sincronizzatore 2/3 stadi, test a rapporto variabile).
+  - **Reset**: **fatto reale trovato per ispezione esaustiva** (non assunto) — l'intero
+    progetto (20 file RTL) usa reset **esclusivamente sincrono**, mai asincrono
+    (`grep -l "posedge rst" rtl/*.v` → nessun risultato). Diverso dalla formulazione
+    "async assert/sync deassert" del prompt originale — segnalato come fatto, non difetto.
+  - **FSM**: i 6 bug BUG-002-007 di questa campagna SONO difetti di FSM (contatori che
+    avvolgono su valori raggiungibili, mux non agganciato allo stato del motore) — trovati
+    e documentati, ma nessuna analisi di raggiungibilità esaustiva di OGNI FSM del
+    progetto fatta in questa fase (riserva dichiarata).
+  - **Larghezze/overflow**: 2 casi reali di questa categoria trovati in tutto (1 in
+    sessione precedente, `FLASH_SPACE_BYTES`; 1 in questa campagna, causa radice di
+    BUG-002) — nessuna garanzia sia l'unico rimasto.
+  - **Lint**: sintesi Yosys dell'intero sistema con `check`, ogni messaggio
+    warning/latch/width/multiple-driver filtrato esplicitamente: **un solo warning reale**
+    (tri-state PSRAM, già noto/atteso), **zero latch inferiti accidentalmente**,
+    confermato segnale per segnale (25 conferme esplicite "No latch inferred", non solo
+    assenza di warning).
+  - **Determinismo**: nessuna evidenza di non-determinismo reale trovata (l'unica
+    "incoerenza" osservata, BUG-003, tracciata a stimoli testbench effettivamente diversi
+    tra i tentativi, non a comportamento instabile a parità di stimolo) — non verificato
+    con una campagna dedicata di run ripetuti (riserva dichiarata).
+- **Deliverable**: `docs/validation/09-pinout.md`, `10-timing.md`, `11-toolchain.md`,
+  `12-netasm.md`, `13-coerenza-datasheet.md`, `14-lavori-in-corso.md`, `D-trasversali.md`.
+- **Prossimo passo**: certificato finale consolidato (`docs/validation/CERTIFICATION.md`).
