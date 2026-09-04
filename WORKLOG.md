@@ -1160,3 +1160,37 @@ integrazione nel top level (F5), verifica consolidata e misure reali (F6).
   DI/DO/CS/CLK della flash vanno cablati sia ai pin dedicati di config sia a questi 4 pin
   GPIO ordinari — non ancora catturato in uno schematico (nessuno schematico esiste ancora
   per questa combinazione dispositivo/package), dichiarato come voce aperta.
+
+## Campagna di ri-certificazione — Fase 0: inventario reale (2026-09-04)
+
+- 2026-09-04T12:00 — [CERT-F0] — Richiesta esplicita dell'utente: rianalizzare l'intero
+  progetto sul codice reale (non su descrizioni/WORKLOG), certificare aspetto per aspetto con
+  oracoli indipendenti, produrre `docs/validation/`. Iniziata Fase 0 (inventario), prima di
+  qualunque test per aspetto.
+- **Trovato codice morto**: `sim/top.v` non compila contro l'RTL corrente (`parameter
+  FRAC_BITS not found` — residuo della versione Q8.8 pre-conversione a INT8 puro, Fase 6).
+  Non referenziato da alcun testbench/tool. Non toccato (analisi, non correzione).
+- **Trovato gap di copertura**: `rtl/mac_unit.v` e `rtl/mac8.v` non hanno alcun testbench
+  unitario dedicato — solo copertura indiretta tramite `neuron_parallel_tb.v` e simili.
+  Portato come blocco per la certificazione di C.1 (Datapath aritmetico).
+- **Trovato finding aperto da verificare** (non ancora bug confermato): il guard
+  elaboration-time `N_INPUTS % PARALLEL != 0` in `rtl/neuron_parallel.v:71` non copre
+  matematicamente il caso `N_INPUTS=0` (`0 % PARALLEL == 0` per ogni PARALLEL, ma
+  `GROUPS=0` → lo stesso hang che il guard dichiara di prevenire). Non ancora testato se
+  `N_INPUTS=0` sia raggiungibile nella pratica — registrato in `docs/validation/bugs.md`
+  come BUG-002, da chiudere in C.1.
+- **Creato `tools/run_regression.py`**: non esisteva alcun harness di regressione
+  riproducibile nella repo — ogni claim "N testbench, tutti PASS" precedente era prodotto a
+  mano. Il nuovo script risolve le dipendenze per analisi statica delle istanziazioni (non a
+  memoria) e rilancia tutto da zero. Primo run: 2 falsi negativi + 1 "sconosciuto" — non bug,
+  ma un blind spot dell'harness stesso su 2 test negativi dichiarati (falliscono a compilare
+  *per progetto*, verificato leggendo l'header dei file) e 1 benchmark senza verdetto per
+  progetto (`graph_engine_bandwidth_tb.v`, mal nominato con suffisso `_tb.v`). Corretto
+  l'harness con una whitelist esplicita letta dal codice sorgente dei test, non inventata.
+  **Risultato finale, verificato indipendentemente**: 33/33 testbench reali PASS, 0
+  regressioni — il claim del WORKLOG è confermato vero, non solo creduto sulla parola.
+  `tools/netasm/tests/test_netasm.py` verificato separatamente: 20/20 PASS, invariato.
+- **Deliverable**: `docs/validation/00-inventario.md` (fotografia completa, matrice
+  modulo→testbench, discrepanze doc↔codice), `docs/validation/bugs.md` (registro aperto).
+- **Prossimo passo**: aspetti C.1–C.14 uno alla volta, ciascuno con test avversari e oracolo
+  Python indipendente, verdetto tracciato in un capitolo dedicato.
