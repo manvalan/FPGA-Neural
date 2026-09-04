@@ -1371,3 +1371,25 @@ integrazione nel top level (F5), verifica consolidata e misure reali (F6).
 - **Deliverable**: `docs/validation/07-spi.md`.
 - **Prossimo passo**: C.8 (top-level `spi_neuron_top` — mux `seq_busy`, reset soft, pin
   `data_ready_n`/`irq_n`).
+
+## Campagna di ri-certificazione — C.8: Top-level (2026-09-04)
+
+- **Mux dispatch legittimo e pin `data_ready_n`/`irq_n` certificati** citando test
+  pre-esistenti (`spi_neuron_top_runnetwork_tb.v`, `spi_neuron_top_irq_tb.v`).
+- **BUG-007 (CRITICO) trovato e confermato end-to-end su SPI reale**: `SET_NET_TYPE` non
+  ha alcun controllo su `graph_busy`/`seq_busy` (`rtl/spi_engine.v`), e il mux della Porta C
+  dell'arbitro sceglie tra `graph_engine`/`layer_sequencer` in modo puramente
+  combinazionale sul valore corrente di `net_type` — non agganciato a quale motore ha
+  avviato il run. Verificato: avviato un `RUN_NETWORK` grafo valido, inviato
+  immediatamente `SET_NET_TYPE(dense)` prima del completamento → **`STATUS.busy` resta
+  bloccato** (30+ poll consecutivi senza `done`/`err`, contro i ~12-25µs normali per quel
+  grafo) — il motore grafo resta in attesa di un `ram_ready` che non arriva più tramite il
+  mux ormai scollegato. **Verificato anche il recupero**: un `RESET` durante l'hang
+  riporta il sistema a uno stato pienamente funzionante (operazione dense successiva
+  completata normalmente) — non un blocco permanente, ma il polling da solo non si
+  sbloccherebbe mai senza un `RESET` di ripiego lato host.
+- **Regressione completa**: 40/40 test reali PASS invariati, 1 nuovo test osservazionale
+  (riproduce BUG-007 in modo deterministico e verifica il recupero via RESET).
+- **Deliverable**: `docs/validation/08-top-level.md`, `bugs.md` con BUG-007.
+- **Prossimo passo**: C.9 (pinout/.lpf — già ampiamente verificato in sessioni precedenti,
+  citazione + eventuale riverifica mirata).

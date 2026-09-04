@@ -165,6 +165,48 @@ funzionale pratico), **INFO** (non un bug: gap di copertura, ambiguità document
 - **Stato**: **APERTO**, severità inferiore a BUG-005 per la protezione incidentale
   osservata, non pienamente verificato su ogni pattern di dati possibile.
 
+### BUG-007 (CRITICA, CONFERMATO end-to-end via SPI reale) — `SET_NET_TYPE` durante un `RUN_NETWORK` in corso blocca permanentemente il motore in esecuzione
+
+- **Sintomo**: `rtl/spi_engine.v`, stato `ST_SET_NET_TYPE`, accetta
+  `net_type <= rx_byte` **incondizionatamente** su qualunque `rx_valid`, senza alcun
+  controllo su `graph_busy`/`seq_busy`. `rtl/spi_neuron_top.v` (righe 394-397) instrada la
+  Porta C dell'arbitro tra `graph_engine` e `layer_sequencer` in modo **puramente
+  combinazionale** sul valore CORRENTE di `net_type` — non agganciato a quale motore ha
+  effettivamente avviato il run in corso. Il commento alla riga 390 dichiara i due motori
+  "mutually exclusive by construction", ma quella costruzione impedisce solo che **entrambi
+  vengano avviati insieme** — non dice nulla su una scrittura di `net_type` che arriva a
+  metà di un run già avviato.
+- **Confermato end-to-end su SPI reale** (non solo per ispezione): avviato un
+  `RUN_NETWORK` in modalità grafo (lo stesso grafo valido già certificato in
+  `spi_neuron_top_graph_tb.v`), poi immediatamente — prima che completi — inviato
+  `SET_NET_TYPE(dense)` via SPI. Risultato: **`STATUS.busy` resta bloccato a 1 per 400+
+  letture consecutive, ~2.35ms di tempo simulato** (contro i ~12-25µs normali per quel
+  grafo) — un hang permanente, non un rallentamento. Le transazioni SPI stesse (incl. il
+  `SET_NET_TYPE` avversariale) completano regolarmente; è specificamente il motore grafo
+  a restare bloccato in attesa di un `ram_ready` che non arriverà mai più tramite il
+  percorso ormai scollegato dal mux.
+- **Evidenza**: `sim/spi_neuron_top_bug007_mid_run_net_type_tb.v` — riproduce l'hang in
+  modo deterministico e ripetibile su SPI reale (non solo un accesso interno).
+- **Impatto pratico**: **il più severo finora insieme a BUG-005** — raggiungibile con due
+  soli opcode SPI documentati emessi in sequenza ravvicinata (`RUN_NETWORK` seguito da
+  `SET_NET_TYPE` prima del completamento), uno scenario host plausibile (es. un host che
+  prepara la configurazione per il prossimo run senza attendere la fine del precedente,
+  o una race a livello applicativo tra due richieste). Blocca l'inferenza in corso finché
+  l'host non se ne accorge (nessun timeout hardware, nessun errore riportato — solo
+  `STATUS.busy` che non si abbassa mai).
+- **Recupero verificato**: un `RESET` inviato durante l'hang **riporta il sistema a uno
+  stato pienamente funzionante** — verificato con una successiva operazione dense legittima
+  completata normalmente (2 cicli di polling, esito corretto). **Non è un blocco
+  permanente**, ma un host che si limita a fare polling di `STATUS` senza un timeout e un
+  `RESET` di ripiego resterebbe bloccato indefinitamente comunque, dato che l'hardware non
+  segnala mai da solo che qualcosa è andato storto.
+- **Fix proposto** (non applicato — analisi separata dalla correzione): in
+  `rtl/spi_engine.v`, rifiutare/accodare `SET_NET_TYPE` mentre `graph_busy||seq_busy` è
+  asserto, oppure latchare `net_type` in `spi_neuron_top.v` solo all'avvio di un run
+  (non renderlo immediatamente combinazionale sul mux dell'arbitro).
+- **Stato**: **APERTO, confermato end-to-end, causa isolata con certezza, recupero via
+  RESET verificato.**
+
 ---
 
 ## Risolti
