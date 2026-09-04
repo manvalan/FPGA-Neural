@@ -1270,3 +1270,26 @@ integrazione nel top level (F5), verifica consolidata e misure reali (F6).
   `docs/validation/bugs.md` aggiornato con BUG-003 e BUG-004.
 - **Prossimo passo**: C.3 (sottosistema memoria — `int8_memory_access`, `memory_interface`,
   `psram_controller`).
+
+## Campagna di ri-certificazione — C.3: Sottosistema memoria (2026-09-04)
+
+- **`int8_memory_access.v` certificato esaustivamente** (nuovo test, non esisteva prima):
+  2048 indirizzi (ogni combinazione dei 12 bit bassi, entrambe le parità) per la conversione
+  byte→word e selezione byte-lane, più 6 round-trip scrittura/lettura reali attraverso
+  l'handshake FSM (incl. verifica che scrivere il byte dispari di una parola non corrompa il
+  byte pari fratello). **2054/2054 controlli, 0 mismatch** — dopo aver corretto due difetti
+  nella mia stessa testbench (controllo dei segnali nello stesso passo dell'aggiornamento
+  non-bloccante; uno stub di memoria che ignorava le byte-lane in scrittura), non nell'RTL.
+- **`memory_interface.v`**: copertura pre-esistente (`memory_interface_tb.v`) ritenuta
+  adeguata alla semplicità del modulo (nessuna aritmetica di indirizzo propria) — non
+  ripetuta da zero.
+- **`psram_controller.v`**: non ri-verificato da zero — cita il lavoro esteso già svolto in
+  QUESTA sessione (bug reale di richiesta persa durante power-up trovato e corretto in Fase
+  F2; timing page-mode/tCEM verificato contro il datasheet ISSI con `$fatal` su violazione
+  in `psram_model.v`), riconfermato PASS dall'harness di regressione indipendente in Fase 0
+  (non dato per buono sulla parola del WORKLOG).
+- **Nessun bug RTL nuovo trovato in questo aspetto** — solo due difetti nella testbench di
+  verifica stessa, corretti prima di trarre conclusioni.
+- **Regressione completa**: 39/39 test reali PASS (38 precedenti + 1 nuovo), 0 regressioni.
+- **Deliverable**: `docs/validation/03-memoria.md`.
+- **Prossimo passo**: C.4 (`mem_arbiter` — priorità B>C>A, starvation, contesa).

@@ -130,3 +130,15 @@ perché siano difetti.
   Vedi `docs/validation/00-inventario.md` §0.5.
 - **`graph_engine_bandwidth_tb.v` "nessun verdetto PASS/FAIL"**: è un benchmark per
   progetto, non un test di correttezza. Vedi §0.3/§0.5 dell'inventario.
+- **C.1 (falso "hang" iniziale, `neuron_parallel` config nota-buona)**: controllo tardivo e
+  singolo di `done` (impulso di un solo ciclo) in uno script bespoke — non un problema
+  dell'RTL. Vedi `docs/validation/01-datapath.md` §1.4.
+- **C.2 (falso "hang" per `n_inputs_real=17`)**: stesso tipo di errore in un secondo script
+  bespoke diverso da quello già provato — corretto riusando lo schema affidabile. Vedi
+  `docs/validation/02-runtime-width.md` §2.2.
+- **C.3 (falsi mismatch su 2048 controlli + un falso fallimento di round-trip)**: nel nuovo
+  `sim/int8_memory_access_bytelane_tb.v`, un controllo dei segnali nello stesso passo di
+  simulazione del loro aggiornamento non-bloccante (leggeva il valore dell'iterazione
+  precedente), e uno stub di memoria comportamentale che ignorava le byte-lane
+  `mem_lb_n`/`mem_ub_n` durante la scrittura. Entrambi difetti della testbench, non
+  dell'RTL — vedi `docs/validation/03-memoria.md` §3.1.
