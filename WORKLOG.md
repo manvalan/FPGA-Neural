@@ -1236,3 +1236,37 @@ integrazione nel top level (F5), verifica consolidata e misure reali (F6).
   l'header di `neuron_parallel.v` dichiara esplicitamente che `n_inputs_real=0` riproduce lo
   stesso rischio di BUG-002 "per responsabilità del chiamante" — da verificare se questo
   claim tiene, con lo stesso rigore.
+
+## Campagna di ri-certificazione — C.2: Larghezza runtime (2026-09-04)
+
+- **Terminazione anticipata `n_inputs_real`/`n_neurons_real` per valori validi: CERTIFICATA**
+  con tecnica "regione veleno" (dati che saturerebbero il risultato se letti oltre il limite
+  reale) — nessun over-read confermato, cicli scalano proporzionalmente in entrambi i casi.
+- **`n_inputs_real` non multiplo di PARALLEL a runtime: CERTIFICATO** — tronca
+  silenziosamente come documentato (`y=16` invece di 17 elementi), non un hang. Un primo
+  tentativo con uno script diverso da quello già provato aveva mostrato un falso hang,
+  corretto riproducendo con lo schema affidabile prima di fidarmene.
+- **`n_inputs_real=0` a runtime (BUG-003) e `n_neurons_real=0` (BUG-004): comportamento
+  scorretto confermato ma NON pienamente caratterizzato** — la parte più impegnativa di
+  questa fase. Ripetizioni quasi identiche dello stesso test hanno prodotto risultati
+  DIVERSI (a volte hang, a volte limite ignorato con esito "processa tutto", a volte un
+  terzo valore di cicli che non corrisponde né a zero né al totale) — non ho isolato la
+  condizione esatta che decide l'esito entro un tempo ragionevole, ed è stato riportato per
+  intero invece di scegliere il risultato più pulito o nascondere l'incoerenza.
+  Analisi aritmetica (non confermata come spiegazione completa): la larghezza del contatore
+  di loop (`GROUP_INDEX_WIDTH`/`NEURON_INDEX_WIDTH`, dimensionata a compile-time sul massimo
+  di build) determina se il valore di avvolgimento per "reale=0" è raggiungibile dal
+  contatore (nessun hang, ma limite ignorato) o irraggiungibile (hang) — coerente con
+  l'osservazione ma non root-caused bit-per-bit come per BUG-002. **Importante**: in ogni
+  singola ripetizione osservata, il risultato era comunque SBAGLIATO in un modo o nell'altro
+  — non è mai stato "corretto per caso".
+- **4 nuovi testbench permanenti**: `sim/neuron_parallel_bug003_n_inputs_real_zero_tb.v`
+  (TESTS 1-3 certificano la terminazione anticipata, TEST 4 è deliberatamente
+  observe-only, non un'asserzione, dato il comportamento non deterministico riscontrato),
+  `sim/neuron_memory_bug004_n_neurons_real_zero_tb.v` (stesso schema).
+- **Regressione completa**: 38/38 test reali PASS (36 precedenti + 2 nuovi), 0 regressioni.
+- **Deliverable**: `docs/validation/02-runtime-width.md` (con la registrazione completa e
+  non filtrata di ogni tentativo per BUG-003, non solo il verdetto finale),
+  `docs/validation/bugs.md` aggiornato con BUG-003 e BUG-004.
+- **Prossimo passo**: C.3 (sottosistema memoria — `int8_memory_access`, `memory_interface`,
+  `psram_controller`).

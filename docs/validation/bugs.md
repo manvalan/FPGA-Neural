@@ -54,6 +54,63 @@ funzionale pratico), **INFO** (non un bug: gap di copertura, ambiguità document
   certificazione): estendere il guard a `if (N_INPUTS == 0 || N_INPUTS % PARALLEL != 0)`.
 - **Stato**: **APERTO, confermato, non corretto.**
 
+### BUG-003 (MEDIA, CONFERMATO ma NON pienamente caratterizzato) — `n_inputs_real=0` a runtime, comportamento incoerente tra ripetizioni
+
+- **Sintomo**: con `N_INPUTS=32, PARALLEL=8` validi a compile-time (nessun problema di
+  larghezza `[-1:0]`, a differenza di BUG-002), impostando `n_inputs_real=0` a runtime (lo
+  stesso percorso raggiungibile dall'host via `SET_BASE sel=7`) il comportamento osservato
+  **varia tra ripetizioni quasi identiche dello stesso test**: a volte `start` viene
+  accettato ma `busy`/`done` non si muovono mai più (hang), a volte l'operazione completa
+  normalmente ma processa l'INTERA larghezza di build invece di zero elementi (limite
+  ignorato silenziosamente, stessa classe di BUG-004). Vedi `docs/validation/
+  02-runtime-width.md` §2.3 per la registrazione completa di ogni singola ripetizione e dei
+  suoi risultati, riportati senza scartare quelli "scomodi".
+- **Causa radice**: **non isolata con certezza** entro il tempo ragionevole per questa
+  campagna. Analisi aritmetica plausibile (non confermata come spiegazione completa): per
+  questa build `GROUP_INDEX_WIDTH=2` bit, quindi `groups_real[1:0]-1` per `groups_real=0`
+  avvolge al valore 3 (raggiungibile da un contatore a 2 bit, a differenza del contatore a
+  1 bit di BUG-002) — spiegherebbe l'esito "limite ignorato" come esito aritmeticamente
+  atteso, ma non spiega perché in alcune ripetizioni compaia invece un hang vero. Esclusi
+  esplicitamente: propagazione di X in simulazione (verificato inizializzando ogni registro
+  prima di qualunque reset, il comportamento non cambia), e una dipendenza semplice
+  dall'ordine delle chiamate (una sequenza valida→zero non blocca; una sequenza
+  zero→zero→zero blocca dalla seconda chiamata in poi, non dalla prima — non un pattern
+  semplice "prima volta sicura, poi no").
+- **Impatto pratico**: come BUG-002, `n_inputs_real=0` non ha senso semantico per una rete
+  reale, ma a differenza di BUG-002 questo valore **è raggiungibile a runtime da un host via
+  SPI** senza bisogno di una nuova sintesi — un host con un bug che calcola erroneamente
+  `n_inputs_real=0` per un caso limite (es. un layer con zero neuroni in una topologia
+  degenere) potrebbe innescarlo, con un esito imprevedibile tra hang e risultato
+  silenziosamente sbagliato.
+- **Stato**: **APERTO, confermato come comportamento scorretto in ogni caso osservato, ma
+  meccanismo esatto NON isolato** — dichiarato esplicitamente come limite di questa verifica
+  (§A.5), non presentato come pienamente compreso. Richiederebbe un'indagine dedicata
+  (probabilmente a livello gate/timing reale, non solo comportamentale) per chiudere con
+  certezza il meccanismo, non solo il sintomo.
+
+### BUG-004 (MEDIA, CONFERMATO scorretto, NON pienamente caratterizzato) — `n_neurons_real=0` non blocca, ma non fa nemmeno quello che ci si aspetterebbe in modo coerente
+
+- **Sintomo**: a `rtl/neuron_memory.v`, con `n_neurons_real=0`, l'operazione **completa
+  sempre normalmente** (mai un hang, a differenza di BUG-002/003) — ma il numero di cicli
+  impiegato **non è coerente tra build diverse**: per `N_NEURONS=2` (`NEURON_INDEX_WIDTH=1`
+  bit) impiega **esattamente** lo stesso numero di cicli di `n_neurons_real=2` (114=114,
+  suggerendo che il limite venga ignorato e processi tutto), mentre per `N_NEURONS=3`
+  (`NEURON_INDEX_WIDTH=2` bit) impiega **196 cicli — più della build completa a 3 neuroni
+  (155)**, un terzo valore che non corrisponde né a "zero neuroni" né a "tutti i neuroni".
+  In ogni caso testato: nessun errore, nessun timeout — un host che chiede zero neuroni
+  riceve sempre un completamento dall'aspetto normale ma su un conteggio/dato diverso da
+  quanto richiesto, e il conteggio esatto varia con `N_NEURONS`.
+- **Causa radice**: non isolata bit-per-bit (a differenza di BUG-002). Ipotesi coerente con
+  BUG-003: l'aritmetica di avvolgimento (`neuron_index == n_neurons_real[W-1:0]-1`) per
+  `n_neurons_real=0` produce un valore di terminazione che, per coincidenza di larghezza,
+  corrisponde al conteggio pieno invece che a "termina subito".
+  Vedi `docs/validation/02-runtime-width.md` §2.5.
+- **Impatto pratico**: come BUG-002/003, richiede che l'host imposti deliberatamente (o per
+  bug proprio) `n_neurons_real=0` — non raggiungibile da un input esterno arbitrario, ma
+  raggiungibile da un bug nel software host senza bisogno di ricompilare il bitstream.
+- **Stato**: **APERTO, confermato, causa esatta non isolata** (stesso limite dichiarato di
+  BUG-003).
+
 ---
 
 ## Risolti
