@@ -1337,3 +1337,21 @@ integrazione nel top level (F5), verifica consolidata e misure reali (F6).
   BUG-005.
 - **Prossimo passo**: C.6 (motore grafo — `graph_engine`, `act_buffer`, guard
   `src_id<out_id`).
+
+## Campagna di ri-certificazione — C.6: Motore grafo (2026-09-04)
+
+- **Gather/padding/guard esistenti certificati** citando test pre-esistenti già solidi
+  (`graph_engine_tb.v` verifica `act_buffer` via riferimento gerarchico non solo l'output
+  finale; `graph_engine_guard_tb.v` copre 4 casi avversari incl. recovery).
+- **BUG-006 (BASSA) trovato**: stessa causa radice esatta di BUG-005
+  (`num_neurons_graph=0`, `neuron_idx` a 16 bit pieni, nessun guard) ma con una differenza
+  pratica importante: `graph_engine` ha già un guard per-edge (`src_id<out_id`) che, per
+  un pattern di dati non banale, ha fermato l'esecuzione dopo soli 58 cicli invece di
+  girare per le 65536 iterazioni possibili come farebbe `layer_sequencer` — protezione
+  incidentale, non garantita per ogni contenuto PSRAM, quindi non chiuso come non-bug ma
+  classificato a severità inferiore di BUG-005. Test non fatto girare a completamento
+  (65536 iterazioni impraticabili per il budget di questa campagna) — limite dichiarato.
+- **Regressione completa**: 40/40 test reali PASS invariati, 1 nuovo test osservazionale.
+- **Deliverable**: `docs/validation/06-graph-engine.md`, `bugs.md` con BUG-006.
+- **Prossimo passo**: C.7 (SPI slave + engine — CDC, opcode, `STATUS` sticky/clear-on-read,
+  `READ_CONFIG`).

@@ -146,6 +146,25 @@ funzionale pratico), **INFO** (non un bug: gap di copertura, ambiguità document
   BUG-003/004, qui il meccanismo esatto è stato individuato precisamente, non solo il
   sintomo).
 
+### BUG-006 (BASSA, stessa causa radice di BUG-005, protezione incidentale) — `num_neurons_graph=0` in `graph_engine.v`
+
+- **Sintomo/causa radice**: identica struttura a BUG-005 — `neuron_idx`
+  (`rtl/graph_engine.v:159`) è un registro a 16 bit pieni, `num_neurons_graph=0` fa
+  avvolgere la condizione di terminazione a un valore (65535) che il contatore raggiunge
+  naturalmente. Nessun guard esplicito su `num_neurons_graph`.
+- **Differenza da BUG-005**: `graph_engine` ha già un guard runtime per-edge
+  (`src_id>=out_id`/`out_id>=N_TOTAL` → `err`) che, **come effetto collaterale non
+  progettato per questo scopo**, cattura la maggior parte dei pattern di dati spazzatura
+  molto rapidamente — verificato con un pattern non banale: `err` a 58 cicli, non 65536.
+  `layer_sequencer.v` non ha alcuna protezione equivalente.
+- **Evidenza**: `sim/graph_engine_bug006_zero_neurons_probe_tb.v` — finestra di 5000 cicli,
+  non fatto girare a completamento (limite dichiarato, vedi
+  `docs/validation/06-graph-engine.md` §6.2).
+- **Impatto pratico**: basso ma non nullo — la protezione osservata è incidentale, non
+  garantita per ogni possibile contenuto PSRAM. Il buco strutturale è reale.
+- **Stato**: **APERTO**, severità inferiore a BUG-005 per la protezione incidentale
+  osservata, non pienamente verificato su ogni pattern di dati possibile.
+
 ---
 
 ## Risolti
