@@ -365,3 +365,39 @@ decision: see decisions.log DEC-0008 (no value forwarding yet, no
 next_action: M7 -- dataflow_core.v, integrating Director + Dependency
   Manager + Memory Manager + Processor Array + Buffers into one top-
   level module for the first time.
+
+[2026-09-05] EXP-0008 -- hardware/v2/rtl/dataflow_core.v (M7, full
+M1-M6 integration)
+test: hardware/v2/sim/tb_dataflow_core.v -- a 3-node DAG (node0/node1
+  independent, node2 depends on BOTH) run through the REAL
+  dependency_manager -> neural_director -> N_SLOTS x (memory_manager +
+  neural_processor) chain end-to-end for the first time, each slot
+  backed by its own independent behavioral byte memory (shared real
+  PSRAM arbitration explicitly deferred to M8, decisions.log DEC-0009)
+simulator: Verilator 5.050 (--binary --timing)
+PASS/FAIL:
+  SIMULATED: 4/4 PASS -- node0=48, node1=8 (correct real
+    neural_processor computations via the full stack), node2=40
+    dispatched only after BOTH node0 and node1 genuinely completed
+    (continuously polled every cycle, not just checked at the end).
+  SYNTHESIZED (via harness_dataflow_core.v -- see errors.log ERR-0005):
+    N_SLOTS=2: 0 CHECK problems, LUT4=2127, CCU2C=248, TRELLIS_FF=2505,
+      MULT18X18D=16, DP16KD=0.
+    N_SLOTS=4: 0 CHECK problems, LUT4=3953, CCU2C=500, TRELLIS_FF=4688,
+      MULT18X18D=32, DP16KD=0.
+  POST-P&R (real, harness-based): N_SLOTS=2 Fmax=165.15 MHz,
+    N_SLOTS=4 Fmax=133.19 MHz -- both PASS at 80MHz.
+errors: one Yosys build-script usage quirk (chparam ordering against
+  a non-top module vs synth_ecp5's own internal re-hierarchy pass) --
+  see errors.log ERR-0007. Not an RTL bug; no dataflow_core.v or
+  harness_dataflow_core.v source change needed, only the build command
+  itself.
+decision: see decisions.log DEC-0009 (no M3 buffers wired in yet, no
+  shared-PSRAM arbitration across slots yet -- both explicitly
+  deferred to M8/a future measurement-driven decision, not missing by
+  oversight).
+next_action: M8 -- PSRAM integration. Wire the real (unmodified) V1
+  PSRAM backend chain (int8_memory_access -> memory_interface ->
+  psram_controller) end-to-end through dataflow_core, and design/
+  measure whatever N_SLOTS>1 arbitration across ONE physical PSRAM
+  port actually requires.

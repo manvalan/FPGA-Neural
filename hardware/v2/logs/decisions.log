@@ -455,3 +455,69 @@ missing.
 
 STATUS:
 ACCEPTED
+DEC-0009
+
+DATE: 2026-09-05
+
+DECISION:
+dataflow_core.v (M7) integrates dependency_manager (M6) -> neural_director
+(M5) -> N_SLOTS x (memory_manager (M4) + neural_processor (M1)), closing
+the wake-up loop end-to-end for the first time. Two things are
+deliberately NOT done in this module: (1) M3's BRAM-backed buffers
+(activation_buffer/weight_buffer/result_buffer) are not instantiated
+anywhere inside it; (2) each slot's byte-level Memory Backend Interface
+is exposed as its own SEPARATE port (slot_mem_req/wr/addr/wdata/rdata/
+ready, arrayed by N_SLOTS) rather than arbitrated down to one shared
+PSRAM master.
+
+WHY:
+(1) §15's own diagram places the Memory Manager -> Memory Backend
+Interface -> PSRAM Controller path on one side, with M3's buffers
+belonging as an on-chip cache concept, not a mandatory pass-through --
+each memory_manager instance already owns its own prefetch double
+buffer (M4) for the fast path it actually needs, and no measured
+benchmark yet shows a real need for an additional shared cache layer
+(§22/§30: no invented results/optimizations). (2) real PSRAM has
+exactly ONE physical port; N_SLOTS>1 memory_manager instances wanting
+concurrent access is fundamentally an arbitration problem, and building
+an arbiter now, before M8's real-toolchain measurement of what
+contention actually looks like end-to-end with the real (unmodified)
+V1 PSRAM chain, risks designing to a guess instead of to data.
+
+EVIDENCE:
+hardware/v2/sim/tb_dataflow_core.v -- 4/4 tests PASS on a 3-node DAG
+run through the full stack with each slot backed by its own
+independent behavioral memory (deliberately NOT the real shared V1
+PSRAM chain, for exactly the reason above): node0 and node1 (no
+dependencies) both complete correctly via real neural_processor
+computation, and node2 (depends on BOTH) is only dispatched after
+BOTH genuinely finish -- continuously polled every cycle, not just
+checked at the end -- proving the producer_done wake-up loop closes
+correctly with real M1/M4/M5/M6 hardware in between, not just
+between M5 and M6 in isolation (already proven separately by their
+own testbenches).
+
+ALTERNATIVES:
+1. Wire a naive round-robin N-port arbiter in front of one shared
+   PSRAM master now. Rejected: M8's own roadmap text is explicit
+   ("Integrare il controller V1 senza modificarlo inizialmente.
+   Misurare il comportamento reale.") -- arbitration design should
+   follow a real measurement of contention under the real PSRAM
+   latency model, not be guessed at during M7's own scope (proving
+   the dependency/scheduling loop closes, not memory sharing).
+2. Instantiate M3's buffers as a shared cache in front of each slot's
+   Memory Backend Interface now. Rejected: no benchmark yet shows
+   PSRAM bandwidth or latency is actually a bottleneck for the
+   dependency-graph workloads this module targets -- premature
+   without measured justification.
+
+RESULT:
+dataflow_core.v as implemented: N_SLOTS independent Memory Backend
+Interface ports, no M3 buffers wired in. Both explicitly deferred to
+M8 (shared PSRAM integration/arbitration) and a future
+measurement-driven decision (M3 buffer reuse), not missing by
+oversight.
+
+STATUS:
+ACCEPTED
+

@@ -60,3 +60,18 @@ test: 4 cases on a 4-node DAG (2 independent + 1 dual-dependency +
   1 single-dependency-shared-producer)
 simulator: Verilator 5.050 (--binary --timing)
 PASS/FAIL: 4/4 PASS
+
+[2026-09-05] EXP-0008 -- hardware/v2/sim/tb_dataflow_core.v
+test: full end-to-end M1-M6 integration through dataflow_core.v (M7),
+  a 3-node DAG (node0/node1 independent, node2 depends on BOTH) run
+  through the REAL dependency_manager -> neural_director -> N_SLOTS x
+  (memory_manager + neural_processor) chain for the first time, each
+  slot backed by its own independent behavioral byte memory
+simulator: Verilator 5.050 (--binary --timing)
+PASS/FAIL: 4/4 PASS -- node0=48, node1=8 (both real neural_processor
+  computations via the full stack), node2=40 dispatched only after
+  BOTH node0 and node1 genuinely completed (continuously polled every
+  cycle up to completion, not just checked at the end) -- the
+  dependency-manager-to-director wake-up loop closes correctly
+  end-to-end with real hardware in between, not just in isolation
+  (M6's own testbench already proved the wake-up logic alone)

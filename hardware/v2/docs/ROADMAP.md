@@ -36,7 +36,16 @@ reali, non solo scritto).
       PASS (dipendenze multiple + produttore condiviso/piu' consumer).
       Fmax 155.30 MHz. Forwarding di valori e riuso slot rimandati
       (`logs/decisions.log` DEC-0008).
-- [ ] **M7 — Dataflow Core** (`dataflow_core.v`), integrazione completa.
+- [x] **M7 — Dataflow Core** (`dataflow_core.v`), prima integrazione
+      completa: Dependency Manager (M6) -> Neural Director (M5) ->
+      N_SLOTS x (Memory Manager (M4) + Neural Processor (M1)), loop di
+      wake-up chiuso end-to-end. 4/4 test PASS su un DAG a 3 nodi (node2
+      dipende da entrambi node0+node1, dispatch confermato solo dopo che
+      ENTRAMBI completano davvero). Sintesi reale 0 problemi a
+      N_SLOTS=2 e N_SLOTS=4. Fmax reale (harness): 165.15 MHz
+      (N_SLOTS=2), 133.19 MHz (N_SLOTS=4). Buffer M3 e arbitraggio PSRAM
+      condiviso rimandati esplicitamente a M8 (`logs/decisions.log`
+      DEC-0009).
 - [ ] **M8 — PSRAM integration**, controller V1 non modificato, misura reale.
 - [ ] **M9 — Full benchmark**, tabella V1 vs V2 (§32 del mandato).
 - [ ] **M10 — Optimization**, solo sulla base dei dati raccolti in M1-M9.

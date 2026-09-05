@@ -181,3 +181,28 @@ decision: vedi decisions.log DEC-0008 (nessun forwarding di valori
 next_action: M7 -- dataflow_core.v, prima integrazione di
   Director+Dependency Manager+Memory Manager+Processor Array+Buffer
   in un unico top-level.
+
+[2026-09-05] M7 -- hardware/v2/rtl/dataflow_core.v
+reason: roadmap M7 -- first full integration of dependency_manager
+  (M6) + neural_director (M5) + N_SLOTS x (memory_manager (M4) +
+  neural_processor (M1)) into one top-level module, closing the
+  producer-completion -> dependency-wake-up loop end-to-end for the
+  first time. Additive extension to neural_director.v: added a
+  slot_node_id output port (which node_id occupies each slot) so a
+  caller can map a completed slot back to the node_id that just
+  finished -- re-verified M5's own testbench still passes 4/4
+  unaffected.
+result: 4/4 test PASS on a 3-node DAG (node2 depends on BOTH node0 and
+  node1; confirmed it does NOT dispatch until both genuinely complete,
+  polled every cycle). Real synthesis: 0 problems at both N_SLOTS=2
+  (LUT4=2127/CCU2C=248/FF=2505/DSP=16) and N_SLOTS=4
+  (LUT4=3953/CCU2C=500/FF=4688/DSP=32). Real Fmax (via
+  harness_dataflow_core.v): 165.15 MHz (N_SLOTS=2), 133.19 MHz
+  (N_SLOTS=4), both PASS at 80MHz.
+errors: one Yosys build-script usage quirk (errors.log ERR-0007,
+  chparam target ordering), not an RTL bug.
+decision: see decisions.log DEC-0009 (M3 buffers not wired in yet, no
+  shared-PSRAM arbitration across slots yet -- both deferred to M8).
+next_action: M8 -- PSRAM integration. Wire the real (unmodified) V1
+  PSRAM backend chain through dataflow_core end-to-end and measure/
+  design whatever N_SLOTS>1 arbitration real contention requires.

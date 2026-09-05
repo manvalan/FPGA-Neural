@@ -53,6 +53,14 @@ module neural_director #(
     output reg  [ADDR_WIDTH*N_SLOTS-1:0]   slot_w_base,
     output reg  [16*N_SLOTS-1:0]           slot_n_tiles,
     output reg  [ADDR_WIDTH*N_SLOTS-1:0]   slot_result_addr,
+    // slot_node_id: which node_id is currently occupying each slot --
+    // not needed by memory_manager itself (it has no notion of node
+    // ids), but needed by a caller (dataflow_core.v, M7) that must
+    // map a slot's job_done back to the node_id that just completed,
+    // to notify the Dependency Manager (M6). Purely additive: existing
+    // callers (hardware/v2/sim/tb_neural_director.v, M5) that don't
+    // connect it are unaffected.
+    output reg  [16*N_SLOTS-1:0]           slot_node_id,
     input  wire [N_SLOTS-1:0]              slot_job_done,
 
     // ---- completion notification (§9 "rilevamento dei completamenti") ----
@@ -133,6 +141,7 @@ module neural_director #(
             slot_w_base      <= {(ADDR_WIDTH*N_SLOTS){1'b0}};
             slot_n_tiles     <= {(16*N_SLOTS){1'b0}};
             slot_result_addr <= {(ADDR_WIDTH*N_SLOTS){1'b0}};
+            slot_node_id     <= {(16*N_SLOTS){1'b0}};
             job_out_done     <= 1'b0;
             job_out_slot     <= {$clog2(N_SLOTS){1'b0}};
         end else begin
@@ -192,6 +201,7 @@ module neural_director #(
                     slot_w_base[free_slot_idx*ADDR_WIDTH +: ADDR_WIDTH]          <= q_w_base[q_head];
                     slot_n_tiles[free_slot_idx*16 +: 16]                        <= q_n_tiles[q_head];
                     slot_result_addr[free_slot_idx*ADDR_WIDTH +: ADDR_WIDTH]    <= q_result_addr[q_head];
+                    slot_node_id[free_slot_idx*16 +: 16]                        <= q_node_id[q_head];
                     slot_busy[free_slot_idx] <= 1'b1;
                     q_head  <= (q_head == QUEUE_DEPTH[Q_ADDR_WIDTH-1:0]-1'b1) ? {Q_ADDR_WIDTH{1'b0}} : q_head + 1'b1;
                     dir_state <= DIR_SCAN_READY;

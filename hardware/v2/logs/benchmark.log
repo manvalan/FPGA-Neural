@@ -88,3 +88,18 @@ no harness needed)
 | Module              | Fmax (POST-P&R) | LUT | FF  | DSP | CCU2C |
 |----------------------|------------------|-----|-----|-----|-------|
 | dependency_manager (N_NODES=16) | 155.30 MHz | 763 | 474 | 0 | 0 |
+
+[2026-09-05] M7 Dataflow Core (full M1-M6 integration; resources via
+real standalone synthesis, Fmax via timing harness -- see errors.log
+ERR-0005)
+
+| Module (config)              | Fmax (POST-P&R) | LUT4 | CCU2C | FF   | DSP | BRAM |
+|-------------------------------|------------------|------|-------|------|-----|------|
+| dataflow_core (N_SLOTS=2)     | 165.15 MHz       | 2127 | 248   | 2505 | 16  | 0    |
+| dataflow_core (N_SLOTS=4)     | 133.19 MHz       | 3953 | 500   | 4688 | 32  | 0    |
+
+DSP budget on the LFE5U-45F is 72 MULT18X18D total: N_SLOTS=4 already
+uses 32/72 (44%), consistent with DEC-0005's finding that DSP, not
+LUT/FF, is the first resource to saturate as concurrency grows (M2's
+own N_PROCESSORS=8 measurement: 88%). BRAM=0 on both is expected --
+M3's buffers are not wired into dataflow_core yet (DEC-0009).

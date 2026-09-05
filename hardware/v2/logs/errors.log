@@ -176,3 +176,30 @@ VERIFICATION: hardware/v2/sim/tb_memory_manager.v -- 3/3 tests PASS
   signal inspection).
 STATUS: FIXED, verified end-to-end with the real (unmodified) V1
   PSRAM backend chain and a real M1 neural_processor.
+
+ERR-0007 (Yosys usage quirk, WORKED AROUND, not an RTL bug)
+DATE: 2026-09-05
+MODULE: hardware/v2/synthesis/harness_dataflow_core.v (build script)
+SYMPTOM: `chparam -set N_SLOTS 2 dataflow_core` (setting the parameter
+  directly on the NON-top child module, before running `synth_ecp5
+  -top harness_dataflow_core`) synthesizes with no visible error from
+  the chparam/hierarchy commands themselves, but `synth_ecp5` then
+  fails with "Module `\dataflow_core' referenced in module
+  `\harness_dataflow_core' in cell `\dut' is not part of the design" --
+  even though a standalone `hierarchy -top harness_dataflow_core` run
+  (no synth_ecp5) with the exact same chparam succeeds.
+ROOT CAUSE: harness_dataflow_core.v's own instantiation of
+  dataflow_core explicitly overrides N_SLOTS via its own local
+  parameter (`.N_SLOTS(N_SLOTS)`) -- chparam on the child module's
+  DEFAULT is therefore always shadowed at that instantiation site
+  regardless of its value, and synth_ecp5's own internal re-hierarchy
+  pass (distinct from a standalone `hierarchy` call) does not
+  reconcile a chparam'd-but-never-actually-used child default the
+  same way, dropping the generic module reference instead.
+WORKAROUND: set the parameter on the TOP module being synthesized
+  instead (`chparam -set N_SLOTS 2 harness_dataflow_core`), letting
+  its own instantiation forward the value down to dataflow_core as
+  designed. Confirmed working for both N_SLOTS=2 and N_SLOTS=4.
+STATUS: WORKED AROUND. A build-script ordering detail, not a defect in
+  dataflow_core.v or harness_dataflow_core.v themselves -- noted here
+  so a future N_SLOTS sweep (M9/M10) does not re-trip over it.

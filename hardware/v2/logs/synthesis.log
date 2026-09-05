@@ -46,3 +46,20 @@ LUT4=382  TRELLIS_FF=366  CCU2C=4  DSP=0. CHECK: 0 problems.
 
 [2026-09-05] EXP-0007 -- dependency_manager (N_NODES=16, MAX_DEPS=4)
 LUT4=763  TRELLIS_FF=474  CCU2C=0  DSP=0. CHECK: 0 problems.
+
+[2026-09-05] EXP-0008 -- dataflow_core (M7 full integration, via
+harness_dataflow_core.v -- see errors.log ERR-0005 for why a harness
+is needed: bare per-slot Memory Backend Interface ports alone total
+280 bits at N_SLOTS=4, exceeding the LFE5U-45F-8BG381's ~245 TRELLIS_IO
+budget)
+N_SLOTS=2: LUT4=2127  CCU2C=248  TRELLIS_FF=2505  MULT18X18D=16  DP16KD=0
+N_SLOTS=4: LUT4=3953  CCU2C=500  TRELLIS_FF=4688  MULT18X18D=32  DP16KD=0
+CHECK: 0 problems on both configs (same 32 benign "multiple conflicting
+  drivers for ...neural_processor.\gi" warnings per neural_processor
+  instance already documented in EXP-0001 -- an `integer` for-loop
+  index shared across two of neural_processor's own always blocks, not
+  a real multi-driver conflict). DP16KD=0 on both is expected: M3's
+  BRAM-backed buffers (activation/weight/result_buffer) are
+  deliberately NOT instantiated inside dataflow_core yet (decisions.log
+  DEC-0009). DSP scales exactly 8/slot (matches P_IN=8, consistent with
+  every prior per-processor DSP measurement since M1/M2).

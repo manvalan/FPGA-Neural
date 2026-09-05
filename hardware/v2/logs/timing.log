@@ -54,3 +54,14 @@ Fmax: 250.50 MHz -- PASS at 80MHz (real place&route measurement)
 no harness needed), real nextpnr-ecp5 --45k --package CABGA381
 --speed 8 --freq 80 --lpf-allow-unconstrained
 Fmax: 155.30 MHz -- PASS at 80MHz (real place&route measurement)
+
+[2026-09-05] EXP-0008 -- dataflow_core (via harness_dataflow_core.v,
+see errors.log ERR-0005 for why a harness was needed), real
+nextpnr-ecp5 --45k --package CABGA381 --speed 8 --freq 80
+--lpf-allow-unconstrained
+N_SLOTS=2: Fmax = 165.15 MHz -- PASS at 80MHz (real place&route)
+N_SLOTS=4: Fmax = 133.19 MHz -- PASS at 80MHz (real place&route)
+Fmax drops as N_SLOTS grows (more concurrent memory_manager+
+neural_processor instances competing for the same routing fabric
+around the shared neural_director/dependency_manager hub) -- both
+configs still clear the 80MHz target with real margin.
