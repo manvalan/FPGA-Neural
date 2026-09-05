@@ -201,3 +201,50 @@ resolved by picking whichever answer looks more convenient.
 
 STATUS:
 ACCEPTED
+
+---
+
+DEC-0005
+
+DATE: 2026-09-05
+
+DECISION:
+Treat DSP (MULT18X18D) budget, not LUT/FF/routing, as the primary
+constraint when exploring the N_PROCESSORS x P_IN trade-off space
+(§16) going forward.
+
+WHY:
+Real place&route measurement (EXP-0003) shows MULT18X18D usage
+scaling linearly and reaching 88% of the LFE5U-45F-8BG381's 72 total
+DSPs at N_PROCESSORS=8, P_IN=8 -- while LUT4/FF usage stays under 6%
+at the SAME configuration and Fmax is still comfortably above the
+80MHz target (134.70 MHz). This means the naive "just add more
+processors" scaling (§8/§16) hits a hard DSP ceiling around
+N_PROCESSORS=9 at P_IN=8, long before LUT/FF/routing/timing become
+relevant -- the opposite of what LUT/FF utilization alone would
+suggest if read in isolation.
+
+EVIDENCE:
+experiments.log EXP-0003 -- MULT18X18D 8/16/32/64 (11%/22%/44%/88% of
+72) at N_PROCESSORS 1/2/4/8, LUT4 under 6% throughout, Fmax PASS at
+80MHz throughout (159.11/149.59/151.01/134.70 MHz).
+
+ALTERNATIVES:
+Assume LUT/FF/routing congestion would be the limiting factor (the
+naive expectation for "more parallel copies of a datapath"). Rejected
+by direct measurement, not assumed -- §16 explicitly requires
+choosing the final configuration "sulla base del throughput effettivo
+... non dell'utilizzo massimo delle risorse", and knowing WHICH
+resource binds first is a prerequisite for that.
+
+RESULT:
+Future N_PROCESSORS x P_IN sweeps (§16, deferred to a dedicated
+scripts/sweep/ run per §31) should budget MULT18X18D count explicitly
+(N_PROCESSORS * P_IN <= ~72, minus whatever the rest of the real
+system needs once M4/PSRAM integration lands) rather than only
+tracking LUT/FF. A smaller P_IN with more N_PROCESSORS (or vice versa)
+is a live trade-off worth exploring precisely because of this ceiling,
+not merely a stylistic choice.
+
+STATUS:
+ACCEPTED

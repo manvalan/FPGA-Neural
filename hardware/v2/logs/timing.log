@@ -20,3 +20,14 @@ Delta vs ACC_WIDTH=32: -6.91 MHz (-3.8%) despite FEWER resources --
   (no seed sweep run to confirm either way -- see experiments.log
   EXP-0002 and benchmark.log). Log: hardware/v2/synthesis/
   neural_processor_p8_acc24/nextpnr.log
+
+[2026-09-05] EXP-0003 -- N_PROCESSORS sweep (P_IN=8), real nextpnr-ecp5
+--45k --package CABGA381 --speed 8 --freq 80 --lpf-allow-unconstrained
+N=1: Fmax=159.11 MHz PASS   MULT18X18D 8/72 (11%)
+N=2: Fmax=149.59 MHz PASS   MULT18X18D 16/72 (22%)
+N=4: Fmax=151.01 MHz PASS   MULT18X18D 32/72 (44%)
+N=8: Fmax=134.70 MHz PASS   MULT18X18D 64/72 (88%)
+TRELLIS_IO stays at 18/245 (7%) throughout (harness has only
+clk/rst/seed/checksum as real pins, by design -- see ERR-0005).
+See decisions.log DEC-0005: DSP, not Fmax or LUT/FF, is the resource
+that will first prevent scaling N_PROCESSORS further at P_IN=8.

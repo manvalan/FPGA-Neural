@@ -18,3 +18,25 @@ stall %, effective MAC/s: not yet meaningful at this milestone (single
 isolated processor, no streaming benchmark harness yet -- deferred to
 M2 once neural_processor_array.v exists and a real workload can be
 timed end-to-end).
+
+[2026-09-05] M2 Neural Processor Array, N_PROCESSORS sweep (P_IN=8,
+ACC_WIDTH=32 each; synthesized via the timing harness, see errors.log
+ERR-0005 for why)
+
+| N_PROCESSORS | Fmax (POST-P&R) | LUT | FF   | DSP (MULT18X18D) | DSP % of 72 |
+|--------------|------------------|-----|------|-------------------|-------------|
+| 1            | 159.11 MHz       | 59  | 409  | 8                 | 11%         |
+| 2            | 149.59 MHz       | 106 | 786  | 16                | 22%         |
+| 4            | 151.01 MHz       | 207 | 1540 | 32                | 44%         |
+| 8            | 134.70 MHz       | 374 | 3048 | 64                | 88%         |
+
+All figures POST-P&R (real nextpnr-ecp5), all PASS at the 80MHz
+target. LUT4 utilization stays under 6% of the device even at N=8;
+DSP is the binding resource (see decisions.log DEC-0005), reaching 88%
+at N=8 -- N_PROCESSORS=9 would already exceed the LFE5U-45F's 72
+MULT18X18D budget at P_IN=8. Theoretical MAC/cycle (THEORETICAL, not
+yet measured end-to-end -- no real workload/benchmark harness exists
+until M9): N_PROCESSORS * P_IN MACs/cycle when all processors are
+simultaneously streaming tiles (8, 16, 32, 64 for N=1/2/4/8 -- verified
+achievable in principle by EXP-0003's concurrent/staggered simulation,
+not yet measured as a sustained throughput number).

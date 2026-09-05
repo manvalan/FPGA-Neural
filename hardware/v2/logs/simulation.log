@@ -15,3 +15,16 @@ PASS/FAIL: 7/7 PASS (ACC_WIDTH=32); 7/7 PASS (ACC_WIDTH=24, EXP-0002)
 bit-exact result: V1.y === V2.result_data for every case, both widths
 stall cycles / memory wait / utilization: N/A (no Memory Manager yet,
   M1 operands fed directly by testbench per the roadmap)
+
+[2026-09-05] EXP-0003 -- hardware/v2/sim/tb_neural_processor_array.v
+(N_PROCESSORS=4)
+test: 7 cases (single-processor sanity; 4-way same-cycle concurrent
+  launch with different tile counts; staggered-start 2-processor test)
+simulator: Verilator 5.050 (--binary --timing)
+PASS/FAIL: 7/7 PASS
+bit-exact result: N/A at this milestone (hand-computed expected
+  values, arithmetic itself already bit-exact-certified vs V1 at M1)
+concurrency: confirmed genuine -- in the staggered test, the
+  later-launched, shorter job (processor 1) completes BEFORE the
+  earlier-launched, longer job (processor 0), proving independent
+  progress rather than serialization.

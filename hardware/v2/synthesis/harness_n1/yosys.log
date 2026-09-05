@@ -1,0 +1,2091 @@
+
+ /----------------------------------------------------------------------------\
+ |  yosys -- Yosys Open SYnthesis Suite                                       |
+ |  Copyright (C) 2012 - 2026  Claire Xenia Wolf <claire@yosyshq.com>         |
+ |  Distributed under an ISC-like license, type "license" to see terms        |
+ \----------------------------------------------------------------------------/
+ Yosys 0.68+post (git sha1 c12172fbae8af5e20f6fb52e3d4e92d56ed587b6, Release, AppleClang clang++ 21.0.0.21000101)
+
+-- Running command `
+    read_verilog hardware/v2/rtl/neural_processor.v hardware/v2/rtl/neural_processor_array.v hardware/v2/synthesis/harness_neural_processor_array.v
+    chparam -set N_PROCESSORS 1 harness_neural_processor_array
+    synth_ecp5 -json hardware/v2/synthesis/harness_n1/top.json -top harness_neural_processor_array
+  ' --
+
+1. Executing Verilog-2005 frontend: hardware/v2/rtl/neural_processor.v
+Parsing Verilog input from `hardware/v2/rtl/neural_processor.v' to AST representation.
+Generating RTLIL representation for module `\neural_processor'.
+Warning: Replacing memory \tree with list of registers. See hardware/v2/rtl/neural_processor.v:193
+Warning: Replacing memory \prod1 with list of registers. See hardware/v2/rtl/neural_processor.v:151
+Warning: Replacing memory \w0 with list of registers. See hardware/v2/rtl/neural_processor.v:122
+Warning: Replacing memory \x0 with list of registers. See hardware/v2/rtl/neural_processor.v:121
+Successfully finished Verilog frontend.
+
+2. Executing Verilog-2005 frontend: hardware/v2/rtl/neural_processor_array.v
+Parsing Verilog input from `hardware/v2/rtl/neural_processor_array.v' to AST representation.
+Generating RTLIL representation for module `\neural_processor_array'.
+Successfully finished Verilog frontend.
+
+3. Executing Verilog-2005 frontend: hardware/v2/synthesis/harness_neural_processor_array.v
+Parsing Verilog input from `hardware/v2/synthesis/harness_neural_processor_array.v' to AST representation.
+Generating RTLIL representation for module `\harness_neural_processor_array'.
+Successfully finished Verilog frontend.
+Parameter \N_PROCESSORS = 1
+
+4. Executing AST frontend in derive mode using pre-parsed AST for module `\harness_neural_processor_array'.
+Parameter \N_PROCESSORS = 1
+Generating RTLIL representation for module `$paramod\harness_neural_processor_array\N_PROCESSORS=s32'00000000000000000000000000000001'.
+
+5. Executing SYNTH_LATTICE pass.
+
+5.1. Executing Verilog-2005 frontend: /opt/homebrew/bin/../share/yosys/lattice/cells_sim_ecp5.v
+Parsing Verilog input from `/opt/homebrew/bin/../share/yosys/lattice/cells_sim_ecp5.v' to AST representation.
+Generating RTLIL representation for module `\LUT4'.
+Generating RTLIL representation for module `\$__ABC9_LUT5'.
+Generating RTLIL representation for module `\$__ABC9_LUT6'.
+Generating RTLIL representation for module `\$__ABC9_LUT7'.
+Generating RTLIL representation for module `\L6MUX21'.
+Generating RTLIL representation for module `\TRELLIS_RAM16X2'.
+Generating RTLIL representation for module `\PFUMX'.
+Generating RTLIL representation for module `\TRELLIS_DPR16X4'.
+Generating RTLIL representation for module `\DPR16X4C'.
+Generating RTLIL representation for module `\LUT2'.
+Generating RTLIL representation for module `\TRELLIS_FF'.
+Generating RTLIL representation for module `\TRELLIS_IO'.
+Generating RTLIL representation for module `\INV'.
+Generating RTLIL representation for module `\TRELLIS_COMB'.
+Generating RTLIL representation for module `\VLO'.
+Generating RTLIL representation for module `\VHI'.
+Generating RTLIL representation for module `\FD1P3AX'.
+Generating RTLIL representation for module `\FD1P3AY'.
+Generating RTLIL representation for module `\FD1P3BX'.
+Generating RTLIL representation for module `\FD1P3DX'.
+Generating RTLIL representation for module `\FD1P3IX'.
+Generating RTLIL representation for module `\FD1P3JX'.
+Generating RTLIL representation for module `\FD1S3AX'.
+Generating RTLIL representation for module `\FD1S3AY'.
+Generating RTLIL representation for module `\FD1S3BX'.
+Generating RTLIL representation for module `\FD1S3DX'.
+Generating RTLIL representation for module `\FD1S3IX'.
+Generating RTLIL representation for module `\FD1S3JX'.
+Generating RTLIL representation for module `\IFS1P3BX'.
+Generating RTLIL representation for module `\IFS1P3DX'.
+Generating RTLIL representation for module `\IFS1P3IX'.
+Generating RTLIL representation for module `\IFS1P3JX'.
+Generating RTLIL representation for module `\OFS1P3BX'.
+Generating RTLIL representation for module `\OFS1P3DX'.
+Generating RTLIL representation for module `\OFS1P3IX'.
+Generating RTLIL representation for module `\OFS1P3JX'.
+Generating RTLIL representation for module `\IB'.
+Generating RTLIL representation for module `\IBPU'.
+Generating RTLIL representation for module `\IBPD'.
+Generating RTLIL representation for module `\OB'.
+Generating RTLIL representation for module `\OBZ'.
+Generating RTLIL representation for module `\OBZPU'.
+Generating RTLIL representation for module `\OBZPD'.
+Generating RTLIL representation for module `\OBCO'.
+Generating RTLIL representation for module `\BB'.
+Generating RTLIL representation for module `\BBPU'.
+Generating RTLIL representation for module `\BBPD'.
+Generating RTLIL representation for module `\ILVDS'.
+Generating RTLIL representation for module `\OLVDS'.
+Generating RTLIL representation for module `\CCU2C'.
+Generating RTLIL representation for module `\DP16KD'.
+Replacing existing blackbox module `\FD1P3AX' at /opt/homebrew/bin/../share/yosys/lattice/cells_ff.vh:2.1-2.261.
+Generating RTLIL representation for module `\FD1P3AX'.
+Replacing existing blackbox module `\FD1P3AY' at /opt/homebrew/bin/../share/yosys/lattice/cells_ff.vh:3.1-3.261.
+Generating RTLIL representation for module `\FD1P3AY'.
+Replacing existing blackbox module `\FD1P3BX' at /opt/homebrew/bin/../share/yosys/lattice/cells_ff.vh:4.1-4.261.
+Generating RTLIL representation for module `\FD1P3BX'.
+Replacing existing blackbox module `\FD1P3DX' at /opt/homebrew/bin/../share/yosys/lattice/cells_ff.vh:5.1-5.261.
+Generating RTLIL representation for module `\FD1P3DX'.
+Replacing existing blackbox module `\FD1P3IX' at /opt/homebrew/bin/../share/yosys/lattice/cells_ff.vh:6.1-6.261.
+Generating RTLIL representation for module `\FD1P3IX'.
+Replacing existing blackbox module `\FD1P3JX' at /opt/homebrew/bin/../share/yosys/lattice/cells_ff.vh:7.1-7.261.
+Generating RTLIL representation for module `\FD1P3JX'.
+Replacing existing blackbox module `\FD1S3AX' at /opt/homebrew/bin/../share/yosys/lattice/cells_ff.vh:8.1-8.261.
+Generating RTLIL representation for module `\FD1S3AX'.
+Replacing existing blackbox module `\FD1S3AY' at /opt/homebrew/bin/../share/yosys/lattice/cells_ff.vh:9.1-9.261.
+Generating RTLIL representation for module `\FD1S3AY'.
+Replacing existing blackbox module `\FD1S3BX' at /opt/homebrew/bin/../share/yosys/lattice/cells_ff.vh:10.1-10.261.
+Generating RTLIL representation for module `\FD1S3BX'.
+Replacing existing blackbox module `\FD1S3DX' at /opt/homebrew/bin/../share/yosys/lattice/cells_ff.vh:11.1-11.261.
+Generating RTLIL representation for module `\FD1S3DX'.
+Replacing existing blackbox module `\FD1S3IX' at /opt/homebrew/bin/../share/yosys/lattice/cells_ff.vh:12.1-12.261.
+Generating RTLIL representation for module `\FD1S3IX'.
+Replacing existing blackbox module `\FD1S3JX' at /opt/homebrew/bin/../share/yosys/lattice/cells_ff.vh:13.1-13.261.
+Generating RTLIL representation for module `\FD1S3JX'.
+Replacing existing blackbox module `\IFS1P3BX' at /opt/homebrew/bin/../share/yosys/lattice/cells_ff.vh:26.1-26.301.
+Generating RTLIL representation for module `\IFS1P3BX'.
+Replacing existing blackbox module `\IFS1P3DX' at /opt/homebrew/bin/../share/yosys/lattice/cells_ff.vh:27.1-27.301.
+Generating RTLIL representation for module `\IFS1P3DX'.
+Replacing existing blackbox module `\IFS1P3IX' at /opt/homebrew/bin/../share/yosys/lattice/cells_ff.vh:28.1-28.301.
+Generating RTLIL representation for module `\IFS1P3IX'.
+Replacing existing blackbox module `\IFS1P3JX' at /opt/homebrew/bin/../share/yosys/lattice/cells_ff.vh:29.1-29.301.
+Generating RTLIL representation for module `\IFS1P3JX'.
+Replacing existing blackbox module `\OFS1P3BX' at /opt/homebrew/bin/../share/yosys/lattice/cells_ff.vh:31.1-31.302.
+Generating RTLIL representation for module `\OFS1P3BX'.
+Replacing existing blackbox module `\OFS1P3DX' at /opt/homebrew/bin/../share/yosys/lattice/cells_ff.vh:32.1-32.302.
+Generating RTLIL representation for module `\OFS1P3DX'.
+Replacing existing blackbox module `\OFS1P3IX' at /opt/homebrew/bin/../share/yosys/lattice/cells_ff.vh:33.1-33.302.
+Generating RTLIL representation for module `\OFS1P3IX'.
+Replacing existing blackbox module `\OFS1P3JX' at /opt/homebrew/bin/../share/yosys/lattice/cells_ff.vh:34.1-34.302.
+Generating RTLIL representation for module `\OFS1P3JX'.
+Replacing existing blackbox module `\IB' at /opt/homebrew/bin/../share/yosys/lattice/cells_io.vh:2.1-2.157.
+Generating RTLIL representation for module `\IB'.
+Replacing existing blackbox module `\IBPU' at /opt/homebrew/bin/../share/yosys/lattice/cells_io.vh:3.1-3.157.
+Generating RTLIL representation for module `\IBPU'.
+Replacing existing blackbox module `\IBPD' at /opt/homebrew/bin/../share/yosys/lattice/cells_io.vh:4.1-4.157.
+Generating RTLIL representation for module `\IBPD'.
+Replacing existing blackbox module `\OB' at /opt/homebrew/bin/../share/yosys/lattice/cells_io.vh:5.1-5.157.
+Generating RTLIL representation for module `\OB'.
+Replacing existing blackbox module `\OBZ' at /opt/homebrew/bin/../share/yosys/lattice/cells_io.vh:6.1-6.164.
+Generating RTLIL representation for module `\OBZ'.
+Replacing existing blackbox module `\OBZPU' at /opt/homebrew/bin/../share/yosys/lattice/cells_io.vh:7.1-7.164.
+Generating RTLIL representation for module `\OBZPU'.
+Replacing existing blackbox module `\OBZPD' at /opt/homebrew/bin/../share/yosys/lattice/cells_io.vh:8.1-8.164.
+Generating RTLIL representation for module `\OBZPD'.
+Replacing existing blackbox module `\OBCO' at /opt/homebrew/bin/../share/yosys/lattice/cells_io.vh:9.1-9.90.
+Generating RTLIL representation for module `\OBCO'.
+Replacing existing blackbox module `\BB' at /opt/homebrew/bin/../share/yosys/lattice/cells_io.vh:10.1-10.179.
+Generating RTLIL representation for module `\BB'.
+Replacing existing blackbox module `\BBPU' at /opt/homebrew/bin/../share/yosys/lattice/cells_io.vh:11.1-11.179.
+Generating RTLIL representation for module `\BBPU'.
+Replacing existing blackbox module `\BBPD' at /opt/homebrew/bin/../share/yosys/lattice/cells_io.vh:12.1-12.179.
+Generating RTLIL representation for module `\BBPD'.
+Replacing existing blackbox module `\ILVDS' at /opt/homebrew/bin/../share/yosys/lattice/cells_io.vh:13.1-13.139.
+Generating RTLIL representation for module `\ILVDS'.
+Replacing existing blackbox module `\OLVDS' at /opt/homebrew/bin/../share/yosys/lattice/cells_io.vh:14.1-14.146.
+Generating RTLIL representation for module `\OLVDS'.
+Successfully finished Verilog frontend.
+
+5.2. Executing Verilog-2005 frontend: /opt/homebrew/bin/../share/yosys/lattice/cells_bb_ecp5.v
+Parsing Verilog input from `/opt/homebrew/bin/../share/yosys/lattice/cells_bb_ecp5.v' to AST representation.
+Generating RTLIL representation for module `\GSR'.
+Generating RTLIL representation for module `\PUR'.
+Generating RTLIL representation for module `\SGSR'.
+Generating RTLIL representation for module `\PDPW16KD'.
+Generating RTLIL representation for module `\MULT18X18D'.
+Generating RTLIL representation for module `\ALU54B'.
+Generating RTLIL representation for module `\CLKDIVF'.
+Generating RTLIL representation for module `\PCSCLKDIV'.
+Generating RTLIL representation for module `\DCSC'.
+Generating RTLIL representation for module `\DCCA'.
+Generating RTLIL representation for module `\ECLKSYNCB'.
+Generating RTLIL representation for module `\ECLKBRIDGECS'.
+Generating RTLIL representation for module `\DELAYF'.
+Generating RTLIL representation for module `\DELAYG'.
+Generating RTLIL representation for module `\USRMCLK'.
+Generating RTLIL representation for module `\DQSBUFM'.
+Generating RTLIL representation for module `\DDRDLLA'.
+Generating RTLIL representation for module `\DLLDELD'.
+Generating RTLIL representation for module `\IDDRX1F'.
+Generating RTLIL representation for module `\IDDRX2F'.
+Generating RTLIL representation for module `\IDDR71B'.
+Generating RTLIL representation for module `\IDDRX2DQA'.
+Generating RTLIL representation for module `\ODDRX1F'.
+Generating RTLIL representation for module `\ODDRX2F'.
+Generating RTLIL representation for module `\ODDR71B'.
+Generating RTLIL representation for module `\OSHX2A'.
+Generating RTLIL representation for module `\TSHX2DQA'.
+Generating RTLIL representation for module `\TSHX2DQSA'.
+Generating RTLIL representation for module `\ODDRX2DQA'.
+Generating RTLIL representation for module `\ODDRX2DQSB'.
+Generating RTLIL representation for module `\EHXPLLL'.
+Generating RTLIL representation for module `\DTR'.
+Generating RTLIL representation for module `\OSCG'.
+Generating RTLIL representation for module `\EXTREFB'.
+Generating RTLIL representation for module `\JTAGG'.
+Generating RTLIL representation for module `\DCUA'.
+Successfully finished Verilog frontend.
+
+5.3. Executing HIERARCHY pass (managing design hierarchy).
+
+5.3.1. Analyzing design hierarchy..
+Top module:  \harness_neural_processor_array
+Used module:     \neural_processor_array
+Used module:         \neural_processor
+Parameter \DATA_WIDTH = 8
+Parameter \P_IN = 8
+Parameter \ACC_WIDTH = 32
+
+5.3.2. Executing AST frontend in derive mode using pre-parsed AST for module `\neural_processor'.
+Parameter \DATA_WIDTH = 8
+Parameter \P_IN = 8
+Parameter \ACC_WIDTH = 32
+Generating RTLIL representation for module `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor'.
+Warning: Replacing memory \tree with list of registers. See hardware/v2/rtl/neural_processor.v:193
+Warning: Replacing memory \prod1 with list of registers. See hardware/v2/rtl/neural_processor.v:151
+Warning: Replacing memory \w0 with list of registers. See hardware/v2/rtl/neural_processor.v:122
+Warning: Replacing memory \x0 with list of registers. See hardware/v2/rtl/neural_processor.v:121
+Parameter \DATA_WIDTH = 8
+Parameter \P_IN = 8
+Parameter \ACC_WIDTH = 32
+Found cached RTLIL representation for module `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor'.
+Parameter \DATA_WIDTH = 8
+Parameter \P_IN = 8
+Parameter \ACC_WIDTH = 32
+Found cached RTLIL representation for module `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor'.
+Parameter \DATA_WIDTH = 8
+Parameter \P_IN = 8
+Parameter \ACC_WIDTH = 32
+Found cached RTLIL representation for module `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor'.
+Reprocessing module neural_processor_array because instantiated module $paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor has become available.
+Generating RTLIL representation for module `\neural_processor_array'.
+Parameter \DATA_WIDTH = 8
+Parameter \P_IN = 8
+Parameter \ACC_WIDTH = 32
+Parameter \N_PROCESSORS = 1
+
+5.3.3. Executing AST frontend in derive mode using pre-parsed AST for module `\neural_processor_array'.
+Parameter \DATA_WIDTH = 8
+Parameter \P_IN = 8
+Parameter \ACC_WIDTH = 32
+Parameter \N_PROCESSORS = 1
+Generating RTLIL representation for module `$paramod$7f4d094838b4fbdaf5ca624eee99b794762af9ea\neural_processor_array'.
+
+5.3.4. Analyzing design hierarchy..
+Top module:  \harness_neural_processor_array
+Used module:     $paramod$7f4d094838b4fbdaf5ca624eee99b794762af9ea\neural_processor_array
+Used module:         \neural_processor
+Parameter \DATA_WIDTH = 8
+Parameter \P_IN = 8
+Parameter \ACC_WIDTH = 32
+Found cached RTLIL representation for module `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor'.
+
+5.3.5. Analyzing design hierarchy..
+Top module:  \harness_neural_processor_array
+Used module:     $paramod$7f4d094838b4fbdaf5ca624eee99b794762af9ea\neural_processor_array
+Used module:         $paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor
+
+5.3.6. Analyzing design hierarchy..
+Top module:  \harness_neural_processor_array
+Used module:     $paramod$7f4d094838b4fbdaf5ca624eee99b794762af9ea\neural_processor_array
+Used module:         $paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor
+Removing unused module `\neural_processor_array'.
+Removing unused module `\neural_processor'.
+Removed 2 unused modules.
+
+5.4. Executing PROC pass (convert processes to netlists).
+
+5.4.1. Executing PROC_CLEAN pass (remove empty switches from decision trees).
+Cleaned up 0 empty switches.
+
+5.4.2. Executing PROC_RMDEAD pass (remove dead branches from decision trees).
+Marked 1 switch rules as full_case in process $proc$hardware/v2/synthesis/harness_neural_processor_array.v:36$95 in module harness_neural_processor_array.
+Marked 1 switch rules as full_case in process $proc$hardware/v2/synthesis/harness_neural_processor_array.v:119$100 in module harness_neural_processor_array.
+Marked 1 switch rules as full_case in process $proc$hardware/v2/rtl/neural_processor.v:181$385 in module $paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.
+Marked 1 switch rules as full_case in process $proc$hardware/v2/rtl/neural_processor.v:181$380 in module $paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.
+Marked 1 switch rules as full_case in process $proc$hardware/v2/rtl/neural_processor.v:181$371 in module $paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.
+Marked 2 switch rules as full_case in process $proc$hardware/v2/rtl/neural_processor.v:305$366 in module $paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.
+Marked 2 switch rules as full_case in process $proc$hardware/v2/rtl/neural_processor.v:278$356 in module $paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.
+Marked 1 switch rules as full_case in process $proc$hardware/v2/rtl/neural_processor.v:245$343 in module $paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.
+Marked 2 switch rules as full_case in process $proc$hardware/v2/rtl/neural_processor.v:215$340 in module $paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.
+Marked 1 switch rules as full_case in process $proc$hardware/v2/rtl/neural_processor.v:143$339 in module $paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.
+Marked 2 switch rules as full_case in process $proc$hardware/v2/rtl/neural_processor.v:104$334 in module $paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.
+Removed a total of 0 dead cases.
+
+5.4.3. Executing PROC_PRUNE pass (remove redundant assignments in processes).
+Removed 17 redundant assignments.
+Promoted 25 assignments to connections.
+
+5.4.4. Executing PROC_INIT pass (extract init attributes).
+
+5.4.5. Executing PROC_ARST pass (detect async resets in processes).
+
+5.4.6. Executing PROC_ROM pass (convert switches to ROMs).
+Converted 0 switches.
+<suppressed ~20 debug messages>
+
+5.4.7. Executing PROC_MUX pass (convert decision trees to multiplexers).
+Creating decoders for process `\harness_neural_processor_array.$proc$hardware/v2/synthesis/harness_neural_processor_array.v:36$95'.
+     1/1: $0\lfsr[31:0]
+Creating decoders for process `\harness_neural_processor_array.$proc$hardware/v2/synthesis/harness_neural_processor_array.v:119$100'.
+     1/1: $0\chk[7:0]
+Creating decoders for process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:170$411'.
+Creating decoders for process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:170$410'.
+Creating decoders for process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:170$409'.
+Creating decoders for process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:170$408'.
+Creating decoders for process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:170$407'.
+Creating decoders for process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:170$406'.
+Creating decoders for process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:170$405'.
+Creating decoders for process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:170$404'.
+Creating decoders for process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:139$402'.
+Creating decoders for process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:139$400'.
+Creating decoders for process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:139$398'.
+Creating decoders for process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:139$396'.
+Creating decoders for process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:139$394'.
+Creating decoders for process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:139$392'.
+Creating decoders for process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:139$390'.
+Creating decoders for process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:139$388'.
+Creating decoders for process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:196$386'.
+Creating decoders for process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:181$385'.
+     1/2: $0\last_tree[2:2]
+     2/2: $0\valid_tree[2:2]
+Creating decoders for process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:196$383'.
+Creating decoders for process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:196$381'.
+Creating decoders for process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:181$380'.
+     1/2: $0\last_tree[1:1]
+     2/2: $0\valid_tree[1:1]
+Creating decoders for process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:192$378'.
+Creating decoders for process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:192$376'.
+Creating decoders for process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:192$374'.
+Creating decoders for process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:192$372'.
+Creating decoders for process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:181$371'.
+     1/2: $0\last_tree[0:0]
+     2/2: $0\valid_tree[0:0]
+Creating decoders for process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:305$366'.
+     1/8: $0\node_id_reg[15:0]
+     2/8: $0\activation_reg[1:0]
+     3/8: $0\bias_reg[7:0]
+     4/8: $0\np_error[0:0]
+     5/8: $0\np_state[3:0]
+     6/8: $0\result_node_id[15:0]
+     7/8: $0\result_data[7:0]
+     8/8: $0\result_valid[0:0]
+Creating decoders for process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:278$356'.
+     1/2: $0\valid7[0:0]
+     2/2: $0\y7[7:0]
+Creating decoders for process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:245$343'.
+     1/3: $0\last6[0:0]
+     2/3: $0\valid6[0:0]
+     3/3: $0\final_acc_reg[31:0]
+Creating decoders for process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:215$340'.
+     1/3: $0\last5[0:0]
+     2/3: $0\valid5[0:0]
+     3/3: $0\acc_reg[31:0]
+Creating decoders for process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:143$339'.
+     1/11: $0\last1[0:0]
+     2/11: $0\valid1[0:0]
+     3/11: $4\gi[31:0]
+     4/11: $0\prod1[7][31:0]
+     5/11: $0\prod1[6][31:0]
+     6/11: $0\prod1[5][31:0]
+     7/11: $0\prod1[4][31:0]
+     8/11: $0\prod1[3][31:0]
+     9/11: $0\prod1[2][31:0]
+    10/11: $0\prod1[1][31:0]
+    11/11: $0\prod1[0][31:0]
+Creating decoders for process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:104$334'.
+     1/20: $2\gi[31:0]
+     2/20: $0\last0[0:0]
+     3/20: $0\valid0[0:0]
+     4/20: $1\gi[31:0]
+     5/20: $0\w0[7][7:0]
+     6/20: $0\w0[6][7:0]
+     7/20: $0\w0[5][7:0]
+     8/20: $0\w0[4][7:0]
+     9/20: $0\w0[3][7:0]
+    10/20: $0\w0[2][7:0]
+    11/20: $0\w0[1][7:0]
+    12/20: $0\w0[0][7:0]
+    13/20: $0\x0[7][7:0]
+    14/20: $0\x0[6][7:0]
+    15/20: $0\x0[5][7:0]
+    16/20: $0\x0[4][7:0]
+    17/20: $0\x0[3][7:0]
+    18/20: $0\x0[2][7:0]
+    19/20: $0\x0[1][7:0]
+    20/20: $0\x0[0][7:0]
+
+5.4.8. Executing PROC_DLATCH pass (convert process syncs to latches).
+No latch inferred for signal `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\level0[7]' from process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:170$411'.
+No latch inferred for signal `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\level0[6]' from process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:170$410'.
+No latch inferred for signal `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\level0[5]' from process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:170$409'.
+No latch inferred for signal `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\level0[4]' from process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:170$408'.
+No latch inferred for signal `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\level0[3]' from process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:170$407'.
+No latch inferred for signal `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\level0[2]' from process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:170$406'.
+No latch inferred for signal `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\level0[1]' from process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:170$405'.
+No latch inferred for signal `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\level0[0]' from process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:170$404'.
+No latch inferred for signal `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\product_comb[7]' from process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:139$402'.
+No latch inferred for signal `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\product_comb[6]' from process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:139$400'.
+No latch inferred for signal `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\product_comb[5]' from process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:139$398'.
+No latch inferred for signal `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\product_comb[4]' from process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:139$396'.
+No latch inferred for signal `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\product_comb[3]' from process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:139$394'.
+No latch inferred for signal `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\product_comb[2]' from process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:139$392'.
+No latch inferred for signal `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\product_comb[1]' from process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:139$390'.
+No latch inferred for signal `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\product_comb[0]' from process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:139$388'.
+
+5.4.9. Executing PROC_DFF pass (convert process syncs to FFs).
+Creating register for signal `\harness_neural_processor_array.\lfsr' using process `\harness_neural_processor_array.$proc$hardware/v2/synthesis/harness_neural_processor_array.v:36$95'.
+  created $dff cell `$procdff$792' with positive edge clock.
+Creating register for signal `\harness_neural_processor_array.\chk' using process `\harness_neural_processor_array.$proc$hardware/v2/synthesis/harness_neural_processor_array.v:119$100'.
+  created $dff cell `$procdff$793' with positive edge clock.
+Creating register for signal `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\tree[16]' using process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:196$386'.
+  created $dff cell `$procdff$794' with positive edge clock.
+Creating register for signal `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\valid_tree [2]' using process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:181$385'.
+  created $dff cell `$procdff$795' with positive edge clock.
+Creating register for signal `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\last_tree [2]' using process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:181$385'.
+  created $dff cell `$procdff$796' with positive edge clock.
+Creating register for signal `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\tree[9]' using process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:196$383'.
+  created $dff cell `$procdff$797' with positive edge clock.
+Creating register for signal `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\tree[8]' using process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:196$381'.
+  created $dff cell `$procdff$798' with positive edge clock.
+Creating register for signal `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\valid_tree [1]' using process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:181$380'.
+  created $dff cell `$procdff$799' with positive edge clock.
+Creating register for signal `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\last_tree [1]' using process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:181$380'.
+  created $dff cell `$procdff$800' with positive edge clock.
+Creating register for signal `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\tree[3]' using process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:192$378'.
+  created $dff cell `$procdff$801' with positive edge clock.
+Creating register for signal `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\tree[2]' using process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:192$376'.
+  created $dff cell `$procdff$802' with positive edge clock.
+Creating register for signal `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\tree[1]' using process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:192$374'.
+  created $dff cell `$procdff$803' with positive edge clock.
+Creating register for signal `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\tree[0]' using process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:192$372'.
+  created $dff cell `$procdff$804' with positive edge clock.
+Creating register for signal `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\valid_tree [0]' using process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:181$371'.
+  created $dff cell `$procdff$805' with positive edge clock.
+Creating register for signal `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\last_tree [0]' using process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:181$371'.
+  created $dff cell `$procdff$806' with positive edge clock.
+Creating register for signal `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\result_valid' using process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:305$366'.
+  created $dff cell `$procdff$807' with positive edge clock.
+Creating register for signal `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\result_data' using process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:305$366'.
+  created $dff cell `$procdff$808' with positive edge clock.
+Creating register for signal `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\result_node_id' using process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:305$366'.
+  created $dff cell `$procdff$809' with positive edge clock.
+Creating register for signal `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\np_state' using process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:305$366'.
+  created $dff cell `$procdff$810' with positive edge clock.
+Creating register for signal `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\np_error' using process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:305$366'.
+  created $dff cell `$procdff$811' with positive edge clock.
+Creating register for signal `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\bias_reg' using process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:305$366'.
+  created $dff cell `$procdff$812' with positive edge clock.
+Creating register for signal `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\activation_reg' using process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:305$366'.
+  created $dff cell `$procdff$813' with positive edge clock.
+Creating register for signal `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\node_id_reg' using process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:305$366'.
+  created $dff cell `$procdff$814' with positive edge clock.
+Creating register for signal `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\valid7' using process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:278$356'.
+  created $dff cell `$procdff$815' with positive edge clock.
+Creating register for signal `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\y7' using process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:278$356'.
+  created $dff cell `$procdff$816' with positive edge clock.
+Creating register for signal `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\valid6' using process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:245$343'.
+  created $dff cell `$procdff$817' with positive edge clock.
+Creating register for signal `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\last6' using process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:245$343'.
+  created $dff cell `$procdff$818' with positive edge clock.
+Creating register for signal `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\final_acc_reg' using process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:245$343'.
+  created $dff cell `$procdff$819' with positive edge clock.
+Creating register for signal `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\acc_reg' using process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:215$340'.
+  created $dff cell `$procdff$820' with positive edge clock.
+Creating register for signal `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\valid5' using process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:215$340'.
+  created $dff cell `$procdff$821' with positive edge clock.
+Creating register for signal `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\last5' using process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:215$340'.
+  created $dff cell `$procdff$822' with positive edge clock.
+Creating register for signal `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\gi' using process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:143$339'.
+  created $dff cell `$procdff$823' with positive edge clock.
+Creating register for signal `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\valid1' using process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:143$339'.
+  created $dff cell `$procdff$824' with positive edge clock.
+Creating register for signal `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\last1' using process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:143$339'.
+  created $dff cell `$procdff$825' with positive edge clock.
+Creating register for signal `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\prod1[0]' using process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:143$339'.
+  created $dff cell `$procdff$826' with positive edge clock.
+Creating register for signal `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\prod1[1]' using process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:143$339'.
+  created $dff cell `$procdff$827' with positive edge clock.
+Creating register for signal `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\prod1[2]' using process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:143$339'.
+  created $dff cell `$procdff$828' with positive edge clock.
+Creating register for signal `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\prod1[3]' using process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:143$339'.
+  created $dff cell `$procdff$829' with positive edge clock.
+Creating register for signal `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\prod1[4]' using process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:143$339'.
+  created $dff cell `$procdff$830' with positive edge clock.
+Creating register for signal `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\prod1[5]' using process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:143$339'.
+  created $dff cell `$procdff$831' with positive edge clock.
+Creating register for signal `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\prod1[6]' using process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:143$339'.
+  created $dff cell `$procdff$832' with positive edge clock.
+Creating register for signal `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\prod1[7]' using process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:143$339'.
+  created $dff cell `$procdff$833' with positive edge clock.
+Creating register for signal `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\valid0' using process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:104$334'.
+  created $dff cell `$procdff$834' with positive edge clock.
+Creating register for signal `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\last0' using process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:104$334'.
+  created $dff cell `$procdff$835' with positive edge clock.
+Creating register for signal `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\gi' using process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:104$334'.
+  created $dff cell `$procdff$836' with positive edge clock.
+Creating register for signal `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\x0[0]' using process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:104$334'.
+  created $dff cell `$procdff$837' with positive edge clock.
+Creating register for signal `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\x0[1]' using process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:104$334'.
+  created $dff cell `$procdff$838' with positive edge clock.
+Creating register for signal `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\x0[2]' using process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:104$334'.
+  created $dff cell `$procdff$839' with positive edge clock.
+Creating register for signal `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\x0[3]' using process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:104$334'.
+  created $dff cell `$procdff$840' with positive edge clock.
+Creating register for signal `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\x0[4]' using process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:104$334'.
+  created $dff cell `$procdff$841' with positive edge clock.
+Creating register for signal `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\x0[5]' using process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:104$334'.
+  created $dff cell `$procdff$842' with positive edge clock.
+Creating register for signal `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\x0[6]' using process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:104$334'.
+  created $dff cell `$procdff$843' with positive edge clock.
+Creating register for signal `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\x0[7]' using process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:104$334'.
+  created $dff cell `$procdff$844' with positive edge clock.
+Creating register for signal `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\w0[0]' using process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:104$334'.
+  created $dff cell `$procdff$845' with positive edge clock.
+Creating register for signal `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\w0[1]' using process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:104$334'.
+  created $dff cell `$procdff$846' with positive edge clock.
+Creating register for signal `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\w0[2]' using process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:104$334'.
+  created $dff cell `$procdff$847' with positive edge clock.
+Creating register for signal `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\w0[3]' using process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:104$334'.
+  created $dff cell `$procdff$848' with positive edge clock.
+Creating register for signal `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\w0[4]' using process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:104$334'.
+  created $dff cell `$procdff$849' with positive edge clock.
+Creating register for signal `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\w0[5]' using process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:104$334'.
+  created $dff cell `$procdff$850' with positive edge clock.
+Creating register for signal `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\w0[6]' using process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:104$334'.
+  created $dff cell `$procdff$851' with positive edge clock.
+Creating register for signal `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\w0[7]' using process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:104$334'.
+  created $dff cell `$procdff$852' with positive edge clock.
+
+5.4.10. Executing PROC_MEMWR pass (convert process memory writes to cells).
+
+5.4.11. Executing PROC_CLEAN pass (remove empty switches from decision trees).
+Found and cleaned up 1 empty switch in `\harness_neural_processor_array.$proc$hardware/v2/synthesis/harness_neural_processor_array.v:36$95'.
+Removing empty process `harness_neural_processor_array.$proc$hardware/v2/synthesis/harness_neural_processor_array.v:36$95'.
+Found and cleaned up 1 empty switch in `\harness_neural_processor_array.$proc$hardware/v2/synthesis/harness_neural_processor_array.v:119$100'.
+Removing empty process `harness_neural_processor_array.$proc$hardware/v2/synthesis/harness_neural_processor_array.v:119$100'.
+Removing empty process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:170$411'.
+Removing empty process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:170$410'.
+Removing empty process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:170$409'.
+Removing empty process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:170$408'.
+Removing empty process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:170$407'.
+Removing empty process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:170$406'.
+Removing empty process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:170$405'.
+Removing empty process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:170$404'.
+Removing empty process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:139$402'.
+Removing empty process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:139$400'.
+Removing empty process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:139$398'.
+Removing empty process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:139$396'.
+Removing empty process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:139$394'.
+Removing empty process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:139$392'.
+Removing empty process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:139$390'.
+Removing empty process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:139$388'.
+Removing empty process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:196$386'.
+Found and cleaned up 1 empty switch in `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:181$385'.
+Removing empty process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:181$385'.
+Removing empty process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:196$383'.
+Removing empty process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:196$381'.
+Found and cleaned up 1 empty switch in `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:181$380'.
+Removing empty process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:181$380'.
+Removing empty process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:192$378'.
+Removing empty process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:192$376'.
+Removing empty process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:192$374'.
+Removing empty process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:192$372'.
+Found and cleaned up 1 empty switch in `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:181$371'.
+Removing empty process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:181$371'.
+Found and cleaned up 6 empty switches in `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:305$366'.
+Removing empty process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:305$366'.
+Found and cleaned up 2 empty switches in `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:278$356'.
+Removing empty process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:278$356'.
+Found and cleaned up 1 empty switch in `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:245$343'.
+Removing empty process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:245$343'.
+Found and cleaned up 3 empty switches in `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:215$340'.
+Removing empty process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:215$340'.
+Found and cleaned up 1 empty switch in `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:143$339'.
+Removing empty process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:143$339'.
+Found and cleaned up 2 empty switches in `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:104$334'.
+Removing empty process `$paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.$proc$hardware/v2/rtl/neural_processor.v:104$334'.
+Cleaned up 20 empty switches.
+
+5.4.12. Executing OPT_EXPR pass (perform const folding).
+Optimizing module harness_neural_processor_array.
+<suppressed ~1 debug messages>
+Optimizing module $paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.
+<suppressed ~7 debug messages>
+Optimizing module $paramod$7f4d094838b4fbdaf5ca624eee99b794762af9ea\neural_processor_array.
+
+5.5. Executing CHECK pass (checking for obvious problems).
+Checking module harness_neural_processor_array...
+Checking module $paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor...
+Warning: multiple conflicting drivers for $paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\gi [31]:
+    port Q[31] of cell $procdff$836 ($dff)
+    port Q[31] of cell $procdff$823 ($dff)
+Warning: multiple conflicting drivers for $paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\gi [30]:
+    port Q[30] of cell $procdff$836 ($dff)
+    port Q[30] of cell $procdff$823 ($dff)
+Warning: multiple conflicting drivers for $paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\gi [29]:
+    port Q[29] of cell $procdff$836 ($dff)
+    port Q[29] of cell $procdff$823 ($dff)
+Warning: multiple conflicting drivers for $paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\gi [28]:
+    port Q[28] of cell $procdff$836 ($dff)
+    port Q[28] of cell $procdff$823 ($dff)
+Warning: multiple conflicting drivers for $paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\gi [27]:
+    port Q[27] of cell $procdff$836 ($dff)
+    port Q[27] of cell $procdff$823 ($dff)
+Warning: multiple conflicting drivers for $paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\gi [26]:
+    port Q[26] of cell $procdff$836 ($dff)
+    port Q[26] of cell $procdff$823 ($dff)
+Warning: multiple conflicting drivers for $paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\gi [25]:
+    port Q[25] of cell $procdff$836 ($dff)
+    port Q[25] of cell $procdff$823 ($dff)
+Warning: multiple conflicting drivers for $paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\gi [24]:
+    port Q[24] of cell $procdff$836 ($dff)
+    port Q[24] of cell $procdff$823 ($dff)
+Warning: multiple conflicting drivers for $paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\gi [23]:
+    port Q[23] of cell $procdff$836 ($dff)
+    port Q[23] of cell $procdff$823 ($dff)
+Warning: multiple conflicting drivers for $paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\gi [22]:
+    port Q[22] of cell $procdff$836 ($dff)
+    port Q[22] of cell $procdff$823 ($dff)
+Warning: multiple conflicting drivers for $paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\gi [21]:
+    port Q[21] of cell $procdff$836 ($dff)
+    port Q[21] of cell $procdff$823 ($dff)
+Warning: multiple conflicting drivers for $paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\gi [20]:
+    port Q[20] of cell $procdff$836 ($dff)
+    port Q[20] of cell $procdff$823 ($dff)
+Warning: multiple conflicting drivers for $paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\gi [19]:
+    port Q[19] of cell $procdff$836 ($dff)
+    port Q[19] of cell $procdff$823 ($dff)
+Warning: multiple conflicting drivers for $paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\gi [18]:
+    port Q[18] of cell $procdff$836 ($dff)
+    port Q[18] of cell $procdff$823 ($dff)
+Warning: multiple conflicting drivers for $paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\gi [17]:
+    port Q[17] of cell $procdff$836 ($dff)
+    port Q[17] of cell $procdff$823 ($dff)
+Warning: multiple conflicting drivers for $paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\gi [16]:
+    port Q[16] of cell $procdff$836 ($dff)
+    port Q[16] of cell $procdff$823 ($dff)
+Warning: multiple conflicting drivers for $paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\gi [15]:
+    port Q[15] of cell $procdff$836 ($dff)
+    port Q[15] of cell $procdff$823 ($dff)
+Warning: multiple conflicting drivers for $paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\gi [14]:
+    port Q[14] of cell $procdff$836 ($dff)
+    port Q[14] of cell $procdff$823 ($dff)
+Warning: multiple conflicting drivers for $paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\gi [13]:
+    port Q[13] of cell $procdff$836 ($dff)
+    port Q[13] of cell $procdff$823 ($dff)
+Warning: multiple conflicting drivers for $paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\gi [12]:
+    port Q[12] of cell $procdff$836 ($dff)
+    port Q[12] of cell $procdff$823 ($dff)
+Warning: multiple conflicting drivers for $paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\gi [11]:
+    port Q[11] of cell $procdff$836 ($dff)
+    port Q[11] of cell $procdff$823 ($dff)
+Warning: multiple conflicting drivers for $paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\gi [10]:
+    port Q[10] of cell $procdff$836 ($dff)
+    port Q[10] of cell $procdff$823 ($dff)
+Warning: multiple conflicting drivers for $paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\gi [9]:
+    port Q[9] of cell $procdff$836 ($dff)
+    port Q[9] of cell $procdff$823 ($dff)
+Warning: multiple conflicting drivers for $paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\gi [8]:
+    port Q[8] of cell $procdff$836 ($dff)
+    port Q[8] of cell $procdff$823 ($dff)
+Warning: multiple conflicting drivers for $paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\gi [7]:
+    port Q[7] of cell $procdff$836 ($dff)
+    port Q[7] of cell $procdff$823 ($dff)
+Warning: multiple conflicting drivers for $paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\gi [6]:
+    port Q[6] of cell $procdff$836 ($dff)
+    port Q[6] of cell $procdff$823 ($dff)
+Warning: multiple conflicting drivers for $paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\gi [5]:
+    port Q[5] of cell $procdff$836 ($dff)
+    port Q[5] of cell $procdff$823 ($dff)
+Warning: multiple conflicting drivers for $paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\gi [4]:
+    port Q[4] of cell $procdff$836 ($dff)
+    port Q[4] of cell $procdff$823 ($dff)
+Warning: multiple conflicting drivers for $paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\gi [3]:
+    port Q[3] of cell $procdff$836 ($dff)
+    port Q[3] of cell $procdff$823 ($dff)
+Warning: multiple conflicting drivers for $paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\gi [2]:
+    port Q[2] of cell $procdff$836 ($dff)
+    port Q[2] of cell $procdff$823 ($dff)
+Warning: multiple conflicting drivers for $paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\gi [1]:
+    port Q[1] of cell $procdff$836 ($dff)
+    port Q[1] of cell $procdff$823 ($dff)
+Warning: multiple conflicting drivers for $paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.\gi [0]:
+    port Q[0] of cell $procdff$836 ($dff)
+    port Q[0] of cell $procdff$823 ($dff)
+Checking module $paramod$7f4d094838b4fbdaf5ca624eee99b794762af9ea\neural_processor_array...
+Found and reported 32 problems.
+
+5.6. Executing FLATTEN pass (flatten design).
+Deleting now unused module $paramod$c0193c7ec190759e8025e35dead4531c56eb80a9\neural_processor.
+Deleting now unused module $paramod$7f4d094838b4fbdaf5ca624eee99b794762af9ea\neural_processor_array.
+<suppressed ~2 debug messages>
+
+5.7. Executing TRIBUF pass.
+
+5.8. Executing DEMINOUT pass (demote inout ports to input or output).
+
+5.9. Executing OPT_EXPR pass (perform const folding).
+Optimizing module harness_neural_processor_array.
+
+5.10. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \harness_neural_processor_array..
+Removed 6 unused cells and 221 unused wires.
+<suppressed ~25 debug messages>
+
+5.11. Executing CHECK pass (checking for obvious problems).
+Checking module harness_neural_processor_array...
+Found and reported 0 problems.
+
+5.12. Executing OPT pass (performing simple optimizations).
+
+5.12.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module harness_neural_processor_array.
+
+5.12.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\harness_neural_processor_array'.
+Computing hashes of 222 cells of `\harness_neural_processor_array'.
+Finding duplicate cells in `\harness_neural_processor_array'.
+Computing hashes of 209 cells of `\harness_neural_processor_array'.
+Finding duplicate cells in `\harness_neural_processor_array'.
+<suppressed ~39 debug messages>
+Removed a total of 13 cells.
+
+5.12.3. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \harness_neural_processor_array..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~146 debug messages>
+
+5.12.4. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \harness_neural_processor_array.
+Performed a total of 0 changes.
+
+5.12.5. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\harness_neural_processor_array'.
+Computing hashes of 209 cells of `\harness_neural_processor_array'.
+Finding duplicate cells in `\harness_neural_processor_array'.
+Removed a total of 0 cells.
+
+5.12.6. Executing OPT_DFF pass (perform DFF optimizations).
+
+5.12.7. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \harness_neural_processor_array..
+Removed 0 unused cells and 13 unused wires.
+<suppressed ~1 debug messages>
+
+5.12.8. Executing OPT_EXPR pass (perform const folding).
+Optimizing module harness_neural_processor_array.
+
+5.12.9. Rerunning OPT passes. (Maybe there is more to do..)
+
+5.12.10. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \harness_neural_processor_array..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~146 debug messages>
+
+5.12.11. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \harness_neural_processor_array.
+Performed a total of 0 changes.
+
+5.12.12. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\harness_neural_processor_array'.
+Computing hashes of 209 cells of `\harness_neural_processor_array'.
+Finding duplicate cells in `\harness_neural_processor_array'.
+Removed a total of 0 cells.
+
+5.12.13. Executing OPT_DFF pass (perform DFF optimizations).
+
+5.12.14. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \harness_neural_processor_array..
+
+5.12.15. Executing OPT_EXPR pass (perform const folding).
+Optimizing module harness_neural_processor_array.
+
+5.12.16. Finished fast OPT passes. (There is nothing left to do.)
+
+5.13. Executing FSM pass (extract and optimize FSM).
+
+5.13.1. Executing FSM_DETECT pass (finding FSMs in design).
+Not marking harness_neural_processor_array.dut.GEN_NP[0].u_np.np_state as FSM state register:
+    Users of register don't seem to benefit from recoding.
+
+5.13.2. Executing FSM_EXTRACT pass (extracting FSM from design).
+
+5.13.3. Executing FSM_OPT pass (simple optimizations of FSMs).
+
+5.13.4. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \harness_neural_processor_array..
+
+5.13.5. Executing FSM_OPT pass (simple optimizations of FSMs).
+
+5.13.6. Executing FSM_RECODE pass (re-assigning FSM state encoding).
+
+5.13.7. Executing FSM_INFO pass (dumping all available information on FSM cells).
+
+5.13.8. Executing FSM_MAP pass (mapping FSMs to basic logic).
+
+5.14. Executing OPT pass (performing simple optimizations).
+
+5.14.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module harness_neural_processor_array.
+
+5.14.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\harness_neural_processor_array'.
+Computing hashes of 209 cells of `\harness_neural_processor_array'.
+Finding duplicate cells in `\harness_neural_processor_array'.
+Removed a total of 0 cells.
+
+5.14.3. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \harness_neural_processor_array..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~146 debug messages>
+
+5.14.4. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \harness_neural_processor_array.
+Performed a total of 0 changes.
+
+5.14.5. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\harness_neural_processor_array'.
+Computing hashes of 209 cells of `\harness_neural_processor_array'.
+Finding duplicate cells in `\harness_neural_processor_array'.
+Removed a total of 0 cells.
+
+5.14.6. Executing OPT_DFF pass (perform DFF optimizations).
+Adding SRST signal on $flatten\dut.\GEN_NP[0].u_np.$procdff$835 ($dff) from module harness_neural_processor_array (D = \lfsr [4], Q = \dut.GEN_NP[0].u_np.last0, rval = 1'0).
+Adding SRST signal on $procdff$793 ($dff) from module harness_neural_processor_array (D = $xor$hardware/v2/synthesis/harness_neural_processor_array.v:121$107_Y, Q = \chk, rval = 8'00000000).
+Adding SRST signal on $procdff$792 ($dff) from module harness_neural_processor_array (D = { \lfsr [30:7] $xor$hardware/v2/synthesis/harness_neural_processor_array.v:38$99_Y }, Q = { \lfsr [31:8] \lfsr [0] }, rval = 25'0000000000000000000000001).
+Adding EN signal on $flatten\dut.\GEN_NP[0].u_np.$procdff$848 ($dff) from module harness_neural_processor_array (D = \lfsr [20:13], Q = \dut.GEN_NP[0].u_np.w0[3]).
+Adding EN signal on $flatten\dut.\GEN_NP[0].u_np.$procdff$837 ($dff) from module harness_neural_processor_array (D = \lfsr [9:2], Q = \dut.GEN_NP[0].u_np.x0[0]).
+Adding EN signal on $flatten\dut.\GEN_NP[0].u_np.$procdff$838 ($dff) from module harness_neural_processor_array (D = \lfsr [10:3], Q = \dut.GEN_NP[0].u_np.x0[1]).
+Adding EN signal on $flatten\dut.\GEN_NP[0].u_np.$procdff$839 ($dff) from module harness_neural_processor_array (D = \lfsr [11:4], Q = \dut.GEN_NP[0].u_np.x0[2]).
+Adding EN signal on $flatten\dut.\GEN_NP[0].u_np.$procdff$840 ($dff) from module harness_neural_processor_array (D = \lfsr [12:5], Q = \dut.GEN_NP[0].u_np.x0[3]).
+Adding EN signal on $flatten\dut.\GEN_NP[0].u_np.$procdff$841 ($dff) from module harness_neural_processor_array (D = \lfsr [13:6], Q = \dut.GEN_NP[0].u_np.x0[4]).
+Adding EN signal on $flatten\dut.\GEN_NP[0].u_np.$procdff$842 ($dff) from module harness_neural_processor_array (D = \lfsr [14:7], Q = \dut.GEN_NP[0].u_np.x0[5]).
+Adding EN signal on $flatten\dut.\GEN_NP[0].u_np.$procdff$843 ($dff) from module harness_neural_processor_array (D = \lfsr [15:8], Q = \dut.GEN_NP[0].u_np.x0[6]).
+Adding EN signal on $flatten\dut.\GEN_NP[0].u_np.$procdff$844 ($dff) from module harness_neural_processor_array (D = \lfsr [16:9], Q = \dut.GEN_NP[0].u_np.x0[7]).
+Adding EN signal on $flatten\dut.\GEN_NP[0].u_np.$procdff$845 ($dff) from module harness_neural_processor_array (D = \lfsr [17:10], Q = \dut.GEN_NP[0].u_np.w0[0]).
+Adding EN signal on $flatten\dut.\GEN_NP[0].u_np.$procdff$846 ($dff) from module harness_neural_processor_array (D = \lfsr [18:11], Q = \dut.GEN_NP[0].u_np.w0[1]).
+Adding EN signal on $flatten\dut.\GEN_NP[0].u_np.$procdff$847 ($dff) from module harness_neural_processor_array (D = \lfsr [19:12], Q = \dut.GEN_NP[0].u_np.w0[2]).
+Adding EN signal on $flatten\dut.\GEN_NP[0].u_np.$procdff$852 ($dff) from module harness_neural_processor_array (D = \lfsr [24:17], Q = \dut.GEN_NP[0].u_np.w0[7]).
+Adding EN signal on $flatten\dut.\GEN_NP[0].u_np.$procdff$851 ($dff) from module harness_neural_processor_array (D = \lfsr [23:16], Q = \dut.GEN_NP[0].u_np.w0[6]).
+Adding EN signal on $flatten\dut.\GEN_NP[0].u_np.$procdff$850 ($dff) from module harness_neural_processor_array (D = \lfsr [22:15], Q = \dut.GEN_NP[0].u_np.w0[5]).
+Adding SRST signal on $flatten\dut.\GEN_NP[0].u_np.$procdff$795 ($dff) from module harness_neural_processor_array (D = \dut.GEN_NP[0].u_np.valid_tree [1], Q = \dut.GEN_NP[0].u_np.valid_tree [2], rval = 1'0).
+Adding SRST signal on $flatten\dut.\GEN_NP[0].u_np.$procdff$796 ($dff) from module harness_neural_processor_array (D = \dut.GEN_NP[0].u_np.last_tree [1], Q = \dut.GEN_NP[0].u_np.last_tree [2], rval = 1'0).
+Adding SRST signal on $flatten\dut.\GEN_NP[0].u_np.$procdff$799 ($dff) from module harness_neural_processor_array (D = \dut.GEN_NP[0].u_np.valid_tree [0], Q = \dut.GEN_NP[0].u_np.valid_tree [1], rval = 1'0).
+Adding SRST signal on $flatten\dut.\GEN_NP[0].u_np.$procdff$800 ($dff) from module harness_neural_processor_array (D = \dut.GEN_NP[0].u_np.last_tree [0], Q = \dut.GEN_NP[0].u_np.last_tree [1], rval = 1'0).
+Adding SRST signal on $flatten\dut.\GEN_NP[0].u_np.$procdff$805 ($dff) from module harness_neural_processor_array (D = \dut.GEN_NP[0].u_np.valid1, Q = \dut.GEN_NP[0].u_np.valid_tree [0], rval = 1'0).
+Adding SRST signal on $flatten\dut.\GEN_NP[0].u_np.$procdff$806 ($dff) from module harness_neural_processor_array (D = \dut.GEN_NP[0].u_np.last1, Q = \dut.GEN_NP[0].u_np.last_tree [0], rval = 1'0).
+Adding SRST signal on $flatten\dut.\GEN_NP[0].u_np.$procdff$807 ($dff) from module harness_neural_processor_array (D = $flatten\dut.\GEN_NP[0].u_np.$procmux$608_Y, Q = \dut.GEN_NP[0].u_np.result_valid, rval = 1'0).
+Adding EN signal on $auto$ff.cc:337:slice$944 ($sdff) from module harness_neural_processor_array (D = $flatten\dut.\GEN_NP[0].u_np.$procmux$608_Y, Q = \dut.GEN_NP[0].u_np.result_valid).
+Adding SRST signal on $flatten\dut.\GEN_NP[0].u_np.$procdff$808 ($dff) from module harness_neural_processor_array (D = $flatten\dut.\GEN_NP[0].u_np.$procmux$598_Y, Q = \dut.GEN_NP[0].u_np.result_data, rval = 8'00000000).
+Adding EN signal on $auto$ff.cc:337:slice$954 ($sdff) from module harness_neural_processor_array (D = \dut.GEN_NP[0].u_np.y7, Q = \dut.GEN_NP[0].u_np.result_data).
+Adding SRST signal on $flatten\dut.\GEN_NP[0].u_np.$procdff$809 ($dff) from module harness_neural_processor_array (D = $flatten\dut.\GEN_NP[0].u_np.$procmux$587_Y, Q = \dut.GEN_NP[0].u_np.result_node_id, rval = 16'0000000000000000).
+Adding EN signal on $auto$ff.cc:337:slice$958 ($sdff) from module harness_neural_processor_array (D = \dut.GEN_NP[0].u_np.node_id_reg, Q = \dut.GEN_NP[0].u_np.result_node_id).
+Adding SRST signal on $flatten\dut.\GEN_NP[0].u_np.$procdff$810 ($dff) from module harness_neural_processor_array (D = $flatten\dut.\GEN_NP[0].u_np.$procmux$562_Y, Q = \dut.GEN_NP[0].u_np.np_state, rval = 4'0000).
+Adding EN signal on $auto$ff.cc:337:slice$962 ($sdff) from module harness_neural_processor_array (D = $flatten\dut.\GEN_NP[0].u_np.$procmux$562_Y, Q = \dut.GEN_NP[0].u_np.np_state).
+Adding EN signal on $flatten\dut.\GEN_NP[0].u_np.$procdff$811 ($dff) from module harness_neural_processor_array (D = 1'0, Q = \dut.GEN_NP[0].u_np.np_error).
+Adding SRST signal on $flatten\dut.\GEN_NP[0].u_np.$procdff$812 ($dff) from module harness_neural_processor_array (D = $flatten\dut.\GEN_NP[0].u_np.$procmux$553_Y, Q = \dut.GEN_NP[0].u_np.bias_reg, rval = 8'00000000).
+Adding EN signal on $auto$ff.cc:337:slice$977 ($sdff) from module harness_neural_processor_array (D = \lfsr [8:1], Q = \dut.GEN_NP[0].u_np.bias_reg).
+Adding SRST signal on $flatten\dut.\GEN_NP[0].u_np.$procdff$813 ($dff) from module harness_neural_processor_array (D = $flatten\dut.\GEN_NP[0].u_np.$procmux$539_Y, Q = \dut.GEN_NP[0].u_np.activation_reg, rval = 2'01).
+Adding EN signal on $auto$ff.cc:337:slice$981 ($sdff) from module harness_neural_processor_array (D = \lfsr [2:1], Q = \dut.GEN_NP[0].u_np.activation_reg).
+Adding SRST signal on $flatten\dut.\GEN_NP[0].u_np.$procdff$814 ($dff) from module harness_neural_processor_array (D = $flatten\dut.\GEN_NP[0].u_np.$procmux$525_Y, Q = \dut.GEN_NP[0].u_np.node_id_reg, rval = 16'0000000000000000).
+Adding EN signal on $auto$ff.cc:337:slice$985 ($sdff) from module harness_neural_processor_array (D = \lfsr [16:1], Q = \dut.GEN_NP[0].u_np.node_id_reg).
+Adding SRST signal on $flatten\dut.\GEN_NP[0].u_np.$procdff$815 ($dff) from module harness_neural_processor_array (D = \dut.GEN_NP[0].u_np.last6, Q = \dut.GEN_NP[0].u_np.valid7, rval = 1'0).
+Adding EN signal on $flatten\dut.\GEN_NP[0].u_np.$procdff$816 ($dff) from module harness_neural_processor_array (D = $flatten\dut.\GEN_NP[0].u_np.$procmux$620_Y, Q = \dut.GEN_NP[0].u_np.y7).
+Adding SRST signal on $flatten\dut.\GEN_NP[0].u_np.$procdff$817 ($dff) from module harness_neural_processor_array (D = \dut.GEN_NP[0].u_np.valid5, Q = \dut.GEN_NP[0].u_np.valid6, rval = 1'0).
+Adding SRST signal on $flatten\dut.\GEN_NP[0].u_np.$procdff$818 ($dff) from module harness_neural_processor_array (D = \dut.GEN_NP[0].u_np.last5, Q = \dut.GEN_NP[0].u_np.last6, rval = 1'0).
+Adding EN signal on $flatten\dut.\GEN_NP[0].u_np.$procdff$819 ($dff) from module harness_neural_processor_array (D = $flatten\dut.\GEN_NP[0].u_np.$add$hardware/v2/rtl/neural_processor.v:252$344_Y, Q = \dut.GEN_NP[0].u_np.final_acc_reg).
+Adding SRST signal on $flatten\dut.\GEN_NP[0].u_np.$procdff$820 ($dff) from module harness_neural_processor_array (D = $flatten\dut.\GEN_NP[0].u_np.$procmux$640_Y, Q = \dut.GEN_NP[0].u_np.acc_reg, rval = 0).
+Adding EN signal on $auto$ff.cc:337:slice$994 ($sdff) from module harness_neural_processor_array (D = $flatten\dut.\GEN_NP[0].u_np.$add$hardware/v2/rtl/neural_processor.v:226$342_Y, Q = \dut.GEN_NP[0].u_np.acc_reg).
+Adding SRST signal on $flatten\dut.\GEN_NP[0].u_np.$procdff$821 ($dff) from module harness_neural_processor_array (D = \dut.GEN_NP[0].u_np.valid_tree [2], Q = \dut.GEN_NP[0].u_np.valid5, rval = 1'0).
+Adding SRST signal on $flatten\dut.\GEN_NP[0].u_np.$procdff$822 ($dff) from module harness_neural_processor_array (D = \dut.GEN_NP[0].u_np.last_tree [2], Q = \dut.GEN_NP[0].u_np.last5, rval = 1'0).
+Adding EN signal on $flatten\dut.\GEN_NP[0].u_np.$procdff$849 ($dff) from module harness_neural_processor_array (D = \lfsr [21:14], Q = \dut.GEN_NP[0].u_np.w0[4]).
+Adding SRST signal on $flatten\dut.\GEN_NP[0].u_np.$procdff$824 ($dff) from module harness_neural_processor_array (D = \dut.GEN_NP[0].u_np.valid0, Q = \dut.GEN_NP[0].u_np.valid1, rval = 1'0).
+Adding SRST signal on $flatten\dut.\GEN_NP[0].u_np.$procdff$825 ($dff) from module harness_neural_processor_array (D = \dut.GEN_NP[0].u_np.last0, Q = \dut.GEN_NP[0].u_np.last1, rval = 1'0).
+Adding EN signal on $flatten\dut.\GEN_NP[0].u_np.$procdff$826 ($dff) from module harness_neural_processor_array (D = { \dut.GEN_NP[0].u_np.product_comb[0] [15] \dut.GEN_NP[0].u_np.product_comb[0] [15] \dut.GEN_NP[0].u_np.product_comb[0] [15] \dut.GEN_NP[0].u_np.product_comb[0] [15] \dut.GEN_NP[0].u_np.product_comb[0] [15] \dut.GEN_NP[0].u_np.product_comb[0] [15] \dut.GEN_NP[0].u_np.product_comb[0] [15] \dut.GEN_NP[0].u_np.product_comb[0] [15] \dut.GEN_NP[0].u_np.product_comb[0] [15] \dut.GEN_NP[0].u_np.product_comb[0] [15] \dut.GEN_NP[0].u_np.product_comb[0] [15] \dut.GEN_NP[0].u_np.product_comb[0] [15] \dut.GEN_NP[0].u_np.product_comb[0] [15] \dut.GEN_NP[0].u_np.product_comb[0] [15] \dut.GEN_NP[0].u_np.product_comb[0] [15] \dut.GEN_NP[0].u_np.product_comb[0] [15] \dut.GEN_NP[0].u_np.product_comb[0] }, Q = \dut.GEN_NP[0].u_np.prod1[0]).
+Adding EN signal on $flatten\dut.\GEN_NP[0].u_np.$procdff$827 ($dff) from module harness_neural_processor_array (D = { \dut.GEN_NP[0].u_np.product_comb[1] [15] \dut.GEN_NP[0].u_np.product_comb[1] [15] \dut.GEN_NP[0].u_np.product_comb[1] [15] \dut.GEN_NP[0].u_np.product_comb[1] [15] \dut.GEN_NP[0].u_np.product_comb[1] [15] \dut.GEN_NP[0].u_np.product_comb[1] [15] \dut.GEN_NP[0].u_np.product_comb[1] [15] \dut.GEN_NP[0].u_np.product_comb[1] [15] \dut.GEN_NP[0].u_np.product_comb[1] [15] \dut.GEN_NP[0].u_np.product_comb[1] [15] \dut.GEN_NP[0].u_np.product_comb[1] [15] \dut.GEN_NP[0].u_np.product_comb[1] [15] \dut.GEN_NP[0].u_np.product_comb[1] [15] \dut.GEN_NP[0].u_np.product_comb[1] [15] \dut.GEN_NP[0].u_np.product_comb[1] [15] \dut.GEN_NP[0].u_np.product_comb[1] [15] \dut.GEN_NP[0].u_np.product_comb[1] }, Q = \dut.GEN_NP[0].u_np.prod1[1]).
+Adding EN signal on $flatten\dut.\GEN_NP[0].u_np.$procdff$828 ($dff) from module harness_neural_processor_array (D = { \dut.GEN_NP[0].u_np.product_comb[2] [15] \dut.GEN_NP[0].u_np.product_comb[2] [15] \dut.GEN_NP[0].u_np.product_comb[2] [15] \dut.GEN_NP[0].u_np.product_comb[2] [15] \dut.GEN_NP[0].u_np.product_comb[2] [15] \dut.GEN_NP[0].u_np.product_comb[2] [15] \dut.GEN_NP[0].u_np.product_comb[2] [15] \dut.GEN_NP[0].u_np.product_comb[2] [15] \dut.GEN_NP[0].u_np.product_comb[2] [15] \dut.GEN_NP[0].u_np.product_comb[2] [15] \dut.GEN_NP[0].u_np.product_comb[2] [15] \dut.GEN_NP[0].u_np.product_comb[2] [15] \dut.GEN_NP[0].u_np.product_comb[2] [15] \dut.GEN_NP[0].u_np.product_comb[2] [15] \dut.GEN_NP[0].u_np.product_comb[2] [15] \dut.GEN_NP[0].u_np.product_comb[2] [15] \dut.GEN_NP[0].u_np.product_comb[2] }, Q = \dut.GEN_NP[0].u_np.prod1[2]).
+Adding EN signal on $flatten\dut.\GEN_NP[0].u_np.$procdff$829 ($dff) from module harness_neural_processor_array (D = { \dut.GEN_NP[0].u_np.product_comb[3] [15] \dut.GEN_NP[0].u_np.product_comb[3] [15] \dut.GEN_NP[0].u_np.product_comb[3] [15] \dut.GEN_NP[0].u_np.product_comb[3] [15] \dut.GEN_NP[0].u_np.product_comb[3] [15] \dut.GEN_NP[0].u_np.product_comb[3] [15] \dut.GEN_NP[0].u_np.product_comb[3] [15] \dut.GEN_NP[0].u_np.product_comb[3] [15] \dut.GEN_NP[0].u_np.product_comb[3] [15] \dut.GEN_NP[0].u_np.product_comb[3] [15] \dut.GEN_NP[0].u_np.product_comb[3] [15] \dut.GEN_NP[0].u_np.product_comb[3] [15] \dut.GEN_NP[0].u_np.product_comb[3] [15] \dut.GEN_NP[0].u_np.product_comb[3] [15] \dut.GEN_NP[0].u_np.product_comb[3] [15] \dut.GEN_NP[0].u_np.product_comb[3] [15] \dut.GEN_NP[0].u_np.product_comb[3] }, Q = \dut.GEN_NP[0].u_np.prod1[3]).
+Adding EN signal on $flatten\dut.\GEN_NP[0].u_np.$procdff$830 ($dff) from module harness_neural_processor_array (D = { \dut.GEN_NP[0].u_np.product_comb[4] [15] \dut.GEN_NP[0].u_np.product_comb[4] [15] \dut.GEN_NP[0].u_np.product_comb[4] [15] \dut.GEN_NP[0].u_np.product_comb[4] [15] \dut.GEN_NP[0].u_np.product_comb[4] [15] \dut.GEN_NP[0].u_np.product_comb[4] [15] \dut.GEN_NP[0].u_np.product_comb[4] [15] \dut.GEN_NP[0].u_np.product_comb[4] [15] \dut.GEN_NP[0].u_np.product_comb[4] [15] \dut.GEN_NP[0].u_np.product_comb[4] [15] \dut.GEN_NP[0].u_np.product_comb[4] [15] \dut.GEN_NP[0].u_np.product_comb[4] [15] \dut.GEN_NP[0].u_np.product_comb[4] [15] \dut.GEN_NP[0].u_np.product_comb[4] [15] \dut.GEN_NP[0].u_np.product_comb[4] [15] \dut.GEN_NP[0].u_np.product_comb[4] [15] \dut.GEN_NP[0].u_np.product_comb[4] }, Q = \dut.GEN_NP[0].u_np.prod1[4]).
+Adding EN signal on $flatten\dut.\GEN_NP[0].u_np.$procdff$831 ($dff) from module harness_neural_processor_array (D = { \dut.GEN_NP[0].u_np.product_comb[5] [15] \dut.GEN_NP[0].u_np.product_comb[5] [15] \dut.GEN_NP[0].u_np.product_comb[5] [15] \dut.GEN_NP[0].u_np.product_comb[5] [15] \dut.GEN_NP[0].u_np.product_comb[5] [15] \dut.GEN_NP[0].u_np.product_comb[5] [15] \dut.GEN_NP[0].u_np.product_comb[5] [15] \dut.GEN_NP[0].u_np.product_comb[5] [15] \dut.GEN_NP[0].u_np.product_comb[5] [15] \dut.GEN_NP[0].u_np.product_comb[5] [15] \dut.GEN_NP[0].u_np.product_comb[5] [15] \dut.GEN_NP[0].u_np.product_comb[5] [15] \dut.GEN_NP[0].u_np.product_comb[5] [15] \dut.GEN_NP[0].u_np.product_comb[5] [15] \dut.GEN_NP[0].u_np.product_comb[5] [15] \dut.GEN_NP[0].u_np.product_comb[5] [15] \dut.GEN_NP[0].u_np.product_comb[5] }, Q = \dut.GEN_NP[0].u_np.prod1[5]).
+Adding EN signal on $flatten\dut.\GEN_NP[0].u_np.$procdff$832 ($dff) from module harness_neural_processor_array (D = { \dut.GEN_NP[0].u_np.product_comb[6] [15] \dut.GEN_NP[0].u_np.product_comb[6] [15] \dut.GEN_NP[0].u_np.product_comb[6] [15] \dut.GEN_NP[0].u_np.product_comb[6] [15] \dut.GEN_NP[0].u_np.product_comb[6] [15] \dut.GEN_NP[0].u_np.product_comb[6] [15] \dut.GEN_NP[0].u_np.product_comb[6] [15] \dut.GEN_NP[0].u_np.product_comb[6] [15] \dut.GEN_NP[0].u_np.product_comb[6] [15] \dut.GEN_NP[0].u_np.product_comb[6] [15] \dut.GEN_NP[0].u_np.product_comb[6] [15] \dut.GEN_NP[0].u_np.product_comb[6] [15] \dut.GEN_NP[0].u_np.product_comb[6] [15] \dut.GEN_NP[0].u_np.product_comb[6] [15] \dut.GEN_NP[0].u_np.product_comb[6] [15] \dut.GEN_NP[0].u_np.product_comb[6] [15] \dut.GEN_NP[0].u_np.product_comb[6] }, Q = \dut.GEN_NP[0].u_np.prod1[6]).
+Adding EN signal on $flatten\dut.\GEN_NP[0].u_np.$procdff$833 ($dff) from module harness_neural_processor_array (D = { \dut.GEN_NP[0].u_np.product_comb[7] [15] \dut.GEN_NP[0].u_np.product_comb[7] [15] \dut.GEN_NP[0].u_np.product_comb[7] [15] \dut.GEN_NP[0].u_np.product_comb[7] [15] \dut.GEN_NP[0].u_np.product_comb[7] [15] \dut.GEN_NP[0].u_np.product_comb[7] [15] \dut.GEN_NP[0].u_np.product_comb[7] [15] \dut.GEN_NP[0].u_np.product_comb[7] [15] \dut.GEN_NP[0].u_np.product_comb[7] [15] \dut.GEN_NP[0].u_np.product_comb[7] [15] \dut.GEN_NP[0].u_np.product_comb[7] [15] \dut.GEN_NP[0].u_np.product_comb[7] [15] \dut.GEN_NP[0].u_np.product_comb[7] [15] \dut.GEN_NP[0].u_np.product_comb[7] [15] \dut.GEN_NP[0].u_np.product_comb[7] [15] \dut.GEN_NP[0].u_np.product_comb[7] [15] \dut.GEN_NP[0].u_np.product_comb[7] }, Q = \dut.GEN_NP[0].u_np.prod1[7]).
+Adding SRST signal on $flatten\dut.\GEN_NP[0].u_np.$procdff$834 ($dff) from module harness_neural_processor_array (D = $flatten\dut.\GEN_NP[0].u_np.$logic_and$hardware/v2/rtl/neural_processor.v:109$335_Y, Q = \dut.GEN_NP[0].u_np.valid0, rval = 1'0).
+Setting constant 0-bit at position 0 on $auto$ff.cc:337:slice$976 ($dffe) from module harness_neural_processor_array.
+
+5.14.7. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \harness_neural_processor_array..
+Removed 80 unused cells and 80 unused wires.
+<suppressed ~81 debug messages>
+
+5.14.8. Executing OPT_EXPR pass (perform const folding).
+Optimizing module harness_neural_processor_array.
+<suppressed ~3 debug messages>
+
+5.14.9. Rerunning OPT passes. (Maybe there is more to do..)
+
+5.14.10. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \harness_neural_processor_array..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~18 debug messages>
+
+5.14.11. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \harness_neural_processor_array.
+Performed a total of 0 changes.
+
+5.14.12. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\harness_neural_processor_array'.
+Computing hashes of 178 cells of `\harness_neural_processor_array'.
+Finding duplicate cells in `\harness_neural_processor_array'.
+Computing hashes of 158 cells of `\harness_neural_processor_array'.
+Finding duplicate cells in `\harness_neural_processor_array'.
+Computing hashes of 143 cells of `\harness_neural_processor_array'.
+Finding duplicate cells in `\harness_neural_processor_array'.
+<suppressed ~105 debug messages>
+Removed a total of 35 cells.
+
+5.14.13. Executing OPT_DFF pass (perform DFF optimizations).
+
+5.14.14. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \harness_neural_processor_array..
+Removed 0 unused cells and 36 unused wires.
+<suppressed ~1 debug messages>
+
+5.14.15. Executing OPT_EXPR pass (perform const folding).
+Optimizing module harness_neural_processor_array.
+
+5.14.16. Rerunning OPT passes. (Maybe there is more to do..)
+
+5.14.17. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \harness_neural_processor_array..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~18 debug messages>
+
+5.14.18. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \harness_neural_processor_array.
+Performed a total of 0 changes.
+
+5.14.19. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\harness_neural_processor_array'.
+Computing hashes of 143 cells of `\harness_neural_processor_array'.
+Finding duplicate cells in `\harness_neural_processor_array'.
+Removed a total of 0 cells.
+
+5.14.20. Executing OPT_DFF pass (perform DFF optimizations).
+
+5.14.21. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \harness_neural_processor_array..
+
+5.14.22. Executing OPT_EXPR pass (perform const folding).
+Optimizing module harness_neural_processor_array.
+
+5.14.23. Finished fast OPT passes. (There is nothing left to do.)
+
+5.15. Executing WREDUCE pass (reducing word size of cells).
+Removed top 16 bits (of 32) from FF cell harness_neural_processor_array.$auto$ff.cc:337:slice$1014 ($dffe).
+Removed top 16 bits (of 32) from FF cell harness_neural_processor_array.$auto$ff.cc:337:slice$1013 ($dffe).
+Removed top 16 bits (of 32) from FF cell harness_neural_processor_array.$auto$ff.cc:337:slice$1012 ($dffe).
+Removed top 16 bits (of 32) from FF cell harness_neural_processor_array.$auto$ff.cc:337:slice$1011 ($dffe).
+Removed top 16 bits (of 32) from FF cell harness_neural_processor_array.$auto$ff.cc:337:slice$1010 ($dffe).
+Removed top 16 bits (of 32) from FF cell harness_neural_processor_array.$auto$ff.cc:337:slice$1009 ($dffe).
+Removed top 16 bits (of 32) from FF cell harness_neural_processor_array.$auto$ff.cc:337:slice$1008 ($dffe).
+Removed top 16 bits (of 32) from FF cell harness_neural_processor_array.$auto$ff.cc:337:slice$1007 ($dffe).
+Removed top 1 bits (of 2) from port B of cell harness_neural_processor_array.$auto$opt_dff.cc:320:make_patterns_logic$969 ($ne).
+Removed top 1 bits (of 2) from port B of cell harness_neural_processor_array.$auto$opt_dff.cc:320:make_patterns_logic$965 ($ne).
+Removed top 15 bits (of 16) from FF cell harness_neural_processor_array.$auto$ff.cc:337:slice$959 ($sdffe).
+Removed top 7 bits (of 8) from FF cell harness_neural_processor_array.$auto$ff.cc:337:slice$955 ($sdffe).
+Removed top 24 bits (of 32) from mux cell harness_neural_processor_array.$procmux$493 ($mux).
+Removed top 24 bits (of 32) from port B of cell harness_neural_processor_array.$flatten\dut.\GEN_NP[0].u_np.$add$hardware/v2/rtl/neural_processor.v:252$344 ($add).
+Converting cell harness_neural_processor_array.$flatten\dut.\GEN_NP[0].u_np.$add$hardware/v2/rtl/neural_processor.v:193$373 ($add) from unsigned to signed.
+Removed top 16 bits (of 32) from port A of cell harness_neural_processor_array.$flatten\dut.\GEN_NP[0].u_np.$add$hardware/v2/rtl/neural_processor.v:193$373 ($add).
+Removed top 16 bits (of 32) from port B of cell harness_neural_processor_array.$flatten\dut.\GEN_NP[0].u_np.$add$hardware/v2/rtl/neural_processor.v:193$373 ($add).
+Removed top 15 bits (of 32) from port Y of cell harness_neural_processor_array.$flatten\dut.\GEN_NP[0].u_np.$add$hardware/v2/rtl/neural_processor.v:193$373 ($add).
+Converting cell harness_neural_processor_array.$flatten\dut.\GEN_NP[0].u_np.$add$hardware/v2/rtl/neural_processor.v:193$375 ($add) from unsigned to signed.
+Removed top 16 bits (of 32) from port A of cell harness_neural_processor_array.$flatten\dut.\GEN_NP[0].u_np.$add$hardware/v2/rtl/neural_processor.v:193$375 ($add).
+Removed top 16 bits (of 32) from port B of cell harness_neural_processor_array.$flatten\dut.\GEN_NP[0].u_np.$add$hardware/v2/rtl/neural_processor.v:193$375 ($add).
+Removed top 15 bits (of 32) from port Y of cell harness_neural_processor_array.$flatten\dut.\GEN_NP[0].u_np.$add$hardware/v2/rtl/neural_processor.v:193$375 ($add).
+Converting cell harness_neural_processor_array.$flatten\dut.\GEN_NP[0].u_np.$add$hardware/v2/rtl/neural_processor.v:193$377 ($add) from unsigned to signed.
+Removed top 16 bits (of 32) from port A of cell harness_neural_processor_array.$flatten\dut.\GEN_NP[0].u_np.$add$hardware/v2/rtl/neural_processor.v:193$377 ($add).
+Removed top 16 bits (of 32) from port B of cell harness_neural_processor_array.$flatten\dut.\GEN_NP[0].u_np.$add$hardware/v2/rtl/neural_processor.v:193$377 ($add).
+Removed top 15 bits (of 32) from port Y of cell harness_neural_processor_array.$flatten\dut.\GEN_NP[0].u_np.$add$hardware/v2/rtl/neural_processor.v:193$377 ($add).
+Converting cell harness_neural_processor_array.$flatten\dut.\GEN_NP[0].u_np.$add$hardware/v2/rtl/neural_processor.v:193$379 ($add) from unsigned to signed.
+Removed top 16 bits (of 32) from port A of cell harness_neural_processor_array.$flatten\dut.\GEN_NP[0].u_np.$add$hardware/v2/rtl/neural_processor.v:193$379 ($add).
+Removed top 16 bits (of 32) from port B of cell harness_neural_processor_array.$flatten\dut.\GEN_NP[0].u_np.$add$hardware/v2/rtl/neural_processor.v:193$379 ($add).
+Removed top 15 bits (of 32) from port Y of cell harness_neural_processor_array.$flatten\dut.\GEN_NP[0].u_np.$add$hardware/v2/rtl/neural_processor.v:193$379 ($add).
+Removed top 1 bits (of 4) from port B of cell harness_neural_processor_array.$flatten\dut.\GEN_NP[0].u_np.$procmux$563_CMP0 ($eq).
+Removed top 1 bits (of 4) from port B of cell harness_neural_processor_array.$flatten\dut.\GEN_NP[0].u_np.$procmux$564_CMP0 ($eq).
+Removed top 2 bits (of 4) from port B of cell harness_neural_processor_array.$flatten\dut.\GEN_NP[0].u_np.$procmux$573_CMP0 ($eq).
+Removed top 3 bits (of 4) from port B of cell harness_neural_processor_array.$flatten\dut.\GEN_NP[0].u_np.$procmux$574_CMP0 ($eq).
+Removed top 1 bits (of 4) from port B of cell harness_neural_processor_array.$flatten\dut.\GEN_NP[0].u_np.$procmux$609_CMP0 ($eq).
+Removed top 2 bits (of 4) from port B of cell harness_neural_processor_array.$flatten\dut.\GEN_NP[0].u_np.$procmux$612_CMP0 ($eq).
+Removed top 15 bits (of 32) from FF cell harness_neural_processor_array.$flatten\dut.\GEN_NP[0].u_np.$procdff$801 ($dff).
+Removed top 15 bits (of 32) from FF cell harness_neural_processor_array.$flatten\dut.\GEN_NP[0].u_np.$procdff$802 ($dff).
+Removed top 15 bits (of 32) from FF cell harness_neural_processor_array.$flatten\dut.\GEN_NP[0].u_np.$procdff$803 ($dff).
+Removed top 15 bits (of 32) from FF cell harness_neural_processor_array.$flatten\dut.\GEN_NP[0].u_np.$procdff$804 ($dff).
+Removed top 7 bits (of 8) from FF cell harness_neural_processor_array.$auto$ff.cc:337:slice$990 ($dffe).
+Removed top 15 bits (of 16) from FF cell harness_neural_processor_array.$auto$ff.cc:337:slice$986 ($sdffe).
+Converting cell harness_neural_processor_array.$flatten\dut.\GEN_NP[0].u_np.$add$hardware/v2/rtl/neural_processor.v:197$382 ($add) from unsigned to signed.
+Removed top 15 bits (of 32) from port A of cell harness_neural_processor_array.$flatten\dut.\GEN_NP[0].u_np.$add$hardware/v2/rtl/neural_processor.v:197$382 ($add).
+Removed top 15 bits (of 32) from port B of cell harness_neural_processor_array.$flatten\dut.\GEN_NP[0].u_np.$add$hardware/v2/rtl/neural_processor.v:197$382 ($add).
+Removed top 14 bits (of 32) from port Y of cell harness_neural_processor_array.$flatten\dut.\GEN_NP[0].u_np.$add$hardware/v2/rtl/neural_processor.v:197$382 ($add).
+Converting cell harness_neural_processor_array.$flatten\dut.\GEN_NP[0].u_np.$add$hardware/v2/rtl/neural_processor.v:197$384 ($add) from unsigned to signed.
+Removed top 15 bits (of 32) from port A of cell harness_neural_processor_array.$flatten\dut.\GEN_NP[0].u_np.$add$hardware/v2/rtl/neural_processor.v:197$384 ($add).
+Removed top 15 bits (of 32) from port B of cell harness_neural_processor_array.$flatten\dut.\GEN_NP[0].u_np.$add$hardware/v2/rtl/neural_processor.v:197$384 ($add).
+Removed top 14 bits (of 32) from port Y of cell harness_neural_processor_array.$flatten\dut.\GEN_NP[0].u_np.$add$hardware/v2/rtl/neural_processor.v:197$384 ($add).
+Removed top 7 bits (of 8) from mux cell harness_neural_processor_array.$flatten\dut.\GEN_NP[0].u_np.$procmux$620 ($mux).
+Removed top 7 bits (of 8) from mux cell harness_neural_processor_array.$flatten\dut.\GEN_NP[0].u_np.$ternary$hardware/v2/rtl/neural_processor.v:263$353 ($mux).
+Removed top 7 bits (of 8) from mux cell harness_neural_processor_array.$flatten\dut.\GEN_NP[0].u_np.$ternary$hardware/v2/rtl/neural_processor.v:268$355 ($mux).
+Removed top 7 bits (of 8) from mux cell harness_neural_processor_array.$flatten\dut.\GEN_NP[0].u_np.$ternary$hardware/v2/rtl/neural_processor.v:264$352 ($mux).
+Removed top 7 bits (of 8) from mux cell harness_neural_processor_array.$flatten\dut.\GEN_NP[0].u_np.$ternary$hardware/v2/rtl/neural_processor.v:269$354 ($mux).
+Removed top 7 bits (of 8) from wire harness_neural_processor_array.$flatten\dut.\GEN_NP[0].u_np.$ternary$hardware/v2/rtl/neural_processor.v:264$352_Y.
+Removed top 7 bits (of 8) from wire harness_neural_processor_array.$flatten\dut.\GEN_NP[0].u_np.$ternary$hardware/v2/rtl/neural_processor.v:269$354_Y.
+Removed top 7 bits (of 8) from wire harness_neural_processor_array.$flatten\dut.\GEN_NP[0].u_np.$procmux$620_Y.
+Removed top 24 bits (of 32) from wire harness_neural_processor_array.$0\lfsr[31:0].
+
+5.16. Executing PEEPOPT pass (run peephole optimizers).
+
+5.17. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \harness_neural_processor_array..
+Removed 0 unused cells and 4 unused wires.
+<suppressed ~1 debug messages>
+
+5.18. Executing SHARE pass (SAT-based resource sharing).
+
+5.19. Executing TECHMAP pass (map to technology primitives).
+
+5.19.1. Executing Verilog-2005 frontend: /opt/homebrew/bin/../share/yosys/cmp2lut.v
+Parsing Verilog input from `/opt/homebrew/bin/../share/yosys/cmp2lut.v' to AST representation.
+Generating RTLIL representation for module `\_90_lut_cmp_'.
+Successfully finished Verilog frontend.
+
+5.19.2. Continuing TECHMAP pass.
+No more expansions possible.
+<suppressed ~6 debug messages>
+
+5.20. Executing OPT_EXPR pass (perform const folding).
+Optimizing module harness_neural_processor_array.
+
+5.21. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \harness_neural_processor_array..
+
+5.22. Executing TECHMAP pass (map to technology primitives).
+
+5.22.1. Executing Verilog-2005 frontend: /opt/homebrew/bin/../share/yosys/mul2dsp.v
+Parsing Verilog input from `/opt/homebrew/bin/../share/yosys/mul2dsp.v' to AST representation.
+Generating RTLIL representation for module `\_80_mul'.
+Generating RTLIL representation for module `\_90_soft_mul'.
+Successfully finished Verilog frontend.
+
+5.22.2. Continuing TECHMAP pass.
+Using template $paramod$cc733e0dbb038034434917c1e0de96998ec4103f\_80_mul for cells of type $mul.
+No more expansions possible.
+<suppressed ~92 debug messages>
+
+5.23. Executing TECHMAP pass (map to technology primitives).
+
+5.23.1. Executing Verilog-2005 frontend: /opt/homebrew/bin/../share/yosys/lattice/dsp_map_18x18.v
+Parsing Verilog input from `/opt/homebrew/bin/../share/yosys/lattice/dsp_map_18x18.v' to AST representation.
+Generating RTLIL representation for module `$__MUL18X18'.
+Successfully finished Verilog frontend.
+
+5.23.2. Continuing TECHMAP pass.
+Using template $paramod$ea686d7c43b0ae12a4f0d39aec4e01bcc4449b23$__MUL18X18 for cells of type $__MUL18X18.
+No more expansions possible.
+<suppressed ~30 debug messages>
+
+5.24. Executing ALUMACC pass (create $alu and $macc cells).
+Extracting $alu and $macc cells in module harness_neural_processor_array:
+  creating $macc model for $flatten\dut.\GEN_NP[0].u_np.$add$hardware/v2/rtl/neural_processor.v:197$387 ($add).
+  creating $macc model for $flatten\dut.\GEN_NP[0].u_np.$add$hardware/v2/rtl/neural_processor.v:197$384 ($add).
+  creating $macc model for $flatten\dut.\GEN_NP[0].u_np.$add$hardware/v2/rtl/neural_processor.v:197$382 ($add).
+  creating $macc model for $flatten\dut.\GEN_NP[0].u_np.$add$hardware/v2/rtl/neural_processor.v:193$379 ($add).
+  creating $macc model for $flatten\dut.\GEN_NP[0].u_np.$add$hardware/v2/rtl/neural_processor.v:193$377 ($add).
+  creating $macc model for $flatten\dut.\GEN_NP[0].u_np.$add$hardware/v2/rtl/neural_processor.v:193$375 ($add).
+  creating $macc model for $flatten\dut.\GEN_NP[0].u_np.$add$hardware/v2/rtl/neural_processor.v:193$373 ($add).
+  creating $macc model for $flatten\dut.\GEN_NP[0].u_np.$add$hardware/v2/rtl/neural_processor.v:252$344 ($add).
+  creating $macc model for $flatten\dut.\GEN_NP[0].u_np.$add$hardware/v2/rtl/neural_processor.v:226$342 ($add).
+  creating $alu model for $macc $flatten\dut.\GEN_NP[0].u_np.$add$hardware/v2/rtl/neural_processor.v:226$342.
+  creating $alu model for $macc $flatten\dut.\GEN_NP[0].u_np.$add$hardware/v2/rtl/neural_processor.v:252$344.
+  creating $alu model for $macc $flatten\dut.\GEN_NP[0].u_np.$add$hardware/v2/rtl/neural_processor.v:193$373.
+  creating $alu model for $macc $flatten\dut.\GEN_NP[0].u_np.$add$hardware/v2/rtl/neural_processor.v:193$375.
+  creating $alu model for $macc $flatten\dut.\GEN_NP[0].u_np.$add$hardware/v2/rtl/neural_processor.v:193$377.
+  creating $alu model for $macc $flatten\dut.\GEN_NP[0].u_np.$add$hardware/v2/rtl/neural_processor.v:193$379.
+  creating $alu model for $macc $flatten\dut.\GEN_NP[0].u_np.$add$hardware/v2/rtl/neural_processor.v:197$382.
+  creating $alu model for $macc $flatten\dut.\GEN_NP[0].u_np.$add$hardware/v2/rtl/neural_processor.v:197$384.
+  creating $alu model for $macc $flatten\dut.\GEN_NP[0].u_np.$add$hardware/v2/rtl/neural_processor.v:197$387.
+  creating $alu cell for $flatten\dut.\GEN_NP[0].u_np.$add$hardware/v2/rtl/neural_processor.v:197$387: $auto$alumacc.cc:548:replace_alu$1037
+  creating $alu cell for $flatten\dut.\GEN_NP[0].u_np.$add$hardware/v2/rtl/neural_processor.v:197$384: $auto$alumacc.cc:548:replace_alu$1040
+  creating $alu cell for $flatten\dut.\GEN_NP[0].u_np.$add$hardware/v2/rtl/neural_processor.v:197$382: $auto$alumacc.cc:548:replace_alu$1043
+  creating $alu cell for $flatten\dut.\GEN_NP[0].u_np.$add$hardware/v2/rtl/neural_processor.v:193$379: $auto$alumacc.cc:548:replace_alu$1046
+  creating $alu cell for $flatten\dut.\GEN_NP[0].u_np.$add$hardware/v2/rtl/neural_processor.v:193$377: $auto$alumacc.cc:548:replace_alu$1049
+  creating $alu cell for $flatten\dut.\GEN_NP[0].u_np.$add$hardware/v2/rtl/neural_processor.v:193$375: $auto$alumacc.cc:548:replace_alu$1052
+  creating $alu cell for $flatten\dut.\GEN_NP[0].u_np.$add$hardware/v2/rtl/neural_processor.v:193$373: $auto$alumacc.cc:548:replace_alu$1055
+  creating $alu cell for $flatten\dut.\GEN_NP[0].u_np.$add$hardware/v2/rtl/neural_processor.v:252$344: $auto$alumacc.cc:548:replace_alu$1058
+  creating $alu cell for $flatten\dut.\GEN_NP[0].u_np.$add$hardware/v2/rtl/neural_processor.v:226$342: $auto$alumacc.cc:548:replace_alu$1061
+  created 9 $alu and 0 $macc cells.
+
+5.25. Executing OPT pass (performing simple optimizations).
+
+5.25.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module harness_neural_processor_array.
+
+5.25.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\harness_neural_processor_array'.
+Computing hashes of 143 cells of `\harness_neural_processor_array'.
+Finding duplicate cells in `\harness_neural_processor_array'.
+Removed a total of 0 cells.
+
+5.25.3. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \harness_neural_processor_array..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~18 debug messages>
+
+5.25.4. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \harness_neural_processor_array.
+Performed a total of 0 changes.
+
+5.25.5. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\harness_neural_processor_array'.
+Computing hashes of 143 cells of `\harness_neural_processor_array'.
+Finding duplicate cells in `\harness_neural_processor_array'.
+Removed a total of 0 cells.
+
+5.25.6. Executing OPT_DFF pass (perform DFF optimizations).
+
+5.25.7. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \harness_neural_processor_array..
+Removed 0 unused cells and 64 unused wires.
+<suppressed ~1 debug messages>
+
+5.25.8. Executing OPT_EXPR pass (perform const folding).
+Optimizing module harness_neural_processor_array.
+
+5.25.9. Rerunning OPT passes. (Maybe there is more to do..)
+
+5.25.10. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \harness_neural_processor_array..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~18 debug messages>
+
+5.25.11. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \harness_neural_processor_array.
+Performed a total of 0 changes.
+
+5.25.12. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\harness_neural_processor_array'.
+Computing hashes of 143 cells of `\harness_neural_processor_array'.
+Finding duplicate cells in `\harness_neural_processor_array'.
+Removed a total of 0 cells.
+
+5.25.13. Executing OPT_DFF pass (perform DFF optimizations).
+
+5.25.14. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \harness_neural_processor_array..
+
+5.25.15. Executing OPT_EXPR pass (perform const folding).
+Optimizing module harness_neural_processor_array.
+
+5.25.16. Finished fast OPT passes. (There is nothing left to do.)
+
+5.26. Executing MEMORY pass.
+
+5.26.1. Executing OPT_MEM pass (optimize memories).
+Performed a total of 0 transformations.
+
+5.26.2. Executing OPT_MEM_PRIORITY pass (removing unnecessary memory write priority relations).
+Performed a total of 0 transformations.
+
+5.26.3. Executing OPT_MEM_FEEDBACK pass (finding memory read-to-write feedback paths).
+
+5.26.4. Executing MEMORY_BMUX2ROM pass (converting muxes to ROMs).
+
+5.26.5. Executing MEMORY_DFF pass (merging $dff cells to $memrd).
+
+5.26.6. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \harness_neural_processor_array..
+
+5.26.7. Executing MEMORY_SHARE pass (consolidating $memrd/$memwr cells).
+
+5.26.8. Executing OPT_MEM_WIDEN pass (optimize memories where all ports are wide).
+Performed a total of 0 transformations.
+
+5.26.9. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \harness_neural_processor_array..
+
+5.26.10. Executing MEMORY_COLLECT pass (generating $mem cells).
+
+5.27. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \harness_neural_processor_array..
+
+5.28. Executing MEMORY_LIBMAP pass (mapping memories to cells).
+
+5.29. Executing TECHMAP pass (map to technology primitives).
+
+5.29.1. Executing Verilog-2005 frontend: /opt/homebrew/bin/../share/yosys/lattice/lutrams_map_trellis.v
+Parsing Verilog input from `/opt/homebrew/bin/../share/yosys/lattice/lutrams_map_trellis.v' to AST representation.
+Generating RTLIL representation for module `$__TRELLIS_DPR16X4_'.
+Successfully finished Verilog frontend.
+
+5.29.2. Executing Verilog-2005 frontend: /opt/homebrew/bin/../share/yosys/lattice/brams_map_16kd.v
+Parsing Verilog input from `/opt/homebrew/bin/../share/yosys/lattice/brams_map_16kd.v' to AST representation.
+Generating RTLIL representation for module `$__DP16KD_'.
+Generating RTLIL representation for module `$__PDPW16KD_'.
+Successfully finished Verilog frontend.
+
+5.29.3. Continuing TECHMAP pass.
+No more expansions possible.
+<suppressed ~5 debug messages>
+
+5.30. Executing OPT pass (performing simple optimizations).
+
+5.30.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module harness_neural_processor_array.
+<suppressed ~81 debug messages>
+
+5.30.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\harness_neural_processor_array'.
+Computing hashes of 137 cells of `\harness_neural_processor_array'.
+Finding duplicate cells in `\harness_neural_processor_array'.
+Removed a total of 0 cells.
+
+5.30.3. Executing OPT_DFF pass (perform DFF optimizations).
+
+5.30.4. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \harness_neural_processor_array..
+Removed 0 unused cells and 18 unused wires.
+<suppressed ~1 debug messages>
+
+5.30.5. Finished fast OPT passes.
+
+5.31. Executing MEMORY_MAP pass (converting memories to logic and flip-flops).
+
+5.32. Executing OPT pass (performing simple optimizations).
+
+5.32.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module harness_neural_processor_array.
+
+5.32.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\harness_neural_processor_array'.
+Computing hashes of 137 cells of `\harness_neural_processor_array'.
+Finding duplicate cells in `\harness_neural_processor_array'.
+Removed a total of 0 cells.
+
+5.32.3. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \harness_neural_processor_array..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~12 debug messages>
+
+5.32.4. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \harness_neural_processor_array.
+    Consolidated identical input bits for $pmux cell $flatten\dut.\GEN_NP[0].u_np.$procmux$562:
+      Old ports: A=4'0110, B=24'000100100011010001010000, Y=$flatten\dut.\GEN_NP[0].u_np.$procmux$562_Y
+      New ports: A=3'110, B=18'001010011100101000, Y=$flatten\dut.\GEN_NP[0].u_np.$procmux$562_Y [2:0]
+      New connections: $flatten\dut.\GEN_NP[0].u_np.$procmux$562_Y [3] = 1'0
+  Optimizing cells in module \harness_neural_processor_array.
+Performed a total of 1 changes.
+
+5.32.5. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\harness_neural_processor_array'.
+Computing hashes of 137 cells of `\harness_neural_processor_array'.
+Finding duplicate cells in `\harness_neural_processor_array'.
+Removed a total of 0 cells.
+
+5.32.6. Executing OPT_DFF pass (perform DFF optimizations).
+Adding EN signal on $auto$ff.cc:337:slice$860 ($sdff) from module harness_neural_processor_array (D = \chk [7:1], Q = \chk [7:1]).
+Handling D = Q on $auto$ff.cc:337:slice$1212 ($sdffe) from module harness_neural_processor_array (conecting SRST instead).
+Setting constant 0-bit at position 0 on $auto$ff.cc:337:slice$1212 ($dffe) from module harness_neural_processor_array.
+Setting constant 0-bit at position 1 on $auto$ff.cc:337:slice$1212 ($dffe) from module harness_neural_processor_array.
+Setting constant 0-bit at position 2 on $auto$ff.cc:337:slice$1212 ($dffe) from module harness_neural_processor_array.
+Setting constant 0-bit at position 3 on $auto$ff.cc:337:slice$1212 ($dffe) from module harness_neural_processor_array.
+Setting constant 0-bit at position 4 on $auto$ff.cc:337:slice$1212 ($dffe) from module harness_neural_processor_array.
+Setting constant 0-bit at position 5 on $auto$ff.cc:337:slice$1212 ($dffe) from module harness_neural_processor_array.
+Setting constant 0-bit at position 6 on $auto$ff.cc:337:slice$1212 ($dffe) from module harness_neural_processor_array.
+
+5.32.7. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \harness_neural_processor_array..
+Removed 1 unused cells and 1 unused wires.
+<suppressed ~2 debug messages>
+
+5.32.8. Executing OPT_EXPR pass (perform const folding).
+Optimizing module harness_neural_processor_array.
+
+5.32.9. Rerunning OPT passes. (Maybe there is more to do..)
+
+5.32.10. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \harness_neural_processor_array..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~12 debug messages>
+
+5.32.11. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \harness_neural_processor_array.
+Performed a total of 0 changes.
+
+5.32.12. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\harness_neural_processor_array'.
+Computing hashes of 137 cells of `\harness_neural_processor_array'.
+Finding duplicate cells in `\harness_neural_processor_array'.
+Removed a total of 0 cells.
+
+5.32.13. Executing OPT_DFF pass (perform DFF optimizations).
+Setting constant 0-bit at position 3 on $auto$ff.cc:337:slice$963 ($sdffe) from module harness_neural_processor_array.
+
+5.32.14. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \harness_neural_processor_array..
+
+5.32.15. Executing OPT_EXPR pass (perform const folding).
+Optimizing module harness_neural_processor_array.
+<suppressed ~1 debug messages>
+
+5.32.16. Rerunning OPT passes. (Maybe there is more to do..)
+
+5.32.17. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \harness_neural_processor_array..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~12 debug messages>
+
+5.32.18. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \harness_neural_processor_array.
+Performed a total of 0 changes.
+
+5.32.19. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\harness_neural_processor_array'.
+Computing hashes of 137 cells of `\harness_neural_processor_array'.
+Finding duplicate cells in `\harness_neural_processor_array'.
+Removed a total of 0 cells.
+
+5.32.20. Executing OPT_DFF pass (perform DFF optimizations).
+
+5.32.21. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \harness_neural_processor_array..
+
+5.32.22. Executing OPT_EXPR pass (perform const folding).
+Optimizing module harness_neural_processor_array.
+
+5.32.23. Finished fast OPT passes. (There is nothing left to do.)
+
+5.33. Executing TECHMAP pass (map to technology primitives).
+
+5.33.1. Executing Verilog-2005 frontend: /opt/homebrew/bin/../share/yosys/techmap.v
+Parsing Verilog input from `/opt/homebrew/bin/../share/yosys/techmap.v' to AST representation.
+Generating RTLIL representation for module `\_90_simplemap_bool_ops'.
+Generating RTLIL representation for module `\_90_simplemap_reduce_ops'.
+Generating RTLIL representation for module `\_90_simplemap_logic_ops'.
+Generating RTLIL representation for module `\_90_simplemap_compare_ops'.
+Generating RTLIL representation for module `\_90_simplemap_various'.
+Generating RTLIL representation for module `\_90_simplemap_registers'.
+Generating RTLIL representation for module `\_90_shift_ops_shr_shl_sshl_sshr'.
+Generating RTLIL representation for module `\_90_shift_shiftx'.
+Generating RTLIL representation for module `\_90_fa'.
+Generating RTLIL representation for module `\_90_lcu_brent_kung'.
+Generating RTLIL representation for module `\_90_alu'.
+Generating RTLIL representation for module `\_90_macc'.
+Generating RTLIL representation for module `\_90_alumacc'.
+Generating RTLIL representation for module `$__div_mod_u'.
+Generating RTLIL representation for module `$__div_mod_trunc'.
+Generating RTLIL representation for module `\_90_div'.
+Generating RTLIL representation for module `\_90_mod'.
+Generating RTLIL representation for module `$__div_mod_floor'.
+Generating RTLIL representation for module `\_90_divfloor'.
+Generating RTLIL representation for module `\_90_modfloor'.
+Generating RTLIL representation for module `\_90_pow'.
+Generating RTLIL representation for module `\_90_demux'.
+Generating RTLIL representation for module `\_90_lut'.
+Generating RTLIL representation for module `$connect'.
+Generating RTLIL representation for module `$input_port'.
+Successfully finished Verilog frontend.
+
+5.33.2. Executing Verilog-2005 frontend: /opt/homebrew/bin/../share/yosys/lattice/arith_map_ccu2c.v
+Parsing Verilog input from `/opt/homebrew/bin/../share/yosys/lattice/arith_map_ccu2c.v' to AST representation.
+Generating RTLIL representation for module `\_80_ccu2c_alu'.
+Successfully finished Verilog frontend.
+
+5.33.3. Continuing TECHMAP pass.
+Using extmapper simplemap for cells of type $sdffe.
+Using extmapper simplemap for cells of type $sdff.
+Using extmapper simplemap for cells of type $xor.
+Using template $paramod$2653f68ddb8eab7b1907b4a20767b72a824a7a36\_80_ccu2c_alu for cells of type $alu.
+Using template $paramod$8fdcfe020be5e507ba05385ffd706e02b549d39d\_80_ccu2c_alu for cells of type $alu.
+Using template $paramod$2470b7ea32c975a55c3ab8b283381b72d09e16d3\_80_ccu2c_alu for cells of type $alu.
+Using template $paramod$5e21cfa2ff6d644e10a0fc1dcdb22e5eb183bcd3\_80_ccu2c_alu for cells of type $alu.
+Using extmapper simplemap for cells of type $dffe.
+Using extmapper simplemap for cells of type $reduce_or.
+Using extmapper simplemap for cells of type $reduce_and.
+Using extmapper simplemap for cells of type $not.
+Using extmapper simplemap for cells of type $ne.
+Using extmapper simplemap for cells of type $reduce_bool.
+Using extmapper simplemap for cells of type $dff.
+Using extmapper simplemap for cells of type $mux.
+Using extmapper simplemap for cells of type $or.
+Using extmapper simplemap for cells of type $logic_or.
+Using extmapper simplemap for cells of type $logic_not.
+Using extmapper simplemap for cells of type $logic_and.
+Using extmapper simplemap for cells of type $eq.
+Using extmapper simplemap for cells of type $pmux.
+Using extmapper simplemap for cells of type $pos.
+No more expansions possible.
+<suppressed ~741 debug messages>
+
+5.34. Executing OPT pass (performing simple optimizations).
+
+5.34.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module harness_neural_processor_array.
+<suppressed ~293 debug messages>
+
+5.34.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\harness_neural_processor_array'.
+Computing hashes of 1632 cells of `\harness_neural_processor_array'.
+Finding duplicate cells in `\harness_neural_processor_array'.
+Computing hashes of 1477 cells of `\harness_neural_processor_array'.
+Finding duplicate cells in `\harness_neural_processor_array'.
+Computing hashes of 1435 cells of `\harness_neural_processor_array'.
+Finding duplicate cells in `\harness_neural_processor_array'.
+<suppressed ~591 debug messages>
+Removed a total of 197 cells.
+
+5.34.3. Executing OPT_DFF pass (perform DFF optimizations).
+
+5.34.4. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \harness_neural_processor_array..
+Removed 741 unused cells and 657 unused wires.
+<suppressed ~742 debug messages>
+
+5.34.5. Finished fast OPT passes.
+
+5.35. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \harness_neural_processor_array..
+
+5.36. Executing DFFLEGALIZE pass (convert FFs to types supported by the target).
+
+5.37. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\harness_neural_processor_array'.
+Computing hashes of 694 cells of `\harness_neural_processor_array'.
+Finding duplicate cells in `\harness_neural_processor_array'.
+Removed a total of 0 cells.
+
+5.38. Executing TECHMAP pass (map to technology primitives).
+
+5.38.1. Executing Verilog-2005 frontend: /opt/homebrew/bin/../share/yosys/lattice/cells_map_trellis.v
+Parsing Verilog input from `/opt/homebrew/bin/../share/yosys/lattice/cells_map_trellis.v' to AST representation.
+Generating RTLIL representation for module `$_DFF_N_'.
+Generating RTLIL representation for module `$_DFF_P_'.
+Generating RTLIL representation for module `$_DFFE_NN_'.
+Generating RTLIL representation for module `$_DFFE_PN_'.
+Generating RTLIL representation for module `$_DFFE_NP_'.
+Generating RTLIL representation for module `$_DFFE_PP_'.
+Generating RTLIL representation for module `$_DFF_NP0_'.
+Generating RTLIL representation for module `$_DFF_NP1_'.
+Generating RTLIL representation for module `$_DFF_PP0_'.
+Generating RTLIL representation for module `$_DFF_PP1_'.
+Generating RTLIL representation for module `$_SDFF_NP0_'.
+Generating RTLIL representation for module `$_SDFF_NP1_'.
+Generating RTLIL representation for module `$_SDFF_PP0_'.
+Generating RTLIL representation for module `$_SDFF_PP1_'.
+Generating RTLIL representation for module `$_DFFE_NP0P_'.
+Generating RTLIL representation for module `$_DFFE_NP1P_'.
+Generating RTLIL representation for module `$_DFFE_PP0P_'.
+Generating RTLIL representation for module `$_DFFE_PP1P_'.
+Generating RTLIL representation for module `$_DFFE_NP0N_'.
+Generating RTLIL representation for module `$_DFFE_NP1N_'.
+Generating RTLIL representation for module `$_DFFE_PP0N_'.
+Generating RTLIL representation for module `$_DFFE_PP1N_'.
+Generating RTLIL representation for module `$_SDFFE_NP0P_'.
+Generating RTLIL representation for module `$_SDFFE_NP1P_'.
+Generating RTLIL representation for module `$_SDFFE_PP0P_'.
+Generating RTLIL representation for module `$_SDFFE_PP1P_'.
+Generating RTLIL representation for module `$_SDFFE_NP0N_'.
+Generating RTLIL representation for module `$_SDFFE_NP1N_'.
+Generating RTLIL representation for module `$_SDFFE_PP0N_'.
+Generating RTLIL representation for module `$_SDFFE_PP1N_'.
+Generating RTLIL representation for module `$_ALDFF_NP_'.
+Generating RTLIL representation for module `$_ALDFF_PP_'.
+Generating RTLIL representation for module `$_ALDFFE_NPN_'.
+Generating RTLIL representation for module `$_ALDFFE_NPP_'.
+Generating RTLIL representation for module `$_ALDFFE_PPN_'.
+Generating RTLIL representation for module `$_ALDFFE_PPP_'.
+Generating RTLIL representation for module `\FD1P3AX'.
+Generating RTLIL representation for module `\FD1P3AY'.
+Generating RTLIL representation for module `\FD1P3BX'.
+Generating RTLIL representation for module `\FD1P3DX'.
+Generating RTLIL representation for module `\FD1P3IX'.
+Generating RTLIL representation for module `\FD1P3JX'.
+Generating RTLIL representation for module `\FD1S3AX'.
+Generating RTLIL representation for module `\FD1S3AY'.
+Generating RTLIL representation for module `\FD1S3BX'.
+Generating RTLIL representation for module `\FD1S3DX'.
+Generating RTLIL representation for module `\FD1S3IX'.
+Generating RTLIL representation for module `\FD1S3JX'.
+Generating RTLIL representation for module `\IFS1P3BX'.
+Generating RTLIL representation for module `\IFS1P3DX'.
+Generating RTLIL representation for module `\IFS1P3IX'.
+Generating RTLIL representation for module `\IFS1P3JX'.
+Generating RTLIL representation for module `\OFS1P3BX'.
+Generating RTLIL representation for module `\OFS1P3DX'.
+Generating RTLIL representation for module `\OFS1P3IX'.
+Generating RTLIL representation for module `\OFS1P3JX'.
+Generating RTLIL representation for module `\IB'.
+Generating RTLIL representation for module `\IBPU'.
+Generating RTLIL representation for module `\IBPD'.
+Generating RTLIL representation for module `\OB'.
+Generating RTLIL representation for module `\OBZ'.
+Generating RTLIL representation for module `\OBZPU'.
+Generating RTLIL representation for module `\OBZPD'.
+Generating RTLIL representation for module `\OBCO'.
+Generating RTLIL representation for module `\BB'.
+Generating RTLIL representation for module `\BBPU'.
+Generating RTLIL representation for module `\BBPD'.
+Generating RTLIL representation for module `\ILVDS'.
+Generating RTLIL representation for module `\OLVDS'.
+Successfully finished Verilog frontend.
+
+5.38.2. Continuing TECHMAP pass.
+Using template $paramod$_DFF_P_\_TECHMAP_WIREINIT_Q_=1'x for cells of type $_DFF_P_.
+Using template $_SDFF_PP0_ for cells of type $_SDFF_PP0_.
+Using template $_SDFF_PP1_ for cells of type $_SDFF_PP1_.
+Using template $paramod$_DFFE_PP_\_TECHMAP_WIREINIT_Q_=1'x for cells of type $_DFFE_PP_.
+Using template $_SDFFE_PP0P_ for cells of type $_SDFFE_PP0P_.
+Using template $paramod$_DFFE_PN_\_TECHMAP_WIREINIT_Q_=1'x for cells of type $_DFFE_PN_.
+Using template $_SDFFE_PP1P_ for cells of type $_SDFFE_PP1P_.
+No more expansions possible.
+<suppressed ~519 debug messages>
+
+5.39. Executing OPT_EXPR pass (perform const folding).
+Optimizing module harness_neural_processor_array.
+
+5.40. Executing SIMPLEMAP pass (map simple cells to gate primitives).
+
+5.41. Executing LATTICE_GSR pass (implement FF init values).
+Handling GSR in harness_neural_processor_array.
+
+5.42. Executing ATTRMVCP pass (move or copy attributes).
+
+5.43. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \harness_neural_processor_array..
+Removed 0 unused cells and 1979 unused wires.
+<suppressed ~1 debug messages>
+
+5.44. Executing CHECK pass (checking for obvious problems).
+Checking module harness_neural_processor_array...
+Found and reported 0 problems.
+
+5.45. Executing TECHMAP pass (map to technology primitives).
+
+5.45.1. Executing Verilog-2005 frontend: /opt/homebrew/bin/../share/yosys/lattice/latches_map.v
+Parsing Verilog input from `/opt/homebrew/bin/../share/yosys/lattice/latches_map.v' to AST representation.
+Generating RTLIL representation for module `$_DLATCH_N_'.
+Generating RTLIL representation for module `$_DLATCH_P_'.
+Successfully finished Verilog frontend.
+
+5.45.2. Continuing TECHMAP pass.
+No more expansions possible.
+<suppressed ~4 debug messages>
+
+5.46. Executing ABC9 pass.
+
+5.46.1. Executing ABC9_OPS pass (helper functions for ABC9).
+
+5.46.2. Executing ABC9_OPS pass (helper functions for ABC9).
+
+5.46.3. Executing SCC pass (detecting logic loops).
+Found 0 SCCs in module harness_neural_processor_array.
+Found 0 SCCs.
+
+5.46.4. Executing ABC9_OPS pass (helper functions for ABC9).
+
+5.46.5. Executing TECHMAP pass (map to technology primitives).
+
+5.46.5.1. Executing Verilog-2005 frontend: /opt/homebrew/bin/../share/yosys/techmap.v
+Parsing Verilog input from `/opt/homebrew/bin/../share/yosys/techmap.v' to AST representation.
+Generating RTLIL representation for module `\_90_simplemap_bool_ops'.
+Generating RTLIL representation for module `\_90_simplemap_reduce_ops'.
+Generating RTLIL representation for module `\_90_simplemap_logic_ops'.
+Generating RTLIL representation for module `\_90_simplemap_compare_ops'.
+Generating RTLIL representation for module `\_90_simplemap_various'.
+Generating RTLIL representation for module `\_90_simplemap_registers'.
+Generating RTLIL representation for module `\_90_shift_ops_shr_shl_sshl_sshr'.
+Generating RTLIL representation for module `\_90_shift_shiftx'.
+Generating RTLIL representation for module `\_90_fa'.
+Generating RTLIL representation for module `\_90_lcu_brent_kung'.
+Generating RTLIL representation for module `\_90_alu'.
+Generating RTLIL representation for module `\_90_macc'.
+Generating RTLIL representation for module `\_90_alumacc'.
+Generating RTLIL representation for module `$__div_mod_u'.
+Generating RTLIL representation for module `$__div_mod_trunc'.
+Generating RTLIL representation for module `\_90_div'.
+Generating RTLIL representation for module `\_90_mod'.
+Generating RTLIL representation for module `$__div_mod_floor'.
+Generating RTLIL representation for module `\_90_divfloor'.
+Generating RTLIL representation for module `\_90_modfloor'.
+Generating RTLIL representation for module `\_90_pow'.
+Generating RTLIL representation for module `\_90_demux'.
+Generating RTLIL representation for module `\_90_lut'.
+Generating RTLIL representation for module `$connect'.
+Generating RTLIL representation for module `$input_port'.
+Successfully finished Verilog frontend.
+
+5.46.5.2. Continuing TECHMAP pass.
+No more expansions possible.
+<suppressed ~166 debug messages>
+
+5.46.6. Executing OPT pass (performing simple optimizations).
+
+5.46.6.1. Executing OPT_EXPR pass (perform const folding).
+
+5.46.6.2. Executing OPT_MERGE pass (detect identical cells).
+Removed a total of 0 cells.
+
+5.46.6.3. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Removed 0 multiplexer ports.
+
+5.46.6.4. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+Performed a total of 0 changes.
+
+5.46.6.5. Executing OPT_MERGE pass (detect identical cells).
+Removed a total of 0 cells.
+
+5.46.6.6. Executing OPT_DFF pass (perform DFF optimizations).
+
+5.46.6.7. Executing OPT_CLEAN pass (remove unused cells and wires).
+
+5.46.6.8. Executing OPT_EXPR pass (perform const folding).
+
+5.46.6.9. Finished fast OPT passes. (There is nothing left to do.)
+
+5.46.7. Executing TECHMAP pass (map to technology primitives).
+
+5.46.7.1. Executing Verilog-2005 frontend: /opt/homebrew/bin/../share/yosys/abc9_map.v
+Parsing Verilog input from `/opt/homebrew/bin/../share/yosys/abc9_map.v' to AST representation.
+Successfully finished Verilog frontend.
+
+5.46.7.2. Continuing TECHMAP pass.
+No more expansions possible.
+<suppressed ~2 debug messages>
+
+5.46.8. Executing Verilog-2005 frontend: /opt/homebrew/bin/../share/yosys/abc9_model.v
+Parsing Verilog input from `/opt/homebrew/bin/../share/yosys/abc9_model.v' to AST representation.
+Generating RTLIL representation for module `$__ABC9_DELAY'.
+Generating RTLIL representation for module `$__ABC9_SCC_BREAKER'.
+Generating RTLIL representation for module `$__DFF_N__$abc9_flop'.
+Generating RTLIL representation for module `$__DFF_P__$abc9_flop'.
+Successfully finished Verilog frontend.
+
+5.46.9. Executing ABC9_OPS pass (helper functions for ABC9).
+<suppressed ~2 debug messages>
+
+5.46.10. Executing ABC9_OPS pass (helper functions for ABC9).
+
+5.46.11. Executing ABC9_OPS pass (helper functions for ABC9).
+<suppressed ~2 debug messages>
+
+5.46.12. Executing TECHMAP pass (map to technology primitives).
+
+5.46.12.1. Executing Verilog-2005 frontend: /opt/homebrew/bin/../share/yosys/techmap.v
+Parsing Verilog input from `/opt/homebrew/bin/../share/yosys/techmap.v' to AST representation.
+Generating RTLIL representation for module `\_90_simplemap_bool_ops'.
+Generating RTLIL representation for module `\_90_simplemap_reduce_ops'.
+Generating RTLIL representation for module `\_90_simplemap_logic_ops'.
+Generating RTLIL representation for module `\_90_simplemap_compare_ops'.
+Generating RTLIL representation for module `\_90_simplemap_various'.
+Generating RTLIL representation for module `\_90_simplemap_registers'.
+Generating RTLIL representation for module `\_90_shift_ops_shr_shl_sshl_sshr'.
+Generating RTLIL representation for module `\_90_shift_shiftx'.
+Generating RTLIL representation for module `\_90_fa'.
+Generating RTLIL representation for module `\_90_lcu_brent_kung'.
+Generating RTLIL representation for module `\_90_alu'.
+Generating RTLIL representation for module `\_90_macc'.
+Generating RTLIL representation for module `\_90_alumacc'.
+Generating RTLIL representation for module `$__div_mod_u'.
+Generating RTLIL representation for module `$__div_mod_trunc'.
+Generating RTLIL representation for module `\_90_div'.
+Generating RTLIL representation for module `\_90_mod'.
+Generating RTLIL representation for module `$__div_mod_floor'.
+Generating RTLIL representation for module `\_90_divfloor'.
+Generating RTLIL representation for module `\_90_modfloor'.
+Generating RTLIL representation for module `\_90_pow'.
+Generating RTLIL representation for module `\_90_demux'.
+Generating RTLIL representation for module `\_90_lut'.
+Generating RTLIL representation for module `$connect'.
+Generating RTLIL representation for module `$input_port'.
+Successfully finished Verilog frontend.
+
+5.46.12.2. Continuing TECHMAP pass.
+Using template $paramod$838872d5a4bab89607f53482b205c0fd50d8b82e\CCU2C for cells of type $paramod$838872d5a4bab89607f53482b205c0fd50d8b82e\CCU2C.
+Using extmapper simplemap for cells of type $or.
+Using extmapper simplemap for cells of type $and.
+Using extmapper simplemap for cells of type $not.
+Using extmapper simplemap for cells of type $xor.
+Using template $paramod\LUT2\INIT=4'1010 for cells of type LUT2.
+Using template $paramod\LUT4\INIT=16'1001011010101010 for cells of type LUT4.
+Using extmapper simplemap for cells of type $mux.
+No more expansions possible.
+<suppressed ~205 debug messages>
+
+5.46.13. Executing OPT pass (performing simple optimizations).
+
+5.46.13.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module harness_neural_processor_array.
+<suppressed ~18 debug messages>
+
+5.46.13.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\harness_neural_processor_array'.
+Computing hashes of 59 cells of `\harness_neural_processor_array'.
+Finding duplicate cells in `\harness_neural_processor_array'.
+Computing hashes of 57 cells of `\harness_neural_processor_array'.
+Finding duplicate cells in `\harness_neural_processor_array'.
+<suppressed ~6 debug messages>
+Removed a total of 2 cells.
+
+5.46.13.3. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \harness_neural_processor_array..
+  Creating internal representation of mux trees.
+  No muxes found in this module.
+Removed 0 multiplexer ports.
+
+5.46.13.4. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \harness_neural_processor_array.
+Performed a total of 0 changes.
+
+5.46.13.5. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\harness_neural_processor_array'.
+Computing hashes of 57 cells of `\harness_neural_processor_array'.
+Finding duplicate cells in `\harness_neural_processor_array'.
+Removed a total of 0 cells.
+
+5.46.13.6. Executing OPT_DFF pass (perform DFF optimizations).
+
+5.46.13.7. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \harness_neural_processor_array..
+Removed 0 unused cells and 55 unused wires.
+<suppressed ~1 debug messages>
+
+5.46.13.8. Executing OPT_EXPR pass (perform const folding).
+Optimizing module harness_neural_processor_array.
+
+5.46.13.9. Rerunning OPT passes. (Maybe there is more to do..)
+
+5.46.13.10. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \harness_neural_processor_array..
+  Creating internal representation of mux trees.
+  No muxes found in this module.
+Removed 0 multiplexer ports.
+
+5.46.13.11. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \harness_neural_processor_array.
+Performed a total of 0 changes.
+
+5.46.13.12. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\harness_neural_processor_array'.
+Computing hashes of 57 cells of `\harness_neural_processor_array'.
+Finding duplicate cells in `\harness_neural_processor_array'.
+Removed a total of 0 cells.
+
+5.46.13.13. Executing OPT_DFF pass (perform DFF optimizations).
+
+5.46.13.14. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \harness_neural_processor_array..
+
+5.46.13.15. Executing OPT_EXPR pass (perform const folding).
+Optimizing module harness_neural_processor_array.
+
+5.46.13.16. Finished fast OPT passes. (There is nothing left to do.)
+
+5.46.14. Executing AIGMAP pass (map logic to AIG).
+Module harness_neural_processor_array: replaced 18 cells with 120 new cells, skipped 39 cells.
+  replaced 3 cell types:
+      14 $_MUX_
+       2 $_OR_
+       2 $_XOR_
+  not replaced 3 cell types:
+       4 $_AND_
+       4 $_NOT_
+      31 $specify2
+
+5.46.15. Executing AIGMAP pass (map logic to AIG).
+Module harness_neural_processor_array: replaced 114 cells with 525 new cells, skipped 580 cells.
+  replaced 3 cell types:
+      14 $_MUX_
+      91 $_OR_
+       9 $_XOR_
+  not replaced 6 cell types:
+      38 $_AND_
+      15 $_NOT_
+       2 $scopeinfo
+     415 TRELLIS_FF
+       8 MULT18X18D
+     102 $paramod$838872d5a4bab89607f53482b205c0fd50d8b82e\CCU2C
+
+5.46.15.1. Executing ABC9_OPS pass (helper functions for ABC9).
+
+5.46.15.2. Executing ABC9_OPS pass (helper functions for ABC9).
+
+5.46.15.3. Executing XAIGER backend.
+<suppressed ~11 debug messages>
+Extracted 198 AND gates and 1556 wires from module `harness_neural_processor_array' to a netlist network with 553 inputs and 426 outputs.
+
+5.46.15.4. Executing ABC9_EXE pass (technology mapping using ABC9).
+
+5.46.15.5. Executing ABC9.
+Running ABC command: "<yosys-exe-dir>/yosys-abc" -s -f <abc-temp-dir>/abc.script 2>&1
+ABC: ======== ABC command line "source <abc-temp-dir>/abc.script"
+ABC: + read_lut <abc-temp-dir>/input.lut 
+ABC: + read_box <abc-temp-dir>/input.box 
+ABC: + &read <abc-temp-dir>/input.xaig 
+ABC: + &ps 
+ABC: <abc-temp-dir>/input : i/o =    553/    426  and =     190  lev =   19 (0.08)  mem = 0.04 MB  box = 102  bb = 0
+ABC: + &scorr 
+ABC: Warning: The network is combinational.
+ABC: + &sweep 
+ABC: + &dc2 
+ABC: + &dch -f -r 
+ABC: + &ps 
+ABC: <abc-temp-dir>/input : i/o =    553/    426  and =     281  lev =    8 (0.06)  mem = 0.04 MB  ch =   44  box = 96  bb = 0
+ABC: cst =       0  cls =     42  lit =      44  unused =    1036  proof =     0
+ABC: + &if -W 300 -v 
+ABC: K = 7. Memory (bytes): Truth =    0. Cut =   76. Obj =  156. Set =  780. CutMin = no
+ABC: Node =     281.  Ch =    42.  Total mem =    0.40 MB. Peak cut mem =    0.01 MB.
+ABC: P:  Del = 2023.00.  Ar =     110.0.  Edge =      187.  Cut =     2230.  T =     0.00 sec
+ABC: P:  Del = 2023.00.  Ar =     110.0.  Edge =      187.  Cut =     2229.  T =     0.00 sec
+ABC: P:  Del = 2023.00.  Ar =      66.0.  Edge =      173.  Cut =     3209.  T =     0.00 sec
+ABC: F:  Del = 2016.00.  Ar =      61.0.  Edge =      172.  Cut =     2467.  T =     0.00 sec
+ABC: A:  Del = 2016.00.  Ar =      58.0.  Edge =      168.  Cut =     2361.  T =     0.00 sec
+ABC: A:  Del = 2016.00.  Ar =      58.0.  Edge =      168.  Cut =     2330.  T =     0.00 sec
+ABC: Total time =     0.00 sec
+ABC: + &write -n <abc-temp-dir>/output.aig 
+ABC: + &mfs 
+ABC: The network is not changed by "&mfs".
+ABC: + &ps -l 
+ABC: <abc-temp-dir>/input : i/o =    553/    426  and =     152  lev =    8 (0.06)  mem = 0.04 MB  box = 96  bb = 0
+ABC: Mapping (K=6)  :  lut =     46  edge =     168  lev =    4 (0.03)  levB =   16  mem = 0.01 MB
+ABC: LUT = 46 : 2=5 10.9 %  3=15 32.6 %  4=20 43.5 %  5=3 6.5 %  6=3 6.5 %  Ave = 3.65
+ABC: + &write -n <abc-temp-dir>/output.aig 
+ABC: + &verify 
+ABC: Networks are equivalent.  Time =     0.01 sec
+ABC: + time 
+ABC: elapse: 0.03 seconds, total: 0.03 seconds
+
+5.46.15.6. Executing AIGER frontend.
+<suppressed ~10 debug messages>
+Removed 214 unused cells and 2129 unused wires.
+
+5.46.15.7. Executing ABC_OPS_REINTEGRATE pass (reintegrate ABC mapped design into module).
+ABC RESULTS:              $lut cells:       47
+ABC RESULTS:   $paramod$838872d5a4bab89607f53482b205c0fd50d8b82e\CCU2C cells:       96
+ABC RESULTS:           input signals:       39
+ABC RESULTS:          output signals:       57
+<suppressed ~1964 debug messages>
+Removing temp directory.
+
+5.46.16. Executing TECHMAP pass (map to technology primitives).
+
+5.46.16.1. Executing Verilog-2005 frontend: /opt/homebrew/bin/../share/yosys/abc9_unmap.v
+Parsing Verilog input from `/opt/homebrew/bin/../share/yosys/abc9_unmap.v' to AST representation.
+Generating RTLIL representation for module `$__DFF_x__$abc9_flop'.
+Generating RTLIL representation for module `$__ABC9_SCC_BREAKER'.
+Successfully finished Verilog frontend.
+
+5.46.16.2. Continuing TECHMAP pass.
+Using template $paramod$838872d5a4bab89607f53482b205c0fd50d8b82e\CCU2C for cells of type $paramod$838872d5a4bab89607f53482b205c0fd50d8b82e\CCU2C.
+No more expansions possible.
+<suppressed ~102 debug messages>
+Removed 20 unused cells and 2833 unused wires.
+
+5.47. Executing TECHMAP pass (map to technology primitives).
+
+5.47.1. Executing Verilog-2005 frontend: /opt/homebrew/bin/../share/yosys/lattice/cells_map_trellis.v
+Parsing Verilog input from `/opt/homebrew/bin/../share/yosys/lattice/cells_map_trellis.v' to AST representation.
+Generating RTLIL representation for module `$_DFF_N_'.
+Generating RTLIL representation for module `$_DFF_P_'.
+Generating RTLIL representation for module `$_DFFE_NN_'.
+Generating RTLIL representation for module `$_DFFE_PN_'.
+Generating RTLIL representation for module `$_DFFE_NP_'.
+Generating RTLIL representation for module `$_DFFE_PP_'.
+Generating RTLIL representation for module `$_DFF_NP0_'.
+Generating RTLIL representation for module `$_DFF_NP1_'.
+Generating RTLIL representation for module `$_DFF_PP0_'.
+Generating RTLIL representation for module `$_DFF_PP1_'.
+Generating RTLIL representation for module `$_SDFF_NP0_'.
+Generating RTLIL representation for module `$_SDFF_NP1_'.
+Generating RTLIL representation for module `$_SDFF_PP0_'.
+Generating RTLIL representation for module `$_SDFF_PP1_'.
+Generating RTLIL representation for module `$_DFFE_NP0P_'.
+Generating RTLIL representation for module `$_DFFE_NP1P_'.
+Generating RTLIL representation for module `$_DFFE_PP0P_'.
+Generating RTLIL representation for module `$_DFFE_PP1P_'.
+Generating RTLIL representation for module `$_DFFE_NP0N_'.
+Generating RTLIL representation for module `$_DFFE_NP1N_'.
+Generating RTLIL representation for module `$_DFFE_PP0N_'.
+Generating RTLIL representation for module `$_DFFE_PP1N_'.
+Generating RTLIL representation for module `$_SDFFE_NP0P_'.
+Generating RTLIL representation for module `$_SDFFE_NP1P_'.
+Generating RTLIL representation for module `$_SDFFE_PP0P_'.
+Generating RTLIL representation for module `$_SDFFE_PP1P_'.
+Generating RTLIL representation for module `$_SDFFE_NP0N_'.
+Generating RTLIL representation for module `$_SDFFE_NP1N_'.
+Generating RTLIL representation for module `$_SDFFE_PP0N_'.
+Generating RTLIL representation for module `$_SDFFE_PP1N_'.
+Generating RTLIL representation for module `$_ALDFF_NP_'.
+Generating RTLIL representation for module `$_ALDFF_PP_'.
+Generating RTLIL representation for module `$_ALDFFE_NPN_'.
+Generating RTLIL representation for module `$_ALDFFE_NPP_'.
+Generating RTLIL representation for module `$_ALDFFE_PPN_'.
+Generating RTLIL representation for module `$_ALDFFE_PPP_'.
+Generating RTLIL representation for module `\FD1P3AX'.
+Generating RTLIL representation for module `\FD1P3AY'.
+Generating RTLIL representation for module `\FD1P3BX'.
+Generating RTLIL representation for module `\FD1P3DX'.
+Generating RTLIL representation for module `\FD1P3IX'.
+Generating RTLIL representation for module `\FD1P3JX'.
+Generating RTLIL representation for module `\FD1S3AX'.
+Generating RTLIL representation for module `\FD1S3AY'.
+Generating RTLIL representation for module `\FD1S3BX'.
+Generating RTLIL representation for module `\FD1S3DX'.
+Generating RTLIL representation for module `\FD1S3IX'.
+Generating RTLIL representation for module `\FD1S3JX'.
+Generating RTLIL representation for module `\IFS1P3BX'.
+Generating RTLIL representation for module `\IFS1P3DX'.
+Generating RTLIL representation for module `\IFS1P3IX'.
+Generating RTLIL representation for module `\IFS1P3JX'.
+Generating RTLIL representation for module `\OFS1P3BX'.
+Generating RTLIL representation for module `\OFS1P3DX'.
+Generating RTLIL representation for module `\OFS1P3IX'.
+Generating RTLIL representation for module `\OFS1P3JX'.
+Generating RTLIL representation for module `\IB'.
+Generating RTLIL representation for module `\IBPU'.
+Generating RTLIL representation for module `\IBPD'.
+Generating RTLIL representation for module `\OB'.
+Generating RTLIL representation for module `\OBZ'.
+Generating RTLIL representation for module `\OBZPU'.
+Generating RTLIL representation for module `\OBZPD'.
+Generating RTLIL representation for module `\OBCO'.
+Generating RTLIL representation for module `\BB'.
+Generating RTLIL representation for module `\BBPU'.
+Generating RTLIL representation for module `\BBPD'.
+Generating RTLIL representation for module `\ILVDS'.
+Generating RTLIL representation for module `\OLVDS'.
+Generating RTLIL representation for module `$lut'.
+Successfully finished Verilog frontend.
+
+5.47.2. Continuing TECHMAP pass.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000011\LUT=8'11111101 for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000011\LUT=8'00000111 for cells of type $lut.
+Using template $paramod$2bf796e0fd6e6f7f76aac424a34e617ed5d61822$lut for cells of type $lut.
+Using template $paramod$efb384421500e94c3837f6feab9212ca25298bd4$lut for cells of type $lut.
+Using template $paramod$fd904e9e35cfd343a9df248824bd3f1408724879$lut for cells of type $lut.
+Using template $paramod$658b9ed803f0d3d335616d3858b53e0a2522f1e8$lut for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000010\LUT=4'0001 for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000010\LUT=4'0100 for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000011\LUT=8'10000000 for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000011\LUT=8'00110110 for cells of type $lut.
+Using template $paramod$47a8214374025465e226fa66bee690ff33268a25$lut for cells of type $lut.
+Using template $paramod$571404c0889eaf57f492cb5e37f8acb5df5852f9$lut for cells of type $lut.
+Using template $paramod$251994398653c4cf8de320f1e306e535d5d2d624$lut for cells of type $lut.
+Using template $paramod$ee19d45db61acb4c70d938b97483a4ed4b792645$lut for cells of type $lut.
+Using template $paramod$200337237619ba4c0bed9a492562f1d1b57fb569$lut for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000011\LUT=8'00000001 for cells of type $lut.
+Using template $paramod$a7dad16c080c08c1647c7e1b9706a59a123d8bcd$lut for cells of type $lut.
+Using template $paramod$e7acaad2d79ca9d6583d9edc46f9553c36f919ec$lut for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000011\LUT=8'10011100 for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000011\LUT=8'10111000 for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000011\LUT=8'11001010 for cells of type $lut.
+Using template $paramod$6d6beead1425af15cf78b27fd9b11b41b5d4bce8$lut for cells of type $lut.
+Using template $paramod$6df2bdde0dda2853f5f5b9a550fd1a1d6cc3fb87$lut for cells of type $lut.
+Using template $paramod$8e44661def013b6bf9fe6f8b049ef2c838d749f9$lut for cells of type $lut.
+Using template $paramod$3fd3cd243a8b2f71b0ffe04bdaebf6ad83bcc78e$lut for cells of type $lut.
+Using template $paramod$0ee76de659bb16de1a03c8c306f484f5819fdcc7$lut for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000010\LUT=4'1000 for cells of type $lut.
+Using template $paramod$c600b4b1adc22857e1c1ba3b6aeb516fabe09da0$lut for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000001\LUT=2'01 for cells of type $lut.
+No more expansions possible.
+<suppressed ~496 debug messages>
+
+5.48. Executing OPT_LUT_INS pass (discard unused LUT inputs).
+Optimizing LUTs in harness_neural_processor_array.
+  Optimizing lut $abc$5442$lut$aiger5441$928.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.lut2 (4 -> 0)
+  Optimizing lut $abc$5442$lut$aiger5441$923.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.lut3 (4 -> 0)
+  Optimizing lut $abc$5442$lut$aiger5441$915.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.lut2 (4 -> 0)
+  Optimizing lut $abc$5442$lut$aiger5441$915.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.lut3 (4 -> 0)
+  Optimizing lut $abc$5442$lut$aiger5441$928.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.lut0 (4 -> 0)
+  Optimizing lut $abc$5442$lut$aiger5441$915.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.lut1 (4 -> 0)
+  Optimizing lut $abc$5442$lut$aiger5441$923.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.lut1 (4 -> 0)
+  Optimizing lut $abc$5442$lut$aiger5441$941.genblk1.genblk1.genblk1.genblk1.genblk1.lut0 (4 -> 0)
+  Optimizing lut $abc$5442$lut$aiger5441$923.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.lut0 (4 -> 0)
+  Optimizing lut $abc$5442$lut$aiger$o870.genblk1.genblk1.genblk1.genblk1.genblk1.lut0 (4 -> 3)
+  Optimizing lut $abc$5442$lut$aiger5441$928.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.lut1 (4 -> 0)
+  Optimizing lut $abc$5442$lut$aiger5441$863.genblk1.genblk1.genblk1.genblk1.genblk1.lut1 (4 -> 0)
+Removed 0 unused cells and 109 unused wires.
+
+5.49. Executing AUTONAME pass.
+Renamed 750 objects in module harness_neural_processor_array.
+<suppressed ~750 debug messages>
+
+5.50. Executing HIERARCHY pass (managing design hierarchy).
+Attribute `top' found on module `harness_neural_processor_array'. Setting top module to harness_neural_processor_array.
+
+5.50.1. Analyzing design hierarchy..
+Top module:  \harness_neural_processor_array
+
+5.50.2. Analyzing design hierarchy..
+Top module:  \harness_neural_processor_array
+Removed 0 unused modules.
+
+5.51. Printing statistics.
+
+=== harness_neural_processor_array ===
+
+        +----------Local Count, excluding submodules.
+        | 
+      301 wires
+     2786 wire bits
+      301 public wires
+     2786 public wire bits
+        4 ports
+       18 port bits
+       10 cells
+        2   $scopeinfo
+        8   MULT18X18D
+      576 submodules
+       96   CCU2C
+        3   L6MUX21
+       59   LUT4
+        9   PFUMX
+      409   TRELLIS_FF
+
+=== design hierarchy ===
+
+        +----------Count including submodules.
+        | 
+       10 harness_neural_processor_array
+
+        +----------Count including submodules.
+        | 
+      301 wires
+     2786 wire bits
+      301 public wires
+     2786 public wire bits
+        4 ports
+       18 port bits
+        - memories
+        - memory bits
+        - processes
+       10 cells
+        2   $scopeinfo
+        8   MULT18X18D
+      576 submodules
+       96   CCU2C
+        3   L6MUX21
+       59   LUT4
+        9   PFUMX
+      409   TRELLIS_FF
+
+5.52. Executing CHECK pass (checking for obvious problems).
+Checking module harness_neural_processor_array...
+Found and reported 0 problems.
+
+5.53. Executing JSON backend.
+
+Warnings: 36 unique messages, 40 total
+End of script. Logfile hash: 6229d1584e, time: 0.44s, user: 0.36s, system: 0.03s, MEM: 43.16 MB peak
+Yosys 0.68+post (git sha1 c12172fbae8af5e20f6fb52e3d4e92d56ed587b6, Release, AppleClang clang++ 21.0.0.21000101)
+Time spent: 45% 23x read_verilog (0 sec), 10% 1x abc9_exe (0 sec), ...

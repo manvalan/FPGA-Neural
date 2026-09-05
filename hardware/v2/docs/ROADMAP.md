@@ -13,8 +13,11 @@ reali, non solo scritto).
       problemi CHECK, Fmax 183.12 MHz (ACC_WIDTH=32) — vedi
       `logs/experiments.log` EXP-0001/EXP-0002, `logs/errors.log` per 3
       bug reali trovati e risolti (2 del toolchain Icarus, 1 RTL).
-- [ ] **M2 — Processor Array** (`neural_processor_array.v`). Test 1/2/4/8
-      processor, misurare timing/risorse/throughput/utilization.
+- [x] **M2 — Processor Array** (`neural_processor_array.v`). 1/2/4/8
+      processor testati (sim concorrenza reale + sintesi/P&R reali).
+      Fmax sempre PASS a 80MHz (159.11→134.70 MHz). Scoperta: il DSP
+      (MULT18X18D), non LUT/FF, satura per primo (88% a N=8) — vedi
+      `logs/decisions.log` DEC-0005.
 - [ ] **M3 — Buffers** (`activation_buffer.v`, `weight_buffer.v`,
       `result_buffer.v`).
 - [ ] **M4 — Memory Manager** (`memory_manager.v`, `prefetch_engine.v`),

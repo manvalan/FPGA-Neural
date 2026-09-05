@@ -98,3 +98,29 @@ NOTE: this session's V1 certification campaign (docs/validation/,
   this V2-kickoff session (V1 is frozen, not to be touched) and was
   not performed. See decisions.log DEC-0004.
 STATUS: OPEN CAVEAT, not actioned in this session by design.
+
+ERR-0005 (synthesis measurement artifact, WORKED AROUND, not an RTL bug)
+DATE: 2026-09-05
+MODULE: hardware/v2/rtl/neural_processor_array.v
+SYMPTOM: synthesizing neural_processor_array as a bare top-level
+  module (every per-processor job/operand/result field exposed as a
+  real TRELLIS_IO pin) works at N_PROCESSORS=1 but fails place&route
+  at N_PROCESSORS=2 with "Unable to place cell ...$tr_io, no BELs
+  remaining to implement cell type 'TRELLIS_IO'".
+ROOT CAUSE: not a logic/timing limit -- the LFE5U-45F-8BG381 package
+  has 245 TRELLIS_IO pins total; the array's wide per-processor buses
+  (input_data/weight_data alone are DATA_WIDTH*P_IN*N_PROCESSORS bits)
+  exceed that budget once N_PROCESSORS>=2, purely because these ports
+  have no on-chip consumer yet (the Memory Manager/M4 and Neural
+  Director/M5 that will drive them in the real system don't exist
+  yet).
+WORKAROUND: hardware/v2/synthesis/harness_neural_processor_array.v --
+  a synthesis-only wrapper (NOT part of rtl/, not a functional
+  deliverable) that drives all wide buses from an internal free-
+  running LFSR and reduces outputs to a small checksum, keeping only
+  clk/rst/seed/checksum as real top-level pins. See its own header
+  comment and experiments.log EXP-0003 for the resulting real
+  resource/Fmax numbers.
+STATUS: WORKED AROUND. Will become moot once M4/M5 exist and the array
+  is synthesized as part of a larger design with on-chip ports instead
+  of a bare top-level module.

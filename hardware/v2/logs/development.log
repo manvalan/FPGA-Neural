@@ -59,3 +59,32 @@ errors: vedi errors.log ERR-0001, ERR-0002, ERR-0003, ERR-0004.
 decision: vedi decisions.log DEC-0002, DEC-0003, DEC-0004.
 next_action: M2 -- neural_processor_array.v, sweep N_PROCESSORS
   (1,2,4,8), misura timing/risorse/throughput/utilization reali.
+
+[2026-09-05T14:30:00Z] commit=dc0b331 session=v2-M2-processor-array
+module: hardware/v2/rtl/neural_processor_array.v + hardware/v2/sim/
+  tb_neural_processor_array.v + hardware/v2/synthesis/
+  harness_neural_processor_array.v
+action: implementato M2 -- Neural Processor Array, N_PROCESSORS
+  parametrico, ogni processore con interfaccia job/operand/result
+  dedicata (nessun bus condiviso/mux a questo livello, §7). Testato
+  N_PROCESSORS=4 con esecuzione concorrente reale (lancio simultaneo
+  di 4 job diversi, più un test a partenza sfalsata) e con lo sweep
+  reale N_PROCESSORS={1,2,4,8} per sintesi/place&route.
+reason: roadmap M2.
+result: 7/7 test PASS (Verilator), confermata esecuzione concorrente e
+  indipendente (un job più corto lanciato dopo completa prima di uno
+  più lungo lanciato prima -- non c'e' serializzazione nascosta).
+  Sintesi/P&R reali per N=1/2/4/8: 0 problemi CHECK, scaling lineare
+  delle risorse, Fmax sempre PASS a 80MHz (159.11/149.59/151.01/134.70
+  MHz). Scoperta reale non assunta: il DSP (MULT18X18D) e' la prima
+  risorsa a saturare (88% a N=8), non LUT/FF (sotto il 6% anche a
+  N=8) -- vedi decisions.log DEC-0005.
+errors: ERR-0005 (artefatto di sintesi da pin-count, non un bug RTL --
+  workaround con un harness dedicato, vedi errors.log). Un primo
+  tentativo di harness alimentava dati identici a ogni processore/lane
+  MAC, e Yosys deduplicava silenziosamente tutto a 1x indipendentemente
+  da N -- scoperto verificando che lo scaling fosse davvero lineare
+  prima di fidarsi dei numeri.
+decision: vedi decisions.log DEC-0005.
+next_action: M3 -- activation_buffer.v / weight_buffer.v /
+  result_buffer.v (profondita' parametrica, valutare BRAM mapping).

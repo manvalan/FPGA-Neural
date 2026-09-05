@@ -14,3 +14,16 @@ CHECK: 0 problems. 36 warnings, all "multiple conflicting drivers for
 LUT: 49  FF: 509  DSP(MULT18X18D): 8  BRAM: 0  CCU2C: 88
 CHECK: 0 problems, same 36 benign warnings as EXP-0001.
 Log: hardware/v2/synthesis/neural_processor_p8_acc24/yosys.log
+
+[2026-09-05] EXP-0003 -- neural_processor_array via
+  harness_neural_processor_array.v (synthesis-only wrapper, see
+  errors.log ERR-0005), N_PROCESSORS in {1,2,4,8}, P_IN=8
+N=1: LUT=59  FF=409  MULT18X18D=8   CCU2C=96
+N=2: LUT=106 FF=786  MULT18X18D=16  CCU2C=192
+N=4: LUT=207 FF=1540 MULT18X18D=32  CCU2C=384
+N=8: LUT=374 FF=3048 MULT18X18D=64  CCU2C=768
+CHECK: 0 problems in all 4 configurations. Perfectly linear scaling in
+  N confirms no unintended cross-processor resource sharing (a first,
+  flawed harness attempt fed identical data to every processor/lane
+  and Yosys silently deduplicated down to 1x regardless of N -- caught
+  by checking for exactly this linearity before trusting the numbers).

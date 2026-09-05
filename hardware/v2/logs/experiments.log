@@ -98,3 +98,64 @@ decision: ACC_WIDTH=32 remains the M1 default (matches V1 exactly for
   comparison run).
 next_action: revisit ACC_WIDTH choice during M10 (Optimization) with a
   real seed sweep, not before.
+
+EXP-0003
+timestamp: 2026-09-05T14:30:00Z
+git_commit: dc0b331 (+ uncommitted M2 work)
+session: v2-M2-processor-array
+module: hardware/v2/rtl/neural_processor_array.v
+configuration: N_PROCESSORS in {1,2,4,8}, P_IN=8, ACC_WIDTH=32 each
+action: M2 -- functional array + real N_PROCESSORS resource/timing sweep
+command (sim, Verilator): verilator --binary --timing -j 0 -Wno-fatal
+  --top-module tb -o /tmp/vtb_array hardware/v2/rtl/neural_processor.v
+  hardware/v2/rtl/neural_processor_array.v
+  hardware/v2/sim/tb_neural_processor_array.v && /tmp/vtb_array
+command (synth/timing): see hardware/v2/synthesis/harness_n{1,2,4,8}/
+  (yosys.log, nextpnr.log) -- synthesized via
+  hardware/v2/synthesis/harness_neural_processor_array.v, a
+  synthesis-only timing harness (see its own header comment and
+  errors.log ERR-0005 for why the array cannot be synthesized as a
+  bare top-level module beyond N_PROCESSORS=1 without it).
+result:
+  SIMULATED (N_PROCESSORS=4, tb_neural_processor_array.v): 7/7 tests
+    PASS -- single-processor sanity, 4 processors launched the SAME
+    cycle with different tile counts (finish at different times,
+    proving true concurrency), and a staggered-start test (processor 1
+    launched mid-way through processor 0's 6-tile job, both complete
+    correctly and independently, confirming §18/§34's "un processor
+    bloccato non deve bloccare gli altri").
+  SYNTHESIZED (resource scaling, harness): perfectly linear in
+    N_PROCESSORS, confirming no unintended resource sharing:
+      N=1: LUT=59  FF=409   MULT18X18D=8   CCU2C=96
+      N=2: LUT=106 FF=786   MULT18X18D=16  CCU2C=192
+      N=4: LUT=207 FF=1540  MULT18X18D=32  CCU2C=384
+      N=8: LUT=374 FF=3048  MULT18X18D=64  CCU2C=768
+    0 CHECK problems in every configuration.
+  POST-P&R (real nextpnr-ecp5, --45k --package CABGA381 --speed 8
+    --freq 80): Fmax PASS at 80MHz in every configuration:
+      N=1: 159.11 MHz   N=2: 149.59 MHz
+      N=4: 151.01 MHz   N=8: 134.70 MHz
+    Fmax decreases gently with N (routing congestion), never close to
+    failing the 80MHz target up to N=8.
+  REAL RESOURCE CEILING FOUND (not assumed, measured via nextpnr's own
+    device utilisation report): MULT18X18D usage is 22%/44%/88% of the
+    LFE5U-45F's 72 total DSPs at N=2/4/8 respectively, while LUT4/FF
+    usage stays under 6% even at N=8. **DSP (not LUT/FF/routing) is
+    the first hard ceiling as N_PROCESSORS grows at P_IN=8** --
+    N_PROCESSORS=9 would already exceed the device's 72 MULT18X18D
+    budget at P_IN=8, before accounting for any multipliers the rest
+    of a real system (Memory Manager, PSRAM path, etc.) might need.
+    See decisions.log DEC-0005 and benchmark.log.
+errors: ERR-0005 (toplevel-pin-count synthesis artifact, worked around
+  with the timing harness -- see errors.log); a first harness attempt
+  fed every processor and every MAC lane identical LFSR-derived data,
+  which Yosys correctly (from pure logic-equivalence) collapsed via
+  CSE down to 1 processor's worth of multipliers regardless of N --
+  fixed by giving each processor AND each of its P_IN MAC lanes a
+  distinct bit-rotated data source, confirmed by the corrected,
+  properly-linear MULT18X18D counts above.
+decision: see decisions.log DEC-0005 (DSP is the binding constraint,
+  not LUT/FF -- informs how the N_PROCESSORS x P_IN trade-off should
+  be explored going forward).
+next_action: M3 -- activation_buffer.v / weight_buffer.v /
+  result_buffer.v.
