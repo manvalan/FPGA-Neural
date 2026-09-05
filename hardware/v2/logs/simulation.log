@@ -48,3 +48,9 @@ bit-exact result: PSRAM-read-back result byte matches hand-computed
   RTL under test)
 cycles: 446 (3 tiles), 166 (1 tile), 728 (5 tiles) -- real PSRAM
   latency dominates, not memory_manager's own control overhead
+
+[2026-09-05] EXP-0006 -- hardware/v2/sim/tb_neural_director.v
+test: 4 cases (3-jobs-2-slots first-free dispatch + queueing,
+  backpressure fill/recover)
+simulator: Verilator 5.050 (--binary --timing)
+PASS/FAIL: 4/4 PASS

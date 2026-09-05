@@ -319,3 +319,73 @@ rather than optimized blindly now.
 
 STATUS:
 ACCEPTED
+
+---
+
+DEC-0007
+
+DATE: 2026-09-05
+
+DECISION:
+neural_director.v (M5) implements a reduced FSM (DIR_IDLE,
+DIR_SCAN_READY, DIR_ALLOCATE, DIR_ERROR) instead of §9's full 8-state
+baseline list (which also includes DIR_WAIT_DEPENDENCY, DIR_MONITOR,
+DIR_COMPLETE, DIR_WAKEUP). Dependency tracking/waiting/wake-up are
+entirely deferred to the Dependency Manager (M6, not yet built); slot
+completion detection (§9's "rilevamento dei completamenti",
+DIR_MONITOR's job) is handled by an always-active per-slot busy
+tracker running independently of whatever state the allocate/scan
+loop happens to be in, not a dedicated state the loop must visit.
+
+WHY:
+§10 explicitly assigns dependency counters/ready-vs-waiting
+tracking/wake-up/producer-tracking to the Dependency Manager, not the
+Director -- building DIR_WAIT_DEPENDENCY/DIR_WAKEUP now, before M6
+exists, would mean inventing a dependency model here that M6 would
+then have to either reuse or replace, backwards from the roadmap's own
+milestone order. For DIR_MONITOR: gating "did any slot just finish"
+detection behind a specific FSM state would force the SAME state to be
+revisited every cycle for every one of N_SLOTS independently-running
+jobs, which is exactly the throughput-killing pattern DEC-0002 already
+rejected for the Neural Processor's own FSM -- the same reasoning
+applies one level up here.
+
+EVIDENCE:
+hardware/v2/sim/tb_neural_director.v -- 4/4 tests pass with 2 slots
+running genuinely concurrent, independently-timed jobs (a 3rd job
+correctly queued until whichever slot freed first, and a
+deliberately-slow 2-job burst used to force real ready-queue
+backpressure) -- confirms slot-completion detection and first-free
+allocation both work without a dedicated FSM state gating either.
+
+Separately: this milestone's testbench gives each (memory_manager,
+neural_processor) slot its OWN independent behavioral byte memory
+(sim_byte_mem, not the real V1 PSRAM chain) rather than sharing one
+PSRAM port across N_SLOTS. M4 (EXP-0005) already proved the real PSRAM
+path end-to-end for ONE slot; M5's own concern is scheduling/dispatch
+across MULTIPLE slots, which this isolates. Multiple slots genuinely
+sharing one physical PSRAM port is a backend-arbitration problem
+already explicitly deferred (DEC-0006), not solved here either.
+
+ALTERNATIVES:
+1. Implement the literal 8-state FSM now, with DIR_WAIT_DEPENDENCY/
+   DIR_WAKEUP as real states that simply never get exercised until
+   M6 wires something into them. Rejected: dead states with no real
+   behavior are not simpler or safer than documenting the deferral
+   explicitly, and risk baking in an ad-hoc dependency model that
+   conflicts with M6's actual design once built.
+2. Share one real PSRAM backend across N_SLOTS now, forcing the
+   arbiter-design question into M5. Rejected: out of this milestone's
+   scope (§9 is about scheduling, not memory arbitration) and would
+   duplicate work once M6/M8 need a real answer to backend sharing
+   anyway.
+
+RESULT:
+neural_director.v as implemented: 4-state FSM, always-active slot-busy
+tracking, ready-queue backpressure via a plain parametric-depth
+circular FIFO. First-free scheduling only (§9's initial policy);
+round-robin/least-loaded/etc are explicitly deferred to a later,
+experimentally-driven milestone per §9's own text.
+
+STATUS:
+ACCEPTED

@@ -74,3 +74,10 @@ dominated by psram_model.v's real ~70ns TAA access latency, not by
 memory_manager's own control overhead (its bank-swap turnaround is
 documented as a fixed +1 cycle/tile in decisions.log DEC-0006, a small
 fraction of the ~140-cycle PSRAM-dominated total).
+
+[2026-09-05] M5 Neural Director (standalone resource count; Fmax via
+timing harness -- see errors.log ERR-0005)
+
+| Module          | Fmax (POST-P&R) | LUT | FF  | DSP | CCU2C |
+|------------------|------------------|-----|-----|-----|-------|
+| neural_director (N_SLOTS=4) | 250.50 MHz | 382 | 366 | 0 | 4 |

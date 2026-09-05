@@ -27,7 +27,10 @@ reali, non solo scritto).
       job PASS) con vero neural_processor + vera catena PSRAM V1.
       3 bug RTL trovati/risolti (`logs/errors.log` ERR-0006). Fmax
       165.86 MHz.
-- [ ] **M5 — Neural Director** (`neural_director.v`), scheduling first-free.
+- [x] **M5 — Neural Director** (`neural_director.v`), scheduling
+      first-free. 4/4 test PASS (dispatch + coda + backpressure reale
+      su N_SLOTS=2). FSM ridotta a 4 stati, dependency rimandata a M6
+      (`logs/decisions.log` DEC-0007). Fmax 250.50 MHz.
 - [ ] **M6 — Dependency Manager** (`dependency_manager.v`), ready/waiting
       queue, dependency counters, wake-up, producer tracking.
 - [ ] **M7 — Dataflow Core** (`dataflow_core.v`), integrazione completa.

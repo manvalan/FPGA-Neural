@@ -137,3 +137,25 @@ errors: vedi errors.log ERR-0005 (ricorrenza), ERR-0006 (3 bug nuovi).
 decision: vedi decisions.log DEC-0006 (motore di prefetch singolo +
   registro pendente, nessun arbitro backend ancora necessario).
 next_action: M5 -- neural_director.v, scheduling first-free.
+
+[2026-09-05T17:00:00Z] commit=175f697 session=v2-M5-neural-director
+module: hardware/v2/rtl/neural_director.v
+action: implementato M5 -- Neural Director, scheduling first-free
+  (§9) su N_SLOTS coppie (memory_manager, neural_processor). FSM
+  ridotta a 4 stati (DIR_IDLE/SCAN_READY/ALLOCATE/ERROR) -- dependency
+  tracking/wake-up rimandati al Dependency Manager (M6, non ancora
+  costruito), rilevamento completamenti gestito da un tracker
+  sempre-attivo per-slot (non uno stato dedicato da rivisitare).
+reason: roadmap M5.
+result: 4/4 test PASS (N_SLOTS=2) -- dispatch first-free confermato,
+  coda pronta con backpressure reale confermata (riempimento e
+  recupero), 3 job su 2 slot con il terzo correttamente in coda fino
+  a liberazione di uno slot. 2 bug di testbench trovati e risolti
+  (non RTL): DEPTH di sim_byte_mem troppo piccolo per il range di
+  indirizzi usato, e una condizione di attesa che si fermava al primo
+  job completato invece che a tutti e tre. Sintesi reale: 0 problemi,
+  382 LUT4/366 FF/4 CCU2C/0 DSP. Fmax reale (via harness): 250.50 MHz.
+errors: nessun bug RTL, solo 2 bug di testbench (vedi experiments.log
+  EXP-0006).
+decision: vedi decisions.log DEC-0007.
+next_action: M6 -- dependency_manager.v.

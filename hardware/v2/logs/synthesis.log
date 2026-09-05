@@ -40,3 +40,6 @@ CHECK: 0 problems, all 6 configs correctly infer DP16KD (no LUT-RAM
 [2026-09-05] EXP-0005 -- memory_manager + prefetch_engine (standalone)
 LUT4=851  TRELLIS_FF=789  CCU2C=108  MULT18X18D=0 (expected, no
   multiplication in this module). CHECK: 0 problems.
+
+[2026-09-05] EXP-0006 -- neural_director (N_SLOTS=4, standalone)
+LUT4=382  TRELLIS_FF=366  CCU2C=4  DSP=0. CHECK: 0 problems.

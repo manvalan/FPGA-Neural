@@ -274,3 +274,51 @@ decision: see decisions.log DEC-0006 (single prefetch engine + pending
 next_action: M5 -- neural_director.v (first-free scheduling), wiring
   job dispatch to potentially multiple (memory_manager, neural_
   processor) pairs instead of the single hardcoded pair tested here.
+
+EXP-0006
+timestamp: 2026-09-05T17:00:00Z
+git_commit: 175f697 (+ uncommitted M5 work)
+session: v2-M5-neural-director
+module: hardware/v2/rtl/neural_director.v
+configuration: N_SLOTS=2 (sim), N_SLOTS=4 (synth default),
+  QUEUE_DEPTH=4 (sim), ADDR_WIDTH=23
+action: M5 -- first-free job scheduler dispatching to N_SLOTS
+  (memory_manager, neural_processor) pairs, with a parametric-depth
+  ready queue.
+command (sim, Verilator): verilator --binary --timing -j 0 -Wno-fatal
+  --top-module tb -o /tmp/vtb_dir hardware/v2/rtl/neural_processor.v
+  hardware/v2/rtl/prefetch_engine.v hardware/v2/rtl/memory_manager.v
+  hardware/v2/rtl/neural_director.v hardware/v2/sim/tb_neural_director.v
+  && /tmp/vtb_dir
+command (synth): yosys -p "synth_ecp5 -json .../top.json -top
+  neural_director" hardware/v2/rtl/neural_director.v (standalone, real
+  resource counts); harness_neural_director.v (see errors.log
+  ERR-0005 pattern) for real P&R Fmax.
+result:
+  SIMULATED (N_SLOTS=2, tb_neural_director.v): 4/4 tests PASS --
+    3 jobs submitted to 2 slots (first two dispatch immediately,
+    first-free; third correctly WAITS in the ready queue until a slot
+    frees, then auto-dispatches), each result independently verified;
+    a deliberate 2-long-job burst forces the ready queue to genuinely
+    fill (job_in_ready correctly deasserts after exactly QUEUE_DEPTH
+    queued jobs while both slots are kept busy) and recover once
+    slots/queue drain.
+  SYNTHESIZED (standalone, N_SLOTS=4): 0 CHECK problems, 382 LUT4,
+    366 TRELLIS_FF, 4 CCU2C, 0 DSP.
+  POST-P&R (via harness, real Fmax): 250.50 MHz, PASS at 80MHz with
+    large margin.
+errors: two real testbench bugs found and fixed during bring-up (not
+  RTL bugs): (1) sim_byte_mem's DEPTH parameter (1024) was smaller
+  than the test's own address range (up to 0x703=1795), an
+  out-of-bounds array access silently returning garbage; (2) the
+  initial completion-wait loop exited as soon as ANY ONE of three
+  jobs' result bytes changed, not all three -- fixed by counting
+  job_out_done pulses instead of polling result memory directly.
+decision: see decisions.log DEC-0007 (reduced 4-state FSM; dependency
+  handling deferred to M6; per-slot independent behavioral memory
+  instead of shared real PSRAM, deferred to when backend arbitration
+  is actually needed).
+next_action: M6 -- dependency_manager.v (ready/waiting queue,
+  dependency counters, wake-up, producer tracking) -- the first
+  milestone where job READINESS itself, not just free-slot dispatch,
+  becomes the Director's actual gating condition.
