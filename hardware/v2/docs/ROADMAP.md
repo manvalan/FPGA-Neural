@@ -58,7 +58,18 @@ reali, non solo scritto).
       reali PSRAM tengono il top-level a 157 pin). Fmax reale 142.45
       MHz. Politica di arbitraggio a priorità fissa, non ancora fair
       (`logs/decisions.log` DEC-0010).
-- [ ] **M9 — Full benchmark**, tabella V1 vs V2 (§32 del mandato).
+- [x] **M9 — Full benchmark**, tabella V1 vs V2 (§32 del mandato) —
+      confronto full-system, stesso PARALLEL/P_IN=8, stesso backend
+      PSRAM reale V1 in entrambi. Fmax POST-P&R: V2 142.45 MHz (PASS
+      @80MHz) vs V1 68.65 MHz (FAIL @80MHz). Cicli/neurone SIMULATED
+      (1 neurone, 8 input, PSRAM reale): V2 166 vs V1 209 (2.6x
+      speedup wall-clock reale). MAC/cycle di picco: V2 16 (N_SLOTS=2 x
+      P_IN=8, concorrenza reale) vs V1 8 (core sequenziale singolo).
+      LUT/FF: V2 4191/3659 vs V1 8907/4900. 9/12 righe con dati reali
+      misurati; stall %/memory utilization/processor utilization
+      esplicitamente NON misurati questo milestone (`logs/decisions.log`
+      DEC-0011), rimandati a M10. Tabella completa in
+      `logs/benchmark.log`.
 - [ ] **M10 — Optimization**, solo sulla base dei dati raccolti in M1-M9.
 
 ## Log

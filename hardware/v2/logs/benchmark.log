@@ -117,3 +117,52 @@ Compare to M7's dataflow_core alone (N_SLOTS=2): 165.15 MHz / LUT4=2127
 slot_mem_arbiter costs ~1000 LUT4/140 CCU2C/1150 FF and drops Fmax by
 ~23 MHz (165.15 -> 142.45) -- both real, measured costs of real PSRAM
 integration, not assumed.
+
+[2026-09-05] M9 -- Confronto finale V1 vs V2 (docs/v2-description.md
+§32). Basi di confronto: entrambi i sistemi COMPLETI (full-system,
+non moduli isolati), stessa larghezza di dot-product per neurone
+(PARALLEL=8 / P_IN=8), stesso backend PSRAM reale V1 non modificato
+in entrambi i casi.
+  V1 = hardware/v1's spi_neuron_top (post_fix_verify synthesis,
+    PARALLEL=8) + neuron_memory_tb.v TEST 5 (1 neuron, N_INPUTS
+    ridotto a 8, catena PSRAM reale) -- entrambi dati gia'
+    certificati/congelati in hardware/v1/.
+  V2 = hardware/v2/rtl/neural_multiprocessor.v (N_SLOTS=2, P_IN=8,
+    M8) -- EXP-0009 (1 tile/8 input via memory_manager standalone,
+    EXP-0005) + EXP-0009 stesso (catena PSRAM reale condivisa).
+
+| Metrica              | V1                        | V2                          | Classificazione |
+|------------------------|---------------------------|------------------------------|-------------------|
+| Fmax                   | 68.65 MHz (FAIL @80MHz)  | 142.45 MHz (PASS @80MHz)    | POST-P&R (reale, nextpnr-ecp5, entrambi full-system) |
+| LUT (Total LUT4s)      | 8907                      | 4191                         | POST-P&R (nextpnr "Total LUT4s", stessa metrica per entrambi) |
+| FF (Total DFFs)        | 4900                      | 3659                         | POST-P&R |
+| DSP (MULT18X18D)       | 16                        | 16                           | POST-P&R |
+| BRAM (DP16KD)          | 2                         | 0 (M3 non ancora collegato, DEC-0009) | POST-P&R |
+| MAC/cycle (picco)      | 8 (PARALLEL=8, core singolo sequenziale) | 16 (N_SLOTS=2 x P_IN=8, concorrenti) | THEORETICAL (parametri architetturali noti, non ancora un picco sostenuto misurato con contesa reale su entrambi gli slot) |
+| cycles/neuron          | 209 (1 neurone, 8 input reali, PSRAM reale -- hardware/v1/docs/FPGA-NeuralNetwork-Engine.md, TEST 5 neuron_memory_tb.v, gia' certificato) | 166 (1 tile/8 input, PSRAM reale -- EXP-0005) | SIMULATED (Verilator per V2; V1 dato gia' certificato in hardware/v1/, non ri-simulato in questa sessione) |
+| neurons/s              | 328,469 (Fmax POST-P&R / cycles SIMULATED) | 858,133 (idem) | DERIVATO (Fmax POST-P&R reale x cycles/neuron SIMULATED reale -- non un numero misurato direttamente in un'unica prova, ma calcolato da due misure reali indipendenti, entrambe citate) |
+| stall %                | NON MISURATO questo milestone | NON MISURATO questo milestone | -- vedi decisions.log DEC-0011 |
+| memory utilization     | NON MISURATO questo milestone | NON MISURATO questo milestone | -- vedi decisions.log DEC-0011 |
+| processor utilization  | NON MISURATO questo milestone | NON MISURATO questo milestone | -- vedi decisions.log DEC-0011 |
+| effective MAC/s        | 2.63 MMAC/s (8 MAC/neurone / 209 cicli x 68.65MHz) | 6.87 MMAC/s (8 MAC/neurone / 166 cicli x 142.45MHz) | DERIVATO (stessa base di neurons/s) |
+| effective MAC/s (picco teorico) | 549.2 MMAC/s (8 x 68.65MHz) | 2279.2 MMAC/s (16 x 142.45MHz) | THEORETICAL |
+
+Osservazioni (tutte da dati reali sopra, nessun numero inventato):
+- V2 e' 2.6x piu' veloce in wall-clock per un singolo neurone/8 input
+  attraverso la catena PSRAM reale (1.165us vs 3.044us), pur usando lo
+  STESSO backend PSRAM V1 non modificato -- il guadagno viene sia da
+  meno cicli (166 vs 209, pipeline M1 piu' efficiente) sia da un Fmax
+  POST-P&R piu' che doppio (142.45 vs 68.65 MHz).
+- V1's full system FALLISCE il target 80MHz (68.65 MHz); V2's full
+  system lo supera con margine (142.45 MHz) -- confermato da vero
+  nextpnr-ecp5 place&route su entrambi.
+- Il vantaggio "MAC/cycle di picco" di V2 (16 vs 8) viene dalla
+  concorrenza reale a livello di sistema (N_SLOTS=2, EXP-0009 lo
+  dimostra con vera contesa PSRAM tra 2 slot), non da un core piu'
+  largo -- V1 e' strutturalmente un acceleratore sequenziale (un solo
+  neuron_parallel attivo alla volta), esattamente il limite che
+  l'intero mandato V2 (docs/v2-description.md, titolo) si propone di
+  superare.
+- BRAM=0 per V2 riflette una scelta di scope esplicita (M3 non ancora
+  collegato, DEC-0009), non un vantaggio architetturale reale -- un
+  confronto onesto lo nota piuttosto che nasconderlo.

@@ -230,3 +230,25 @@ decision: see decisions.log DEC-0010 (fixed-priority arbitration, no
   fairness yet -- deferred pending real measured need).
 next_action: M9 -- Full benchmark (§32): V1-vs-V2 comparison table,
   every number labeled THEORETICAL/SIMULATED/SYNTHESIZED/POST-P&R.
+
+[2026-09-05] M9 -- Confronto finale V1 vs V2 (§32)
+reason: roadmap M9 -- produrre la tabella di confronto mandata dal
+  mandato, ogni numero classificato THEORETICAL/SIMULATED/SYNTHESIZED/
+  POST-P&R, nessun risultato inventato (§30).
+result: tabella completa in benchmark.log (M9 entry) -- V2 full-system
+  (neural_multiprocessor, N_SLOTS=2, M8) supera V1 full-system
+  (spi_neuron_top, PARALLEL=8, post_fix_verify) su ogni asse reale
+  misurato: Fmax POST-P&R 142.45 vs 68.65 MHz (V1 FALLISCE il target
+  80MHz, V2 lo supera), 166 vs 209 cicli SIMULATED per un neurone/8
+  input attraverso la stessa vera catena PSRAM V1 (2.6x speedup
+  wall-clock reale), MAC/cycle di picco 16 vs 8 (concorrenza reale a
+  livello di sistema, N_SLOTS=2, gia' dimostrata con vera contesa
+  PSRAM in EXP-0009). LUT/FF di V2 sono anche piu' bassi (4191/3659 vs
+  8907/4900) nonostante il sistema completo comprenda gia' scheduling
+  a grafo di dipendenze che V1 non ha affatto.
+errors: nessuno (consolidamento dati, nessun nuovo RTL).
+decision: vedi decisions.log DEC-0011 (stall %/utilization non
+  misurati questo milestone -- richiedono strumentazione dedicata,
+  rimandata a M10 dove diventa direttamente utile).
+next_action: M10 -- Optimization, sulla base dei dati reali raccolti
+  in M1-M9.

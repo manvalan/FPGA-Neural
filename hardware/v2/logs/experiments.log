@@ -433,3 +433,33 @@ next_action: M9 -- Full benchmark. Produce the V1-vs-V2 comparison
   cycles/neuron, neurons/s, stall %, memory/processor utilization,
   effective MAC/s), each number labeled THEORETICAL/SIMULATED/
   SYNTHESIZED/POST-P&R per §30.
+
+[2026-09-05] EXP-0010 -- M9 Full benchmark: V1 vs V2 comparison table
+(docs/v2-description.md §32)
+test: not a new simulation -- a consolidation of real, already-
+  measured data from hardware/v1/ (frozen, pre-certified) and V2's own
+  M1-M8 logs (EXP-0001..EXP-0009), placed side-by-side on an
+  apples-to-apples basis (both full-system, both PARALLEL=8/P_IN=8,
+  both using the real unmodified V1 PSRAM backend).
+result: see benchmark.log's own M9 entry for the full 12-row table.
+  Headline: V2's full system (neural_multiprocessor, N_SLOTS=2) is
+  142.45 MHz POST-P&R (PASS @80MHz) vs V1's 68.65 MHz (FAIL @80MHz);
+  166 vs 209 real simulated cycles for one neuron's 8-input dot
+  product through the real PSRAM chain -- 2.6x wall-clock speedup,
+  measured, not assumed.
+errors: none this milestone (pure data consolidation, no new RTL).
+decision: see decisions.log DEC-0011 -- 3 of the 12 §32 rows (stall %,
+  memory utilization, processor utilization) are reported as NOT
+  MEASURED rather than approximated, since a real number would require
+  dedicated cycle-accounting instrumentation neither system has had
+  built for it yet; approximating from partial data would violate
+  §30's "no invented results" rule.
+next_action: M10 -- Optimization, using the REAL data gathered in M1-
+  M9 (not blind guessing): revisit memory_manager's +1-cycle/tile
+  overhead (DEC-0006), the ACC_WIDTH 24-vs-32 Fmax question (EXP-0002,
+  inconclusive without a seed sweep), the N_SLOTS x P_IN trade-off
+  given the DSP ceiling (DEC-0005), dependency_manager's node-slot
+  reclamation (DEC-0008), and slot_mem_arbiter's fixed-priority
+  fairness question (DEC-0010) -- plus building the stall %/
+  utilization instrumentation DEC-0011 deferred, since M10 is exactly
+  where that data becomes actionable.

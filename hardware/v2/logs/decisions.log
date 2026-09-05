@@ -582,3 +582,70 @@ decision, not missing by oversight.
 STATUS:
 ACCEPTED
 
+DEC-0011
+
+DATE: 2026-09-05
+
+DECISION:
+M9's §32 comparison table reports "stall %", "memory utilization" and
+"processor utilization" as NOT INDEPENDENTLY MEASURED this milestone,
+rather than computing a number for them. All other rows (Fmax, LUT,
+FF, DSP, BRAM, MAC/cycle, cycles/neuron, neurons/s, effective MAC/s)
+are filled with real, sourced numbers (see benchmark.log's M9 entry).
+
+WHY:
+Computing a real, honest stall %/utilization figure requires isolating
+"real compute cycles" from "real memory-wait cycles" for BOTH V1 and
+V2 on an equal footing -- V1's own docs give a real end-to-end cycle
+count (209 cycles, 1 neuron/8 inputs, real PSRAM) but not a
+correspondingly measured ISOLATED (no-PSRAM) compute-only cycle count
+for the exact same configuration; V2 has the isolated pipeline latency
+(8-stage neural_processor, known from M1) but computing a precise,
+honest stall % still means dedicated per-cycle instrumentation of a
+real run, not something to approximate from numbers already at hand
+without effectively inventing the missing half of the ratio. §30's own
+rule ("nessun risultato inventato") applies exactly here: an
+approximated/guessed percentage would look precise while not being a
+real measurement.
+
+EVIDENCE:
+benchmark.log/timing.log/simulation.log already contain the REAL
+numbers this table draws from (V1: hardware/v1/docs/
+FPGA-NeuralNetwork-Engine.md's own already-certified 209-cycle
+measurement, PARALLEL=8/N_INPUTS=8, real PSRAM; V2: EXP-0005's 166-
+cycle measurement, P_IN=8, real V1 PSRAM chain, plus EXP-0009's 444-
+cycle real 2-slot-concurrent run). The qualitative finding is already
+documented (simulation.log EXP-0005: "real PSRAM latency dominates,
+not memory_manager's own control overhead") -- both systems are
+memory-latency-bound for a single small job, but a precise percentage
+needs dedicated instrumentation neither system has had built for it
+yet.
+
+ALTERNATIVES:
+1. Approximate stall % from the neural_processor pipeline's known
+   8-stage latency vs total real cycles (rough mental arithmetic).
+   Rejected: this is exactly the kind of "looks-measured-but-isn't"
+   number §30 prohibits -- pipeline latency and PSRAM real access
+   latency are not the same thing as "non-stalled cycles" once
+   overlap/pipelining across tiles is accounted for (M4's own
+   double-buffered prefetch specifically overlaps compute with the
+   NEXT tile's fetch), so a naive subtraction would misrepresent real
+   behavior, not measure it.
+2. Skip the whole M9 table until full instrumentation exists.
+   Rejected: 9 of the table's 12 rows already have solid real data
+   sitting in the logs from M1-M8 -- withholding the whole table would
+   throw away real, useful, already-measured information for the sake
+   of 3 rows that genuinely need new instrumentation.
+
+RESULT:
+M9's table ships with 9/12 rows filled from real measured data
+(labeled THEORETICAL/SIMULATED/SYNTHESIZED/POST-P&R per row) and 3
+rows (stall %, memory utilization, processor utilization) explicitly
+marked NOT MEASURED, deferred to M10 -- which itself explicitly needs
+real utilization data to decide what to optimize, making dedicated
+cycle-accounting instrumentation a natural M10 prerequisite rather
+than M9 scope creep.
+
+STATUS:
+ACCEPTED
+
