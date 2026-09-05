@@ -1,0 +1,61 @@
+# V2 development log — solo append, mai troncato/sovrascritto (vedi README.md)
+
+[2026-09-05T11:14:08Z] commit=07a48e4 session=v2-kickoff
+module: scaffold
+action: creato hardware/v1/ (baseline V1 congelata, sola lettura) e
+  hardware/v2/ (struttura obbligatoria: rtl/ sim/ constraints/ synthesis/
+  reports/{simulation,synthesis,timing,experiments}/ scripts/sweep/ logs/
+  docs/), per iniziare lo sviluppo V2 richiesto da docs/v2-description.md.
+reason: richiesta utente esplicita -- "Crea un v1 con tutto il codice
+  attuale che non deve essere modificato per nessun motivo e lavora su
+  una v2 copiando quello che ti serve. Aggiornami frequentemente e crea
+  un log nuovo."
+command: cp rtl/*.v sim/*.v tools/ synth/ecp5/{p2,p4,p8,post_fix_verify}
+  synth/ecp5/*.lpf docs/validation/*.md WORKLOG.md
+  docs/FPGA-NeuralNetwork-Engine.md docs/FPGA-Neural-Datapatch-Benchmark.md
+  docs/FPGA-Neural-Hardware-Design.md -> hardware/v1/{rtl,sim,tools,
+  constraints,synthesis,docs}; chmod -R a-w su tutto hardware/v1/.
+result: verificato bit-esatto (`diff -rq rtl/ hardware/v1/rtl/` e cmp
+  file-per-file su sim/*.v, 0 differenze). hardware/v1/ reso sola lettura
+  a livello filesystem come ulteriore salvaguardia oltre alla policy.
+  hardware/v2/ vuoto tranne logs/ (questo file + README.md).
+errors: nessuno.
+decision: copia (non spostamento) dell'albero top-level rtl/sim/synth/
+  tools -- l'albero principale del repository resta la "produzione" V1
+  invariata; hardware/v1/ e' una seconda copia frozen dedicata al
+  confronto V2, per minimizzare il rischio di rompere riferimenti/path
+  esistenti in WORKLOG.md, docs/, altri script. Vedi decisions.log
+  DEC-0001 per la motivazione completa.
+next_action: M1 (docs/v2-description.md §33) -- implementare
+  hardware/v2/rtl/neural_processor.v (P_IN=8), pipeline 8 stage,
+  bit-exact contro hardware/v1/rtl/neuron_parallel.v + mac8.v,
+  testbench hardware/v2/sim/tb_neural_processor.v.
+
+[2026-09-05T12:03:12Z] commit=07a48e4 session=v2-M1-neural-processor
+module: hardware/v2/rtl/neural_processor.v + hardware/v2/sim/
+  tb_neural_processor.v
+action: implementato M1 (docs/v2-description.md §33) -- Neural
+  Processor P_IN=8, pipeline a 8 stadi (input align -> 8 moltiplicatori
+  -> 3 livelli di albero di somma -> accumulatore -> bias/activation ->
+  saturazione INT8), FSM a 7 stati (§6, con 4 stati assorbiti in
+  NP_WAIT_OPERANDS per il vero throughput pipeline -- vedi
+  decisions.log DEC-0002), interfacce valid/ready/data/last (§7).
+  Aritmetica bit-esatta con hardware/v1/rtl/neuron_parallel.v +
+  mac8.v + mac_unit.v.
+reason: roadmap M1, richiesta esplicita utente di iniziare lo sviluppo
+  V2 copiando da V1 quanto necessario.
+result: 3 bug reali incontrati e risolti durante lo sviluppo (vedi
+  errors.log ERR-0001/0002/0003) -- due erano bug del toolchain Icarus
+  Verilog v13.0 (non del RTL), confermati installando e usando
+  Verilator 5.050 come secondo simulatore indipendente (decisions.log
+  DEC-0004); uno era un bug RTL reale (gating mancante su `last0`,
+  fix verificato). Testbench finale: 7/7 test PASS, bit-exact contro
+  V1, sia a ACC_WIDTH=32 che ACC_WIDTH=24 (esperimento richiesto
+  dall'utente, experiments.log EXP-0002). Sintesi reale Yosys + P&R
+  reale nextpnr-ecp5: 0 problemi CHECK, Fmax 183.12 MHz (ACC_WIDTH=32)
+  / 176.21 MHz (ACC_WIDTH=24) -- entrambi PASS a 80MHz con ampio
+  margine, ~3x il Fmax isolato di V1 a PARALLEL=8 (61.71 MHz).
+errors: vedi errors.log ERR-0001, ERR-0002, ERR-0003, ERR-0004.
+decision: vedi decisions.log DEC-0002, DEC-0003, DEC-0004.
+next_action: M2 -- neural_processor_array.v, sweep N_PROCESSORS
+  (1,2,4,8), misura timing/risorse/throughput/utilization reali.

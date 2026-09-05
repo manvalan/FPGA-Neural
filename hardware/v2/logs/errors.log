@@ -1,0 +1,100 @@
+# V2 errors log -- solo append, mai troncato/sovrascritto (vedi README.md)
+# Nessuna entry ancora -- popolato incrementalmente man mano che avanza lo sviluppo V2.
+
+ERR-0001 (Icarus Verilog v13.0 toolchain bug, TASK/SCOPE-ENTRY DESYNC)
+DATE: 2026-09-05
+MODULE: hardware/v2/sim/tb_neural_processor.v (M1 testbench development)
+SYMPTOM: a task (or any named `begin:label` block) whose FIRST executable
+  statement is a blocking assignment to a signal read by another module's
+  `always @(posedge clk)`, when the task/block is entered immediately after
+  a time-consuming statement in the caller with no intervening
+  `@(posedge clk)`, can make that FIRST assignment invisible to the DUT at
+  the very next clock edge (the DUT's own always block behaves as if the
+  signal never changed). Confirmed at V1's own frozen `neuron_parallel.v`
+  (unmodified, already certified) via a minimal 3-statement task
+  (`v1_start=1; @(posedge clk); v1_start=0;`) -- `busy` never asserted.
+REPRODUCTION: /tmp/mt6.v-style repro (not committed, transient scratch
+  file) -- see conversation record for the exact minimal case.
+DIAGNOSIS METHOD: bisected from the full dual-DUT testbench down to a
+  standalone ~15-line repro, ruling out RTL, port connections, and
+  operator precedence one at a time.
+WORKAROUND: always begin such a task with an explicit `@(posedge clk);`
+  before its first assignment (matches the pre-existing convention in
+  hardware/v1/sim's own tasks, e.g. neuron_parallel_tb.v's run_neuron,
+  which is presumably why V1's own test suite was never affected).
+STATUS: WORKAROUND APPLIED in hardware/v2/sim/tb_neural_processor.v's
+  run_case. NOT reported upstream (out of scope for this session). See
+  ERR-0004 for the broader consequence of this finding.
+
+ERR-0002 (Icarus Verilog v13.0 toolchain bug, SPURIOUS CONDITION EVALUATION)
+DATE: 2026-09-05
+MODULE: hardware/v2/rtl/neural_processor.v (protocol-violation guard,
+  removed -- see decisions.log DEC-0003)
+SYMPTOM: `if (operand_valid && !operand_ready && (state-is-one-of-four))`
+  inside `always @(posedge clk)` evaluated TRUE at an edge where
+  `operand_valid` was independently confirmed (via $display in the same
+  timestep, and via the testbench's own port-connected signal) to be 0.
+  Bisected term-by-term: even `if (operand_valid && !operand_ready)`
+  alone, and even `if (operand_valid)` alone with explicit `== 1'b1`
+  comparisons, still fired spuriously. Confirmed NOT a precedence issue
+  (parens are unambiguous) and NOT specific to this exact expression
+  shape (multiple simplified variants all reproduced it).
+CROSS-CHECK: root-caused further via a minimal 2-state FSM
+  (`if (go) st<=B;`) with NO relation to the removed guard -- Icarus
+  failed to transition on an ODD-numbered testbench clock edge
+  (`repeat(3)` before the pulse) but succeeded on an EVEN-numbered one
+  (`repeat(4)`), reproduced identically with both `always #5 clk=~clk`
+  and `initial ... forever #5 clk=~clk` clock generators. VERILATOR
+  5.050 gives the CORRECT result for the same repro in both cases.
+  This suggests ERR-0001 and ERR-0002 are two symptoms of the same
+  underlying VVP scheduling defect (edge-count/thread-parity dependent),
+  not two unrelated bugs.
+STATUS: the offending RTL block (protocol-violation detection) was
+  REMOVED rather than chased further -- see DEC-0003. Root cause not
+  fully isolated (documented honestly, not overclaimed).
+
+ERR-0003 (real RTL bug in hardware/v2/rtl/neural_processor.v, FOUND AND FIXED)
+DATE: 2026-09-05
+MODULE: hardware/v2/rtl/neural_processor.v, stage 0 (input
+  alignment/register)
+SYMPTOM: back-to-back single-tile jobs (and some multi-tile jobs)
+  produced result_data=0 instead of the correct value, while the
+  internal `y7` register (one stage upstream of the FSM's capture)
+  showed the CORRECT value one cycle later than `valid7` first asserted.
+ROOT CAUSE: `last0 <= tile_last;` was unconditional, while
+  `valid0 <= operand_valid && operand_ready;` was correctly gated. A
+  master asserting `tile_last` before `operand_ready` rises (legal
+  valid-before-ready behavior) let a "last" tag propagate through the
+  pipeline (last1, last_tree[], last5, last6) with NO corresponding
+  valid tile behind it, arriving at stage 7 one cycle ahead of the
+  real valid/data pair and causing the FSM to capture a stale/wrong
+  `y7`.
+EVIDENCE: isolated to a single-DUT, no-task, no-V1 repro
+  (hardware/v2/sim/tb_neural_processor.v run under Verilator, with a
+  cycle-by-cycle dump of valid5/last5/valid6/last6/valid7/y7) --
+  `last5=1` while `valid5=0` on the same cycle, confirmed the
+  desync's exact origin at stage 0.
+FIX: `last0 <= (operand_valid && operand_ready) ? tile_last : 1'b0;`
+  -- last0 is now gated identically to valid0.
+VERIFICATION: full 7-test bit-exact-vs-V1 regression
+  (hardware/v2/sim/tb_neural_processor.v under Verilator) -- 7/7 PASS
+  after the fix, including the back-to-back and single-tile-after-
+  multi-tile cases that exposed it.
+STATUS: FIXED, verified.
+
+ERR-0004 (methodology consequence of ERR-0001/ERR-0002)
+DATE: 2026-09-05
+NOTE: this session's V1 certification campaign (docs/validation/,
+  hardware/v1/docs/validation/) was verified exclusively with Icarus
+  Verilog v13.0, the ONLY simulator available on this machine at the
+  time. ERR-0001/ERR-0002 show that v13.0 has at least one real,
+  reproducible scheduling defect around clock-edge/task-entry timing.
+  V1's own testbenches were NOT observed to trigger it in this session
+  (V1's `run_neuron`-style tasks already begin with `@(posedge clk)`,
+  which incidentally avoids ERR-0001's trigger condition), and V1
+  remains frozen/untouched regardless. This is flagged here for
+  honesty, not to imply V1's certification is wrong -- re-verifying
+  the full V1 suite under Verilator was explicitly OUT OF SCOPE for
+  this V2-kickoff session (V1 is frozen, not to be touched) and was
+  not performed. See decisions.log DEC-0004.
+STATUS: OPEN CAVEAT, not actioned in this session by design.

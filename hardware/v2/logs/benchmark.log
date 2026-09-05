@@ -1,0 +1,20 @@
+# V2 benchmark log -- solo append, mai troncato/sovrascritto (vedi README.md)
+# Nessuna entry ancora -- popolato incrementalmente man mano che avanza lo sviluppo V2.
+
+[2026-09-05] M1 single Neural Processor, isolated (no array/director/
+  memory manager yet -- system-level numbers deferred to M9)
+
+| Config              | Fmax (POST-P&R) | LUT | FF  | DSP | BRAM |
+|----------------------|------------------|-----|-----|-----|------|
+| P_IN=8, ACC_WIDTH=32 | 183.12 MHz       | 55  | 533 | 8   | 0    |
+| P_IN=8, ACC_WIDTH=24 | 176.21 MHz       | 49  | 509 | 8   | 0    |
+
+Reference (V1, hardware/v1/synthesis/p8/, isolated neuron_parallel,
+PARALLEL=8, N_INPUTS=256): 61.71 MHz POST-P&R.
+
+All Fmax figures above are POST-P&R (real nextpnr-ecp5), not
+theoretical or simulated-only. MAC/cycle, cycles/neuron, neurons/s,
+stall %, effective MAC/s: not yet meaningful at this milestone (single
+isolated processor, no streaming benchmark harness yet -- deferred to
+M2 once neural_processor_array.v exists and a real workload can be
+timed end-to-end).

@@ -1,0 +1,17 @@
+# V2 simulation log -- solo append, mai troncato/sovrascritto (vedi README.md)
+# Nessuna entry ancora -- popolato incrementalmente man mano che avanza lo sviluppo V2.
+
+[2026-09-05] EXP-0001/EXP-0002 -- hardware/v2/sim/tb_neural_processor.v
+test: 7 cases (16/32/8/8/8/8/64-input jobs; ACT_NONE + ACT_RELU;
+  extreme INT8 saturation; back-to-back zero-idle-gap tiles)
+vectors: regular positive, mixed-sign cancellation, extreme INT8
+  (-128,-127,-1,0,1,126,127,127 in one 8-lane tile), back-to-back
+  jobs, 8-tile (64-input) job
+simulator: Verilator 5.050 (--binary --timing) -- see decisions.log
+  DEC-0004 for why Icarus v13.0 is not trusted for this testbench
+cycles: not separately profiled at this milestone (throughput/stall
+  cycle counting deferred to M9 per §22)
+PASS/FAIL: 7/7 PASS (ACC_WIDTH=32); 7/7 PASS (ACC_WIDTH=24, EXP-0002)
+bit-exact result: V1.y === V2.result_data for every case, both widths
+stall cycles / memory wait / utilization: N/A (no Memory Manager yet,
+  M1 operands fed directly by testbench per the roadmap)

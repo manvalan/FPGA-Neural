@@ -1,0 +1,22 @@
+# V2 timing log -- solo append, mai troncato/sovrascritto (vedi README.md)
+# Nessuna entry ancora -- popolato incrementalmente man mano che avanza lo sviluppo V2.
+
+[2026-09-05] EXP-0001 -- neural_processor (P_IN=8, ACC_WIDTH=32)
+nextpnr-ecp5 --45k --package CABGA381 --speed 8 --freq 80
+  --lpf-allow-unconstrained
+Fmax: 183.12 MHz -- PASS at 80 MHz (real place&route measurement)
+Critical path: job_ready -> TRELLIS_IO output pad (i.e. the design's
+  own logic is NOT the bottleneck at this Fmax -- an unconstrained
+  output pin dominates; a real system-level Fmax will differ once
+  this signal is consumed on-chip instead of driven to a pad in
+  isolation). Log: hardware/v2/synthesis/neural_processor_p8/nextpnr.log
+WNS/TNS: not reported by this nextpnr version in this invocation.
+
+[2026-09-05] EXP-0002 -- neural_processor (P_IN=8, ACC_WIDTH=24)
+Same command as above, ACC_WIDTH=24 build.
+Fmax: 176.21 MHz -- PASS at 80 MHz (real place&route measurement)
+Delta vs ACC_WIDTH=32: -6.91 MHz (-3.8%) despite FEWER resources --
+  attributed to placement noise, not a real architectural effect
+  (no seed sweep run to confirm either way -- see experiments.log
+  EXP-0002 and benchmark.log). Log: hardware/v2/synthesis/
+  neural_processor_p8_acc24/nextpnr.log

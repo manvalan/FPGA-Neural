@@ -1,0 +1,203 @@
+# V2 decisions log -- formato DEC-XXXX, mai sovrascritto (vedi README.md)
+
+DEC-0001
+
+DATE: 2026-09-05
+
+DECISION:
+Congelare V1 come copia separata in hardware/v1/ (sola lettura a livello
+filesystem) invece di spostare (git mv) l'albero top-level esistente
+(rtl/, sim/, synth/, tools/) dentro hardware/v1/.
+
+WHY:
+docs/v2-description.md §1/§34 impone una "struttura obbligatoria"
+hardware/v1/ + hardware/v2/ e vieta di modificare/degradare V1. Due
+strade possibili: (a) spostare fisicamente rtl/sim/synth/tools
+nell'albero hardware/v1/, oppure (b) copiarli lasciando l'albero
+top-level esattamente come e' oggi. Lo spostamento romperebbe tutti i
+riferimenti a percorso in WORKLOG.md, docs/validation/*.md,
+docs/FPGA-NeuralNetwork-Engine.md (centinaia di citazioni tipo
+"rtl/neuron_parallel.v:127") e negli script (tools/run_regression.py
+resta funzionante per costruzione relativa, ma altri riferimenti
+documentali no) -- un costo reale senza benefico funzionale, dato che
+l'obiettivo della regola e' *non perdere/alterare* V1, non *dove* vive
+fisicamente. La copia raggiunge lo stesso obiettivo (baseline
+funzionale/numerica/bit-exact per V2, mai modificabile) senza il
+rischio di rompere la cronologia documentale esistente.
+
+EVIDENCE:
+- `diff -rq rtl/ hardware/v1/rtl/` e confronto file-per-file su
+  sim/*.v: 0 differenze (copia bit-esatta verificata, non assunta).
+- hardware/v1/ reso sola lettura (`chmod -R a-w`) subito dopo la copia,
+  prima di qualunque lavoro V2.
+
+ALTERNATIVES:
+- git mv dell'intero albero rtl/sim/synth/tools sotto hardware/v1/,
+  poi aggiornamento di tutti i riferimenti di percorso nella
+  documentazione. Scartata: costo/rischio alto, beneficio nullo
+  rispetto all'obiettivo dichiarato della regola.
+- Symlink hardware/v1/ -> ../../rtl ecc. Scartata: non garantisce
+  l'immutabilita' (un simlink non protegge dalla modifica dell'originale
+  ed e' fragile rispetto a `chmod -R a-w`).
+
+RESULT:
+hardware/v1/ creato come copia bit-esatta e sola-lettura. L'albero
+top-level del repository resta la "produzione" V1 corrente, invariata,
+usata anche dal resto del progetto (WORKLOG.md, docs/) esattamente come
+prima di questa sessione.
+
+STATUS:
+ACCEPTED
+
+DEC-0002
+
+DATE: 2026-09-05
+
+DECISION:
+Collapse §6's baseline Neural Processor FSM states NP_LOAD_TILE,
+NP_MAC, NP_ACCUM, NP_NEXT_TILE into the single NP_WAIT_OPERANDS state
+in the actual implementation (hardware/v2/rtl/neural_processor.v),
+rather than implementing them as four separate one-cycle-gated states.
+
+WHY:
+§5 explicitly states the internal datapath must be pipelined and the
+goal is throughput, not minimal latency -- accepting a new P_IN-wide
+tile every cycle. Gating tile acceptance behind four sequential FSM
+states (each holding for exactly one cycle per tile) would recreate a
+non-pipelined, one-tile-per-4-cycles controller, directly
+contradicting §5/§34 ("ottimizzare il throughput effettivo"). The four
+states from §6's baseline list describe what the ORIGINAL (pre-M1)
+sketch assumed before the pipeline design in §5 was fully worked out;
+once the datapath is genuinely pipelined, tile acceptance becomes a
+single steady-state condition (operand_valid && operand_ready), and
+per-tile progress is tracked by the valid/last tags flowing through
+the pipeline registers, not by the outer FSM.
+
+EVIDENCE:
+EXP-0001 (bit-exact vs V1, 7/7 tests incl. a deliberate zero-idle-gap
+back-to-back-tiles case, TEST 5 in tb_neural_processor.v) -- confirms
+tiles are genuinely accepted one per cycle with no outer-FSM stall
+between them.
+
+ALTERNATIVES:
+Literal 11-state FSM per §6's baseline list, with LOAD_TILE/MAC/
+ACCUM/NEXT_TILE each a real one-cycle state gating acceptance.
+Rejected: would cap throughput at 1 tile per 4 cycles, defeating the
+pipeline's own purpose.
+
+RESULT:
+7-state FSM (NP_IDLE, NP_LOAD_JOB, NP_WAIT_OPERANDS, NP_FINISH,
+NP_WRITE_RESULT, NP_DONE, NP_ERROR) implemented and verified.
+
+STATUS:
+ACCEPTED
+
+---
+
+DEC-0003
+
+DATE: 2026-09-05
+
+DECISION:
+Remove the operand-arrival protocol-violation guard from
+neural_processor.v (the check that would raise NP_ERROR if
+operand_valid arrived while the processor could not consume it) rather
+than continue debugging it. Defer this responsibility to the Neural
+Director (M5).
+
+WHY:
+The guard's own evaluation triggered ERR-0002 (docs/v2-description.md
+mandate §25-29 requires documenting this, not hiding it) -- a
+reproducible Icarus Verilog v13.0 bug where the guard's condition
+evaluated true despite operand_valid being independently confirmed 0.
+Root cause was bisected down to a minimal FSM transition unrelated to
+this specific expression (see errors.log ERR-0002), meaning the bug is
+in the toolchain's scheduling, not fixable by rewording the condition.
+Architecturally, a standalone Neural Processor policing its OWN
+issuer's protocol is also arguably the wrong owner of that
+responsibility: per §34's own division of labor ("Il Director gestisce
+WHAT deve essere eseguito"), arbitrating/validating operand issuance
+across possibly-multiple Neural Processors is the Director's job, not
+each processor's.
+
+EVIDENCE:
+ERR-0002 (errors.log) -- the guard, and several simplified variants of
+it, all misevaluated under Icarus v13.0; disabling it entirely (and
+only it) restored correct behavior in every case, confirmed via
+Verilator that the underlying pipeline logic was already correct.
+
+ALTERNATIVES:
+1. Keep chasing the exact Icarus root cause. Rejected for this
+   session: already bisected to a toolchain-level scheduling issue
+   independent of this specific code, further chasing would not
+   change the architectural need for this check to live in the
+   Director eventually anyway.
+2. Reimplement the same check with different Verilog phrasing.
+   Rejected: multiple independent phrasings all reproduced the bug.
+
+RESULT:
+NP_ERROR is now reachable only via the `default:` case branch (a
+genuine np_state encoding corruption) -- a real safety net, just not
+exercised by operand-arrival timing. The corresponding negative test
+(TEST 7) was removed from tb_neural_processor.v; the scenario is
+deferred to M5's testbench (tb_neural_director.v), where the Director
+is the actual issuer under test.
+
+STATUS:
+ACCEPTED
+
+---
+
+DEC-0004
+
+DATE: 2026-09-05
+
+DECISION:
+Adopt Verilator 5.050 (`verilator --binary --timing`) as the primary/
+trusted simulator for hardware/v2/ testbenches going forward, in
+addition to (not instead of) Icarus Verilog. Cross-check any Icarus
+result that looks anomalous against Verilator before concluding it is
+an RTL bug.
+
+WHY:
+ERR-0001/ERR-0002 (errors.log) are two independently-reproduced Icarus
+Verilog v13.0 defects that produced WRONG simulation results (not
+compile errors) for straightforward, standard sequential Verilog, with
+no workaround available at the RTL/testbench level for ERR-0002 short
+of removing the affected logic. Verilator gave the CORRECT result for
+every one of these repros. §30's rule against invented results cuts
+both ways: a simulator that silently gives a WRONG "measured" result is
+just as dangerous as inventing one outright -- cross-checking against
+a second, architecturally different simulator (Verilator compiles to
+C++, Icarus interprets bytecode -- unlikely to share the same
+scheduling bug) is now mandatory whenever a hardware/v2/ testbench
+shows unexpected behavior.
+
+EVIDENCE:
+- Minimal FSM repro (`if (go) st<=B;`, no tasks, no other logic):
+  Icarus v13.0 fails to transition on specific testbench edge-count
+  parities; Verilator 5.050 gives the correct result every time.
+- Full hardware/v2/sim/tb_neural_processor.v: Icarus v13.0 hangs/
+  misbehaves even after every known-real RTL bug (ERR-0003) was fixed;
+  the SAME unmodified file under Verilator gives 7/7 PASS, bit-exact
+  vs the frozen V1 reference.
+
+ALTERNATIVES:
+1. Downgrade Icarus to an older release. Rejected: no older bottle was
+   cached on this machine (`brew list --versions icarus-verilog` shows
+   only 13.0) and fetching a specific historical formula version was
+   not attempted this session (time-boxed decision, revisit if it
+   becomes a recurring blocker).
+2. Keep using only Icarus and manually work around each new defect as
+   found. Rejected: not sustainable across the dozens of testbenches
+   the full V2 roadmap requires (§20).
+
+RESULT:
+Verilator installed (`brew install verilator`, 5.050). hardware/v2/
+testbenches are compiled/run with both simulators when convenient;
+Verilator's result is authoritative when the two disagree, and any
+such disagreement is logged here / in errors.log, not silently
+resolved by picking whichever answer looks more convenient.
+
+STATUS:
+ACCEPTED

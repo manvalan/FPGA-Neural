@@ -1,0 +1,100 @@
+# V2 experiments log -- REGISTRO PRINCIPALE (docs/v2-description.md §25).
+# Un EXP-XXXX per ogni esperimento end-to-end (config -> sim/synth/timing ->
+# risultato). ID mai riutilizzati, anche per i FAIL. Ogni EXP rimanda a
+# reports/experiments/EXP-XXXX/ (experiment.yaml, simulation.log,
+# synthesis.log, timing.log, results.txt, notes.md).
+#
+# Nessun esperimento ancora eseguito.
+
+EXP-0001
+timestamp: 2026-09-05T12:03:12Z
+git_commit: 07a48e401f56d395f9d1a6e22f1b5ebc6b598e64 (+ uncommitted M1 work)
+session: v2-M1-neural-processor
+module: hardware/v2/rtl/neural_processor.v
+configuration: DATA_WIDTH=8, P_IN=8, ACC_WIDTH=32
+action: first M1 implementation -- 8-stage pipelined perceptron unit,
+  bit-exact vs hardware/v1/rtl/neuron_parallel.v + mac8.v + mac_unit.v
+command (sim, Verilator): verilator --binary --timing -j 0 -Wno-fatal
+  --top-module tb -o /tmp/vtb_np hardware/v1/rtl/neuron_parallel.v
+  hardware/v1/rtl/mac8.v hardware/v1/rtl/mac_unit.v
+  hardware/v2/rtl/neural_processor.v hardware/v2/sim/tb_neural_processor.v
+  && /tmp/vtb_np
+command (synth): yosys -p "synth_ecp5 -json
+  hardware/v2/synthesis/neural_processor_p8/top.json -top neural_processor"
+  hardware/v2/rtl/neural_processor.v
+command (timing): nextpnr-ecp5 --45k --package CABGA381 --speed 8
+  --freq 80 --json hardware/v2/synthesis/neural_processor_p8/top.json
+  --lpf-allow-unconstrained --textcfg .../top.config
+result:
+  SIMULATED: 7/7 tests PASS, bit-exact vs V1 (functional +
+    extreme-INT8 + back-to-back-tiles + 64-input/8-tile coverage).
+  SYNTHESIZED: 0 CHECK problems, 8 MULT18X18D, 533 TRELLIS_FF,
+    96 CCU2C, 55 LUT4 (36 benign integer-loop-variable warnings, see
+    hardware/v2/logs/synthesis.log).
+  POST-P&R: Fmax = 183.12 MHz, PASS at 80MHz target (real
+    nextpnr-ecp5 measurement, hardware/v2/synthesis/neural_processor_p8/
+    nextpnr.log). Compare V1 isolated PARALLEL=8: 61.71 MHz
+    (hardware/v1/synthesis/p8/) -- ~3x higher Fmax for the pipelined
+    single-processor datapath alone (not yet a system-level
+    comparison -- no Memory Manager/Director/multi-processor overhead
+    included at this milestone).
+errors: ERR-0001, ERR-0002, ERR-0003 (see errors.log) encountered and
+  resolved/worked around during development.
+decision: see decisions.log DEC-0002, DEC-0003, DEC-0004.
+next_action: EXP-0002 (ACC_WIDTH=24 comparison), then M2 (Processor
+  Array, N_PROCESSORS sweep).
+
+EXP-0002
+timestamp: 2026-09-05T12:03:12Z
+git_commit: 07a48e401f56d395f9d1a6e22f1b5ebc6b598e64 (+ uncommitted M1 work)
+session: v2-M1-neural-processor
+module: hardware/v2/rtl/neural_processor.v
+configuration: DATA_WIDTH=8, P_IN=8, ACC_WIDTH=24 (vs EXP-0001's
+  ACC_WIDTH=32 baseline) -- requested explicitly by the user as a test
+  variant ("come test nel perceptrone crea una versione con
+  accumulatori a 24 bit anziche' a 32 bit").
+reason: ACC_WIDTH is already fully parametric throughout
+  neural_processor.v (no code duplication needed); 24 bits is a real,
+  non-degenerate choice -- worst-case realistic accumulation (e.g. 256
+  INT8 inputs all at +-127/+-128) needs at most 23 signed bits
+  (256 * 128 = 32768, |value| <= 2^22 for the largest single-tile-
+  chain sums this project's configs reach), so 24 bits carries a
+  legitimate 1-bit margin, not an arbitrary/unsafe truncation.
+command (sim, Verilator): same as EXP-0001 with a copy of
+  tb_neural_processor.v with ACC_WIDTH localparam changed to 24 (V1's
+  own neuron_parallel instantiated at ACC_WIDTH=24 too, for a true
+  bit-exact comparison at the SAME width -- V1's ACC_WIDTH is also a
+  module parameter, no V1 modification needed).
+command (synth): yosys -p "read_verilog
+  hardware/v2/rtl/neural_processor.v; chparam -set ACC_WIDTH 24
+  neural_processor; synth_ecp5 -json
+  hardware/v2/synthesis/neural_processor_p8_acc24/top.json -top
+  neural_processor"
+command (timing): nextpnr-ecp5, same flags as EXP-0001, json from
+  the ACC_WIDTH=24 build.
+result:
+  SIMULATED: 7/7 tests PASS, bit-exact vs V1 at ACC_WIDTH=24 (no
+    overflow in any test vector, as expected from the margin analysis
+    above).
+  SYNTHESIZED: 0 CHECK problems, 8 MULT18X18D (unchanged, multiplier
+    width is DATA_WIDTH-driven not ACC_WIDTH-driven), 509 TRELLIS_FF
+    (was 533 at ACC_WIDTH=32, -24 FF as expected for 8 fewer
+    accumulator bits carried through ~3 pipeline-stage copies),
+    88 CCU2C (was 96), 49 LUT4 (was 55).
+  POST-P&R: Fmax = 176.21 MHz (was 183.12 MHz at ACC_WIDTH=32) --
+    REAL measurement, both from nextpnr-ecp5. The 24-bit build is
+    ~4% SLOWER despite fewer resources -- almost certainly placement
+    noise (consistent with this project's established finding,
+    hardware/v1/docs/WORKLOG.md "Timing closure", that seed-to-seed
+    placement variance on this device dominates small logic-width
+    differences), NOT attributed to a real architectural effect
+    without a seed sweep to confirm. Reported as-measured, not
+    overinterpreted -- see hardware/v2/logs/benchmark.log.
+errors: none.
+decision: ACC_WIDTH=32 remains the M1 default (matches V1 exactly for
+  ongoing bit-exact comparisons); ACC_WIDTH=24 confirmed as a viable,
+  correctly-functioning, slightly-smaller alternative, not adopted as
+  default without a proper seed sweep (out of scope for this single
+  comparison run).
+next_action: revisit ACC_WIDTH choice during M10 (Optimization) with a
+  real seed sweep, not before.

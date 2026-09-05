@@ -1,0 +1,13 @@
+; Worked example from the project spec (§3): 4 inputs, two neurons,
+; n5 is the sole output. See docs for the hand-computed expected
+; result with x = [10, 1, 4, 0]: n4=49, n5=126.
+NET graph
+INPUTS 4                 ; id 0..3
+NEURON n4 relu bias=2
+  CONN 0 w=5
+  CONN 1 w=-3
+NEURON n5 none bias=0
+  CONN n4 w=2            ; symbolic reference to n4's output
+  CONN 2 w=7
+OUTPUT n5
+END

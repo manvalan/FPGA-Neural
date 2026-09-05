@@ -1,0 +1,16 @@
+# V2 synthesis log -- solo append, mai troncato/sovrascritto (vedi README.md)
+# Nessuna entry ancora -- popolato incrementalmente man mano che avanza lo sviluppo V2.
+
+[2026-09-05] EXP-0001 -- neural_processor (P_IN=8, ACC_WIDTH=32)
+LUT: 55  FF: 533  DSP(MULT18X18D): 8  BRAM: 0  CCU2C: 96
+CHECK: 0 problems. 36 warnings, all "multiple conflicting drivers for
+  neural_processor.\gi" -- benign Yosys quirk for an `integer` used as
+  a synthesizable for-loop index in stage 0's unrolled always block,
+  not a real multi-driver conflict (cross-verified functionally
+  correct on 2 independent simulators). Log: hardware/v2/synthesis/
+  neural_processor_p8/yosys.log
+
+[2026-09-05] EXP-0002 -- neural_processor (P_IN=8, ACC_WIDTH=24)
+LUT: 49  FF: 509  DSP(MULT18X18D): 8  BRAM: 0  CCU2C: 88
+CHECK: 0 problems, same 36 benign warnings as EXP-0001.
+Log: hardware/v2/synthesis/neural_processor_p8_acc24/yosys.log

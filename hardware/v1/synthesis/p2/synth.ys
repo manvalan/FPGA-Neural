@@ -1,0 +1,8 @@
+
+read_verilog -sv     /Users/michelebigi/Development/FPGA-Neural/FPGA-Neural/rtl/mac_unit.v     /Users/michelebigi/Development/FPGA-Neural/FPGA-Neural/rtl/mac8.v     /Users/michelebigi/Development/FPGA-Neural/FPGA-Neural/rtl/neuron_parallel.v     /Users/michelebigi/Development/FPGA-Neural/FPGA-Neural/rtl/layer.v     /Users/michelebigi/Development/FPGA-Neural/FPGA-Neural/synth/ecp5/p2/top.v
+
+hierarchy -top top
+
+synth_ecp5 -top top
+
+write_json /Users/michelebigi/Development/FPGA-Neural/FPGA-Neural/synth/ecp5/p2/top.json

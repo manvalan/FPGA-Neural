@@ -1,0 +1,14 @@
+# V2 architecture log -- solo append, mai troncato/sovrascritto (vedi README.md)
+# Nessuna entry ancora -- popolato incrementalmente man mano che avanza lo sviluppo V2.
+
+[2026-09-05] Neural Processor Array error isolation (§34: "un processor
+bloccato non deve bloccare gli altri")
+NP_ERROR is per-processor state, private to each neural_processor
+instance -- it only halts the ONE processor's own FSM (recoverable via
+its own rst), never asserts anything that could stall a shared bus,
+arbiter, or the Neural Director's own state. This is the mechanism
+that will let M2's neural_processor_array.v treat one processor's
+NP_ERROR as an isolated fault (report + exclude from scheduling) rather
+than a system-wide halt, once the Director (M5) exists to observe it.
+No shared/global reset or shared bus signal is driven by any single
+processor's error state at M1.
