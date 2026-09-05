@@ -87,3 +87,13 @@ LUT4=6439  CCU2C=996  TRELLIS_FF=9053  MULT18X18D=64 (64/72=88.9% of
 DP16KD=0 (expected, DEC-0009). CHECK: 0 problems (same benign
   "multiple conflicting drivers" warnings as every other neural_processor
   instantiation since EXP-0001).
+
+[2026-09-05] EXP-0014 -- neural_multiprocessor N_SLOTS=1 and N_SLOTS=4
+(final benchmark campaign, real standalone top-level synthesis, no
+harness needed -- same 157-pin real-PSRAM-pin methodology as N_SLOTS=2,
+EXP-0009)
+N_SLOTS=1: LUT4=2642  CCU2C=200  TRELLIS_FF=2240  MULT18X18D=8   DP16KD=0
+N_SLOTS=4: LUT4=7552  CCU2C=768  TRELLIS_FF=6495  MULT18X18D=32  DP16KD=0
+(N_SLOTS=2 reference, EXP-0009: LUT4=4191 CCU2C=388 FF=3659 DSP=16 DP16KD=0)
+CHECK: 0 problems on both, same benign warnings as every other
+  neural_processor instantiation since EXP-0001.

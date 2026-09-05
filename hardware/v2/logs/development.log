@@ -284,3 +284,30 @@ next_action: nessuna prevista dal mandato (§33 termina a M10) -- la
   P_IN<8 per N_SLOTS ancora piu' alto (DEC-0012 alternativa #2), riuso
   dei buffer M3 come cache condivisa (DEC-0009), strumentazione
   stall%/utilization anche lato V1 (DEC-0011).
+
+[2026-09-05] Final Benchmark Campaign (post-M10, richiesta diretta
+utente, non parte del roadmap §33)
+reason: caratterizzare le prestazioni reali end-to-end di V2 prima di
+  decidere il numero finale di unita' parallele (N_SLOTS) e prima di
+  scrivere il datasheet V2. Nessun test funzionale isolato, nessuna
+  ottimizzazione prima della misura, come esplicitamente richiesto.
+result: 6 workload realistici (16-256 neuroni indipendenti + un layer
+  multilivello con dati random seed loggato + un DAG a diamante a 2
+  hop) verificati bit-exact su 4 configurazioni (N_SLOTS=1/2/4/8) --
+  24/24 PASS dopo aver risolto 3 problemi reali (errors.log ERR-0009).
+  Scoperta principale: lo scaling parallelo reale e' sostanzialmente
+  PIATTO per i workload memory-bound (1.05-1.06x da N=1 a N=8) -- il
+  vero collo di bottiglia e' la porta PSRAM condivisa (~91% utilizzo
+  indipendentemente da N_SLOTS>=2), non il numero di processori.
+  Considerando anche il vero Fmax POST-P&R (152.46/142.45/113.38 MHz
+  per N=1/2/4), N_SLOTS=4 e' realmente PIU' LENTO del 21% in
+  wall-clock rispetto a N_SLOTS=1 per il workload Stress. Trovato
+  squilibrio reale di scheduling (slot a indice basso fanno quasi
+  tutto il lavoro).
+errors: vedi errors.log ERR-0009 (1 bug RTL reale in neural_director.v,
+  mai testato prima a N_SLOTS=1; 2 bug nel testbench stesso).
+decision: vedi decisions.log DEC-0014 -- N_SLOTS=2 raccomandato come
+  configurazione di default, non N_SLOTS=8 (DEC-0012 resta valido come
+  tetto DSP mafisico, non come raccomandazione d'uso generale).
+next_action: datasheet V2 in stile professionale (richiesta utente),
+  ora sbloccato dalla decisione su N_SLOTS.

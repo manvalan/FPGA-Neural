@@ -101,3 +101,17 @@ Conclusion: over 6 real placement seeds, ACC_WIDTH=24 has a HIGHER
   EXP-0002's single-seed result (176.21 < 183.12, i.e. ACC=24 looked
   WORSE) was placement-seed noise, not a real trend. See decisions.log
   DEC-0013.
+
+[2026-09-05] EXP-0014 -- neural_multiprocessor N_SLOTS=1 and N_SLOTS=4
+(final benchmark campaign), real nextpnr-ecp5 --45k --package CABGA381
+--speed 8 --freq 80 --lpf-allow-unconstrained
+N_SLOTS=1: Fmax = 152.46 MHz -- PASS at 80MHz
+N_SLOTS=4: Fmax = 113.38 MHz -- PASS at 80MHz
+(N_SLOTS=2 reference, EXP-0009: 142.45 MHz)
+Full real N_SLOTS sweep for the complete system (dataflow_core + real
+V1 PSRAM chain + slot_mem_arbiter): 1 -> 152.46 MHz, 2 -> 142.45 MHz,
+4 -> 113.38 MHz. Fmax falls monotonically as N_SLOTS grows (more
+routing congestion around the shared director/dependency_manager/
+arbiter hub), exactly the same trend already observed for
+dataflow_core alone (M7/M10, EXP-0008/EXP-0011) but now measured for
+the REAL FULL SYSTEM including the real PSRAM backend.

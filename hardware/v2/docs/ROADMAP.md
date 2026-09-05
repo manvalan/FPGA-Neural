@@ -97,6 +97,25 @@ piu' alto (DEC-0012), riuso dei buffer M3 come cache condivisa
 (DEC-0009), strumentazione stall%/utilization completa anche lato V1
 (DEC-0011).
 
+## Final Benchmark Campaign (post-roadmap, richiesta utente)
+
+Dopo il completamento di M1-M10, una campagna di benchmark finale
+completa e reale (`hardware/v2/sim/tb_benchmark_suite.v`, EXP-0014) ha
+caratterizzato V2 end-to-end su 6 workload realistici (16-256 neuroni
+indipendenti, un layer multilivello con forwarding reale via PSRAM, un
+DAG a 6 nodi con risveglio a 2 hop) su N_SLOTS=1/2/4/8. 24/24 PASS
+bit-exact dopo aver trovato e risolto 3 problemi reali (1 bug RTL in
+`neural_director.v` mai testato a N_SLOTS=1, 2 bug nel testbench --
+`logs/errors.log` ERR-0009). Scoperta principale: lo scaling parallelo
+reale e' sostanzialmente PIATTO oltre N_SLOTS=2 (la vera porta PSRAM
+condivisa satura al 91%, non il numero di processori) -- N_SLOTS=4 e'
+misurabilmente PIU' LENTO in wall-clock reale di N_SLOTS=1 per il
+workload Stress una volta considerato il vero Fmax POST-P&R.
+**N_SLOTS=2 raccomandato come default** (`logs/decisions.log`
+DEC-0014). Report completo (21 sezioni, THEORETICAL/SIMULATED/
+POST-P&R/DERIVED classificati): `hardware/v2/docs/benchmarks/
+final-benchmark.md`.
+
 ## Log
 
 Vedi `hardware/v2/logs/` (`development.log` per la cronologia di sessione,

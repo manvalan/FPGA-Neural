@@ -118,3 +118,19 @@ note: slot 0's higher utilization is at least partly explained by it
   harmful priority starvation on its own; see decisions.log DEC-0010's
   original fairness deferral, now informed by this real (if small)
   data point.
+
+[2026-09-05] EXP-0014 -- hardware/v2/sim/tb_benchmark_suite.v (final
+benchmark campaign, post-M10)
+test: 6 workloads (16/64/128/256 independent neurons + 10-node
+  multilayer with random data + 6-node 2-hop DAG), each bit-exact
+  verified against a software golden model, at N_SLOTS=1/2/4/8 (24
+  total runs) through the real full neural_multiprocessor.v (real V1
+  PSRAM chain, real slot_mem_arbiter)
+simulator: Verilator 5.050 (--binary --timing)
+PASS/FAIL: 24/24 PASS bit-exact (11,520 individual neuron/node
+  comparisons, zero mismatches) after fixing 3 real issues found
+  during this campaign (errors.log ERR-0009: 1 real RTL bug in
+  neural_director.v at N_SLOTS=1, never exercised before; 2 testbench
+  sizing bugs -- psram_model DEPTH too small, N_NODES too small
+  causing a real node-id wraparound deadlock)
+full data/analysis: hardware/v2/docs/benchmarks/final-benchmark.md

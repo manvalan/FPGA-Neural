@@ -198,3 +198,80 @@ single-seed inconclusiveness):
 ACC_WIDTH=24 recommended as the new default (DEC-0013): higher mean
 Fmax, much tighter variance, fewer resources, same bit-exact
 correctness.
+
+[2026-09-05] EXP-0014 -- FINAL BENCHMARK CAMPAIGN: real end-to-end
+characterization, 6 workloads x 4 configs (N_SLOTS=1/2/4/8), real V1
+PSRAM chain + real slot_mem_arbiter, full report at
+hardware/v2/docs/benchmarks/final-benchmark.md. Summary below; see
+that report for the complete 21-section breakdown.
+
+Real cycle counts (SIMULATED, Verilator, bit-exact verified against a
+software golden model for every single neuron/node):
+
+| Workload      | Neurons | N=1 cycles | N=2 cycles | N=4 cycles | N=8 cycles |
+|-----------------|---------|------------|------------|------------|------------|
+| A-Small         | 16      | 3546       | 2674       | 2743       | 2887       |
+| B-Medium        | 64      | 50442      | 46770      | 46765      | 46935      |
+| C-Large         | 128     | 390154     | 368210     | 368909     | 370835     |
+| D-Stress        | 256     | 780298     | 736402     | 736823     | 738751     |
+| E-Multilayer    | 10      | 2223       | 1689       | 1726       | 1723       |
+| F-DAG           | 6       | 1336       | 1014       | 1014       | 1014       |
+
+PARALLEL SCALING (speedup(N)=cycles(1)/cycles(N),
+efficiency(N)=speedup(N)/N -- NOT assumed, computed from the real
+cycle counts above):
+
+| Workload   | spd N=2 | eff N=2 | spd N=4 | eff N=4 | spd N=8 | eff N=8 |
+|--------------|---------|---------|---------|---------|---------|---------|
+| A-Small      | 1.33x   | 66.3%   | 1.29x   | 32.3%   | 1.23x   | 15.4%   |
+| B-Medium     | 1.08x   | 53.9%   | 1.08x   | 27.0%   | 1.08x   | 13.4%   |
+| C-Large      | 1.06x   | 53.0%   | 1.06x   | 26.4%   | 1.05x   | 13.2%   |
+| D-Stress     | 1.06x   | 53.0%   | 1.06x   | 26.5%   | 1.06x   | 13.2%   |
+| E-Multilayer | 1.32x   | 65.8%   | 1.29x   | 32.2%   | 1.29x   | 16.1%   |
+| F-DAG        | 1.32x   | 65.9%   | 1.32x   | 32.9%   | 1.32x   | 16.5%   |
+
+REAL WALL-CLOCK speedup (cycles / real POST-P&R Fmax, workload
+D-Stress, the largest/most representative sustained workload):
+
+| N_SLOTS | Fmax (POST-P&R) | cycles  | wall-clock us | speedup vs N=1 |
+|-----------|-------------------|---------|----------------|------------------|
+| 1         | 152.46 MHz       | 780298  | 5118.05        | 1.000x          |
+| 2         | 142.45 MHz       | 736402  | 5169.55        | 0.990x (SLOWER) |
+| 4         | 113.38 MHz       | 736823  | 6498.70        | 0.788x (SLOWER) |
+
+HEADLINE FINDING: real parallel scaling is essentially FLAT for
+memory-bound workloads (C/D) regardless of N_SLOTS (1.05-1.06x speedup
+from 1 to 8 slots) -- the shared PSRAM port (91% utilized regardless
+of N_SLOTS>=2, see per-workload utilization data in the full report)
+is the real bottleneck, not compute/slot count. Once real Fmax
+degradation from added routing congestion is also accounted for
+(POST-P&R, not assumed), N_SLOTS=4 is actually 21% SLOWER in real
+wall-clock time than N_SLOTS=1 for the Stress workload -- more
+hardware parallelism made this workload WORSE, not better. Small/
+bursty workloads (A/E/F) DO see a real ~1.2-1.3x wall-clock benefit
+from N_SLOTS=2 (better overlap of registration/scheduling latency),
+but that benefit saturates immediately and does not extend to N=4/8.
+
+Per-slot tile distribution (C-Large, N_SLOTS=4) also reveals real,
+measured scheduling imbalance from the fixed lowest-index-priority
+arbiter/director (decisions.log DEC-0010): slot 0/1 each delivered
+1008/1008 real tiles while slot 2/3 delivered only 16/16 -- confirming
+DEC-0010's original starvation concern with much stronger evidence
+than EXP-0013's small-scale test could show (see decisions.log
+DEC-0014 for the resulting recommendation).
+
+Resource/Fmax summary (all real POST-P&R, full neural_multiprocessor
+including the real V1 PSRAM chain):
+
+| N_SLOTS | Fmax (POST-P&R) | LUT4 | FF   | DSP | BRAM |
+|-----------|-------------------|------|------|-----|------|
+| 1         | 152.46 MHz       | 2642 | 2240 | 8   | 0    |
+| 2         | 142.45 MHz       | 4191 | 3659 | 16  | 0    |
+| 4         | 113.38 MHz       | 7552 | 6495 | 32  | 0    |
+
+Bit-exact functional verification: ALL 6 workloads x ALL 4
+configurations (24 total workload/config combinations) PASSED
+bit-exact against a software golden model, zero errors, zero
+timeouts, zero deadlocks (after fixing the 3 issues in errors.log
+ERR-0009). No node lost, no node duplicated, correct multi-hop
+dependency wake-up verified (workload F's 2-hop diamond+fan-in graph).

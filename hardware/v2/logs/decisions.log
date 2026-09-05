@@ -775,3 +775,85 @@ choices, not a mandate to re-synthesize already-logged results).
 STATUS:
 ACCEPTED
 
+DEC-0014
+
+DATE: 2026-09-05
+
+DECISION:
+N_SLOTS=2 is the recommended default/shipped configuration for
+neural_multiprocessor.v, superseding DEC-0012's earlier "N_SLOTS=8 is
+the practical ceiling" framing for general use. N_SLOTS=8 remains a
+REAL, valid, synthesizable configuration (DEC-0012's DSP-budget
+ceiling finding stands), but the final benchmark campaign (EXP-0014)
+shows it is not a good DEFAULT given the system's real bottleneck.
+
+WHY:
+EXP-0014's real, measured parallel-scaling data (6 workloads x 4
+configs, real V1 PSRAM chain, real slot_mem_arbiter, real POST-P&R
+Fmax) shows conclusively that the shared PSRAM port -- not slot count
+-- is this system's real bottleneck: memory-bound workloads
+(C-Large/D-Stress) get only 1.05-1.06x real cycle-count speedup from
+N_SLOTS=1 all the way to N_SLOTS=8 (PSRAM port utilization pegged at
+~91% regardless), and once real Fmax degradation from added slots is
+also factored in (152.46 -> 142.45 -> 113.38 MHz for N=1/2/4), the
+REAL WALL-CLOCK time for the Stress workload is actually 21% WORSE at
+N_SLOTS=4 than at N_SLOTS=1. More hardware parallelism made this
+workload class slower, not faster -- adding slots has a real Fmax cost
+with no compensating real throughput benefit once the shared PSRAM
+port saturates.
+
+Small/bursty workloads (A-Small, E-Multilayer, F-DAG) DO show a real,
+if modest, benefit from N_SLOTS=2 (~1.2-1.3x real wall-clock speedup,
+from better overlap of per-job registration/scheduling latency across
+two independently-progressing jobs) -- this benefit already exists at
+N=2 and does not meaningfully grow at N=4/8 (see EXP-0014's efficiency
+table: efficiency collapses from 66% at N=2 to 15% at N=8 for exactly
+this workload class). N_SLOTS=2 is therefore the point that captures
+essentially all of the real, measured benefit this architecture can
+deliver from concurrency, without paying N=4/8's real Fmax tax for a
+benefit that does not materialize.
+
+EVIDENCE:
+benchmark.log's EXP-0014 entry: the full 6-workload x 4-config real
+cycle-count table, the derived speedup/efficiency table, the real
+wall-clock (cycles / real POST-P&R Fmax) comparison for D-Stress, and
+the real per-slot tile-delivery imbalance data (slot 0/1 doing ~98% of
+C-Large's real work at N_SLOTS=4, slot 2/3 essentially idle until the
+tail) -- all real, Verilator-simulated + nextpnr-ecp5-measured, not
+assumed.
+
+ALTERNATIVES:
+1. Recommend N_SLOTS=8 (DEC-0012's original framing, "practical DSP
+   ceiling"). Rejected as a DEFAULT: DEC-0012 was correct that
+   N_SLOTS=8 is the largest configuration that FITS the chip's DSP
+   budget, but EXP-0014 shows fitting is not the same as being
+   beneficial -- 8 slots deliver essentially the same real throughput
+   as 1 slot for memory-bound work, at a real Fmax cost (92.63 MHz for
+   dataflow_core-only, even lower once the real PSRAM chain is added).
+   N_SLOTS=8 remains available/valid for a FUTURE system that also
+   widens real memory bandwidth (see Alternative 2 below and the final
+   report's Bottleneck Analysis/Limitations sections) but is not the
+   right choice for THIS system as built.
+2. Solve the real bottleneck (widen/parallelize PSRAM bandwidth --
+   e.g. multiple physical PSRAM banks, one per pair of slots) so that
+   N_SLOTS=4/8 would actually deliver real throughput gains. Rejected
+   for THIS decision: real hardware/board redesign, well beyond a
+   measurement-driven RTL parameter choice -- flagged as the correct
+   FUTURE direction if higher real concurrency is ever needed, not
+   attempted here (§30: no invented results, no un-measured redesigns
+   presented as decided).
+
+RESULT:
+N_SLOTS=2 is the recommended default configuration, used as the
+reference configuration in the final benchmark report and (pending
+user confirmation) the datasheet. N_SLOTS=1 remains a real,
+competitive alternative for deployments that are purely large/
+sustained/memory-bound (equal or better real wall-clock throughput,
+lower resource cost, highest real Fmax). N_SLOTS=4/8 remain valid,
+synthesizable, functionally-correct configurations (all bit-exact
+verified in EXP-0014) but are NOT recommended as a default without a
+future memory-bandwidth-scaling architecture change.
+
+STATUS:
+ACCEPTED
+

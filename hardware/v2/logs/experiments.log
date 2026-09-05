@@ -513,3 +513,41 @@ next_action: none mandated by docs/v2-description.md's own roadmap
   buffer reuse as a shared cache once real bandwidth pressure is
   measured (DEC-0009), and V1-side stall%/utilization instrumentation
   to complete the M9 table's V1 column (DEC-0011).
+
+[2026-09-05] EXP-0014 -- FINAL BENCHMARK CAMPAIGN (post-M10, real
+end-to-end characterization, not an isolated functional test -- see
+hardware/v2/docs/benchmarks/final-benchmark.md for the full 21-section
+report)
+test: hardware/v2/sim/tb_benchmark_suite.v -- 6 representative
+  workloads (Small/Medium/Large/Stress/Multilayer/DAG, up to 256
+  independent neurons and a 6-node 2-hop dependency diamond), each
+  bit-exact verified against a software golden model, run through the
+  REAL full neural_multiprocessor.v (real V1 PSRAM chain, real
+  slot_mem_arbiter) at N_SLOTS=1, 2, 4, and 8 (24 total workload/config
+  runs)
+simulator: Verilator 5.050 (--binary --timing)
+PASS/FAIL:
+  SIMULATED: 24/24 workload/config combinations PASS bit-exact, zero
+    errors, zero timeouts, zero deadlocks -- AFTER fixing 3 real issues
+    found during this campaign (errors.log ERR-0009: 1 real RTL bug in
+    neural_director.v never exercised at N_SLOTS=1 before, 2 testbench
+    sizing bugs in tb_benchmark_suite.v itself).
+  SYNTHESIZED + POST-P&R (real, no harness needed, full system incl.
+    real PSRAM pins): N_SLOTS=1 -> 152.46 MHz/LUT4=2642/FF=2240/DSP=8;
+    N_SLOTS=2 -> 142.45 MHz/LUT4=4191/FF=3659/DSP=16 (EXP-0009);
+    N_SLOTS=4 -> 113.38 MHz/LUT4=7552/FF=6495/DSP=32.
+errors: see errors.log ERR-0009 (1 real RTL bug + 2 testbench bugs,
+  all found and fixed).
+decision: see decisions.log DEC-0014 -- N_SLOTS=2 recommended as the
+  default configuration (supersedes DEC-0012's N_SLOTS=8 "practical
+  ceiling" framing for general use): real measured parallel scaling is
+  essentially flat for memory-bound workloads regardless of N_SLOTS
+  (shared PSRAM port is the real bottleneck, ~91% utilized regardless
+  of N_SLOTS>=2), and N_SLOTS=4 is actually 21% SLOWER in real
+  wall-clock time than N_SLOTS=1 for the Stress workload once real
+  Fmax degradation is accounted for.
+next_action: none mandated by the roadmap (this campaign was
+  requested directly by the user, post-M10, as a final
+  characterization before deciding N_SLOTS and writing the V2
+  datasheet). Full report: hardware/v2/docs/benchmarks/final-
+  benchmark.md.

@@ -254,3 +254,76 @@ VERIFICATION: hardware/v2/sim/tb_neural_multiprocessor.v -- 4/4 PASS
   entirely contained inside the new arbiter module.
 STATUS: FIXED, verified end-to-end with the real (unmodified) V1
   PSRAM backend chain and real concurrent multi-slot contention.
+
+ERR-0009 (one real RTL bug + two testbench bugs, all FOUND AND FIXED
+during the post-M10 final benchmark campaign -- hardware/v2/sim/
+tb_benchmark_suite.v)
+DATE: 2026-09-05
+
+1. REAL RTL BUG in hardware/v2/rtl/neural_director.v (M5, previously
+   committed/synthesized, never before exercised at N_SLOTS=1):
+   SYMPTOM: Verilator compile error building neural_multiprocessor at
+     N_SLOTS=1 -- "%Error-ZEROREPL: Replication value of 0 is only
+     legal under a concatenation" at three sites.
+   ROOT CAUSE: at N_SLOTS=1, $clog2(1)=0, making
+     `{$clog2(N_SLOTS){1'b0}}` a ZERO-width replication (illegal
+     outside a concatenation, IEEE 1800 11.4.12.1). Every prior
+     milestone (M5-M10) only ever built/simulated/synthesized
+     neural_director at N_SLOTS=2/4/8 -- N_SLOTS=1 was never actually
+     exercised until this benchmark campaign asked for it as the
+     baseline for parallel-scaling measurement.
+   FIX: replaced the three `{$clog2(N_SLOTS){1'b0}}` reset/default
+     expressions with the width-agnostic `'0` literal, which self-sizes
+     correctly for any width including 0. No functional change for
+     N_SLOTS>1 (same reset value).
+   VERIFICATION: hardware/v2/sim/tb_neural_director.v (M5's own
+     testbench, N_SLOTS=2) re-run unchanged -- still 4/4 PASS. All 6
+     benchmark-suite workloads then verified bit-exact at N_SLOTS=1
+     through the real full neural_multiprocessor + real V1 PSRAM chain.
+   STATUS: FIXED, verified at both N_SLOTS=1 (newly working) and
+     N_SLOTS=2 (no regression).
+
+2. TESTBENCH BUG (tb_benchmark_suite.v, not RTL): psram_model's own
+   DEPTH parameter (524288... originally 131072 words = 256KB) was
+   smaller than the byte address range some workloads actually use
+   (workload C-Large's own result region alone needs word address
+   ~0x24000, beyond a 131072-word/0x20000 DEPTH) -- a silent
+   out-of-bounds array access, same bug CLASS already documented once
+   before (an M5 testbench bug, sim_byte_mem's too-small DEPTH).
+   SYMPTOM: every C-Large neuron read back real=0 (poison value never
+     overwritten) despite the RTL reporting all 128 jobs completed.
+   FIX: DEPTH raised to 524288 words (1MB byte-addressable), computed
+     to safely exceed the highest byte address used by any of the six
+     workloads' regions (~0xB2006, workload F).
+   VERIFICATION: C-Large re-run bit-exact PASS after the fix.
+
+3. TESTBENCH BUG (tb_benchmark_suite.v, not RTL): N_NODES=512 was
+   smaller than the highest node_id actually used -- workload D-Stress
+   (node_base=400, 256 neurons) reaches node_id 655, which silently
+   WRAPS at the 9-bit node_id width (512 -> truncates to 0), colliding
+   with workload A's node_id 0, already permanently ST_DISPATCHED (M6's
+   own design never reclaims dispatched node slots, decisions.log
+   DEC-0008). register_node's blocking `while(!reg_ready)` wait then
+   deadlocks forever (reg_ready never returns true for an already-
+   occupied, non-EMPTY node_id).
+   SYMPTOM: simulation appeared to hang indefinitely partway through
+     D-Stress's node registration (confirmed via periodic progress
+     `$display` instrumentation added specifically to localize this --
+     registration silently stopped advancing past neuron index 112).
+   FIX: N_NODES raised to 1024, comfortably exceeding every workload's
+     own node_id range.
+   VERIFICATION: D-Stress re-run bit-exact PASS (256/256 neurons) after
+     the fix, no further hangs at any N_SLOTS configuration (1/2/4/8).
+   NOTE: this is a REAL, honest consequence of DEC-0008's own design
+     choice (no node-slot reclamation) -- a long-running system that
+     keeps registering new nodes without ever reusing old (DISPATCHED)
+     ids will eventually exhaust its node_id space and deadlock exactly
+     this way. Flagged in the final benchmark report's Limitations
+     section, not just fixed and forgotten.
+
+DIAGNOSIS METHOD (bug 3): periodic `$display` progress heartbeats
+  added to the registration loop and the completion watchdog loop,
+  run under `stdbuf -oL` to force line-buffered (not block-buffered)
+  output for real-time visibility, isolating the exact neuron index
+  where progress stopped advancing -- the same "trace real signals,
+  don't guess" discipline used throughout this whole project.

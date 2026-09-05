@@ -104,11 +104,18 @@ module neural_director #(
     wire                any_slot_free = |slot_free;
 
     // first-free slot index (priority encoder, lowest index wins --
-    // "first-free", per §9's initial policy, not load-balanced)
+    // "first-free", per §9's initial policy, not load-balanced).
+    // Reset/default values below use '0 rather than
+    // {$clog2(N_SLOTS){1'b0}} -- at N_SLOTS=1, $clog2(1)=0 makes that
+    // replication a ZERO-width replication, illegal outside a
+    // concatenation (IEEE 1800 11.4.12.1); found when this module was
+    // first synthesized/simulated at N_SLOTS=1 by the post-M10
+    // benchmark campaign (never exercised at N_SLOTS=1 through M5-M9).
+    // '0 self-sizes correctly for any width, including 0.
     reg [$clog2(N_SLOTS)-1:0] free_slot_idx;
     integer fi;
     always @(*) begin
-        free_slot_idx = {$clog2(N_SLOTS){1'b0}};
+        free_slot_idx = '0;
         for (fi = N_SLOTS-1; fi >= 0; fi = fi - 1) begin
             if (slot_free[fi]) free_slot_idx = fi[$clog2(N_SLOTS)-1:0];
         end
@@ -122,7 +129,7 @@ module neural_director #(
     reg [$clog2(N_SLOTS)-1:0] done_slot_idx;
     integer di;
     always @(*) begin
-        done_slot_idx = {$clog2(N_SLOTS){1'b0}};
+        done_slot_idx = '0;
         for (di = N_SLOTS-1; di >= 0; di = di - 1) begin
             if (slot_job_done[di]) done_slot_idx = di[$clog2(N_SLOTS)-1:0];
         end
@@ -143,7 +150,7 @@ module neural_director #(
             slot_result_addr <= {(ADDR_WIDTH*N_SLOTS){1'b0}};
             slot_node_id     <= {(16*N_SLOTS){1'b0}};
             job_out_done     <= 1'b0;
-            job_out_slot     <= {$clog2(N_SLOTS){1'b0}};
+            job_out_slot     <= '0;
         end else begin
             slot_job_start <= {N_SLOTS{1'b0}};
             job_out_done   <= 1'b0;
