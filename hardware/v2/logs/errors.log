@@ -124,3 +124,55 @@ WORKAROUND: hardware/v2/synthesis/harness_neural_processor_array.v --
 STATUS: WORKED AROUND. Will become moot once M4/M5 exist and the array
   is synthesized as part of a larger design with on-chip ports instead
   of a bare top-level module.
+
+ERR-0006 (real RTL bugs in hardware/v2/rtl/memory_manager.v, FOUND AND FIXED)
+DATE: 2026-09-05
+MODULE: hardware/v2/rtl/memory_manager.v
+SYMPTOM: end-to-end M4 testbench (real V1 PSRAM backend + real M1
+  neural_processor) hung permanently partway through the first
+  multi-tile job -- bank_ready for the "current" bank never became 1,
+  even though the byte-level backend clearly kept completing read
+  transactions (observed via cycle-by-cycle hierarchical tracing of
+  memory_manager/prefetch_engine internal state).
+ROOT CAUSES (three, found together during the same debugging session):
+  1. The tile-N+2 prefetch request, queued on tile-N's handoff, could
+     be issued (pf_start asserted) while prefetch_engine was STILL
+     mid-fetch for tile-N+1 -- there was no single-in-flight-request
+     discipline at all in the first draft. Fixed by adding a
+     single-entry pf_pending register: requests are queued, not
+     issued directly, and a dedicated rule launches the queued
+     request only once the engine reports free.
+  2. Even with that queue, pf_busy does not read 1 until the cycle
+     AFTER pf_start was first observed by prefetch_engine (its own
+     fetch_busy<=1 lags its own fetch_start sampling by one clock) --
+     checking only `!pf_busy` left a genuine one-cycle window where a
+     second queued request would fire on top of the one just
+     launched, silently overwriting pf_target_bank (and pf_x_addr/
+     pf_w_addr) for the fetch already in flight. The address corruption
+     was harmless (prefetch_engine had already latched the correct
+     address into its own state that same edge), but pf_target_bank
+     corruption meant the eventually-completed fetch's real data got
+     filed into the WRONG bank's bank_ready/bank_x/bank_w, permanently
+     starving the bank actually needed next. Fixed by gating the issue
+     rule on `!pf_busy && !pf_start` (the extra term closes exactly
+     this one-cycle window).
+  3. A combinational mux selecting between prefetch_engine's own
+     backend wires and the result-write-back FSM's wires was gated on
+     `state == MM_WRITE_RESULT`, but wr_mem_req (asserted while
+     state==MM_WRITE_RESULT) only becomes valid the FOLLOWING cycle,
+     i.e. while state==MM_DONE -- the mux therefore selected the wrong
+     source for the one cycle the write request pulse was actually
+     high, silently dropping the PSRAM write entirely. Fixed by
+     widening the mux's select condition to cover both states.
+DIAGNOSIS METHOD: cycle-by-cycle hierarchical signal dumps (mm.state,
+  tile_idx, bank_ready, pf_busy, pf_pending, pf_target_bank,
+  prefetch_engine's own state) under Verilator, printed only on
+  signal-change to keep the trace readable, comparing against the
+  hand-derived expected sequence of events for a 3-tile job.
+VERIFICATION: hardware/v2/sim/tb_memory_manager.v -- 3/3 tests PASS
+  after all three fixes, including a 5-tile job (steady-state
+  double-buffer swap across more than 2 tiles) and independent
+  PSRAM read-back of the written-back result byte (not just internal
+  signal inspection).
+STATUS: FIXED, verified end-to-end with the real (unmodified) V1
+  PSRAM backend chain and a real M1 neural_processor.

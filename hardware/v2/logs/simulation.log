@@ -36,3 +36,15 @@ vectors: extreme INT8 (-128, 127, -100, 100), regular values, full
   writes undisturbed
 simulator: Verilator 5.050 (--binary --timing)
 PASS/FAIL: 10/10 PASS
+
+[2026-09-05] EXP-0005 -- hardware/v2/sim/tb_memory_manager.v
+test: 3 end-to-end jobs (3-tile/saturating, 1-tile/non-saturating,
+  5-tile/steady-state-swap), real V1 PSRAM backend chain (unmodified),
+  real M1 neural_processor
+simulator: Verilator 5.050 (--binary --timing)
+PASS/FAIL: 3/3 PASS
+bit-exact result: PSRAM-read-back result byte matches hand-computed
+  expectation in every case (independent oracle, not derived from the
+  RTL under test)
+cycles: 446 (3 tiles), 166 (1 tile), 728 (5 tiles) -- real PSRAM
+  latency dominates, not memory_manager's own control overhead

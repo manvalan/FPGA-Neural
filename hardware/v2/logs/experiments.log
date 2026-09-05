@@ -218,3 +218,59 @@ decision: keep DEPTH parametric as specified, but document (this
 next_action: M4 -- memory_manager.v + prefetch_engine.v (wires these
   three buffers + the array together, PSRAM backend reused unmodified
   from V1 per §15).
+
+EXP-0005
+timestamp: 2026-09-05T16:00:00Z
+git_commit: 5f0d7f1 (+ uncommitted M4 work)
+session: v2-M4-memory-manager
+module: hardware/v2/rtl/memory_manager.v, prefetch_engine.v
+configuration: P_IN=8, ADDR_WIDTH=23, real V1 backend chain
+  (int8_memory_access -> memory_interface -> psram_controller ->
+  psram_model, ALL unmodified), real M1 neural_processor
+action: M4 -- end-to-end integration: memory_manager double-buffers
+  prefetch of X/W tiles from PSRAM, feeds a real neural_processor,
+  writes the computed result back to PSRAM.
+command (sim, Verilator): verilator --binary --timing -j 0 -Wno-fatal
+  --top-module tb -o /tmp/vtb_mm hardware/v1/rtl/int8_memory_access.v
+  hardware/v1/rtl/memory_interface.v hardware/v1/rtl/psram_controller.v
+  hardware/v1/sim/psram_model.v hardware/v2/rtl/neural_processor.v
+  hardware/v2/rtl/prefetch_engine.v hardware/v2/rtl/memory_manager.v
+  hardware/v2/sim/tb_memory_manager.v && /tmp/vtb_mm
+command (synth): yosys -p "synth_ecp5 -json .../top.json -top
+  memory_manager" hardware/v2/rtl/memory_manager.v
+  hardware/v2/rtl/prefetch_engine.v (standalone, for real resource
+  counts); harness_memory_manager.v (see errors.log ERR-0005 pattern)
+  for real P&R Fmax, since the bare module exceeds the device's
+  TRELLIS_IO budget as a top-level (same class of artifact as the
+  Processor Array, not a logic limit).
+result:
+  SIMULATED: 3/3 jobs PASS end-to-end -- 3-tile (bias=0, ACT_RELU,
+    saturates to 127), 1-tile (no saturation, y=32), and 5-tile
+    (steady-state double-buffer swap across more than 2 tiles, y=40)
+    -- each verified by an INDEPENDENT PSRAM read-back of the
+    written result byte (not just internal signal inspection), with
+    "poison" bytes surrounding the real operand regions to catch any
+    off-by-one addressing (none found).
+  Cycle counts (real, PSRAM power-up already excluded): 3-tile job =
+    446 cycles, 1-tile job = 166 cycles, 5-tile job = 728 cycles.
+    Roughly ~140-150 cycles/tile at this PSRAM timing (dominated by
+    the real ~70ns TAA access latency modeled in psram_model.v, not
+    by memory_manager's own control overhead) -- a real, measured
+    number, not estimated.
+  SYNTHESIZED (standalone, real resource count): 0 CHECK problems,
+    851 LUT4, 789 TRELLIS_FF, 108 CCU2C, 0 DSP (expected -- no
+    multiplication in this module).
+  POST-P&R (via harness, real Fmax): 165.86 MHz, PASS at 80MHz with
+    large margin.
+errors: ERR-0006 (three real RTL bugs found and fixed during bring-up
+  -- see errors.log for full detail: a missing single-in-flight-
+  request discipline, a one-cycle pf_busy blind spot, and an
+  off-by-one state mux for the write-back path). ERR-0005's pin-count
+  artifact recurred for this module too (worked around the same way).
+decision: see decisions.log DEC-0006 (single prefetch engine + pending
+  register is sufficient for this milestone's scope; a real backend
+  arbiter is deferred until multiple processors/jobs actually need to
+  share one memory_manager).
+next_action: M5 -- neural_director.v (first-free scheduling), wiring
+  job dispatch to potentially multiple (memory_manager, neural_
+  processor) pairs instead of the single hardcoded pair tested here.

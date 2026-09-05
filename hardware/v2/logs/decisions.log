@@ -248,3 +248,74 @@ not merely a stylistic choice.
 
 STATUS:
 ACCEPTED
+
+---
+
+DEC-0006
+
+DATE: 2026-09-05
+
+DECISION:
+memory_manager.v (M4) uses a SINGLE prefetch_engine instance,
+retargeted per bank via a depth-1 pending-request register, rather
+than multiple engines or a general request queue. The result
+write-back (one byte per job, after the last tile) shares the same
+backend port via a simple state-based mux, not a general arbiter --
+because prefetch and write-back are temporally disjoint by
+construction (the write only happens after prefetch_engine has
+nothing left to fetch for that job).
+
+WHY:
+§13's double-buffering strategy needs at most ONE fetch "in flight"
+and at most ONE fetch "queued" at any time for a SINGLE Neural
+Processor consuming tiles sequentially (proven by construction: a new
+prefetch is only ever queued on a tile handoff, and at most one
+handoff can be pending completion of the previous prefetch before the
+next one is even requested). A general multi-entry queue or a second
+engine would add complexity with no present benefit. Likewise,
+because this Memory Manager currently serves exactly one Neural
+Processor and one job at a time, no concurrent second requester can
+ever contend for the backend port with prefetch reads -- a real
+mem_arbiter-style arbiter (as V1 uses for ITS OWN multi-master case)
+is deferred until a scenario that actually needs it exists (multiple
+Neural Processors or overlapping jobs sharing one memory_manager,
+not yet built).
+
+EVIDENCE:
+errors.log ERR-0006 -- the single-entry pending register, once
+correctly gated (see ERR-0006 items 1-2), handled 1-tile, 3-tile, and
+5-tile jobs correctly with no queue overflow in
+hardware/v2/sim/tb_memory_manager.v.
+
+ALTERNATIVES:
+1. Multiple prefetch_engine instances (one per bank), letting both
+   banks fetch fully in parallel. Rejected for M4: doubles DSP-free
+   logic for a benefit only realized when compute-tile time is
+   SHORTER than 2x fetch-tile time for a single engine -- not yet
+   measured to be the case (§22, deferred to M9), and the single-
+   engine design already fully hides fetch latency behind neural_
+   processor's own per-tile compute time in the cases tested (see
+   experiments.log EXP-0005 cycle counts).
+2. General N-entry FIFO for pending requests. Rejected: no scenario
+   in the current single-processor, single-job design can ever
+   generate more than one pending request before the in-flight one
+   completes -- an N-entry queue would be complexity with no
+   reachable use.
+3. Reuse V1's mem_arbiter.v as-is for the prefetch-vs-writeback
+   sharing. Rejected: mem_arbiter.v's four ports are hardcoded to
+   specific V1 module names/priorities (§1 already established this
+   pattern in DEC-0001 for the broader V1-freeze decision) -- and
+   prefetch/write-back are provably never simultaneous here anyway,
+   so even a generic 2-port arbiter would be unexercised complexity.
+
+RESULT:
+memory_manager.v as implemented. A NOTED, NOT-YET-OPTIMIZED
+characteristic (documented in the module's own header comment): the
+bank-swap-and-check control path costs a minimum 1 idle cycle per
+tile handoff even when the next bank was already prefetched in time,
+unlike neural_processor.v's own zero-gap tile acceptance -- left for
+M10 (Optimization) to revisit using real stall-percentage data (§22)
+rather than optimized blindly now.
+
+STATUS:
+ACCEPTED

@@ -36,3 +36,7 @@ result_buffer     D=4096: LUT=37 FF=30  DP16KD=2  (D=256: LUT=21 FF=26 DP16KD=1)
 CHECK: 0 problems, all 6 configs correctly infer DP16KD (no LUT-RAM
   fallback). weight_buffer's DP16KD count does NOT drop with depth
   (width-bound, not depth-bound -- see decisions.log / benchmark.log).
+
+[2026-09-05] EXP-0005 -- memory_manager + prefetch_engine (standalone)
+LUT4=851  TRELLIS_FF=789  CCU2C=108  MULT18X18D=0 (expected, no
+  multiplication in this module). CHECK: 0 problems.

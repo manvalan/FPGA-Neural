@@ -38,3 +38,9 @@ weight_buffer (D=512):      Fmax=339.67 MHz PASS
 result_buffer (D=4096):     Fmax=325.20 MHz PASS
 All far above the 80MHz target -- buffers are not a timing concern in
 isolation at these depths.
+
+[2026-09-05] EXP-0005 -- memory_manager + prefetch_engine (via
+harness_memory_manager.v, see errors.log ERR-0005 for why a harness
+was needed), real nextpnr-ecp5 --45k --package CABGA381 --speed 8
+--freq 80 --lpf-allow-unconstrained
+Fmax: 165.86 MHz -- PASS at 80MHz (real place&route measurement)

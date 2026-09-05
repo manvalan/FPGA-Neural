@@ -110,3 +110,30 @@ decision: vedi benchmark.log -- il dimensionamento di weight_buffer
   andra' guidato da P_IN, non solo da DEPTH, quando si arrivera' a
   M4/M9.
 next_action: M4 -- memory_manager.v + prefetch_engine.v.
+
+[2026-09-05T16:00:00Z] commit=5f0d7f1 session=v2-M4-memory-manager
+module: hardware/v2/rtl/memory_manager.v, prefetch_engine.v
+action: implementato M4 -- Memory Manager (arbitraggio/buffering/
+  forwarding/gestione latenza/double buffering, §12) + Prefetch Engine
+  (fetch a doppio buffer con retargeting di una singola istanza per
+  banco, §13). Backend PSRAM V1 riusato SENZA MODIFICHE
+  (int8_memory_access.v -> memory_interface.v -> psram_controller.v,
+  §15), integrato end-to-end con un vero hardware/v2/rtl/
+  neural_processor.v (M1).
+reason: roadmap M4.
+result: 3/3 job PASS end-to-end (1/3/5 tile), risultato verificato con
+  RILETTURA INDIPENDENTE da PSRAM (non solo ispezione di segnali
+  interni), con byte "poison" attorno alle regioni operando per
+  catturare eventuali errori di indirizzamento off-by-one (nessuno
+  trovato). 3 bug RTL reali trovati e risolti durante l'integrazione
+  (vedi errors.log ERR-0006): mancava una disciplina "una sola
+  richiesta di prefetch in volo", un buco di un ciclo nel check
+  !pf_busy, un mux di stato disallineato di un ciclo che faceva
+  silenziosamente perdere la scrittura del risultato su PSRAM.
+  Sintesi reale: 0 problemi, 851 LUT4/789 FF/108 CCU2C/0 DSP (atteso).
+  Fmax reale (via harness, stesso motivo pin-count di ERR-0005):
+  165.86 MHz, PASS a 80MHz.
+errors: vedi errors.log ERR-0005 (ricorrenza), ERR-0006 (3 bug nuovi).
+decision: vedi decisions.log DEC-0006 (motore di prefetch singolo +
+  registro pendente, nessun arbitro backend ancora necessario).
+next_action: M5 -- neural_director.v, scheduling first-free.

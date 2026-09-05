@@ -59,3 +59,18 @@ wide) scale as expected with depth. Confirms §14's warning literally:
 "non assumere che buffer piu' grandi siano automaticamente migliori"
 -- here, smaller was not cheaper either, because depth was the wrong
 lever for this specific buffer's cost.
+
+[2026-09-05] M4 Memory Manager + Prefetch Engine (standalone resource
+count; Fmax via timing harness -- see errors.log ERR-0005)
+
+| Module                          | Fmax (POST-P&R) | LUT | FF  | DSP | CCU2C |
+|----------------------------------|------------------|-----|-----|-----|-------|
+| memory_manager + prefetch_engine | 165.86 MHz       | 851 | 789 | 0   | 108   |
+
+End-to-end (real PSRAM + real neural_processor, SIMULATED only, no
+system-level P&R yet -- deferred to M7/M9): 3-tile job = 446 cycles,
+1-tile job = 166 cycles, 5-tile job = 728 cycles. ~140-150 cycles/tile,
+dominated by psram_model.v's real ~70ns TAA access latency, not by
+memory_manager's own control overhead (its bank-swap turnaround is
+documented as a fixed +1 cycle/tile in decisions.log DEC-0006, a small
+fraction of the ~140-cycle PSRAM-dominated total).

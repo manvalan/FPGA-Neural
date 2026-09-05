@@ -22,8 +22,11 @@ reali, non solo scritto).
       `result_buffer.v`). Tutti inferiscono DP16KD reale (10/10 test,
       6/6 config sintetizzate 0 problemi). Scoperta: il costo BRAM di
       weight_buffer e' guidato da P_IN (larghezza), non da DEPTH.
-- [ ] **M4 — Memory Manager** (`memory_manager.v`, `prefetch_engine.v`),
-      backend PSRAM V1 riusato senza modifiche.
+- [x] **M4 — Memory Manager** (`memory_manager.v`, `prefetch_engine.v`),
+      backend PSRAM V1 riusato SENZA MODIFICHE. End-to-end reale (3/3
+      job PASS) con vero neural_processor + vera catena PSRAM V1.
+      3 bug RTL trovati/risolti (`logs/errors.log` ERR-0006). Fmax
+      165.86 MHz.
 - [ ] **M5 — Neural Director** (`neural_director.v`), scheduling first-free.
 - [ ] **M6 — Dependency Manager** (`dependency_manager.v`), ready/waiting
       queue, dependency counters, wake-up, producer tracking.
