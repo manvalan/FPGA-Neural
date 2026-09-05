@@ -116,6 +116,28 @@ DEC-0014). Report completo (21 sezioni, THEORETICAL/SIMULATED/
 POST-P&R/DERIVED classificati): `hardware/v2/docs/benchmarks/
 final-benchmark.md`.
 
+### Ottimizzazioni post-campagna (su richiesta utente)
+
+Implementate entrambe le raccomandazioni #1/#2 del report:
+1. **Burst a livello di parola** (`prefetch_engine.v`/`memory_manager.v`
+   parlano direttamente il protocollo a 16 bit di `memory_interface.v`,
+   bypassando `int8_memory_access.v` -- ancora congelato, semplicemente
+   non piu' istanziato in questo percorso). Reale: -49/-56% cicli sui
+   job singoli, 2.24-2.37x speedup wall-clock reale sull'intera
+   campagna. `logs/decisions.log` DEC-0015.
+2. **Cache condivisa on-chip per il vettore di attivazione** (nuovo
+   `activation_cache.v`, evita che neuroni con lo stesso `x_base`
+   rileggano X da PSRAM). Reale: ulteriore -1.66/-2.00x cicli. MA costo
+   Fmax reale molto piu' ripido del previsto: N_SLOTS=4 ora FALLISCE il
+   target 80MHz (65.01 MHz, prima passava). N_SLOTS=2 (default
+   raccomandato) resta valido con margine piu' sottile (87.72 MHz).
+   Speedup wall-clock reale combinato (#1+#2) vs baseline originale:
+   N=1 3.86x, N=2 2.45x. `logs/decisions.log` DEC-0016.
+
+Trovati e risolti 3 bug RTL reali durante l'implementazione
+(`logs/errors.log` ERR-0009, ERR-0010). 24/24 combinazioni
+workload/config ancora bit-exact dopo entrambe le ottimizzazioni.
+
 ## Log
 
 Vedi `hardware/v2/logs/` (`development.log` per la cronologia di sessione,

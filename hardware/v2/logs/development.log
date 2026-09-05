@@ -331,3 +331,35 @@ decision: vedi decisions.log DEC-0015.
 next_action: ottimizzazione #2 -- cache condivisa on-chip per il
   vettore di attivazione (X), per eliminare le letture ridondanti tra
   neuroni che condividono lo stesso input di layer.
+
+[2026-09-05] Ottimizzazione #2 -- cache condivisa on-chip per il
+vettore di attivazione, su richiesta esplicita dell'utente
+reason: dopo l'ottimizzazione #1 (burst a livello di parola), l'utente
+  ha chiesto di implementare anche la #2: cache condivisa per evitare
+  che ogni neurone rilegga da PSRAM lo stesso vettore X gia' letto da
+  un altro neurone dello stesso layer.
+result: nuovo modulo activation_cache.v (single-tag, granularita' a
+  tile, condiviso tra tutti gli slot). Trovati e risolti 2 bug reali
+  durante l'implementazione (errors.log ERR-0010): una race
+  target-bank/pending-bank (stessa classe di ERR-0006) e una ripetizione
+  del bug a larghezza zero di ERR-0009 (N_SLOTS=1). Dopo il fix: 24/24
+  PASS bit-exact. Beneficio reale misurato: ulteriore riduzione cicli
+  1.66-2.00x oltre l'ottimizzazione #1 (circa 4x combinato rispetto
+  alla baseline originale byte-level). MA costo reale in Fmax molto piu'
+  ripido del previsto: N_SLOTS=2 scende da 133.58 a 87.72 MHz (-34%,
+  ancora sopra 80MHz ma con margine molto piu' sottile), N_SLOTS=4
+  scende a 65.01 MHz e ORA FALLISCE il target 80MHz (prima passava).
+  Speedup reale in wall-clock rispetto alla baseline originale:
+  N=1 3.86x, N=2 2.45x, N=4 2.29x (ma con una regressione reale
+  rispetto alla sola ottimizzazione #1, dato che N=4 ora fallisce il
+  timing).
+errors: vedi errors.log ERR-0010 (2 bug RTL reali, trovati e risolti).
+decision: vedi decisions.log DEC-0016 -- vittoria reale netta
+  confermata per N_SLOTS=1/2 (l'intervallo raccomandato, DEC-0014
+  resta valida), regressione reale a N_SLOTS=4 (mai la configurazione
+  raccomandata, ma un costo reale onestamente riportato, non nascosto).
+  Pipeline della logica di hit-check della cache segnalato come lavoro
+  futuro concreto se servisse N_SLOTS>2 con la cache attiva.
+next_action: nessuna ulteriore richiesta esplicitamente dall'utente per
+  questo giro. Datasheet V2 professionale, ora con dati definitivi
+  post-ottimizzazione da includere.

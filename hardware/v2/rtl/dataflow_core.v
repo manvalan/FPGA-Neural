@@ -34,19 +34,32 @@
 // component gluing the two together.
 //
 // Scope (see hardware/v2/logs/decisions.log DEC-0009):
-// - activation_buffer.v/weight_buffer.v/result_buffer.v (M3) are NOT
-//   instantiated inside dataflow_core yet -- they belong on the OTHER
-//   side of the Memory Backend Interface (§15's own diagram: Memory
-//   Manager -> Memory Backend Interface -> PSRAM Controller), and
-//   each memory_manager instance already owns its own prefetch double
-//   buffer (M4) for the fast path. Wiring the M3 buffers in as a
-//   shared on-chip cache in front of PSRAM is real future work, not
-//   done here (no measured need for it yet, §22/§30).
-// - each slot's byte-level Memory Backend Interface port is exposed
-//   SEPARATELY (N_SLOTS independent ports) rather than arbitrated
-//   down to one shared PSRAM master -- real PSRAM integration
-//   (including whatever arbitration N_SLOTS>1 requires) is explicitly
-//   M8's job, not this one's.
+// - activation_buffer.v/weight_buffer.v/result_buffer.v (M3, BRAM-
+//   backed FIFOs) are NOT instantiated here -- superseded by a
+//   different, measurement-driven shared cache (activation_cache.v,
+//   post-M10 DEC-0016, see below), not the original M3 modules
+//   themselves.
+// - each slot's Memory Backend Interface port is exposed SEPARATELY
+//   (N_SLOTS independent ports) rather than arbitrated down to one
+//   shared PSRAM master -- real PSRAM integration (including whatever
+//   arbitration N_SLOTS>1 requires) is done one level up, in
+//   neural_multiprocessor.v (M8).
+//
+// Post-M10 (decisions.log DEC-0016): a single shared activation_cache
+// instance sits alongside the N_SLOTS memory_managers, serving the
+// ACTIVATION (X) half of each tile fetch -- in the realistic dense-
+// layer workloads this project benchmarks, many neurons share the
+// exact same X vector, and fetching it from PSRAM once instead of
+// once per memory_manager instance is real, measured, redundant-
+// traffic elimination (see hardware/v2/docs/benchmarks/
+// final-benchmark.md's own recommendation #2). Each memory_manager's
+// own prefetch_engine now fetches WEIGHTS only. The exposed
+// slot_mem_* arrays are sized N_SLOTS+1: indices [0, N_SLOTS) are the
+// per-slot memory_managers' own weight+write-back backend ports
+// (unchanged in spirit from before), index [N_SLOTS] is the shared
+// activation_cache's own backend port -- all N_SLOTS+1 arbitrated
+// together by neural_multiprocessor.v's slot_mem_arbiter.v (N_PORTS
+// widened to N_SLOTS+1 there to match).
 // ================================================================
 
 module dataflow_core #(
@@ -73,19 +86,20 @@ module dataflow_core #(
     input  wire [15:0]                          reg_n_tiles,
     input  wire [ADDR_WIDTH-1:0]                reg_result_addr,
 
-    // ---- per-slot Memory Backend Interface (arrayed, one per slot --
-    // see file header on why arbitration to one shared PSRAM port is
-    // NOT done here). WORD-level (16-bit) post-M10 (decisions.log
-    // DEC-0015) -- see memory_manager.v/prefetch_engine.v's own
-    // headers for why. ----
-    output wire [N_SLOTS-1:0]                   slot_mem_req,
-    output wire [N_SLOTS-1:0]                   slot_mem_wr,
-    output wire [ADDR_WIDTH*N_SLOTS-1:0]        slot_mem_addr,   // WORD address
-    output wire [16*N_SLOTS-1:0]                slot_mem_wdata,
-    output wire [N_SLOTS-1:0]                   slot_mem_lb_n,
-    output wire [N_SLOTS-1:0]                   slot_mem_ub_n,
-    input  wire [16*N_SLOTS-1:0]                slot_mem_rdata,
-    input  wire [N_SLOTS-1:0]                   slot_mem_ready
+    // ---- Memory Backend Interface, arrayed N_SLOTS+1 wide (see file
+    // header: indices [0,N_SLOTS) are the per-slot memory_managers'
+    // own weight+write-back ports, index [N_SLOTS] is the shared
+    // activation_cache's own port). WORD-level (16-bit) post-M10
+    // (decisions.log DEC-0015) -- see memory_manager.v/
+    // prefetch_engine.v's own headers for why. ----
+    output wire [N_SLOTS:0]                     slot_mem_req,
+    output wire [N_SLOTS:0]                      slot_mem_wr,
+    output wire [ADDR_WIDTH*(N_SLOTS+1)-1:0]     slot_mem_addr,   // WORD address
+    output wire [16*(N_SLOTS+1)-1:0]             slot_mem_wdata,
+    output wire [N_SLOTS:0]                      slot_mem_lb_n,
+    output wire [N_SLOTS:0]                      slot_mem_ub_n,
+    input  wire [16*(N_SLOTS+1)-1:0]             slot_mem_rdata,
+    input  wire [N_SLOTS:0]                      slot_mem_ready
 );
 
     localparam NODE_IDW = $clog2(N_NODES);
@@ -153,6 +167,14 @@ module dataflow_core #(
     assign dm_producer_done_valid    = dir_job_out_done;
     assign dm_producer_done_node_id  = completed_node_id_16[NODE_IDW-1:0];
 
+    // ---- shared activation_cache request bus (one port per slot,
+    // collected here for the cache instance below) ----
+    wire [N_SLOTS-1:0]            xc_req;
+    wire [ADDR_WIDTH*N_SLOTS-1:0] xc_x_base;
+    wire [16*N_SLOTS-1:0]         xc_tile_idx;
+    wire [N_SLOTS-1:0]            xc_ack;
+    wire signed [DATA_WIDTH*P_IN*N_SLOTS-1:0] xc_tile_x;
+
     // ---- N_SLOTS x (Memory Manager (M4) + Neural Processor (M1)) ----
     genvar g;
     generate
@@ -177,6 +199,11 @@ module dataflow_core #(
                 .operand_valid(mm_operand_valid), .operand_ready(mm_operand_ready),
                 .input_data(mm_input_data), .weight_data(mm_weight_data), .tile_last(mm_tile_last),
                 .result_valid(mm_result_valid), .result_ready(mm_result_ready), .result_data(mm_result_data),
+                .xc_req(xc_req[g]),
+                .xc_x_base(xc_x_base[g*ADDR_WIDTH +: ADDR_WIDTH]),
+                .xc_tile_idx(xc_tile_idx[g*16 +: 16]),
+                .xc_ack(xc_ack[g]),
+                .xc_tile_x(xc_tile_x[g*DATA_WIDTH*P_IN +: DATA_WIDTH*P_IN]),
                 .mem_req(slot_mem_req[g]), .mem_wr(slot_mem_wr[g]),
                 .mem_addr(slot_mem_addr[g*ADDR_WIDTH +: ADDR_WIDTH]),
                 .mem_wdata(slot_mem_wdata[g*16 +: 16]),
@@ -214,5 +241,22 @@ module dataflow_core #(
 
         end
     endgenerate
+
+    // ---- shared activation_cache (M10+, DEC-0016) -- serves the
+    // ACTIVATION half of every slot's tile fetch, using arbiter port
+    // index N_SLOTS (the last one) for its own PSRAM traffic on a
+    // cache miss. ----
+    activation_cache #(
+        .DATA_WIDTH(DATA_WIDTH), .P_IN(P_IN), .ADDR_WIDTH(ADDR_WIDTH), .N_SLOTS(N_SLOTS)
+    ) u_activation_cache (
+        .clk(clk), .rst(rst),
+        .req(xc_req), .req_x_base(xc_x_base), .req_tile_idx(xc_tile_idx),
+        .ack(xc_ack), .tile_x_out(xc_tile_x),
+        .mem_req(slot_mem_req[N_SLOTS]), .mem_wr(slot_mem_wr[N_SLOTS]),
+        .mem_addr(slot_mem_addr[N_SLOTS*ADDR_WIDTH +: ADDR_WIDTH]),
+        .mem_wdata(slot_mem_wdata[N_SLOTS*16 +: 16]),
+        .mem_lb_n(slot_mem_lb_n[N_SLOTS]), .mem_ub_n(slot_mem_ub_n[N_SLOTS]),
+        .mem_rdata(slot_mem_rdata[N_SLOTS*16 +: 16]), .mem_ready(slot_mem_ready[N_SLOTS])
+    );
 
 endmodule

@@ -937,3 +937,98 @@ correctness preserved (24/24 bit-exact).
 STATUS:
 ACCEPTED
 
+DEC-0016
+
+DATE: 2026-09-05
+
+DECISION:
+A new shared module, activation_cache.v, is added inside dataflow_core.v
+alongside the N_SLOTS memory_managers. It fetches a given ACTIVATION
+(X) vector from PSRAM once (tile by tile, on first use) and serves
+every subsequent request for the same x_base/tile directly from an
+on-chip buffer -- no PSRAM access on a hit. Each memory_manager's own
+prefetch_engine now fetches WEIGHTS only (X is no longer duplicated
+per-slot). Single-tag design (one active cached x_base at a time,
+correct but can thrash under interleaved different-x_base concurrent
+traffic -- never incorrect, see the "Alternatives"/"Result" sections
+below for the honest limitation).
+
+WHY (user-requested optimization #2, following the final-benchmark.md
+report's own recommendation): in the realistic dense-layer workloads
+this project benchmarks, many neurons share the exact same X vector --
+each of dataflow_core's N_SLOTS memory_manager instances re-fetching
+that identical vector from PSRAM independently was real, measured,
+redundant traffic on the one shared PSRAM port.
+
+EVIDENCE -- REAL BENEFIT (cycles, SIMULATED, full campaign,
+tb_benchmark_suite.v, D-Stress the largest/most representative
+workload): combined with DEC-0015's word-level burst rewrite, total
+cycle count for D-Stress falls from the ORIGINAL byte-level baseline
+(EXP-0014) by 3.97x-4.47x across every N_SLOTS tested (N=1: 780298 ->
+174610; N=2: 736402 -> 185428; N=4: 736823 -> 184795; N=8: 738751 ->
+184797) -- the activation_cache's OWN incremental contribution on top
+of DEC-0015 alone is a further 1.66x-2.00x cycle reduction. All 24/24
+workload/config combinations remain bit-exact.
+
+EVIDENCE -- REAL COST (Fmax, POST-P&R MEASURED, full
+neural_multiprocessor including the real V1 PSRAM chain): the shared
+cache's real Fmax cost is substantially STEEPER than DEC-0015's own
+(which cost only 0-6% Fmax). Real POST-P&R Fmax after adding the
+cache: N=1: 152.44 -> 131.79 MHz (-13.5%); N=2: 133.58 -> 87.72 MHz
+(-34.3%); N=4: 112.07 -> 65.01 MHz (-42.0%, and this configuration NOW
+FAILS the 80MHz target it previously passed). This is a real,
+structural cost: activation_cache is a single shared resource with
+N_SLOTS request ports, a broadcast-capable hit-check evaluated for
+every port every cycle, and a shared tile_store array -- a genuine
+routing/fan-in hot spot that gets worse as N_SLOTS grows, more
+severely than the arbiter-only widening DEC-0015 introduced.
+
+Combined REAL WALL-CLOCK effect (cycles / real POST-P&R Fmax,
+D-Stress, vs the ORIGINAL byte-level baseline): N=1: 3.86x faster
+(the clear win case -- low Fmax cost, full cycle benefit); N=2: 2.45x
+faster (still a solid net win -- this is the recommended default,
+DEC-0014, and it still comfortably beats the baseline, though its
+Fmax safety margin over 80MHz shrank from +78% to +9.7%); N=4: 2.29x
+faster THAN THE ORIGINAL baseline, but WORSE than DEC-0015-alone
+(2742.4us -> 2842.6us) once its own real (now failing) Fmax is used --
+adding the cache is a net REGRESSION specifically at N=4, and N=4 is
+no longer even a valid passing 80MHz design point.
+
+ALTERNATIVES:
+1. Pipeline the cache's hit-detection/broadcast logic (register the
+   hit[] comparison one extra stage before driving tile_x_out) to
+   recover some of the lost Fmax margin. Rejected FOR NOW: a real,
+   promising follow-up, but a genuine RTL redesign of the cache's own
+   timing, not attempted in this pass -- flagged as real, concrete
+   future work rather than attempted blindly without first measuring
+   whether N_SLOTS=2 (the actual recommended default, DEC-0014) still
+   needs it (it does not fail timing at N=2, it just has a thinner
+   margin than before).
+2. Give up on the cache entirely given N=4's regression. Rejected:
+   N=1 and N=2 (the actually-recommended range per DEC-0014) both show
+   a clear, real net win, and N=4 was never the recommended default
+   to begin with -- discarding a real 2.45-3.86x win over the range
+   that matters to avoid a regression in a range that was already
+   deprioritized would be the wrong trade.
+3. Make MAX_TILES smaller (currently 16, sized for the largest
+   workload's shared vector) to shrink the cache's own storage/compare
+   width and recover some Fmax. Rejected for THIS round: would need
+   re-verifying against every workload's own real tile count
+   requirements (Large/Stress use exactly 16) -- a real, bounded
+   follow-up, not attempted here to avoid conflating multiple
+   variables in one measurement.
+
+RESULT:
+activation_cache.v is added, real net win confirmed at N_SLOTS=1 and
+N_SLOTS=2 (the recommended default, DEC-0014), real regression to a
+failing timing state confirmed at N_SLOTS=4 -- reported honestly, not
+hidden. N_SLOTS=2 remains the recommended default (DEC-0014's own
+conclusion is unaffected, since N=4 was never recommended), now with a
+thinner but still real Fmax margin (87.72 MHz vs the 80MHz target).
+Cache pipelining (Alternative 1) is flagged as real, concrete follow-up
+work if N_SLOTS>2 configurations are ever needed with this cache
+active.
+
+STATUS:
+ACCEPTED
+

@@ -327,3 +327,61 @@ DIAGNOSIS METHOD (bug 3): periodic `$display` progress heartbeats
   output for real-time visibility, isolating the exact neuron index
   where progress stopped advancing -- the same "trace real signals,
   don't guess" discipline used throughout this whole project.
+
+ERR-0010 (real RTL bugs found and fixed during activation_cache.v
+implementation, DEC-0016)
+DATE: 2026-09-05
+
+1. Same bug CLASS as ERR-0006 (pf_target_bank/pf_pending_bank), NEW
+   instance, memory_manager.v's activation-cache side:
+   SYMPTOM: hardware/v2/sim/tb_memory_manager.v -- job xb=4096 (3
+     tiles) hung/produced wrong results after adding the shared
+     activation_cache request path; cycle-by-cycle tracing (temporary
+     $display instrumentation, later removed) showed a cache ack for
+     tile 1 (queued for bank 1) instead applying its data to bank 0.
+   ROOT CAUSE: `xc_target_bank` (which bank an ack's data should be
+     written into) was being written DIRECTLY by the queueing logic
+     (MM_IDLE/MM_PREFETCH_FIRST/MM_STREAM), the same register used to
+     resolve an ack that might still be OUTSTANDING from an EARLIER
+     queued request. Real PSRAM miss latency can exceed one
+     neural_processor tile's own compute time, so a LATER handoff can
+     queue a NEW request (targeting a DIFFERENT bank) in the same or a
+     following cycle, before the EARLIER request's ack has arrived --
+     with only one `xc_target_bank` register, NBA "last write in
+     program order wins" semantics silently overwrote which bank the
+     EARLIER, already-in-flight request's eventual ack gets applied
+     to. This is the EXACT bug ERR-0006 already found and fixed once
+     for pf_target_bank/pf_pending_bank (which already used a correct
+     two-register pattern: a `_pending_bank` staging register written
+     at queueing time, and the real `_target_bank` written ONLY by the
+     issue rule at the moment the request actually fires) -- this
+     module's newly-added activation-cache side did not follow that
+     already-established pattern, until now.
+   FIX: introduced `xc_pending_bank` (written at queueing time) and
+     changed `xc_target_bank` to be written ONLY by the issue rule
+     (`xc_target_bank <= xc_pending_bank;`, the same cycle xc_req
+     fires), mirroring pf_target_bank/pf_pending_bank exactly.
+   VERIFICATION: tb_memory_manager.v 3/3 PASS bit-exact after the fix.
+     Full final-benchmark campaign (24/24 workload/config
+     combinations) re-verified bit-exact.
+
+2. Same bug CLASS as ERR-0009 item 1 (neural_director.v's N_SLOTS=1
+   zero-width replication), NEW instance, activation_cache.v:
+   SYMPTOM: Verilator compile error building the M4-level regression
+     testbench (activation_cache instantiated with N_SLOTS=1 there,
+     to serve a single memory_manager instance) -- same
+     "%Error-ZEROREPL: Replication value of 0 is only legal under a
+     concatenation" as ERR-0009.
+   ROOT CAUSE: `miss_idx = {$clog2(N_SLOTS){1'b0}};` -- identical root
+     cause to ERR-0009 item 1 ($clog2(1)=0 at N_SLOTS=1).
+   FIX: replaced with the same width-agnostic `'0` literal used in
+     neural_director.v's own fix.
+   VERIFICATION: tb_memory_manager.v (N_SLOTS=1 activation_cache) and
+     the full campaign (N_SLOTS=1/2/4/8) all build and pass.
+
+DIAGNOSIS METHOD (item 1): periodic $display cycle-by-cycle tracing of
+  memory_manager's own internal state (xc_req/xc_ack/xc_outstanding/
+  xc_pending/bank_x_ready/bank_w_ready) and the 2-port test arbiter's
+  own owner/grant state, added temporarily to tb_memory_manager.v and
+  removed once the bug was isolated and fixed -- the same "trace real
+  signals, don't guess" discipline used throughout this project.

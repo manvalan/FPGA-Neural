@@ -50,15 +50,73 @@ module tb;
     wire                                 mm_result_valid, mm_result_ready;
     wire signed [DATA_WIDTH-1:0]         mm_result_data;
 
-    // ---- memory_manager <-> memory_interface (word-level Memory
-    // Backend Interface, post-M10 DEC-0015 -- int8_memory_access is no
-    // longer in this datapath, see memory_manager.v's own header) ----
-    wire                    mem_req, mem_wr;
-    wire [ADDR_WIDTH-1:0]   mem_addr;   // WORD address
-    wire [15:0]             mem_wdata;
-    wire                    mem_lb_n, mem_ub_n;
-    wire [15:0]             mem_rdata;
-    wire                    mem_ready;
+    // ---- memory_manager's own WEIGHT backend port (word-level Memory
+    // Backend Interface, post-M10 DEC-0015) ----
+    wire                    mm_mem_req, mm_mem_wr;
+    wire [ADDR_WIDTH-1:0]   mm_mem_addr;   // WORD address
+    wire [15:0]             mm_mem_wdata;
+    wire                    mm_mem_lb_n, mm_mem_ub_n;
+    wire [15:0]             mm_mem_rdata;
+    wire                    mm_mem_ready;
+
+    // ---- shared activation_cache (M10+, DEC-0016) -- N_SLOTS=1 here
+    // (a single memory_manager instance), routed through a real 2-port
+    // arbiter (weight port + cache port) into the SAME real
+    // memory_interface, mirroring dataflow_core.v/neural_multiprocessor.v's
+    // own real structure exactly, just scoped down to one slot. ----
+    wire                    xc_req;
+    wire [ADDR_WIDTH-1:0]   xc_x_base;
+    wire [15:0]             xc_tile_idx;
+    wire                    xc_ack;
+    wire signed [DATA_WIDTH*P_IN-1:0] xc_tile_x;
+
+    wire                    xc_mem_req, xc_mem_wr;
+    wire [ADDR_WIDTH-1:0]   xc_mem_addr;
+    wire [15:0]             xc_mem_wdata;
+    wire                    xc_mem_lb_n, xc_mem_ub_n;
+    wire [15:0]             xc_mem_rdata;
+    wire                    xc_mem_ready;
+
+    activation_cache #(
+        .DATA_WIDTH(DATA_WIDTH), .P_IN(P_IN), .ADDR_WIDTH(ADDR_WIDTH), .N_SLOTS(1)
+    ) u_xcache (
+        .clk(clk), .rst(rst),
+        .req(xc_req), .req_x_base(xc_x_base), .req_tile_idx(xc_tile_idx),
+        .ack(xc_ack), .tile_x_out(xc_tile_x),
+        .mem_req(xc_mem_req), .mem_wr(xc_mem_wr), .mem_addr(xc_mem_addr), .mem_wdata(xc_mem_wdata),
+        .mem_lb_n(xc_mem_lb_n), .mem_ub_n(xc_mem_ub_n),
+        .mem_rdata(xc_mem_rdata), .mem_ready(xc_mem_ready)
+    );
+
+    wire [1:0]              arb2_req    = {xc_mem_req, mm_mem_req};
+    wire [1:0]              arb2_wr     = {xc_mem_wr, mm_mem_wr};
+    wire [ADDR_WIDTH*2-1:0] arb2_addr   = {xc_mem_addr, mm_mem_addr};
+    wire [31:0]             arb2_wdata  = {xc_mem_wdata, mm_mem_wdata};
+    wire [1:0]              arb2_lb_n   = {xc_mem_lb_n, mm_mem_lb_n};
+    wire [1:0]              arb2_ub_n   = {xc_mem_ub_n, mm_mem_ub_n};
+    wire [31:0]             arb2_rdata;
+    wire [1:0]              arb2_ready;
+    assign mm_mem_rdata = arb2_rdata[15:0];
+    assign mm_mem_ready = arb2_ready[0];
+    assign xc_mem_rdata = arb2_rdata[31:16];
+    assign xc_mem_ready = arb2_ready[1];
+
+    wire                    arb_m_req, arb_m_wr;
+    wire [ADDR_WIDTH-1:0]   arb_m_addr;
+    wire [15:0]             arb_m_wdata;
+    wire                    arb_m_lb_n, arb_m_ub_n;
+    wire [15:0]             arb_m_rdata;
+    wire                    arb_m_ready;
+
+    slot_mem_arbiter #(.ADDR_WIDTH(ADDR_WIDTH), .N_PORTS(2)) u_arb2 (
+        .clk(clk), .rst(rst),
+        .s_req(arb2_req), .s_wr(arb2_wr), .s_addr(arb2_addr),
+        .s_wdata(arb2_wdata), .s_lb_n(arb2_lb_n), .s_ub_n(arb2_ub_n),
+        .s_rdata(arb2_rdata), .s_ready(arb2_ready),
+        .m_req(arb_m_req), .m_wr(arb_m_wr), .m_addr(arb_m_addr), .m_wdata(arb_m_wdata),
+        .m_lb_n(arb_m_lb_n), .m_ub_n(arb_m_ub_n),
+        .m_rdata(arb_m_rdata), .m_ready(arb_m_ready)
+    );
 
     memory_manager #(
         .DATA_WIDTH(DATA_WIDTH), .P_IN(P_IN), .ADDR_WIDTH(ADDR_WIDTH)
@@ -69,9 +127,11 @@ module tb;
         .operand_valid(mm_operand_valid), .operand_ready(mm_operand_ready),
         .input_data(mm_input_data), .weight_data(mm_weight_data), .tile_last(mm_tile_last),
         .result_valid(mm_result_valid), .result_ready(mm_result_ready), .result_data(mm_result_data),
-        .mem_req(mem_req), .mem_wr(mem_wr), .mem_addr(mem_addr), .mem_wdata(mem_wdata),
-        .mem_lb_n(mem_lb_n), .mem_ub_n(mem_ub_n),
-        .mem_rdata(mem_rdata), .mem_ready(mem_ready)
+        .xc_req(xc_req), .xc_x_base(xc_x_base), .xc_tile_idx(xc_tile_idx),
+        .xc_ack(xc_ack), .xc_tile_x(xc_tile_x),
+        .mem_req(mm_mem_req), .mem_wr(mm_mem_wr), .mem_addr(mm_mem_addr), .mem_wdata(mm_mem_wdata),
+        .mem_lb_n(mm_mem_lb_n), .mem_ub_n(mm_mem_ub_n),
+        .mem_rdata(mm_mem_rdata), .mem_ready(mm_mem_ready)
     );
 
     // ---- real Neural Processor (M1), driven entirely by memory_manager ----
@@ -121,9 +181,9 @@ module tb;
 
     memory_interface #(.ADDR_WIDTH(ADDR_WIDTH), .DATA_WIDTH(PSRAM_DATA_WIDTH)) u_memif (
         .clk(clk), .rst(rst),
-        .req(mem_req), .wr(mem_wr), .addr(mem_addr), .wdata(mem_wdata),
-        .lb_n(mem_lb_n), .ub_n(mem_ub_n),
-        .rdata(mem_rdata), .ready(mem_ready),
+        .req(arb_m_req), .wr(arb_m_wr), .addr(arb_m_addr), .wdata(arb_m_wdata),
+        .lb_n(arb_m_lb_n), .ub_n(arb_m_ub_n),
+        .rdata(arb_m_rdata), .ready(arb_m_ready),
         .mem_req(pc_mem_req), .mem_wr(pc_mem_wr), .mem_addr(pc_mem_addr), .mem_wdata(pc_mem_wdata),
         .mem_lb_n(pc_mem_lb_n), .mem_ub_n(pc_mem_ub_n),
         .mem_rdata(pc_mem_rdata), .mem_ready(pc_mem_ready)

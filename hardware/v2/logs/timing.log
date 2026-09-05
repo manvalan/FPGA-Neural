@@ -126,3 +126,18 @@ Small, real Fmax cost from widening the shared arbiter/backend to
 16-bit + lb_n/ub_n (extra routing), overwhelmingly outweighed by the
 real cycle-count reduction (EXP-0015 in experiments.log/benchmark.log):
 D-Stress real wall-clock improves 2.24-2.37x at every N_SLOTS.
+
+[2026-09-05] EXP-0016 -- neural_multiprocessor N_SLOTS=1/2/4 after
+adding activation_cache.v (DEC-0016), real nextpnr-ecp5 --45k
+--package CABGA381 --speed 8 --freq 80 --lpf-allow-unconstrained
+N_SLOTS=1: Fmax = 131.79 MHz -- PASS at 80MHz (was 152.44 MHz, -13.5%)
+N_SLOTS=2: Fmax = 87.72 MHz  -- PASS at 80MHz (was 133.58 MHz, -34.3%)
+N_SLOTS=4: Fmax = 65.01 MHz  -- FAILS at 80MHz (was 112.07 MHz, -42.0%)
+Real, substantial Fmax cost from the shared activation_cache -- a
+single central resource with N_SLOTS request ports, a broadcast-
+capable hit-check evaluated every cycle for every port, and a shared
+tile_store array. Cost grows much faster with N_SLOTS than
+DEC-0015's own arbiter widening did. N_SLOTS=4 is no longer a passing
+80MHz design point with the cache active -- see decisions.log
+DEC-0016 for the full analysis and why N_SLOTS=2 (the recommended
+default, DEC-0014) is unaffected in its own recommendation.

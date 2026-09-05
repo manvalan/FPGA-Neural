@@ -584,3 +584,45 @@ next_action: user-requested optimization #2 -- a shared on-chip cache
   for the activation (X) vector, so N independent neurons sharing one
   input vector (the dense-layer shape used throughout this benchmark
   suite) fetch it from PSRAM ONCE instead of once per neuron.
+
+[2026-09-05] EXP-0016 -- shared activation_cache implementation (user-
+requested optimization #2, following final-benchmark.md's own
+recommendation: eliminate redundant per-neuron re-fetching of a
+shared input vector)
+test: new module activation_cache.v (single-tag, tile-granular,
+  N_SLOTS request ports, real word-level PSRAM backend via its own
+  arbiter port); memory_manager.v's activation half redirected through
+  it (weight half unchanged from DEC-0015); dataflow_core.v/
+  neural_multiprocessor.v/slot_mem_arbiter.v widened to N_SLOTS+1
+  ports to arbitrate the cache's own traffic alongside the N_SLOTS
+  memory_managers' weight traffic. Re-verified: M4 (updated
+  testbench), M7 (updated testbench), M8 (unchanged, black-box), and
+  the full final benchmark campaign (unchanged, black-box) at
+  N_SLOTS=1/2/4/8.
+simulator: Verilator 5.050 (--binary --timing)
+PASS/FAIL:
+  SIMULATED: M4 3/3 PASS, M7 4/4 PASS, M8 4/4 PASS, final campaign
+    24/24 PASS bit-exact. D-Stress cycles: 348682/307602/307346/
+    307874 (post-DEC-0015) -> 174610/185428/184795/184797 (N=1/2/4/8,
+    post-DEC-0016) -- a further 1.66-2.00x real cycle reduction from
+    the cache alone, ~4x combined with DEC-0015 vs the original
+    byte-level baseline.
+  SYNTHESIZED + POST-P&R (real, full system incl. real PSRAM pins):
+    N=1 131.79 MHz (was 152.44), N=2 87.72 MHz (was 133.58, -34.3%),
+    N=4 65.01 MHz (was 112.07, -42.0% -- NOW FAILS the 80MHz target).
+  Combined real wall-clock speedup vs the ORIGINAL byte-level
+    baseline: N=1 3.86x, N=2 2.45x, N=4 2.29x (but a real regression
+    vs DEC-0015-alone once N=4's own now-failing Fmax is used).
+errors: 2 real bugs found and fixed (errors.log ERR-0010): a target-
+  bank/pending-bank race (ERR-0006's bug class, new instance) and a
+  repeat of ERR-0009's N_SLOTS=1 zero-width replication bug.
+decision: see decisions.log DEC-0016 -- real net win confirmed at
+  N_SLOTS=1/2 (the recommended range, DEC-0014), real regression to a
+  failing timing state at N_SLOTS=4 (never the recommended default,
+  but a real, honestly-reported cost of this optimization). Cache
+  pipelining flagged as real follow-up work if N_SLOTS>2 with the
+  cache active is ever needed.
+next_action: none further requested by the user for this round. Real,
+  concrete follow-up flagged in DEC-0016: pipeline the cache's own
+  hit-detection/broadcast logic to recover Fmax margin if higher
+  N_SLOTS configurations are ever needed with the cache active.

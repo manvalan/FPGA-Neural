@@ -72,12 +72,14 @@ module neural_multiprocessor #(
 );
 
     // ---- dataflow_core (M7, control logic unmodified; per-slot
-    // backend port widened to 16-bit + lb_n/ub_n per DEC-0015) ----
-    wire [N_SLOTS-1:0]              slot_mem_req, slot_mem_wr;
-    wire [ADDR_WIDTH*N_SLOTS-1:0]   slot_mem_addr;
-    wire [16*N_SLOTS-1:0]           slot_mem_wdata, slot_mem_rdata;
-    wire [N_SLOTS-1:0]              slot_mem_lb_n, slot_mem_ub_n;
-    wire [N_SLOTS-1:0]              slot_mem_ready;
+    // backend port widened to 16-bit + lb_n/ub_n per DEC-0015, and to
+    // N_SLOTS+1 ports per DEC-0016 -- the extra port is the shared
+    // activation_cache's own backend traffic) ----
+    wire [N_SLOTS:0]                 slot_mem_req, slot_mem_wr;
+    wire [ADDR_WIDTH*(N_SLOTS+1)-1:0] slot_mem_addr;
+    wire [16*(N_SLOTS+1)-1:0]        slot_mem_wdata, slot_mem_rdata;
+    wire [N_SLOTS:0]                 slot_mem_lb_n, slot_mem_ub_n;
+    wire [N_SLOTS:0]                 slot_mem_ready;
 
     dataflow_core #(
         .DATA_WIDTH(DATA_WIDTH), .P_IN(P_IN), .ACC_WIDTH(ACC_WIDTH), .ADDR_WIDTH(ADDR_WIDTH),
@@ -93,7 +95,9 @@ module neural_multiprocessor #(
         .slot_mem_rdata(slot_mem_rdata), .slot_mem_ready(slot_mem_ready)
     );
 
-    // ---- N_SLOTS -> 1 arbiter (M8, word-level per DEC-0015) ----
+    // ---- (N_SLOTS+1) -> 1 arbiter (M8, word-level per DEC-0015;
+    // widened to N_SLOTS+1 ports per DEC-0016 to also arbitrate the
+    // shared activation_cache's own backend traffic) ----
     wire                    arb_m_req, arb_m_wr;
     wire [ADDR_WIDTH-1:0]   arb_m_addr;
     wire [15:0]             arb_m_wdata;
@@ -102,7 +106,7 @@ module neural_multiprocessor #(
     wire                    arb_m_ready;
 
     slot_mem_arbiter #(
-        .ADDR_WIDTH(ADDR_WIDTH), .N_PORTS(N_SLOTS)
+        .ADDR_WIDTH(ADDR_WIDTH), .N_PORTS(N_SLOTS+1)
     ) u_arbiter (
         .clk(clk), .rst(rst),
         .s_req(slot_mem_req), .s_wr(slot_mem_wr), .s_addr(slot_mem_addr),

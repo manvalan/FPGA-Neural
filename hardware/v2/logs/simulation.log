@@ -152,3 +152,31 @@ PASS/FAIL: M4 3/3 PASS (166/446/728 -> 84/204/322 cycles, bit-exact).
   (see benchmark.log EXP-0015 for the full table).
 errors: none found during this implementation (clean first-pass
   correctness at every regression point).
+
+[2026-09-05] EXP-0016 -- regression + real improvement measurement
+after adding shared activation_cache.v (DEC-0016)
+test: hardware/v2/sim/tb_memory_manager.v (M4, updated: memory_manager
+  now wired to a real activation_cache instance + a real 2-port
+  arbiter, N_SLOTS=1 scope), hardware/v2/sim/tb_dataflow_core.v (M7,
+  updated: sim_word_mem array widened to N_SLOTS+1, X data poked once
+  into the shared cache's own backing memory instead of duplicated
+  per-slot), hardware/v2/sim/tb_neural_multiprocessor.v (M8,
+  UNCHANGED -- black-box), hardware/v2/sim/tb_benchmark_suite.v (final
+  campaign, UNCHANGED, re-run at N_SLOTS=1/2/4/8)
+simulator: Verilator 5.050 (--binary --timing)
+PASS/FAIL: M4 3/3 PASS (bit-exact, cycle counts higher than DEC-0015
+  alone for this SPECIFIC single-instance test -- expected, no sharing
+  benefit possible with only one memory_manager, only the cache's real
+  arbitration overhead shows up here). M7 4/4 PASS. M8 4/4 PASS
+  (unchanged testbench). Final campaign 24/24 PASS bit-exact,
+  D-Stress cycles reduced a further 1.66-2.00x on top of DEC-0015's
+  own reduction (see benchmark.log EXP-0016 for the full table) --
+  the real sharing benefit this cache targets only manifests with
+  multiple neurons genuinely sharing one x_base, which only the full
+  campaign's dense-layer workloads (not M4/M7/M8's own small tests)
+  exercise.
+errors: 2 real bugs found and fixed during implementation (errors.log
+  ERR-0010): a target-bank/pending-bank race (same class as ERR-0006,
+  a new instance in the activation-cache side of memory_manager.v),
+  and a repeat of ERR-0009's N_SLOTS=1 zero-width replication bug
+  (this time in activation_cache.v itself).

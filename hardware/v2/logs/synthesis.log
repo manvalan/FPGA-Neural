@@ -112,3 +112,13 @@ CHECK: 0 problems on all three (same benign warnings as every prior
   configs and saved some in others (word-level control logic is
   simpler than byte-indexing logic in prefetch_engine.v), net roughly
   flat.
+
+[2026-09-05] EXP-0016 -- neural_multiprocessor N_SLOTS=1/2/4 after
+adding activation_cache.v (DEC-0016), real standalone synthesis, no
+harness needed
+N_SLOTS=1: LUT4=2760  CCU2C=202  TRELLIS_FF=2405  MULT18X18D=8   DP16KD=0
+N_SLOTS=2: LUT4=4359  CCU2C=366  TRELLIS_FF=3924  MULT18X18D=16  DP16KD=0
+N_SLOTS=4: LUT4=9158  CCU2C=698  TRELLIS_FF=7986  MULT18X18D=32  DP16KD=0
+CHECK: 0 problems on all three (same benign warnings as always).
+  Resource cost is modest (activation_cache itself is small -- a
+  16-tile x 64-bit store plus N_SLOTS-way pending/hit logic).

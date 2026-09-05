@@ -96,11 +96,21 @@ module tb;
     reg  [ADDR_WIDTH-1:0]              reg_x_base, reg_w_base, reg_result_addr;
     reg  [15:0]                        reg_n_tiles;
 
-    wire [N_SLOTS-1:0]              slot_mem_req, slot_mem_wr;
-    wire [ADDR_WIDTH*N_SLOTS-1:0]   slot_mem_addr;
-    wire [16*N_SLOTS-1:0]           slot_mem_wdata, slot_mem_rdata;
-    wire [N_SLOTS-1:0]              slot_mem_lb_n, slot_mem_ub_n;
-    wire [N_SLOTS-1:0]              slot_mem_ready;
+    // Arrays sized N_SLOTS+1 post-M10 (decisions.log DEC-0016) -- index
+    // N_SLOTS is the shared activation_cache's own backend port. Each
+    // index still gets its OWN independent behavioral memory (matches
+    // this testbench's own pre-existing scope: real shared-PSRAM
+    // arbitration across slots is M8's job, not exercised here) --
+    // X data is poked ONCE into memory index N_SLOTS (the cache's own,
+    // single shared backing store) rather than duplicated per-slot,
+    // since X now genuinely flows through ONE shared path regardless
+    // of which slot a job lands on; W data is still poked into every
+    // slot's own memory (unchanged), since W is not shared.
+    wire [N_SLOTS:0]                slot_mem_req, slot_mem_wr;
+    wire [ADDR_WIDTH*(N_SLOTS+1)-1:0] slot_mem_addr;
+    wire [16*(N_SLOTS+1)-1:0]       slot_mem_wdata, slot_mem_rdata;
+    wire [N_SLOTS:0]                slot_mem_lb_n, slot_mem_ub_n;
+    wire [N_SLOTS:0]                slot_mem_ready;
 
     dataflow_core #(
         .DATA_WIDTH(DATA_WIDTH), .P_IN(P_IN), .ACC_WIDTH(ACC_WIDTH), .ADDR_WIDTH(ADDR_WIDTH),
@@ -118,7 +128,7 @@ module tb;
 
     genvar g;
     generate
-        for (g = 0; g < N_SLOTS; g = g + 1) begin : GEN_MEM
+        for (g = 0; g < N_SLOTS+1; g = g + 1) begin : GEN_MEM
             sim_word_mem #(.ADDR_WIDTH(ADDR_WIDTH), .DEPTH(4096)) u_mem (
                 .clk(clk), .rst(rst),
                 .req(slot_mem_req[g]), .wr(slot_mem_wr[g]),
@@ -143,6 +153,8 @@ module tb;
                    else                    tb.GEN_MEM[0].u_mem.mem[word_addr][15:8] = val;
                 1: if (byte_addr[0]==1'b0) tb.GEN_MEM[1].u_mem.mem[word_addr][7:0] = val;
                    else                    tb.GEN_MEM[1].u_mem.mem[word_addr][15:8] = val;
+                2: if (byte_addr[0]==1'b0) tb.GEN_MEM[2].u_mem.mem[word_addr][7:0] = val; // shared activation_cache backing store (N_SLOTS index)
+                   else                    tb.GEN_MEM[2].u_mem.mem[word_addr][15:8] = val;
                 default: ;
             endcase
         end
@@ -155,6 +167,7 @@ module tb;
             case (slot)
                 0: peek = (byte_addr[0]==1'b0) ? tb.GEN_MEM[0].u_mem.mem[word_addr][7:0] : tb.GEN_MEM[0].u_mem.mem[word_addr][15:8];
                 1: peek = (byte_addr[0]==1'b0) ? tb.GEN_MEM[1].u_mem.mem[word_addr][7:0] : tb.GEN_MEM[1].u_mem.mem[word_addr][15:8];
+                2: peek = (byte_addr[0]==1'b0) ? tb.GEN_MEM[2].u_mem.mem[word_addr][7:0] : tb.GEN_MEM[2].u_mem.mem[word_addr][15:8];
                 default: peek = 8'sdx;
             endcase
         end
@@ -193,15 +206,15 @@ module tb;
         rst = 0;
         @(posedge clk);
 
-        // Pre-load PSRAM-equivalent memory for both slots (a job could
-        // land on either slot, first-free, so both need the data).
+        // Pre-load PSRAM-equivalent memory. W (per-slot, not shared)
+        // still needs to land in EVERY slot's own memory (a job could
+        // land on either slot, first-free). X (post-DEC-0016) flows
+        // through the ONE shared activation_cache instead -- poked
+        // once into memory index N_SLOTS(=2)'s backing store.
         for (i = 0; i < 8; i = i + 1) begin
-            poke(0, 23'h10+i, 8'sd2); poke(0, 23'h20+i, 8'sd3); // node0: x=2,w=3
-            poke(1, 23'h10+i, 8'sd2); poke(1, 23'h20+i, 8'sd3);
-            poke(0, 23'h30+i, 8'sd1); poke(0, 23'h40+i, 8'sd1); // node1: x=1,w=1
-            poke(1, 23'h30+i, 8'sd1); poke(1, 23'h40+i, 8'sd1);
-            poke(0, 23'h50+i, 8'sd1); poke(0, 23'h60+i, 8'sd5); // node2: x=1,w=5
-            poke(1, 23'h50+i, 8'sd1); poke(1, 23'h60+i, 8'sd5);
+            poke(2, 23'h10+i, 8'sd2); poke(0, 23'h20+i, 8'sd3); poke(1, 23'h20+i, 8'sd3); // node0: x=2,w=3
+            poke(2, 23'h30+i, 8'sd1); poke(0, 23'h40+i, 8'sd1); poke(1, 23'h40+i, 8'sd1); // node1: x=1,w=1
+            poke(2, 23'h50+i, 8'sd1); poke(0, 23'h60+i, 8'sd5); poke(1, 23'h60+i, 8'sd5); // node2: x=1,w=5
         end
 
         // node0, node1: no dependencies. node2: depends on BOTH.

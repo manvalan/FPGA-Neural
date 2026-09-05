@@ -311,3 +311,38 @@ cycles at N=2/4/8 remain within ~0.2% of each other: 307602/307346/
 EFFICIENT per transaction, it did not remove the fact that there is
 still only one physical port, so DEC-0014's N_SLOTS=2 recommendation
 is unaffected and reconfirmed with the new, faster numbers.
+
+[2026-09-05] EXP-0016 -- shared activation_cache (DEC-0016), real
+before/after comparison on top of DEC-0015's own word-level burst
+rewrite (user-requested optimization #2)
+
+Full campaign (tb_benchmark_suite.v, same 6 workloads as EXP-0014/
+EXP-0015), D-Stress (256 neurons, all sharing ONE input vector -- the
+exact pattern this cache targets), real cycles and real wall-clock
+(cycles / real POST-P&R Fmax):
+
+| N_SLOTS | cycles: byte | cycles: +burst | cycles: +cache | Fmax: byte | Fmax: +burst | Fmax: +cache |
+|-----------|----------------|-------------------|-------------------|--------------|----------------|----------------|
+| 1         | 780298         | 348682            | 174610            | 152.46 MHz   | 152.44 MHz     | 131.79 MHz     |
+| 2         | 736402         | 307602            | 185428            | 142.45 MHz   | 133.58 MHz     | 87.72 MHz      |
+| 4         | 736823         | 307346            | 184795            | 113.38 MHz   | 112.07 MHz     | 65.01 MHz (FAIL@80MHz) |
+
+Real wall-clock speedup vs the ORIGINAL byte-level baseline (cycles /
+real Fmax, both fully combined optimizations):
+| N_SLOTS | wall-clock: byte | wall-clock: +burst | wall-clock: +cache | TOTAL real speedup |
+|-----------|--------------------|------------------------|------------------------|------------------------|
+| 1         | 5118.1 us         | 2287.3 us              | 1324.9 us              | 3.86x                 |
+| 2         | 5169.5 us         | 2302.8 us              | 2113.9 us              | 2.45x                 |
+| 4         | 6498.7 us         | 2742.4 us              | 2842.6 us (Fmax FAILS)| 2.29x (but a real regression vs +burst alone) |
+
+All 24/24 workload/config combinations (6 workloads x N_SLOTS=1/2/4/8)
+re-verified bit-exact after adding the cache. Two real bugs found and
+fixed during implementation (errors.log ERR-0010).
+
+HONEST SUMMARY: the two user-requested optimizations together deliver
+a real 2.45-3.86x wall-clock speedup for the recommended N_SLOTS<=2
+range (DEC-0014), at the cost of a much steeper Fmax sensitivity to
+N_SLOTS than either the arbiter alone (DEC-0015) or the un-optimized
+baseline had -- N_SLOTS=4 now fails 80MHz outright with the cache
+active, a real trade-off, not glossed over (see decisions.log
+DEC-0016).
