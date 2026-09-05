@@ -88,3 +88,25 @@ errors: ERR-0005 (artefatto di sintesi da pin-count, non un bug RTL --
 decision: vedi decisions.log DEC-0005.
 next_action: M3 -- activation_buffer.v / weight_buffer.v /
   result_buffer.v (profondita' parametrica, valutare BRAM mapping).
+
+[2026-09-05T15:15:00Z] commit=3026dcd session=v2-M3-buffers
+module: hardware/v2/rtl/activation_buffer.v, weight_buffer.v,
+  result_buffer.v
+action: implementato M3 -- tre buffer paramentrici (profondita'
+  parametrica) che inferiscono DP16KD reale, riusando l'idioma gia'
+  validato in hardware/v1/rtl/act_buffer.v (porta A scrittura sync,
+  porta B lettura sync REGISTRATA, nessun reset sulla porta di lettura
+  per restare fuori dal percorso LUT-RAM).
+reason: roadmap M3.
+result: 10/10 test PASS (Verilator). Sintesi reale a 2 profondita'
+  ciascuno: 0 problemi CHECK, DP16KD reale confermato in tutte le 6
+  configurazioni (mai LUT-RAM). Scoperta reale non assunta: il costo
+  BRAM di weight_buffer e' determinato dalla LARGHEZZA (P_IN*DATA_
+  WIDTH=64 bit), non dalla profondita' -- 512->64 di profondita' non
+  ha ridotto il conteggio DP16KD (resta 2). Place&route reale sui
+  default: tutti PASS a 80MHz con ampio margine (287-367 MHz).
+errors: nessuno.
+decision: vedi benchmark.log -- il dimensionamento di weight_buffer
+  andra' guidato da P_IN, non solo da DEPTH, quando si arrivera' a
+  M4/M9.
+next_action: M4 -- memory_manager.v + prefetch_engine.v.

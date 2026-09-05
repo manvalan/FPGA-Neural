@@ -27,3 +27,12 @@ CHECK: 0 problems in all 4 configurations. Perfectly linear scaling in
   flawed harness attempt fed identical data to every processor/lane
   and Yosys silently deduplicated down to 1x regardless of N -- caught
   by checking for exactly this linearity before trusting the numbers).
+
+[2026-09-05] EXP-0004 -- activation_buffer/weight_buffer/result_buffer,
+2 depths each
+activation_buffer D=4096: LUT=37 FF=30  DP16KD=2  (D=256: LUT=21 FF=26 DP16KD=1)
+weight_buffer     D=512:  LUT=88 FF=139 DP16KD=2  (D=64:  LUT=73 FF=136 DP16KD=2)
+result_buffer     D=4096: LUT=37 FF=30  DP16KD=2  (D=256: LUT=21 FF=26 DP16KD=1)
+CHECK: 0 problems, all 6 configs correctly infer DP16KD (no LUT-RAM
+  fallback). weight_buffer's DP16KD count does NOT drop with depth
+  (width-bound, not depth-bound -- see decisions.log / benchmark.log).

@@ -40,3 +40,22 @@ until M9): N_PROCESSORS * P_IN MACs/cycle when all processors are
 simultaneously streaming tiles (8, 16, 32, 64 for N=1/2/4/8 -- verified
 achievable in principle by EXP-0003's concurrent/staggered simulation,
 not yet measured as a sustained throughput number).
+
+[2026-09-05] M3 buffers -- BRAM cost vs DEPTH (real Yosys synth_ecp5)
+
+| Module             | DEPTH | DP16KD | LUT4 | FF  |
+|--------------------|-------|--------|------|-----|
+| activation_buffer   | 4096  | 2      | 37   | 30  |
+| activation_buffer   | 256   | 1      | 21   | 26  |
+| weight_buffer       | 512   | 2      | 88   | 139 |
+| weight_buffer       | 64    | 2      | 73   | 136 |
+| result_buffer       | 4096  | 2      | 37   | 30  |
+| result_buffer       | 256   | 1      | 21   | 26  |
+
+weight_buffer's DP16KD count is flat across an 8x depth reduction --
+its 64-bit TILE_WIDTH (P_IN=8 * DATA_WIDTH=8), not DEPTH, determines
+BRAM count for this module. activation_buffer/result_buffer (byte-
+wide) scale as expected with depth. Confirms §14's warning literally:
+"non assumere che buffer piu' grandi siano automaticamente migliori"
+-- here, smaller was not cheaper either, because depth was the wrong
+lever for this specific buffer's cost.

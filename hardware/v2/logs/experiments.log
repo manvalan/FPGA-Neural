@@ -159,3 +159,62 @@ decision: see decisions.log DEC-0005 (DSP is the binding constraint,
   be explored going forward).
 next_action: M3 -- activation_buffer.v / weight_buffer.v /
   result_buffer.v.
+
+EXP-0004
+timestamp: 2026-09-05T15:15:00Z
+git_commit: 3026dcd (+ uncommitted M3 work)
+session: v2-M3-buffers
+module: hardware/v2/rtl/activation_buffer.v, weight_buffer.v,
+  result_buffer.v
+configuration: activation_buffer/result_buffer DEPTH in {4096, 256};
+  weight_buffer DEPTH (in tiles) in {512, 64}, P_IN=8, DATA_WIDTH=8
+  (TILE_WIDTH=64 bits)
+action: M3 -- three parametric dual-port BRAM-inferring buffers
+  (Input/Weight/Result of the §12 data-plane diagram), reusing the
+  proven inference idiom from hardware/v1/rtl/act_buffer.v (sync
+  write, sync REGISTERED read, no reset on the read register).
+command (sim, Verilator): verilator --binary --timing -j 0 -Wno-fatal
+  --top-module tb -o /tmp/vtb_buffers hardware/v2/rtl/
+  activation_buffer.v hardware/v2/rtl/weight_buffer.v
+  hardware/v2/rtl/result_buffer.v hardware/v2/sim/tb_buffers.v &&
+  /tmp/vtb_buffers
+command (synth): yosys -p "read_verilog <file>; chparam -set DEPTH
+  <N> <module>; synth_ecp5 -json .../top.json -top <module>" for each
+  of the 6 (module, depth) combinations.
+command (timing): nextpnr-ecp5 --45k --package CABGA381 --speed 8
+  --freq 80 --lpf-allow-unconstrained, default-depth configs only.
+result:
+  SIMULATED: 10/10 tests PASS -- write-then-read correctness incl.
+    extreme INT8 (-128/127) round-tripping exactly, back-to-back
+    writes to different addresses not disturbing earlier entries, and
+    weight_buffer's full 64-bit TILE_WIDTH round-tripping (not just
+    one lane).
+  SYNTHESIZED (real BRAM mapping, not assumed):
+    activation_buffer DEPTH=4096: 2 DP16KD, 37 LUT4, 30 FF
+    activation_buffer DEPTH=256:  1 DP16KD, 21 LUT4, 26 FF
+    weight_buffer     DEPTH=512:  2 DP16KD, 88 LUT4, 139 FF
+    weight_buffer     DEPTH=64:   2 DP16KD, 73 LUT4, 136 FF
+    result_buffer     DEPTH=4096: 2 DP16KD, 37 LUT4, 30 FF
+    result_buffer     DEPTH=256:  1 DP16KD, 21 LUT4, 26 FF
+    0 CHECK problems in all 6 configurations -- every one correctly
+    inferred DP16KD block RAM, none fell back to LUT-RAM.
+  REAL, NON-OBVIOUS FINDING (§14: "non assumere che buffer piu' grandi
+    siano automaticamente migliori"): shrinking weight_buffer's DEPTH
+    8x (512->64) did NOT reduce DP16KD usage at all (2->2) -- its
+    64-bit TILE_WIDTH (P_IN*DATA_WIDTH), not its depth, is what forces
+    2 physical block RAMs (a single DP16KD's usable port width in the
+    density this needs is narrower than 64 bits). Depth-only buffer
+    sizing decisions are the wrong lever for THIS buffer; width
+    (P_IN) is. activation_buffer/result_buffer, being byte-wide, DO
+    show the expected depth-proportional DP16KD count (2 -> 1).
+  POST-P&R (default-depth configs): all PASS at 80MHz with large
+    margin (287-367 MHz range, real place&route) -- these buffers are
+    not a timing concern in isolation.
+errors: none.
+decision: keep DEPTH parametric as specified, but document (this
+  entry + benchmark.log) that weight_buffer's real BRAM cost is driven
+  by P_IN (its width), not DEPTH -- relevant when M4/M9 size these
+  buffers against a real workload.
+next_action: M4 -- memory_manager.v + prefetch_engine.v (wires these
+  three buffers + the array together, PSRAM backend reused unmodified
+  from V1 per §15).

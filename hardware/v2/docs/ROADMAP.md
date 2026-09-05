@@ -18,8 +18,10 @@ reali, non solo scritto).
       Fmax sempre PASS a 80MHz (159.11→134.70 MHz). Scoperta: il DSP
       (MULT18X18D), non LUT/FF, satura per primo (88% a N=8) — vedi
       `logs/decisions.log` DEC-0005.
-- [ ] **M3 — Buffers** (`activation_buffer.v`, `weight_buffer.v`,
-      `result_buffer.v`).
+- [x] **M3 — Buffers** (`activation_buffer.v`, `weight_buffer.v`,
+      `result_buffer.v`). Tutti inferiscono DP16KD reale (10/10 test,
+      6/6 config sintetizzate 0 problemi). Scoperta: il costo BRAM di
+      weight_buffer e' guidato da P_IN (larghezza), non da DEPTH.
 - [ ] **M4 — Memory Manager** (`memory_manager.v`, `prefetch_engine.v`),
       backend PSRAM V1 riusato senza modifiche.
 - [ ] **M5 — Neural Director** (`neural_director.v`), scheduling first-free.

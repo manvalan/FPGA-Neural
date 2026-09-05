@@ -28,3 +28,11 @@ concurrency: confirmed genuine -- in the staggered test, the
   later-launched, shorter job (processor 1) completes BEFORE the
   earlier-launched, longer job (processor 0), proving independent
   progress rather than serialization.
+
+[2026-09-05] EXP-0004 -- hardware/v2/sim/tb_buffers.v
+test: 10 cases across activation_buffer/weight_buffer/result_buffer
+vectors: extreme INT8 (-128, 127, -100, 100), regular values, full
+  64-bit tile round-trip (weight_buffer), re-reads confirming earlier
+  writes undisturbed
+simulator: Verilator 5.050 (--binary --timing)
+PASS/FAIL: 10/10 PASS

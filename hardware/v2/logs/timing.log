@@ -31,3 +31,10 @@ TRELLIS_IO stays at 18/245 (7%) throughout (harness has only
 clk/rst/seed/checksum as real pins, by design -- see ERR-0005).
 See decisions.log DEC-0005: DSP, not Fmax or LUT/FF, is the resource
 that will first prevent scaling N_PROCESSORS further at P_IN=8.
+
+[2026-09-05] EXP-0004 -- default-depth buffer configs, real nextpnr-ecp5
+activation_buffer (D=4096): Fmax=325.20 MHz PASS
+weight_buffer (D=512):      Fmax=339.67 MHz PASS
+result_buffer (D=4096):     Fmax=325.20 MHz PASS
+All far above the 80MHz target -- buffers are not a timing concern in
+isolation at these depths.
