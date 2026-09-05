@@ -46,7 +46,18 @@ reali, non solo scritto).
       (N_SLOTS=2), 133.19 MHz (N_SLOTS=4). Buffer M3 e arbitraggio PSRAM
       condiviso rimandati esplicitamente a M8 (`logs/decisions.log`
       DEC-0009).
-- [ ] **M8 — PSRAM integration**, controller V1 non modificato, misura reale.
+- [x] **M8 — PSRAM integration** (`neural_multiprocessor.v`,
+      `slot_mem_arbiter.v`), controller V1 riusato SENZA MODIFICHE,
+      condiviso tra N_SLOTS memory_manager concorrenti reali. Trovato e
+      risolto un bug RTL reale: il primo arbitro perdeva silenziosamente
+      una richiesta arrivata durante la contesa (protocollo byte-level
+      "fire-and-forget", mai esposto da M4 che collega un solo master
+      direttamente) — vedi `logs/errors.log` ERR-0008. Dopo il fix: 4/4
+      test PASS (2 slot in vera contesa concorrente sulla stessa PSRAM
+      reale). Sintesi reale 0 problemi (nessun harness necessario — pin
+      reali PSRAM tengono il top-level a 157 pin). Fmax reale 142.45
+      MHz. Politica di arbitraggio a priorità fissa, non ancora fair
+      (`logs/decisions.log` DEC-0010).
 - [ ] **M9 — Full benchmark**, tabella V1 vs V2 (§32 del mandato).
 - [ ] **M10 — Optimization**, solo sulla base dei dati raccolti in M1-M9.
 

@@ -203,3 +203,54 @@ WORKAROUND: set the parameter on the TOP module being synthesized
 STATUS: WORKED AROUND. A build-script ordering detail, not a defect in
   dataflow_core.v or harness_dataflow_core.v themselves -- noted here
   so a future N_SLOTS sweep (M9/M10) does not re-trip over it.
+
+ERR-0008 (real RTL bug in the first draft of hardware/v2/rtl/slot_mem_arbiter.v, FOUND AND FIXED)
+DATE: 2026-09-05
+MODULE: hardware/v2/rtl/slot_mem_arbiter.v (M8, new)
+SYMPTOM: hardware/v2/sim/tb_neural_multiprocessor.v -- node0 (slot 0)
+  completes correctly (result=48), but node1 (slot 1, dispatched
+  concurrently to node0) never completes; its byte-level backend
+  request appears to simply vanish, and the slot hangs forever
+  (watchdog timeout at 20000 cycles, result stays 0).
+ROOT CAUSE: memory_manager.v/prefetch_engine.v's own byte-level
+  backend protocol (mem_req/mem_wr/mem_addr/mem_wdata/mem_rdata/
+  mem_ready) is FIRE-AND-FORGET: mem_req is asserted for exactly ONE
+  clock cycle per byte transaction, with no separate "request
+  accepted" acknowledgment -- only `mem_ready` (transaction
+  COMPLETION) exists. M4's own testbench (tb_memory_manager.v) never
+  exposed this because it connects exactly ONE memory_manager directly
+  to int8_memory_access, which is always idle and therefore always
+  able to accept that single pulse the instant it fires. The first
+  arbiter draft only granted a port while its s_req was LIVE that same
+  cycle -- if slot 1's one-cycle pulse arrived on a cycle where the
+  arbiter was already owned by slot 0, the pulse was gone the very
+  next cycle with no record of it ever having happened, and slot 1's
+  prefetch_engine sat in ST_READ_X/ST_READ_W waiting forever for a
+  mem_ready that could never arrive (its request never reached
+  int8_memory_access at all).
+DIAGNOSIS METHOD: ran the M8 testbench, observed node0 (whichever slot
+  the Director happened to grant the shared bus to first) complete
+  while node1 (the other, concurrently-dispatched slot) hung; traced
+  the fire-and-forget nature of mem_req directly in
+  prefetch_engine.v's own state machine (`mem_req <= 1'b1;` appearing
+  only inside single-cycle state-transition branches, unconditionally
+  cleared to 0 every other cycle) -- confirmed the arbiter's naive
+  "grant only while req is live" logic could not possibly catch a
+  pulse arriving during contention.
+FIX: every incoming s_req pulse is now LATCHED into a per-port
+  `pending` register (capturing wr/addr/wdata the same cycle),
+  regardless of arbiter state -- the same single-entry "queue, don't
+  drop the request" idiom already used by memory_manager's own
+  pf_pending register (ERR-0006 fix #1). Grants are drawn from
+  `pending`, never from a live s_req directly. This adds a uniform
+  minimum 1-cycle latency to every byte transaction (a real, honestly
+  measured cost of sharing one PSRAM port across N_SLOTS -- see
+  timing.log/benchmark.log EXP-0009), but never drops a request
+  regardless of contention.
+VERIFICATION: hardware/v2/sim/tb_neural_multiprocessor.v -- 4/4 PASS
+  after the fix (444 cycles end-to-end, vs the buggy draft's 20000-
+  cycle watchdog timeout). hardware/v2/sim/tb_memory_manager.v (M4,
+  untouched) re-run unchanged -- still 3/3 PASS, confirming the fix is
+  entirely contained inside the new arbiter module.
+STATUS: FIXED, verified end-to-end with the real (unmodified) V1
+  PSRAM backend chain and real concurrent multi-slot contention.

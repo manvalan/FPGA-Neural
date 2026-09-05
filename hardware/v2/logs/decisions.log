@@ -521,3 +521,64 @@ oversight.
 STATUS:
 ACCEPTED
 
+DEC-0010
+
+DATE: 2026-09-05
+
+DECISION:
+slot_mem_arbiter.v (M8) arbitrates dataflow_core's N_SLOTS independent
+Memory Backend Interface ports down to the ONE real PSRAM port using
+FIXED, lowest-port-index priority (not round-robin/least-loaded/
+fair-share), with a per-port single-entry pending-request latch (see
+errors.log ERR-0008) so a fire-and-forget request pulse arriving
+during contention is queued, never dropped.
+
+WHY:
+Fixed lowest-index priority is the same "first-found, simplest
+correct policy first" starting point already chosen for
+neural_director's first-free slot scheduling (decisions.log DEC-0007)
+and dependency_manager's first-ready dispatch -- consistent with this
+whole roadmap's own pattern of shipping the simplest policy that is
+provably correct, then revisiting fairness/throughput ONLY once real
+measured data (M9) shows it actually matters for a real workload.
+Under sustained heavy contention a low-index slot COULD in principle
+starve a higher-index one (an unfair, but not incorrect, outcome);
+this is an honestly-acknowledged limitation of a first cut, not an
+oversight. The pending-latch discipline (ERR-0008) is not a policy
+choice but a correctness requirement -- discovered empirically via
+real concurrent-slot simulation, not designed in from the start (an
+example of the mandate's own point, §22/§30: real measurement finds
+real problems that a purely theoretical design would not).
+
+EVIDENCE:
+hardware/v2/sim/tb_neural_multiprocessor.v -- 4/4 PASS with N_SLOTS=2
+genuinely concurrent slots (node0/node1, no dependencies, dispatched
+back-to-back) contending for the one real PSRAM port through the real
+V1 backend chain; both complete correctly and node2 (depends on both)
+dispatches only once they genuinely do. No starvation observed in this
+small a test (2 slots, one short job each) -- a real starvation
+measurement would need a longer-running, higher-N_SLOTS workload,
+deferred to M9's own benchmark.
+
+ALTERNATIVES:
+1. Round-robin or least-recently-served fairness now. Rejected: no
+   measured evidence yet (M9 not run) that fixed-priority starvation
+   is a real problem for the graph workloads this system targets --
+   adding fairness logic before a measured need is speculative
+   complexity, the same reasoning DEC-0007 already applied to
+   neural_director's own scheduling policy.
+2. Give each slot its own dedicated PSRAM port (no arbitration at
+   all). Rejected: real PSRAM hardware has exactly one physical port
+   (the whole reason this module exists) -- not an option on real
+   hardware, only in simulation.
+
+RESULT:
+slot_mem_arbiter.v as implemented: fixed lowest-index priority,
+single-entry pending-request latch per port (mandatory for
+correctness, not a policy choice). Fairness/throughput-aware
+scheduling explicitly deferred to a future measurement-driven
+decision, not missing by oversight.
+
+STATUS:
+ACCEPTED
+

@@ -65,3 +65,8 @@ Fmax drops as N_SLOTS grows (more concurrent memory_manager+
 neural_processor instances competing for the same routing fabric
 around the shared neural_director/dependency_manager hub) -- both
 configs still clear the 80MHz target with real margin.
+
+[2026-09-05] EXP-0009 -- neural_multiprocessor (M8, N_SLOTS=2, real
+standalone synthesis, no harness needed), real nextpnr-ecp5 --45k
+--package CABGA381 --speed 8 --freq 80 --lpf-allow-unconstrained
+Fmax: 142.45 MHz -- PASS at 80MHz (real place&route measurement)

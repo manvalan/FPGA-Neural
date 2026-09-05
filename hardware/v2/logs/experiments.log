@@ -401,3 +401,35 @@ next_action: M8 -- PSRAM integration. Wire the real (unmodified) V1
   psram_controller) end-to-end through dataflow_core, and design/
   measure whatever N_SLOTS>1 arbitration across ONE physical PSRAM
   port actually requires.
+
+[2026-09-05] EXP-0009 -- hardware/v2/rtl/neural_multiprocessor.v (M8,
+real PSRAM integration)
+test: hardware/v2/sim/tb_neural_multiprocessor.v -- same 3-node DAG as
+  EXP-0008, now routed through the REAL, UNMODIFIED V1 PSRAM backend
+  chain shared across N_SLOTS=2 genuinely concurrent memory_manager
+  instances via the new slot_mem_arbiter.v
+simulator: Verilator 5.050 (--binary --timing)
+PASS/FAIL:
+  SIMULATED: 4/4 PASS after fixing a real dropped-request bug in the
+    arbiter's first draft (errors.log ERR-0008) -- 444 cycles
+    end-to-end. hardware/v2/sim/tb_memory_manager.v (M4, untouched)
+    re-confirmed 3/3 PASS, no regression.
+  SYNTHESIZED (real standalone top-level, no harness needed -- 157
+    port bits, real PSRAM pins keep it under the TRELLIS_IO budget):
+    0 CHECK problems, LUT4=3145, CCU2C=388, TRELLIS_FF=3659,
+    MULT18X18D=16, DP16KD=0.
+  POST-P&R (real): Fmax=142.45 MHz -- PASS at 80MHz.
+errors: one real RTL bug (errors.log ERR-0008) -- the first arbiter
+  draft silently dropped a request pulse arriving during contention;
+  fixed with a per-port pending-request latch, the same "queue, don't
+  drop" idiom already used by memory_manager's own pf_pending register
+  (ERR-0006).
+decision: see decisions.log DEC-0010 (fixed lowest-index priority
+  arbitration, not fairness-balanced -- consistent with every other
+  scheduling policy chosen so far in this roadmap; revisit only if
+  M9's real measurement shows starvation actually matters).
+next_action: M9 -- Full benchmark. Produce the V1-vs-V2 comparison
+  table mandated by §32 (Fmax, LUT, FF, DSP, BRAM, MAC/cycle,
+  cycles/neuron, neurons/s, stall %, memory/processor utilization,
+  effective MAC/s), each number labeled THEORETICAL/SIMULATED/
+  SYNTHESIZED/POST-P&R per §30.

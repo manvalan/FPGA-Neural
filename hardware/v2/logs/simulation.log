@@ -75,3 +75,23 @@ PASS/FAIL: 4/4 PASS -- node0=48, node1=8 (both real neural_processor
   dependency-manager-to-director wake-up loop closes correctly
   end-to-end with real hardware in between, not just in isolation
   (M6's own testbench already proved the wake-up logic alone)
+
+[2026-09-05] EXP-0009 -- hardware/v2/sim/tb_neural_multiprocessor.v
+test: same 3-node DAG as EXP-0008 (node0/node1 independent, node2
+  depends on both), routed through neural_multiprocessor.v (M8): the
+  REAL, UNMODIFIED V1 PSRAM backend chain (int8_memory_access ->
+  memory_interface -> psram_controller -> psram_model) shared across
+  N_SLOTS=2 genuinely concurrent memory_manager instances via the new
+  slot_mem_arbiter.v -- node0 and node1 are registered back-to-back
+  with no dependencies, so both dispatch to their slots essentially
+  simultaneously and genuinely contend for the one real PSRAM port.
+simulator: Verilator 5.050 (--binary --timing)
+PASS/FAIL: 4/4 PASS after fixing a real dropped-request bug in the
+  first arbiter draft (errors.log ERR-0008) -- node0=48, node1=8
+  (concurrent, real PSRAM, real arbitration), node2=40 dispatched only
+  after both genuinely completed. 444 cycles end-to-end (vs 20000-cycle
+  watchdog timeout with the buggy first draft, where node1's request
+  was silently dropped and its slot hung forever).
+regression: hardware/v2/sim/tb_memory_manager.v (M4) re-run unchanged
+  (no M4 file touched) -- still 3/3 PASS, identical cycle counts
+  (446/166/728), confirming slot_mem_arbiter.v is purely additive.

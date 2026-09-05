@@ -103,3 +103,17 @@ uses 32/72 (44%), consistent with DEC-0005's finding that DSP, not
 LUT/FF, is the first resource to saturate as concurrency grows (M2's
 own N_PROCESSORS=8 measurement: 88%). BRAM=0 on both is expected --
 M3's buffers are not wired into dataflow_core yet (DEC-0009).
+
+[2026-09-05] M8 Neural Multiprocessor top (real standalone synthesis +
+P&R, no harness needed -- real PSRAM pins keep the bare top-level
+pin count at 157, under the TRELLIS_IO budget)
+
+| Module (config)                    | Fmax (POST-P&R) | LUT4 | CCU2C | FF   | DSP | BRAM |
+|--------------------------------------|------------------|------|-------|------|-----|------|
+| neural_multiprocessor (N_SLOTS=2)    | 142.45 MHz       | 3145 | 388   | 3659 | 16  | 0    |
+
+Compare to M7's dataflow_core alone (N_SLOTS=2): 165.15 MHz / LUT4=2127
+/ CCU2C=248 / FF=2505 / DSP=16. Adding the real V1 PSRAM chain +
+slot_mem_arbiter costs ~1000 LUT4/140 CCU2C/1150 FF and drops Fmax by
+~23 MHz (165.15 -> 142.45) -- both real, measured costs of real PSRAM
+integration, not assumed.

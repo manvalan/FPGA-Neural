@@ -206,3 +206,27 @@ decision: see decisions.log DEC-0009 (M3 buffers not wired in yet, no
 next_action: M8 -- PSRAM integration. Wire the real (unmodified) V1
   PSRAM backend chain through dataflow_core end-to-end and measure/
   design whatever N_SLOTS>1 arbitration real contention requires.
+
+[2026-09-05] M8 -- hardware/v2/rtl/neural_multiprocessor.v +
+hardware/v2/rtl/slot_mem_arbiter.v
+reason: roadmap M8 -- "Integrare il controller V1 senza modificarlo
+  inizialmente. Misurare il comportamento reale." dataflow_core.v (M7,
+  untouched) now shares the real, unmodified V1 PSRAM backend chain
+  (int8_memory_access -> memory_interface -> psram_controller) across
+  N_SLOTS genuinely concurrent memory_manager instances, via a new
+  generic N-port arbiter inspired by (not copied from) V1's own
+  mem_arbiter.v.
+result: real concurrent-slot simulation immediately surfaced a real
+  bug (errors.log ERR-0008: the byte-level backend's fire-and-forget
+  request pulse gets silently dropped by a naive arbiter under
+  contention) -- fixed with a pending-request latch. After the fix:
+  4/4 test PASS (2 concurrent slots genuinely contending for one real
+  PSRAM port, 444 cycles). Real synthesis: 0 problems, LUT4=3145/
+  CCU2C=388/FF=3659/DSP=16, real Fmax 142.45 MHz (PASS at 80MHz, no
+  harness needed -- real PSRAM pins keep the top-level pin count at
+  157). No regression on M4's own testbench.
+errors: see errors.log ERR-0008 (real RTL bug, found and fixed).
+decision: see decisions.log DEC-0010 (fixed-priority arbitration, no
+  fairness yet -- deferred pending real measured need).
+next_action: M9 -- Full benchmark (§32): V1-vs-V2 comparison table,
+  every number labeled THEORETICAL/SIMULATED/SYNTHESIZED/POST-P&R.

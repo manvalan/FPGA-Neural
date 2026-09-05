@@ -63,3 +63,16 @@ CHECK: 0 problems on both configs (same 32 benign "multiple conflicting
   deliberately NOT instantiated inside dataflow_core yet (decisions.log
   DEC-0009). DSP scales exactly 8/slot (matches P_IN=8, consistent with
   every prior per-processor DSP measurement since M1/M2).
+
+[2026-09-05] EXP-0009 -- neural_multiprocessor (M8, N_SLOTS=2, real
+standalone top-level synthesis -- no timing harness needed: real PSRAM
+pins replace dataflow_core's wide per-slot arrays, total 157 port bits,
+well under the LFE5U-45F-8BG381's ~245 TRELLIS_IO budget)
+LUT4=3145  CCU2C=388  TRELLIS_FF=3659  MULT18X18D=16  DP16KD=0
+TRELLIS_DPR16X4=45 (small LUT-based distributed RAM, inferred from
+  neural_director's shallow QUEUE_DEPTH-entry job queue -- not BRAM,
+  same primitive class already seen in M7's own harness stat)
+$_TBUF_=16 (tri-state buffers for the bidirectional psram_dq bus,
+  from V1's own unmodified psram_controller.v)
+CHECK: 0 problems (same 32 benign "multiple conflicting drivers for
+  ...neural_processor.\gi" warnings documented since EXP-0001).
