@@ -21,13 +21,17 @@
 //   node1 (x=1,w=1,8in -> acc=8)  --+
 //
 // Verified with Verilator (decisions.log DEC-0004). Each slot gets
-// its own independent behavioral memory (sim_byte_mem, same as
+// its own independent behavioral memory (sim_word_mem, same as
 // tb_neural_director.v/tb_memory_manager.v's own scope decisions --
 // DEC-0006/DEC-0007: shared-PSRAM arbitration across slots is
 // explicitly M8's job, not exercised here).
+//
+// WORD-level (16-bit, + lb_n/ub_n) post-M10 (decisions.log DEC-0015),
+// matching memory_manager.v's own backend port width after the
+// burst-read rewrite (see prefetch_engine.v/memory_manager.v headers).
 // ============================================================
 
-module sim_byte_mem #(
+module sim_word_mem #(
     parameter ADDR_WIDTH = 23,
     parameter DEPTH      = 4096
 )(
@@ -35,24 +39,28 @@ module sim_byte_mem #(
     input  wire rst,
     input  wire                  req,
     input  wire                  wr,
-    input  wire [ADDR_WIDTH-1:0] addr,
-    input  wire signed [7:0]     wdata,
-    output reg  signed [7:0]     rdata,
+    input  wire [ADDR_WIDTH-1:0] addr,   // WORD address
+    input  wire [15:0]           wdata,
+    input  wire                  lb_n, ub_n,
+    output reg  [15:0]           rdata,
     output reg                   ready
 );
-    reg signed [7:0] mem [0:DEPTH-1];
+    reg [15:0] mem [0:DEPTH-1];
     reg [1:0] state;
     reg [ADDR_WIDTH-1:0] addr_reg;
     localparam ST_IDLE = 0, ST_WAIT = 1;
     always @(posedge clk) begin
         if (rst) begin
-            state <= ST_IDLE; ready <= 1'b0; rdata <= 8'sd0;
+            state <= ST_IDLE; ready <= 1'b0; rdata <= 16'h0000;
         end else begin
             ready <= 1'b0;
             case (state)
                 ST_IDLE: if (req) begin
                     addr_reg <= addr;
-                    if (wr) mem[addr] <= wdata;
+                    if (wr) begin
+                        if (!lb_n) mem[addr][7:0]  <= wdata[7:0];
+                        if (!ub_n) mem[addr][15:8] <= wdata[15:8];
+                    end
                     state <= ST_WAIT;
                 end
                 ST_WAIT: begin
@@ -90,7 +98,8 @@ module tb;
 
     wire [N_SLOTS-1:0]              slot_mem_req, slot_mem_wr;
     wire [ADDR_WIDTH*N_SLOTS-1:0]   slot_mem_addr;
-    wire signed [8*N_SLOTS-1:0]     slot_mem_wdata, slot_mem_rdata;
+    wire [16*N_SLOTS-1:0]           slot_mem_wdata, slot_mem_rdata;
+    wire [N_SLOTS-1:0]              slot_mem_lb_n, slot_mem_ub_n;
     wire [N_SLOTS-1:0]              slot_mem_ready;
 
     dataflow_core #(
@@ -103,37 +112,49 @@ module tb;
         .reg_x_base(reg_x_base), .reg_w_base(reg_w_base), .reg_n_tiles(reg_n_tiles),
         .reg_result_addr(reg_result_addr),
         .slot_mem_req(slot_mem_req), .slot_mem_wr(slot_mem_wr), .slot_mem_addr(slot_mem_addr),
-        .slot_mem_wdata(slot_mem_wdata), .slot_mem_rdata(slot_mem_rdata), .slot_mem_ready(slot_mem_ready)
+        .slot_mem_wdata(slot_mem_wdata), .slot_mem_lb_n(slot_mem_lb_n), .slot_mem_ub_n(slot_mem_ub_n),
+        .slot_mem_rdata(slot_mem_rdata), .slot_mem_ready(slot_mem_ready)
     );
 
     genvar g;
     generate
         for (g = 0; g < N_SLOTS; g = g + 1) begin : GEN_MEM
-            sim_byte_mem #(.ADDR_WIDTH(ADDR_WIDTH), .DEPTH(4096)) u_mem (
+            sim_word_mem #(.ADDR_WIDTH(ADDR_WIDTH), .DEPTH(4096)) u_mem (
                 .clk(clk), .rst(rst),
                 .req(slot_mem_req[g]), .wr(slot_mem_wr[g]),
                 .addr(slot_mem_addr[g*ADDR_WIDTH +: ADDR_WIDTH]),
-                .wdata(slot_mem_wdata[g*8 +: 8]),
-                .rdata(slot_mem_rdata[g*8 +: 8]), .ready(slot_mem_ready[g])
+                .wdata(slot_mem_wdata[g*16 +: 16]),
+                .lb_n(slot_mem_lb_n[g]), .ub_n(slot_mem_ub_n[g]),
+                .rdata(slot_mem_rdata[g*16 +: 16]), .ready(slot_mem_ready[g])
             );
         end
     endgenerate
 
-    task automatic poke(input integer slot, input [ADDR_WIDTH-1:0] addr, input [7:0] val);
+    // poke/peek stay BYTE-addressed at the testbench level (matching
+    // every other testbench's own convention) -- converted to
+    // word-address + byte-lane internally, same as psram_model.v's
+    // own real convention.
+    task automatic poke(input integer slot, input [ADDR_WIDTH-1:0] byte_addr, input [7:0] val);
+        reg [ADDR_WIDTH-2:0] word_addr;
         begin
+            word_addr = byte_addr[ADDR_WIDTH-1:1];
             case (slot)
-                0: tb.GEN_MEM[0].u_mem.mem[addr] = val;
-                1: tb.GEN_MEM[1].u_mem.mem[addr] = val;
+                0: if (byte_addr[0]==1'b0) tb.GEN_MEM[0].u_mem.mem[word_addr][7:0] = val;
+                   else                    tb.GEN_MEM[0].u_mem.mem[word_addr][15:8] = val;
+                1: if (byte_addr[0]==1'b0) tb.GEN_MEM[1].u_mem.mem[word_addr][7:0] = val;
+                   else                    tb.GEN_MEM[1].u_mem.mem[word_addr][15:8] = val;
                 default: ;
             endcase
         end
     endtask
 
-    function automatic signed [7:0] peek(input integer slot, input [ADDR_WIDTH-1:0] addr);
+    function automatic signed [7:0] peek(input integer slot, input [ADDR_WIDTH-1:0] byte_addr);
+        reg [ADDR_WIDTH-2:0] word_addr;
         begin
+            word_addr = byte_addr[ADDR_WIDTH-1:1];
             case (slot)
-                0: peek = tb.GEN_MEM[0].u_mem.mem[addr];
-                1: peek = tb.GEN_MEM[1].u_mem.mem[addr];
+                0: peek = (byte_addr[0]==1'b0) ? tb.GEN_MEM[0].u_mem.mem[word_addr][7:0] : tb.GEN_MEM[0].u_mem.mem[word_addr][15:8];
+                1: peek = (byte_addr[0]==1'b0) ? tb.GEN_MEM[1].u_mem.mem[word_addr][7:0] : tb.GEN_MEM[1].u_mem.mem[word_addr][15:8];
                 default: peek = 8'sdx;
             endcase
         end

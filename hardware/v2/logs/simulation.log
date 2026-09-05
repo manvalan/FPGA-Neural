@@ -134,3 +134,21 @@ PASS/FAIL: 24/24 PASS bit-exact (11,520 individual neuron/node
   sizing bugs -- psram_model DEPTH too small, N_NODES too small
   causing a real node-id wraparound deadlock)
 full data/analysis: hardware/v2/docs/benchmarks/final-benchmark.md
+
+[2026-09-05] EXP-0015 -- regression + real improvement measurement
+after word-level burst-read rewrite (DEC-0015)
+test: hardware/v2/sim/tb_memory_manager.v (M4, updated to connect
+  memory_manager directly to memory_interface.v, skipping
+  int8_memory_access.v), hardware/v2/sim/tb_dataflow_core.v (M7,
+  sim_byte_mem -> sim_word_mem), hardware/v2/sim/tb_neural_multiprocessor.v
+  (M8, UNCHANGED -- black-box on neural_multiprocessor.v, no edits
+  needed), hardware/v2/sim/tb_benchmark_suite.v (final campaign,
+  UNCHANGED, re-run at N_SLOTS=1/2/4/8)
+simulator: Verilator 5.050 (--binary --timing)
+PASS/FAIL: M4 3/3 PASS (166/446/728 -> 84/204/322 cycles, bit-exact).
+  M7 4/4 PASS (wd=67->43 cycles to first dependency check). M8 4/4
+  PASS (684->337 cycles). Final campaign 24/24 PASS bit-exact,
+  D-Stress cycles roughly halved to a bit more at every N_SLOTS
+  (see benchmark.log EXP-0015 for the full table).
+errors: none found during this implementation (clean first-pass
+  correctness at every regression point).

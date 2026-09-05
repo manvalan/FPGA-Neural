@@ -551,3 +551,36 @@ next_action: none mandated by the roadmap (this campaign was
   characterization before deciding N_SLOTS and writing the V2
   datasheet). Full report: hardware/v2/docs/benchmarks/final-
   benchmark.md.
+
+[2026-09-05] EXP-0015 -- word-level burst-read implementation (user-
+requested optimization #1, following final-benchmark.md's own
+recommendation: exploit psram_controller.v's already-implemented
+page-mode support by fetching multiple bytes per real transaction
+instead of one at a time)
+test: prefetch_engine.v/memory_manager.v rewritten to speak
+  memory_interface.v's 16-bit word protocol directly (bypassing
+  int8_memory_access.v, still frozen/unmodified -- just no longer
+  instantiated in this datapath); slot_mem_arbiter.v/dataflow_core.v/
+  neural_multiprocessor.v widened to match. Re-verified: M4's own
+  testbench (updated to skip int8_memory_access), M7's own testbench
+  (sim_byte_mem -> sim_word_mem), M8's own testbench (UNCHANGED,
+  black-box), and the full final benchmark campaign (UNCHANGED,
+  black-box) at N_SLOTS=1/2/4/8.
+simulator: Verilator 5.050 (--binary --timing)
+PASS/FAIL:
+  SIMULATED: M4 3/3 PASS, cycles reduced 49-56% (166->84, 446->204,
+    728->322). M7 4/4 PASS. M8 4/4 PASS, cycles 684->337. Final
+    campaign 24/24 PASS bit-exact, D-Stress cycles reduced from
+    780298/736402/736823/738751 to 348682/307602/307346/307874
+    (N=1/2/4/8) -- roughly 2.2-2.4x fewer real cycles.
+  SYNTHESIZED + POST-P&R (real, full system incl. real PSRAM pins):
+    N=1 152.44 MHz (was 152.46), N=2 133.58 MHz (was 142.45, -6.2%),
+    N=4 112.07 MHz (was 113.38, -1.2%) -- small real Fmax cost.
+  Combined real wall-clock speedup (cycles / real Fmax): 2.24-2.37x
+    across N_SLOTS=1/2/4.
+errors: none found (clean implementation, no regressions).
+decision: see decisions.log DEC-0015.
+next_action: user-requested optimization #2 -- a shared on-chip cache
+  for the activation (X) vector, so N independent neurons sharing one
+  input vector (the dense-layer shape used throughout this benchmark
+  suite) fetch it from PSRAM ONCE instead of once per neuron.

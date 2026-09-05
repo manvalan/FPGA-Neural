@@ -8,17 +8,29 @@
 // The real, hardware-facing top-level: dataflow_core.v (M7) with its
 // N_SLOTS independent Memory Backend Interface ports funneled through
 // a new generic arbiter (slot_mem_arbiter.v, M8) down to the REAL,
-// UNMODIFIED hardware/v1 PSRAM backend chain --
-//   int8_memory_access -> memory_interface -> psram_controller
-// -- exactly the chain hardware/v2/sim/tb_memory_manager.v (M4)
-// already proved correct for ONE memory_manager port. This module is
-// the first point M3 (per DEC-0009) and M2 (per DEC-0006) BOTH
-// deferred to: N_SLOTS memory_manager instances genuinely sharing one
-// physical PSRAM port.
+// UNMODIFIED hardware/v1 PSRAM backend chain -- exactly the chain
+// hardware/v2/sim/tb_memory_manager.v (M4) already proved correct for
+// ONE memory_manager port. This module is the first point M3 (per
+// DEC-0009) and M2 (per DEC-0006) BOTH deferred to: N_SLOTS
+// memory_manager instances genuinely sharing one physical PSRAM port.
 //
-// dataflow_core.v itself is NOT modified -- its per-slot interface
-// (DEC-0009) is exactly what makes it pluggable into an arbiter here
-// without touching M7's own file.
+// Post-M10 (decisions.log DEC-0015): the chain is now
+//   memory_interface -> psram_controller
+// -- int8_memory_access.v is no longer instantiated here.
+// int8_memory_access itself is untouched (still frozen V1, §1/§34);
+// V2 simply reuses the lower (word-level) layer of the same frozen
+// chain directly, since prefetch_engine.v/memory_manager.v now speak
+// memory_interface's own 16-bit word protocol natively (see those
+// modules' headers for why: every real transaction now moves a full
+// PSRAM word instead of discarding half of it, halving the number of
+// real backend round-trips per tile fetch).
+//
+// dataflow_core.v itself is NOT modified in its own control logic --
+// its per-slot interface (DEC-0009) is exactly what makes it pluggable
+// into an arbiter here without touching M7's own file (only the
+// WIDTH of that per-slot interface changed, from 8 to 16 bits plus
+// lb_n/ub_n, a mechanical consequence of DEC-0015, not a redesign of
+// dataflow_core's own scheduling/dependency logic).
 // ================================================================
 
 module neural_multiprocessor #(
@@ -59,10 +71,12 @@ module neural_multiprocessor #(
     output wire                         psram_zz_n
 );
 
-    // ---- dataflow_core (M7, unmodified) ----
+    // ---- dataflow_core (M7, control logic unmodified; per-slot
+    // backend port widened to 16-bit + lb_n/ub_n per DEC-0015) ----
     wire [N_SLOTS-1:0]              slot_mem_req, slot_mem_wr;
     wire [ADDR_WIDTH*N_SLOTS-1:0]   slot_mem_addr;
-    wire signed [8*N_SLOTS-1:0]     slot_mem_wdata, slot_mem_rdata;
+    wire [16*N_SLOTS-1:0]           slot_mem_wdata, slot_mem_rdata;
+    wire [N_SLOTS-1:0]              slot_mem_lb_n, slot_mem_ub_n;
     wire [N_SLOTS-1:0]              slot_mem_ready;
 
     dataflow_core #(
@@ -75,14 +89,16 @@ module neural_multiprocessor #(
         .reg_x_base(reg_x_base), .reg_w_base(reg_w_base), .reg_n_tiles(reg_n_tiles),
         .reg_result_addr(reg_result_addr),
         .slot_mem_req(slot_mem_req), .slot_mem_wr(slot_mem_wr), .slot_mem_addr(slot_mem_addr),
-        .slot_mem_wdata(slot_mem_wdata), .slot_mem_rdata(slot_mem_rdata), .slot_mem_ready(slot_mem_ready)
+        .slot_mem_wdata(slot_mem_wdata), .slot_mem_lb_n(slot_mem_lb_n), .slot_mem_ub_n(slot_mem_ub_n),
+        .slot_mem_rdata(slot_mem_rdata), .slot_mem_ready(slot_mem_ready)
     );
 
-    // ---- N_SLOTS -> 1 arbiter (M8, new) ----
+    // ---- N_SLOTS -> 1 arbiter (M8, word-level per DEC-0015) ----
     wire                    arb_m_req, arb_m_wr;
     wire [ADDR_WIDTH-1:0]   arb_m_addr;
-    wire signed [7:0]       arb_m_wdata;
-    wire signed [7:0]       arb_m_rdata;
+    wire [15:0]             arb_m_wdata;
+    wire                    arb_m_lb_n, arb_m_ub_n;
+    wire [15:0]             arb_m_rdata;
     wire                    arb_m_ready;
 
     slot_mem_arbiter #(
@@ -90,28 +106,16 @@ module neural_multiprocessor #(
     ) u_arbiter (
         .clk(clk), .rst(rst),
         .s_req(slot_mem_req), .s_wr(slot_mem_wr), .s_addr(slot_mem_addr),
-        .s_wdata(slot_mem_wdata), .s_rdata(slot_mem_rdata), .s_ready(slot_mem_ready),
+        .s_wdata(slot_mem_wdata), .s_lb_n(slot_mem_lb_n), .s_ub_n(slot_mem_ub_n),
+        .s_rdata(slot_mem_rdata), .s_ready(slot_mem_ready),
         .m_req(arb_m_req), .m_wr(arb_m_wr), .m_addr(arb_m_addr), .m_wdata(arb_m_wdata),
+        .m_lb_n(arb_m_lb_n), .m_ub_n(arb_m_ub_n),
         .m_rdata(arb_m_rdata), .m_ready(arb_m_ready)
     );
 
-    // ---- real, unmodified V1 PSRAM backend chain ----
-    wire                          if_mem_req, if_mem_wr;
-    wire [ADDR_WIDTH-1:0]         if_mem_addr;
-    wire [PSRAM_DATA_WIDTH-1:0]   if_mem_wdata;
-    wire                          if_mem_lb_n, if_mem_ub_n;
-    wire [PSRAM_DATA_WIDTH-1:0]   if_mem_rdata;
-    wire                          if_mem_ready;
-
-    int8_memory_access #(.ADDR_WIDTH(ADDR_WIDTH)) u_int8 (
-        .clk(clk), .rst(rst),
-        .req(arb_m_req), .wr(arb_m_wr), .addr(arb_m_addr), .wdata(arb_m_wdata),
-        .rdata(arb_m_rdata), .ready(arb_m_ready),
-        .mem_req(if_mem_req), .mem_wr(if_mem_wr), .mem_addr(if_mem_addr), .mem_wdata(if_mem_wdata),
-        .mem_lb_n(if_mem_lb_n), .mem_ub_n(if_mem_ub_n),
-        .mem_rdata(if_mem_rdata), .mem_ready(if_mem_ready)
-    );
-
+    // ---- real, unmodified V1 PSRAM backend chain (memory_interface
+    // -> psram_controller; int8_memory_access no longer in this
+    // datapath -- see file header, DEC-0015) ----
     wire                          pc_mem_req, pc_mem_wr;
     wire [ADDR_WIDTH-1:0]         pc_mem_addr;
     wire [PSRAM_DATA_WIDTH-1:0]   pc_mem_wdata;
@@ -121,9 +125,9 @@ module neural_multiprocessor #(
 
     memory_interface #(.ADDR_WIDTH(ADDR_WIDTH), .DATA_WIDTH(PSRAM_DATA_WIDTH)) u_memif (
         .clk(clk), .rst(rst),
-        .req(if_mem_req), .wr(if_mem_wr), .addr(if_mem_addr), .wdata(if_mem_wdata),
-        .lb_n(if_mem_lb_n), .ub_n(if_mem_ub_n),
-        .rdata(if_mem_rdata), .ready(if_mem_ready),
+        .req(arb_m_req), .wr(arb_m_wr), .addr(arb_m_addr), .wdata(arb_m_wdata),
+        .lb_n(arb_m_lb_n), .ub_n(arb_m_ub_n),
+        .rdata(arb_m_rdata), .ready(arb_m_ready),
         .mem_req(pc_mem_req), .mem_wr(pc_mem_wr), .mem_addr(pc_mem_addr), .mem_wdata(pc_mem_wdata),
         .mem_lb_n(pc_mem_lb_n), .mem_ub_n(pc_mem_ub_n),
         .mem_rdata(pc_mem_rdata), .mem_ready(pc_mem_ready)

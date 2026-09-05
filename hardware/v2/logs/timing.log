@@ -115,3 +115,14 @@ routing congestion around the shared director/dependency_manager/
 arbiter hub), exactly the same trend already observed for
 dataflow_core alone (M7/M10, EXP-0008/EXP-0011) but now measured for
 the REAL FULL SYSTEM including the real PSRAM backend.
+
+[2026-09-05] EXP-0015 -- neural_multiprocessor N_SLOTS=1/2/4 after the
+word-level burst-read rewrite (DEC-0015), real nextpnr-ecp5 --45k
+--package CABGA381 --speed 8 --freq 80 --lpf-allow-unconstrained
+N_SLOTS=1: Fmax = 152.44 MHz -- PASS at 80MHz (was 152.46 MHz, unchanged)
+N_SLOTS=2: Fmax = 133.58 MHz -- PASS at 80MHz (was 142.45 MHz, -6.2%)
+N_SLOTS=4: Fmax = 112.07 MHz -- PASS at 80MHz (was 113.38 MHz, -1.2%)
+Small, real Fmax cost from widening the shared arbiter/backend to
+16-bit + lb_n/ub_n (extra routing), overwhelmingly outweighed by the
+real cycle-count reduction (EXP-0015 in experiments.log/benchmark.log):
+D-Stress real wall-clock improves 2.24-2.37x at every N_SLOTS.

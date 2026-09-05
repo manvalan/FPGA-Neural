@@ -857,3 +857,83 @@ future memory-bandwidth-scaling architecture change.
 STATUS:
 ACCEPTED
 
+DEC-0015
+
+DATE: 2026-09-05
+
+DECISION:
+prefetch_engine.v/memory_manager.v's own Memory Backend Interface is
+changed from byte-level (matching hardware/v1/rtl/int8_memory_access.v's
+contract, one 8-bit logical transaction per real backend round-trip)
+to WORD-level (matching hardware/v1/rtl/memory_interface.v's own
+16-bit contract directly, one transaction moving 2 consecutive bytes).
+neural_multiprocessor.v no longer instantiates int8_memory_access.v --
+the arbiter's master port connects directly to memory_interface.v.
+slot_mem_arbiter.v's own per-port data width and lb_n/ub_n signals are
+widened to match.
+
+WHY (user-requested, directly following the M9/M10 benchmark
+campaign's own finding that the system is memory-bound -- see the
+final-benchmark.md report's recommendation #1): int8_memory_access.v
+ALREADY converts every 8-bit logical request into a FULL 16-bit
+PSRAM word access internally (`mem_addr <= addr >> 1`, one byte lane
+selected via lb_n/ub_n) -- so fetching X/W tile arrays one byte at a
+time was ALREADY paying for two bytes of real PSRAM bandwidth per
+transaction while discarding half of it, and paying int8_memory_access's
+own STATE_IDLE/STATE_WAIT round-trip TWICE for every 2 real bytes
+instead of once. hardware/v1/rtl/psram_controller.v's own real
+page-mode support (already implemented, unmodified, confirmed present
+by direct inspection) then has fewer, more effective opportunities to
+serve consecutive words fast once transactions are batched this way.
+int8_memory_access.v/memory_interface.v/psram_controller.v are all
+frozen V1 files and remain byte-for-byte unmodified (§1/§34) --
+V2 simply chooses to reuse the lower (word-level) layer of that same
+frozen chain directly instead of the byte-splitting layer on top of
+it, the same "reuse what fits" precedent slot_mem_arbiter.v already
+set by not reusing hardware/v1/rtl/mem_arbiter.v verbatim.
+
+EVIDENCE (real, measured, before/after -- see experiments.log EXP-0015
+for full detail): hardware/v2/sim/tb_memory_manager.v (M4, real V1
+PSRAM chain): 3-tile job 446->204 cycles (-54%), 1-tile 166->84
+(-49%), 5-tile 728->322 (-56%), all still bit-exact. Full campaign
+(tb_benchmark_suite.v, EXP-0014's own workloads) re-run at N_SLOTS=
+1/2/4/8: D-Stress real wall-clock (cycles / real POST-P&R Fmax)
+improves 2.24-2.37x across every N_SLOTS tested, all 24/24 workload/
+config combinations still bit-exact. Real Fmax cost is small (N=1:
+152.46->152.44 MHz, unchanged; N=2: 142.45->133.58 MHz, -6.2%; N=4:
+113.38->112.07 MHz, -1.2%) -- overwhelmingly a net win in real
+wall-clock terms at every N_SLOTS.
+
+CONSTRAINT introduced: P_IN must be even (already true, P_IN=8), and
+tile base addresses (x_base/w_base, and therefore every x_base +
+tile_idx*P_IN the system ever computes) must be word-aligned (even
+byte addresses) -- true of every address this project's own
+testbenches already use, and a trivial constraint for any real
+loader/host to satisfy (place tile arrays at even byte offsets).
+
+ALTERNATIVES:
+1. Modify int8_memory_access.v itself to return/accept 2 bytes per
+   logical transaction. Rejected: that file is frozen V1 (§1/§34) --
+   never modified, regardless of how small the change would be.
+2. Build a NEW byte-level burst wrapper on top of int8_memory_access.v
+   (queue N byte requests, pipeline them). Rejected: int8_memory_access's
+   own STATE_IDLE only samples a new req once back in STATE_IDLE after
+   the previous transaction's mem_ready -- it fundamentally does not
+   support pipelining/overlapped requests, so no wrapper on TOP of it
+   can avoid paying its full per-byte round-trip cost twice per word.
+   Only bypassing it (going one layer lower, to memory_interface.v's
+   own native word interface) actually eliminates the redundant
+   round-trip.
+
+RESULT:
+prefetch_engine.v/memory_manager.v/slot_mem_arbiter.v/
+neural_multiprocessor.v now speak a word-level (16-bit + lb_n/ub_n)
+Memory Backend Interface, bypassing int8_memory_access.v entirely
+(still frozen, still reused unmodified -- just one layer lower in the
+same frozen stack). Real, measured 2.24-2.37x wall-clock improvement
+at every N_SLOTS tested, negligible real Fmax cost, all functional
+correctness preserved (24/24 bit-exact).
+
+STATUS:
+ACCEPTED
+

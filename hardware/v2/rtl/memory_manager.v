@@ -3,12 +3,23 @@
 // ================================================================
 // FPGA-Neural V2 -- Memory Manager (M4, docs/v2-description.md §12/§15)
 //
-// Sits between a single Neural Processor (M1) and the byte-level
-// Memory Backend Interface (hardware/v1/rtl/int8_memory_access.v,
+// Sits between a single Neural Processor (M1) and the WORD-level
+// Memory Backend Interface (hardware/v1/rtl/memory_interface.v,
 // reused UNMODIFIED, per §15 -- "NON iniziare modificando il
 // controller PSRAM. Mantenere inizialmente il backend esistente").
 // The processor sees only "data available" (operand_valid/ready,
 // tile_last) -- never PSRAM request/wait cycles directly (§12).
+//
+// Post-M10 (decisions.log DEC-0015): this port talks directly to
+// memory_interface.v's own 16-bit word interface instead of routing
+// through int8_memory_access.v's byte-splitting layer -- every real
+// transaction now moves a full PSRAM word (2 bytes) instead of
+// discarding half of one, halving the real transaction count for
+// prefetch_engine's own reads. int8_memory_access.v itself is
+// untouched (still frozen V1); V2 simply no longer instantiates it in
+// this datapath, reusing the lower (word-level) layer directly
+// instead, the same "reuse what fits" precedent slot_mem_arbiter.v
+// already set for hardware/v1/rtl/mem_arbiter.v.
 //
 // Double-buffered prefetch (§13): while the processor consumes tile
 // N from bank "current", this module retargets the single
@@ -67,12 +78,19 @@ module memory_manager #(
     output reg                        result_ready,
     input  wire signed [DATA_WIDTH-1:0] result_data,
 
-    // ---- Memory Backend Interface (matches int8_memory_access.v) ----
+    // ---- Memory Backend Interface (word-level, matches
+    // hardware/v1/rtl/memory_interface.v's contract exactly -- see
+    // prefetch_engine.v's own header and decisions.log DEC-0015 for
+    // why this is now word- rather than byte-level: int8_memory_access.v
+    // is no longer in the datapath, each transaction moves a full
+    // 16-bit PSRAM word instead of discarding half of it) ----
     output wire                    mem_req,
     output wire                    mem_wr,
-    output wire [ADDR_WIDTH-1:0]   mem_addr,
-    output wire signed [7:0]       mem_wdata,
-    input  wire signed [7:0]       mem_rdata,
+    output wire [ADDR_WIDTH-1:0]   mem_addr,   // WORD address
+    output wire [15:0]             mem_wdata,
+    output wire                    mem_lb_n,
+    output wire                    mem_ub_n,
+    input  wire [15:0]             mem_rdata,
     input  wire                    mem_ready
 );
 
@@ -122,10 +140,11 @@ module memory_manager #(
     // (never both at once, by construction -- see file header)
     // selects which one actually reaches the real output port,
     // avoiding a two-driver conflict on mem_req/mem_wr/mem_addr/
-    // mem_wdata.
+    // mem_wdata/mem_lb_n/mem_ub_n.
     wire                   pf_mem_req, pf_mem_wr;
     wire [ADDR_WIDTH-1:0]  pf_mem_addr;
-    wire signed [7:0]      pf_mem_wdata;
+    wire [15:0]            pf_mem_wdata;
+    wire                   pf_mem_lb_n, pf_mem_ub_n;
 
     prefetch_engine #(
         .DATA_WIDTH(DATA_WIDTH), .P_IN(P_IN), .ADDR_WIDTH(ADDR_WIDTH)
@@ -135,12 +154,14 @@ module memory_manager #(
         .fetch_busy(pf_busy), .fetch_done(pf_done),
         .tile_x(pf_tile_x), .tile_w(pf_tile_w),
         .mem_req(pf_mem_req), .mem_wr(pf_mem_wr), .mem_addr(pf_mem_addr), .mem_wdata(pf_mem_wdata),
+        .mem_lb_n(pf_mem_lb_n), .mem_ub_n(pf_mem_ub_n),
         .mem_rdata(mem_rdata), .mem_ready(mem_ready)
     );
 
     reg                   wr_mem_req;
-    reg  [ADDR_WIDTH-1:0] wr_mem_addr;
-    reg  signed [7:0]     wr_mem_wdata;
+    reg  [ADDR_WIDTH-1:0] wr_mem_addr;   // WORD address
+    reg  [15:0]           wr_mem_wdata;
+    reg                   wr_mem_lb_n, wr_mem_ub_n;
 
     // wr_mem_req is SET while state==MM_WRITE_RESULT but only becomes
     // valid (via NBA) the FOLLOWING cycle, i.e. while state==MM_DONE --
@@ -153,6 +174,8 @@ module memory_manager #(
     assign mem_wr    = wr_active ? 1'b1         : pf_mem_wr;
     assign mem_addr  = wr_active ? wr_mem_addr  : pf_mem_addr;
     assign mem_wdata = wr_active ? wr_mem_wdata : pf_mem_wdata;
+    assign mem_lb_n  = wr_active ? wr_mem_lb_n  : pf_mem_lb_n;
+    assign mem_ub_n  = wr_active ? wr_mem_ub_n  : pf_mem_ub_n;
 
     always @(posedge clk) begin
         if (rst) begin
@@ -169,7 +192,9 @@ module memory_manager #(
             tile_idx        <= 16'h0;
             wr_mem_req      <= 1'b0;
             wr_mem_addr     <= {ADDR_WIDTH{1'b0}};
-            wr_mem_wdata    <= 8'sd0;
+            wr_mem_wdata    <= 16'h0000;
+            wr_mem_lb_n     <= 1'b1;
+            wr_mem_ub_n     <= 1'b1;
             pf_pending      <= 1'b0;
         end else begin
             job_done     <= 1'b0;
@@ -282,7 +307,15 @@ module memory_manager #(
                 MM_WAIT_RESULT: begin
                     result_ready <= 1'b1;
                     if (result_valid && result_ready) begin
-                        wr_mem_wdata <= result_data;
+                        // Replicate int8_memory_access.v's own byte-
+                        // select convention exactly (addr[0]==0 -> low
+                        // byte, addr[0]==1 -> high byte) since that
+                        // module is no longer in the datapath -- see
+                        // prefetch_engine.v's header/decisions.log
+                        // DEC-0015.
+                        wr_mem_wdata <= result_addr_reg[0] ? {result_data, 8'h00} : {8'h00, result_data};
+                        wr_mem_lb_n  <= result_addr_reg[0] ? 1'b1 : 1'b0;
+                        wr_mem_ub_n  <= result_addr_reg[0] ? 1'b0 : 1'b1;
                         state        <= MM_WRITE_RESULT;
                     end
                 end
@@ -292,7 +325,7 @@ module memory_manager #(
                     // tiles to fetch for this job), so driving the shared
                     // backend port directly is safe -- see file header.
                     wr_mem_req  <= 1'b1;
-                    wr_mem_addr <= result_addr_reg;
+                    wr_mem_addr <= result_addr_reg[ADDR_WIDTH-1:1]; // byte -> word
                     state       <= MM_DONE;
                 end
 

@@ -275,3 +275,39 @@ bit-exact against a software golden model, zero errors, zero
 timeouts, zero deadlocks (after fixing the 3 issues in errors.log
 ERR-0009). No node lost, no node duplicated, correct multi-hop
 dependency wake-up verified (workload F's 2-hop diamond+fan-in graph).
+
+[2026-09-05] EXP-0015 -- word-level burst-read rewrite (DEC-0015),
+real before/after comparison (user-requested optimization #1,
+following the final-benchmark.md report's own recommendation)
+
+M4 standalone (tb_memory_manager.v, real V1 PSRAM chain, single job):
+| Job (n_tiles) | cycles BEFORE | cycles AFTER | reduction |
+|-----------------|-----------------|----------------|-------------|
+| 1 tile          | 166             | 84             | -49.4%     |
+| 3 tiles         | 446             | 204            | -54.3%     |
+| 5 tiles         | 728             | 322            | -55.8%     |
+All still bit-exact.
+
+Full campaign (tb_benchmark_suite.v, same 6 workloads as EXP-0014),
+D-Stress (256 neurons, the largest/most representative workload),
+real cycles and real wall-clock (cycles / real POST-P&R Fmax):
+
+| N_SLOTS | Fmax BEFORE | Fmax AFTER | cycles BEFORE | cycles AFTER | wall-clock BEFORE | wall-clock AFTER | real speedup |
+|-----------|---------------|--------------|------------------|-----------------|----------------------|---------------------|----------------|
+| 1         | 152.46 MHz   | 152.44 MHz  | 780298          | 348682         | 5118.1 us           | 2287.3 us          | 2.24x         |
+| 2         | 142.45 MHz   | 133.58 MHz  | 736402          | 307602         | 5169.5 us           | 2302.8 us          | 2.24x         |
+| 4         | 113.38 MHz   | 112.07 MHz  | 736823          | 307346         | 6498.7 us           | 2742.4 us          | 2.37x         |
+
+Real PSRAM port utilization also rose (e.g. N=2, D-Stress: 91.0% ->
+89.1% -- essentially unchanged fraction, but of a MUCH smaller total
+cycle count, meaning the port is doing genuinely useful work a larger
+fraction of the time it IS busy, not idling on redundant round-trips).
+
+All 24/24 workload/config combinations (6 workloads x N_SLOTS=1/2/4/8)
+re-verified bit-exact after the rewrite. The "real parallel scaling is
+flat beyond N_SLOTS=2" finding from EXP-0014 STILL holds (D-Stress
+cycles at N=2/4/8 remain within ~0.2% of each other: 307602/307346/
+307874) -- this optimization made the shared PSRAM port more
+EFFICIENT per transaction, it did not remove the fact that there is
+still only one physical port, so DEC-0014's N_SLOTS=2 recommendation
+is unaffected and reconfirmed with the new, faster numbers.

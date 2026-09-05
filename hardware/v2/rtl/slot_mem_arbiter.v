@@ -9,13 +9,18 @@
 // funneling N_SLOTS independent memory_manager backend ports down to
 // the ONE physical PSRAM port a real chip actually has.
 //
+// WORD-level (16-bit, + lb_n/ub_n) post-M10 (decisions.log DEC-0015):
+// arbitrates hardware/v1/rtl/memory_interface.v's own port shape
+// directly (int8_memory_access.v is no longer in this datapath -- see
+// memory_manager.v/prefetch_engine.v's own headers for why).
+//
 // Inspired by (NOT copied from -- see hardware/v2/logs/decisions.log
 // DEC-0006's own note) hardware/v1/rtl/mem_arbiter.v: same
 // single-owner-until-ready-pulse discipline (a port, once granted,
 // holds the shared master port until ITS OWN transaction's m_ready
 // pulse, then releases -- no queuing/pipelining needed, since every
 // requester already issues a clean one-cycle req pulse matching
-// int8_memory_access's own contract). Generalized from V1's fixed
+// memory_interface's own contract). Generalized from V1's fixed
 // 4 named ports (A/B/C/D) to a parametric N_PORTS array, since
 // dataflow_core.v's N_SLOTS is itself a parameter.
 //
@@ -30,21 +35,20 @@
 // IMPORTANT (found via real concurrent-slot simulation, see
 // hardware/v2/logs/errors.log ERR-0008): each port's own s_req is a
 // FIRE-AND-FORGET single-cycle pulse (prefetch_engine.v/
-// memory_manager.v's own byte-level backend protocol -- M4 verified
-// it only against a DIRECT 1:1 connection to int8_memory_access,
-// which is always free to accept it since there is exactly one
-// requester). A naive "grant only while req is live" arbiter silently
-// DROPS a pulse that arrives while the shared bus is owned by another
-// port, hanging that slot's prefetch/writeback forever. Every
-// incoming s_req is therefore LATCHED into a per-port `pending`
-// register (capturing wr/addr/wdata the same cycle) regardless of
-// arbiter state -- the same single-entry "queue, don't drop the
-// request" idiom already used by memory_manager's own pf_pending
-// register (ERR-0006 fix #1). Grants are drawn from `pending`, never
-// from a live s_req directly, which adds a uniform minimum 1-cycle
-// latency to every byte transaction (a real, measured cost of sharing
-// one PSRAM port -- see timing.log/benchmark.log EXP-0009) but never
-// drops a request.
+// memory_manager.v's own backend protocol -- M4 verified it only
+// against a DIRECT 1:1 connection to the backend, which is always
+// free to accept it since there is exactly one requester). A naive
+// "grant only while req is live" arbiter silently DROPS a pulse that
+// arrives while the shared bus is owned by another port, hanging that
+// slot's prefetch/writeback forever. Every incoming s_req is therefore
+// LATCHED into a per-port `pending` register (capturing wr/addr/wdata/
+// lb_n/ub_n the same cycle) regardless of arbiter state -- the same
+// single-entry "queue, don't drop the request" idiom already used by
+// memory_manager's own pf_pending register (ERR-0006 fix #1). Grants
+// are drawn from `pending`, never from a live s_req directly, which
+// adds a uniform minimum 1-cycle latency to every transaction (a real,
+// measured cost of sharing one PSRAM port -- see timing.log/
+// benchmark.log EXP-0009) but never drops a request.
 // ================================================================
 
 module slot_mem_arbiter #(
@@ -57,17 +61,21 @@ module slot_mem_arbiter #(
     // ---- N_PORTS requester side (one per dataflow_core slot) ----
     input  wire [N_PORTS-1:0]            s_req,
     input  wire [N_PORTS-1:0]            s_wr,
-    input  wire [ADDR_WIDTH*N_PORTS-1:0] s_addr,
-    input  wire signed [8*N_PORTS-1:0]   s_wdata,
-    output reg  signed [8*N_PORTS-1:0]   s_rdata,
+    input  wire [ADDR_WIDTH*N_PORTS-1:0] s_addr,   // WORD address
+    input  wire [16*N_PORTS-1:0]         s_wdata,
+    input  wire [N_PORTS-1:0]            s_lb_n,
+    input  wire [N_PORTS-1:0]            s_ub_n,
+    output reg  [16*N_PORTS-1:0]         s_rdata,
     output reg  [N_PORTS-1:0]            s_ready,
 
-    // ---- single shared master port (-> int8_memory_access) ----
+    // ---- single shared master port (-> memory_interface.v) ----
     output reg                    m_req,
     output reg                    m_wr,
     output reg  [ADDR_WIDTH-1:0]  m_addr,
-    output reg  signed [7:0]      m_wdata,
-    input  wire signed [7:0]      m_rdata,
+    output reg  [15:0]            m_wdata,
+    output reg                    m_lb_n,
+    output reg                    m_ub_n,
+    input  wire [15:0]            m_rdata,
     input  wire                   m_ready
 );
 
@@ -81,8 +89,10 @@ module slot_mem_arbiter #(
     // is never silently dropped while the bus is owned by another port.
     reg [N_PORTS-1:0]            pending;
     reg [ADDR_WIDTH*N_PORTS-1:0] pending_addr;
-    reg signed [8*N_PORTS-1:0]   pending_wdata;
+    reg [16*N_PORTS-1:0]         pending_wdata;
     reg [N_PORTS-1:0]            pending_wr;
+    reg [N_PORTS-1:0]            pending_lb_n;
+    reg [N_PORTS-1:0]            pending_ub_n;
 
     // Fixed lowest-index-wins priority scan over PENDING requests (not
     // raw s_req -- see file header).
@@ -107,13 +117,17 @@ module slot_mem_arbiter #(
             owner         <= OWNER_NONE;
             pending       <= {N_PORTS{1'b0}};
             pending_addr  <= {(ADDR_WIDTH*N_PORTS){1'b0}};
-            pending_wdata <= {(8*N_PORTS){1'b0}};
+            pending_wdata <= {(16*N_PORTS){1'b0}};
             pending_wr    <= {N_PORTS{1'b0}};
+            pending_lb_n  <= {N_PORTS{1'b1}};
+            pending_ub_n  <= {N_PORTS{1'b1}};
             m_req   <= 1'b0;
             m_wr    <= 1'b0;
             m_addr  <= {ADDR_WIDTH{1'b0}};
-            m_wdata <= 8'sd0;
-            s_rdata <= {(8*N_PORTS){1'b0}};
+            m_wdata <= 16'h0000;
+            m_lb_n  <= 1'b1;
+            m_ub_n  <= 1'b1;
+            s_rdata <= {(16*N_PORTS){1'b0}};
             s_ready <= {N_PORTS{1'b0}};
         end else begin
             m_req   <= 1'b0;
@@ -129,10 +143,12 @@ module slot_mem_arbiter #(
             // the cycle it is granted.
             for (pi = 0; pi < N_PORTS; pi = pi + 1) begin
                 if (s_req[pi]) begin
-                    pending[pi]                          <= 1'b1;
-                    pending_wr[pi]                        <= s_wr[pi];
-                    pending_addr[pi*ADDR_WIDTH +: ADDR_WIDTH] <= s_addr[pi*ADDR_WIDTH +: ADDR_WIDTH];
-                    pending_wdata[pi*8 +: 8]              <= s_wdata[pi*8 +: 8];
+                    pending[pi]                                <= 1'b1;
+                    pending_wr[pi]                              <= s_wr[pi];
+                    pending_lb_n[pi]                            <= s_lb_n[pi];
+                    pending_ub_n[pi]                            <= s_ub_n[pi];
+                    pending_addr[pi*ADDR_WIDTH +: ADDR_WIDTH]   <= s_addr[pi*ADDR_WIDTH +: ADDR_WIDTH];
+                    pending_wdata[pi*16 +: 16]                  <= s_wdata[pi*16 +: 16];
                 end
             end
 
@@ -141,8 +157,10 @@ module slot_mem_arbiter #(
                     owner   <= grant_idx + 1'b1;
                     m_req   <= 1'b1;
                     m_wr    <= pending_wr[grant_idx];
+                    m_lb_n  <= pending_lb_n[grant_idx];
+                    m_ub_n  <= pending_ub_n[grant_idx];
                     m_addr  <= pending_addr[grant_idx*ADDR_WIDTH +: ADDR_WIDTH];
-                    m_wdata <= pending_wdata[grant_idx*8 +: 8];
+                    m_wdata <= pending_wdata[grant_idx*16 +: 16];
                     pending[grant_idx] <= 1'b0;
                 end
             end else begin
@@ -153,8 +171,8 @@ module slot_mem_arbiter #(
                     // of bug already hit/fixed at ERR-0006/M2/M6).
                     for (pi = 0; pi < N_PORTS; pi = pi + 1) begin
                         if (owner == pi[PIDXW-1:0] + 1'b1) begin
-                            s_rdata[pi*8 +: 8] <= m_rdata;
-                            s_ready[pi]        <= 1'b1;
+                            s_rdata[pi*16 +: 16] <= m_rdata;
+                            s_ready[pi]          <= 1'b1;
                         end
                     end
                     owner <= OWNER_NONE;

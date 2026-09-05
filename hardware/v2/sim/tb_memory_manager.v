@@ -50,11 +50,14 @@ module tb;
     wire                                 mm_result_valid, mm_result_ready;
     wire signed [DATA_WIDTH-1:0]         mm_result_data;
 
-    // ---- memory_manager <-> int8_memory_access (Memory Backend Interface) ----
+    // ---- memory_manager <-> memory_interface (word-level Memory
+    // Backend Interface, post-M10 DEC-0015 -- int8_memory_access is no
+    // longer in this datapath, see memory_manager.v's own header) ----
     wire                    mem_req, mem_wr;
-    wire [ADDR_WIDTH-1:0]   mem_addr;
-    wire signed [7:0]       mem_wdata;
-    wire signed [7:0]       mem_rdata;
+    wire [ADDR_WIDTH-1:0]   mem_addr;   // WORD address
+    wire [15:0]             mem_wdata;
+    wire                    mem_lb_n, mem_ub_n;
+    wire [15:0]             mem_rdata;
     wire                    mem_ready;
 
     memory_manager #(
@@ -67,6 +70,7 @@ module tb;
         .input_data(mm_input_data), .weight_data(mm_weight_data), .tile_last(mm_tile_last),
         .result_valid(mm_result_valid), .result_ready(mm_result_ready), .result_data(mm_result_data),
         .mem_req(mem_req), .mem_wr(mem_wr), .mem_addr(mem_addr), .mem_wdata(mem_wdata),
+        .mem_lb_n(mem_lb_n), .mem_ub_n(mem_ub_n),
         .mem_rdata(mem_rdata), .mem_ready(mem_ready)
     );
 
@@ -105,23 +109,9 @@ module tb;
         else if (job_valid_np && job_ready_np) job_valid_np <= 1'b0;
     end
 
-    // ---- REAL, unmodified V1 backend chain ----
-    wire                          if_mem_req, if_mem_wr;
-    wire [ADDR_WIDTH-1:0]         if_mem_addr;
-    wire [PSRAM_DATA_WIDTH-1:0]   if_mem_wdata;
-    wire                          if_mem_lb_n, if_mem_ub_n;
-    wire [PSRAM_DATA_WIDTH-1:0]   if_mem_rdata;
-    wire                          if_mem_ready;
-
-    int8_memory_access #(.ADDR_WIDTH(ADDR_WIDTH)) u_int8 (
-        .clk(clk), .rst(rst),
-        .req(mem_req), .wr(mem_wr), .addr(mem_addr), .wdata(mem_wdata),
-        .rdata(mem_rdata), .ready(mem_ready),
-        .mem_req(if_mem_req), .mem_wr(if_mem_wr), .mem_addr(if_mem_addr), .mem_wdata(if_mem_wdata),
-        .mem_lb_n(if_mem_lb_n), .mem_ub_n(if_mem_ub_n),
-        .mem_rdata(if_mem_rdata), .mem_ready(if_mem_ready)
-    );
-
+    // ---- REAL, unmodified V1 backend chain (memory_interface ->
+    // psram_controller; int8_memory_access no longer in this datapath,
+    // see memory_manager.v's own header, DEC-0015) ----
     wire                          pc_mem_req, pc_mem_wr;
     wire [ADDR_WIDTH-1:0]         pc_mem_addr;
     wire [PSRAM_DATA_WIDTH-1:0]   pc_mem_wdata;
@@ -131,9 +121,9 @@ module tb;
 
     memory_interface #(.ADDR_WIDTH(ADDR_WIDTH), .DATA_WIDTH(PSRAM_DATA_WIDTH)) u_memif (
         .clk(clk), .rst(rst),
-        .req(if_mem_req), .wr(if_mem_wr), .addr(if_mem_addr), .wdata(if_mem_wdata),
-        .lb_n(if_mem_lb_n), .ub_n(if_mem_ub_n),
-        .rdata(if_mem_rdata), .ready(if_mem_ready),
+        .req(mem_req), .wr(mem_wr), .addr(mem_addr), .wdata(mem_wdata),
+        .lb_n(mem_lb_n), .ub_n(mem_ub_n),
+        .rdata(mem_rdata), .ready(mem_ready),
         .mem_req(pc_mem_req), .mem_wr(pc_mem_wr), .mem_addr(pc_mem_addr), .mem_wdata(pc_mem_wdata),
         .mem_lb_n(pc_mem_lb_n), .mem_ub_n(pc_mem_ub_n),
         .mem_rdata(pc_mem_rdata), .mem_ready(pc_mem_ready)

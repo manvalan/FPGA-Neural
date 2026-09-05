@@ -97,3 +97,18 @@ N_SLOTS=4: LUT4=7552  CCU2C=768  TRELLIS_FF=6495  MULT18X18D=32  DP16KD=0
 (N_SLOTS=2 reference, EXP-0009: LUT4=4191 CCU2C=388 FF=3659 DSP=16 DP16KD=0)
 CHECK: 0 problems on both, same benign warnings as every other
   neural_processor instantiation since EXP-0001.
+
+[2026-09-05] EXP-0015 -- neural_multiprocessor N_SLOTS=1/2/4 after the
+word-level burst-read rewrite (DEC-0015), real standalone synthesis,
+no harness needed
+N_SLOTS=1: LUT4=1995  CCU2C=200  TRELLIS_FF=2217  MULT18X18D=8   DP16KD=0
+N_SLOTS=2: LUT4=3166  CCU2C=388  TRELLIS_FF=3655  MULT18X18D=16  DP16KD=0
+N_SLOTS=4: LUT4=5824  CCU2C=768  TRELLIS_FF=6529  MULT18X18D=32  DP16KD=0
+CHECK: 0 problems on all three (same benign warnings as every prior
+  neural_processor instantiation since EXP-0001). Resource cost is
+  essentially unchanged from the pre-rewrite byte-level numbers
+  (EXP-0014: LUT4 2642/4191/7552, FF 2240/3659/6495) -- widening the
+  backend to 16-bit + lb_n/ub_n cost a small amount of LUT4 in some
+  configs and saved some in others (word-level control logic is
+  simpler than byte-indexing logic in prefetch_engine.v), net roughly
+  flat.

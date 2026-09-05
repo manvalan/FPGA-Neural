@@ -311,3 +311,23 @@ decision: vedi decisions.log DEC-0014 -- N_SLOTS=2 raccomandato come
   tetto DSP mafisico, non come raccomandazione d'uso generale).
 next_action: datasheet V2 in stile professionale (richiesta utente),
   ora sbloccato dalla decisione su N_SLOTS.
+
+[2026-09-05] Ottimizzazione #1 -- burst read a livello di parola
+(word-level), su richiesta esplicita dell'utente
+reason: dopo la campagna di benchmark finale, l'utente ha chiesto
+  concretamente di implementare la raccomandazione #1 (sfruttare il
+  page-mode gia' presente nel controller PSRAM leggendo piu' byte in
+  una sola transazione, non uno alla volta).
+result: prefetch_engine.v/memory_manager.v riscritti per parlare
+  direttamente il protocollo a 16 bit di memory_interface.v (bypassando
+  int8_memory_access.v, che resta comunque congelato e non modificato
+  -- semplicemente non piu' istanziato in questo percorso dati).
+  Risultato reale misurato: -49/-54/-56% cicli su job singoli (M4),
+  2.24-2.37x speedup reale in wall-clock sull'intera campagna finale
+  (24/24 ancora bit-exact), a fronte di un costo Fmax reale piccolo
+  (-6.2% a N_SLOTS=2, -1.2% a N_SLOTS=4, invariato a N_SLOTS=1).
+errors: nessuno (implementazione pulita, nessuna regressione).
+decision: vedi decisions.log DEC-0015.
+next_action: ottimizzazione #2 -- cache condivisa on-chip per il
+  vettore di attivazione (X), per eliminare le letture ridondanti tra
+  neuroni che condividono lo stesso input di layer.

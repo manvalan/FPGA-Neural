@@ -75,12 +75,16 @@ module dataflow_core #(
 
     // ---- per-slot Memory Backend Interface (arrayed, one per slot --
     // see file header on why arbitration to one shared PSRAM port is
-    // NOT done here) ----
+    // NOT done here). WORD-level (16-bit) post-M10 (decisions.log
+    // DEC-0015) -- see memory_manager.v/prefetch_engine.v's own
+    // headers for why. ----
     output wire [N_SLOTS-1:0]                   slot_mem_req,
     output wire [N_SLOTS-1:0]                   slot_mem_wr,
-    output wire [ADDR_WIDTH*N_SLOTS-1:0]        slot_mem_addr,
-    output wire signed [8*N_SLOTS-1:0]          slot_mem_wdata,
-    input  wire signed [8*N_SLOTS-1:0]          slot_mem_rdata,
+    output wire [ADDR_WIDTH*N_SLOTS-1:0]        slot_mem_addr,   // WORD address
+    output wire [16*N_SLOTS-1:0]                slot_mem_wdata,
+    output wire [N_SLOTS-1:0]                   slot_mem_lb_n,
+    output wire [N_SLOTS-1:0]                   slot_mem_ub_n,
+    input  wire [16*N_SLOTS-1:0]                slot_mem_rdata,
     input  wire [N_SLOTS-1:0]                   slot_mem_ready
 );
 
@@ -175,8 +179,9 @@ module dataflow_core #(
                 .result_valid(mm_result_valid), .result_ready(mm_result_ready), .result_data(mm_result_data),
                 .mem_req(slot_mem_req[g]), .mem_wr(slot_mem_wr[g]),
                 .mem_addr(slot_mem_addr[g*ADDR_WIDTH +: ADDR_WIDTH]),
-                .mem_wdata(slot_mem_wdata[g*8 +: 8]),
-                .mem_rdata(slot_mem_rdata[g*8 +: 8]), .mem_ready(slot_mem_ready[g])
+                .mem_wdata(slot_mem_wdata[g*16 +: 16]),
+                .mem_lb_n(slot_mem_lb_n[g]), .mem_ub_n(slot_mem_ub_n[g]),
+                .mem_rdata(slot_mem_rdata[g*16 +: 16]), .mem_ready(slot_mem_ready[g])
             );
 
             reg job_valid_np;
