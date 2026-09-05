@@ -166,3 +166,35 @@ Osservazioni (tutte da dati reali sopra, nessun numero inventato):
 - BRAM=0 per V2 riflette una scelta di scope esplicita (M3 non ancora
   collegato, DEC-0009), non un vantaggio architetturale reale -- un
   confronto onesto lo nota piuttosto che nasconderlo.
+
+[2026-09-05] M10 -- Optimization, closing M9's deferred gaps with real
+data (§32/DEC-0011 follow-up)
+
+Stall %/utilization (EXP-0013, real SIMULATED data, N_SLOTS=2, 3-node
+DAG scenario, replacing M9's "NOT MEASURED" placeholder for V2 -- V1's
+own equivalent instrumentation was not built this session, still NOT
+MEASURED for V1):
+| Metric                          | V2 (SIMULATED, real) |
+|------------------------------------|------------------------|
+| shared PSRAM port utilization      | 81.7% (18.3% idle)    |
+| slot 0 (memory_manager) utilization| 95.2%                 |
+| slot 1 (memory_manager) utilization| 65.2%                 |
+
+N_SLOTS sweep, extended to the real DSP ceiling (EXP-0008/EXP-0011):
+| N_SLOTS | Fmax (POST-P&R) | DSP used/total |
+|-----------|-------------------|------------------|
+| 2         | 165.15 MHz       | 16/72 (22%)     |
+| 4         | 133.19 MHz       | 32/72 (44%)     |
+| 8         | 92.63 MHz        | 64/72 (89%)     |
+All three PASS at 80MHz; N_SLOTS=8 recommended as the practical
+ceiling for P_IN=8 on this chip (DEC-0012).
+
+ACC_WIDTH 6-seed real placement sweep (EXP-0012, resolves EXP-0002's
+single-seed inconclusiveness):
+| ACC_WIDTH | mean Fmax | min | max | stdev |
+|-------------|-------------|-------|-------|---------|
+| 32          | 170.12 MHz | 145.73| 183.96| 14.16   |
+| 24          | 180.71 MHz | 175.16| 185.49| 4.21    |
+ACC_WIDTH=24 recommended as the new default (DEC-0013): higher mean
+Fmax, much tighter variance, fewer resources, same bit-exact
+correctness.

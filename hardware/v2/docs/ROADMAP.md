@@ -70,7 +70,32 @@ reali, non solo scritto).
       esplicitamente NON misurati questo milestone (`logs/decisions.log`
       DEC-0011), rimandati a M10. Tabella completa in
       `logs/benchmark.log`.
-- [ ] **M10 — Optimization**, solo sulla base dei dati raccolti in M1-M9.
+- [x] **M10 — Optimization**, solo sulla base dei dati raccolti in
+      M1-M9. N_SLOTS=8 sintetizzato e P&R reale (92.63 MHz, PASS
+      @80MHz, DSP 64/72=88.9%) — tetto pratico raccomandato per P_IN=8
+      su LFE5U-45F (`logs/decisions.log` DEC-0012). Sweep reale a 6
+      seed ACC_WIDTH 24 vs 32 (riusando i netlist gia' sintetizzati):
+      ACC_WIDTH=24 vince sia in Fmax medio (+6.2%, 180.71 vs 170.12
+      MHz) che in varianza (~3.4x piu' stretta) — risolve
+      l'inconcludenza a singolo seed di EXP-0002, nuovo default
+      raccomandato (DEC-0013). Strumentazione di conteggio cicli
+      (solo testbench, nessun RTL toccato) chiude la lacuna
+      stall%/utilization di DEC-0011 con dati reali: porta PSRAM
+      condivisa all'81.7% di utilizzo, slot0 95.2%, slot1 65.2%.
+
+## Roadmap completa (§33)
+
+Tutte e 10 le milestone del mandato (`docs/v2-description.md` §33) sono
+complete: simulazione reale (Verilator), sintesi reale (Yosys), place &
+route reale (nextpnr-ecp5) per ognuna, con log completi in
+`hardware/v2/logs/` (EXP-0001..EXP-0013, DEC-0001..DEC-0013,
+ERR-0001..ERR-0008). Elementi esplicitamente rimandati (non
+dimenticanze, ognuno con la propria motivazione in `decisions.log`):
+riuso slot in dependency_manager (DEC-0008), fairness dell'arbitro PSRAM
+sotto contesa piu' estesa (DEC-0010), sweep P_IN<8 per N_SLOTS ancora
+piu' alto (DEC-0012), riuso dei buffer M3 come cache condivisa
+(DEC-0009), strumentazione stall%/utilization completa anche lato V1
+(DEC-0011).
 
 ## Log
 

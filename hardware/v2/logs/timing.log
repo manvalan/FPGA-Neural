@@ -70,3 +70,34 @@ configs still clear the 80MHz target with real margin.
 standalone synthesis, no harness needed), real nextpnr-ecp5 --45k
 --package CABGA381 --speed 8 --freq 80 --lpf-allow-unconstrained
 Fmax: 142.45 MHz -- PASS at 80MHz (real place&route measurement)
+
+[2026-09-05] EXP-0011 -- dataflow_core N_SLOTS=8 (via
+harness_dataflow_core.v), real nextpnr-ecp5 --45k --package CABGA381
+--speed 8 --freq 80 --lpf-allow-unconstrained
+Fmax: 92.63 MHz -- PASS at 80MHz (real place&route measurement), but
+with a much thinner margin than N_SLOTS=2 (165.15 MHz) or N_SLOTS=4
+(133.19 MHz) -- Fmax falls monotonically with N_SLOTS (165.15 ->
+133.19 -> 92.63 MHz for N_SLOTS=2/4/8) as routing congestion around
+the shared neural_director/dependency_manager hub grows, while DSP
+usage (88.9% at N_SLOTS=8) approaches its hard ceiling at the same
+time -- see decisions.log DEC-0012.
+
+[2026-09-05] EXP-0012 -- ACC_WIDTH 24 vs 32 real placement-seed sweep
+(M10, "pipeline" axis, resolving EXP-0002's single-seed
+inconclusiveness), 5 additional real nextpnr-ecp5 seeds (1-5) plus the
+original default-seed run (EXP-0001/EXP-0002), same synthesized
+netlists (hardware/v2/synthesis/neural_processor_p8/top.json and
+neural_processor_p8_acc24/top.json), --45k --package CABGA381 --speed
+8 --freq 80 --lpf-allow-unconstrained
+ACC_WIDTH=32: seeds [default,1,2,3,4,5] -> [183.12, 164.85, 174.25,
+  168.83, 183.96, 145.73] MHz. n=6, mean=170.12 MHz, min=145.73 MHz,
+  max=183.96 MHz, stdev=14.16 MHz.
+ACC_WIDTH=24: seeds [default,1,2,3,4,5] -> [176.21, 183.72, 180.57,
+  183.08, 185.49, 175.16] MHz. n=6, mean=180.71 MHz, min=175.16 MHz,
+  max=185.49 MHz, stdev=4.21 MHz.
+Conclusion: over 6 real placement seeds, ACC_WIDTH=24 has a HIGHER
+  mean Fmax (+10.6 MHz, +6.2%) AND a much lower seed-to-seed variance
+  (stdev 4.21 vs 14.16 MHz, ~3.4x tighter) than ACC_WIDTH=32 --
+  EXP-0002's single-seed result (176.21 < 183.12, i.e. ACC=24 looked
+  WORSE) was placement-seed noise, not a real trend. See decisions.log
+  DEC-0013.

@@ -121,8 +121,32 @@ module tb;
     integer errors, tests;
     integer i, wd;
 
+    // ---- M10 addition (decisions.log DEC-0011 closure): real
+    // cycle-accounting instrumentation, TESTBENCH-ONLY (no RTL
+    // touched) -- counts, from the moment node registration begins
+    // (measure_en) to $finish, how many cycles the shared PSRAM port
+    // is actually busy (slot_mem_arbiter's own `owner` field != NONE)
+    // and how many cycles each slot's memory_manager is busy (state
+    // != MM_IDLE), giving real SIMULATED stall %/utilization numbers
+    // for the exact same EXP-0009 scenario instead of leaving them
+    // unmeasured. ----
+    reg measure_en;
+    integer measured_cycles;
+    integer psram_busy_cycles;
+    integer slot0_busy_cycles, slot1_busy_cycles;
+    always @(posedge clk) begin
+        if (measure_en) begin
+            measured_cycles <= measured_cycles + 1;
+            if (u_nmp.u_arbiter.owner != 0) psram_busy_cycles <= psram_busy_cycles + 1;
+            if (u_nmp.u_dataflow_core.GEN_SLOT[0].u_mm.state != 3'd0) slot0_busy_cycles <= slot0_busy_cycles + 1;
+            if (u_nmp.u_dataflow_core.GEN_SLOT[1].u_mm.state != 3'd0) slot1_busy_cycles <= slot1_busy_cycles + 1;
+        end
+    end
+
     initial begin
         errors = 0; tests = 0;
+        measure_en = 1'b0; measured_cycles = 0; psram_busy_cycles = 0;
+        slot0_busy_cycles = 0; slot1_busy_cycles = 0;
         rst = 1; reg_valid = 0; reg_node_id = 0; reg_required = 0; reg_producer_ids = 0;
         reg_x_base = 0; reg_w_base = 0; reg_n_tiles = 0; reg_result_addr = 0;
         repeat(5) @(posedge clk);
@@ -132,6 +156,7 @@ module tb;
         // requirement/convention as tb_memory_manager.v (M4).
         wait (u_nmp.u_psram_ctrl.state == u_nmp.u_psram_ctrl.STATE_IDLE);
         @(posedge clk);
+        measure_en = 1'b1;
 
         for (i = 0; i < 8; i = i + 1) begin
             poke_byte(23'h10+i, 8'sd2); poke_byte(23'h20+i, 8'sd3); // node0: x=2,w=3
@@ -178,6 +203,17 @@ module tb;
             errors = errors + 1;
         end else $display("PASS node2: result=40, dispatched only after BOTH producers genuinely completed, real PSRAM end-to-end");
 
+        measure_en = 1'b0;
+        $display("========================================");
+        $display("M10 cycle-accounting (DEC-0011 closure, real SIMULATED data):");
+        $display("  measured cycles (from first registration to completion): %0d", measured_cycles);
+        $display("  shared PSRAM port busy: %0d/%0d cycles (%0.1f%% utilization, %0.1f%% idle)",
+            psram_busy_cycles, measured_cycles,
+            100.0*psram_busy_cycles/measured_cycles, 100.0*(measured_cycles-psram_busy_cycles)/measured_cycles);
+        $display("  slot 0 (memory_manager) busy: %0d/%0d cycles (%0.1f%% utilization)",
+            slot0_busy_cycles, measured_cycles, 100.0*slot0_busy_cycles/measured_cycles);
+        $display("  slot 1 (memory_manager) busy: %0d/%0d cycles (%0.1f%% utilization)",
+            slot1_busy_cycles, measured_cycles, 100.0*slot1_busy_cycles/measured_cycles);
         $display("========================================");
         if (errors == 0)
             $display("ALL %0d TESTS PASSED (neural_multiprocessor, real V1 PSRAM chain shared across N_SLOTS=%0d via slot_mem_arbiter)", tests, N_SLOTS);

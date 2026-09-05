@@ -463,3 +463,53 @@ next_action: M10 -- Optimization, using the REAL data gathered in M1-
   fairness question (DEC-0010) -- plus building the stall %/
   utilization instrumentation DEC-0011 deferred, since M10 is exactly
   where that data becomes actionable.
+
+[2026-09-05] EXP-0011/EXP-0012/EXP-0013 -- M10 Optimization, only on
+data already gathered (docs/v2-description.md M10: "Solo sulla base
+dei dati: pipeline; P_IN; numero processor; buffer; FIFO; scheduling;
+prefetch; routing; memoria.")
+test/result summary (full detail in synthesis.log/timing.log/
+simulation.log/benchmark.log under the same EXP numbers):
+  EXP-0011 ("numero processor" axis): dataflow_core N_SLOTS=8 real
+    synthesis+P&R (via harness_dataflow_core.v) -- 92.63 MHz POST-P&R,
+    PASS at 80MHz, DSP 64/72 (88.9%). Extends M7's N_SLOTS=2/4 sweep
+    to the real ceiling DEC-0005 predicted. See decisions.log DEC-0012
+    (N_SLOTS=8 recommended practical ceiling for P_IN=8).
+  EXP-0012 ("pipeline" axis): ACC_WIDTH 24-vs-32, 6 real placement
+    seeds each (reusing already-synthesized netlists, nextpnr-ecp5
+    P&R only) -- ACC_WIDTH=24 wins on both mean Fmax (+6.2%) and
+    variance (~3.4x tighter), resolving EXP-0002's single-seed
+    inconclusiveness. See decisions.log DEC-0013 (ACC_WIDTH=24
+    recommended new default).
+  EXP-0013 ("scheduling"/"memoria" axes): testbench-only cycle-
+    accounting instrumentation added to tb_neural_multiprocessor.v (no
+    RTL touched) -- closes decisions.log DEC-0011's deferred stall %/
+    utilization gap with real SIMULATED numbers (shared PSRAM port
+    81.7% utilized, slot 0 95.2%, slot 1 65.2%, N_SLOTS=2 3-node DAG).
+    No conclusive evidence of harmful fixed-priority starvation in
+    this small a test (slot 0's higher utilization is at least partly
+    explained by serving 2 sequential jobs vs slot 1's 1) --
+    decisions.log DEC-0010's arbiter fairness question remains
+    correctly deferred pending a larger, longer-running workload.
+simulator: Verilator 5.050 (--binary --timing) for EXP-0013; Yosys +
+  real nextpnr-ecp5 for EXP-0011/EXP-0012 (no new simulation needed,
+  reused already-verified netlists/functional results).
+PASS/FAIL: EXP-0013 4/4 PASS (unchanged from EXP-0009, instrumentation
+  is additive-only). EXP-0011/EXP-0012 are synthesis/P&R measurements,
+  not functional tests -- 0 synthesis problems, all P&R runs PASS at
+  80MHz.
+errors: none this milestone.
+decision: see decisions.log DEC-0012 (N_SLOTS=8 ceiling) and DEC-0013
+  (ACC_WIDTH=24 new default).
+next_action: none mandated by docs/v2-description.md's own roadmap
+  (§33 ends at M10) -- the 10-milestone V2 roadmap is now complete
+  end-to-end, from M1's single neural_processor through M9's full
+  V1-vs-V2 benchmark to M10's data-driven optimization findings.
+  Remaining open items (all explicitly deferred by their own DEC
+  entries, not oversights): dependency_manager node-slot reclamation
+  (DEC-0008), slot_mem_arbiter fairness under sustained/larger
+  contention (DEC-0010, now informed by EXP-0013's small-scale data),
+  a P_IN<4 sweep at higher N_SLOTS (DEC-0012's alternative #2), M3
+  buffer reuse as a shared cache once real bandwidth pressure is
+  measured (DEC-0009), and V1-side stall%/utilization instrumentation
+  to complete the M9 table's V1 column (DEC-0011).

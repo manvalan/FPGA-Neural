@@ -95,3 +95,26 @@ PASS/FAIL: 4/4 PASS after fixing a real dropped-request bug in the
 regression: hardware/v2/sim/tb_memory_manager.v (M4) re-run unchanged
   (no M4 file touched) -- still 3/3 PASS, identical cycle counts
   (446/166/728), confirming slot_mem_arbiter.v is purely additive.
+
+[2026-09-05] EXP-0013 -- hardware/v2/sim/tb_neural_multiprocessor.v,
+M10 cycle-accounting instrumentation (closes decisions.log DEC-0011's
+deferred stall %/utilization gap with real data, testbench-only
+addition, no RTL touched)
+test: same EXP-0009 scenario (3-node DAG, N_SLOTS=2, real V1 PSRAM
+  chain, real slot_mem_arbiter contention), instrumented with cycle
+  counters (shared PSRAM port busy cycles via
+  u_nmp.u_arbiter.owner!=0, each slot's memory_manager busy cycles via
+  its own state!=MM_IDLE), measured from the first node registration
+  to test completion.
+simulator: Verilator 5.050 (--binary --timing)
+PASS/FAIL: 4/4 PASS (unchanged from EXP-0009), plus real measured
+  data: 684 total cycles measured; shared PSRAM port busy 559/684
+  (81.7% utilization, 18.3% idle); slot 0 (memory_manager) busy
+  651/684 (95.2%); slot 1 (memory_manager) busy 446/684 (65.2%).
+note: slot 0's higher utilization is at least partly explained by it
+  serving TWO sequential jobs in this run (node0, then whichever slot
+  frees first serves node2 -- likely slot 0, first-free/lowest-index)
+  while slot 1 only ever serves node1 -- NOT conclusive evidence of
+  harmful priority starvation on its own; see decisions.log DEC-0010's
+  original fairness deferral, now informed by this real (if small)
+  data point.

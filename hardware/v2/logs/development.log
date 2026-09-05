@@ -252,3 +252,35 @@ decision: vedi decisions.log DEC-0011 (stall %/utilization non
   rimandata a M10 dove diventa direttamente utile).
 next_action: M10 -- Optimization, sulla base dei dati reali raccolti
   in M1-M9.
+
+[2026-09-05] M10 -- Optimization (finale della roadmap V2, §33)
+reason: roadmap M10 -- ottimizzare SOLO sulla base dei dati reali
+  raccolti in M1-M9, sugli assi: pipeline, P_IN, numero processor,
+  buffer, FIFO, scheduling, prefetch, routing, memoria.
+result: tre azioni concrete, tutte basate su dati reali gia' raccolti
+  o su nuove misure reali mirate a colmare lacune gia' documentate:
+  (1) N_SLOTS=8 sintetizzato e P&R reale (92.63 MHz, PASS @80MHz,
+  DSP 64/72=88.9%) -- conferma e completa il limite gia' previsto da
+  DEC-0005, formalizzato come DEC-0012 (N_SLOTS=8 tetto pratico per
+  P_IN=8 su questo chip). (2) Sweep reale a 6 seed di piazzamento per
+  ACC_WIDTH 24 vs 32 (riusando i netlist gia' sintetizzati) -- risolve
+  l'inconcludenza a singolo seed di EXP-0002: ACC_WIDTH=24 vince sia
+  in Fmax medio (+6.2%) che in varianza (~3.4x piu' stretta),
+  formalizzato come DEC-0013 (ACC_WIDTH=24 nuovo default
+  raccomandato). (3) Strumentazione di conteggio cicli aggiunta al
+  testbench M8 (nessun RTL toccato) -- chiude la lacuna di
+  DEC-0011 con dati reali SIMULATED: porta PSRAM condivisa
+  utilizzata all'81.7%, slot0 al 95.2%, slot1 al 65.2% (nessuna prova
+  conclusiva di starvation dannosa su un test cosi' piccolo).
+errors: nessuno.
+decision: vedi decisions.log DEC-0012 e DEC-0013.
+next_action: nessuna prevista dal mandato (§33 termina a M10) -- la
+  roadmap V2 a 10 milestone e' ora completa end-to-end, da M1 (singolo
+  neural_processor) a M9 (benchmark completo V1 vs V2) a M10 (risultati
+  di ottimizzazione basati sui dati). Elementi ancora aperti restano
+  tutti esplicitamente rimandati dalle proprie DEC entry (non
+  dimenticanze): riuso slot in dependency_manager (DEC-0008),
+  fairness dell'arbitro sotto contesa piu' estesa (DEC-0010), sweep
+  P_IN<8 per N_SLOTS ancora piu' alto (DEC-0012 alternativa #2), riuso
+  dei buffer M3 come cache condivisa (DEC-0009), strumentazione
+  stall%/utilization anche lato V1 (DEC-0011).

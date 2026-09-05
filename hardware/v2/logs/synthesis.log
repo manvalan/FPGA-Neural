@@ -76,3 +76,14 @@ $_TBUF_=16 (tri-state buffers for the bidirectional psram_dq bus,
   from V1's own unmodified psram_controller.v)
 CHECK: 0 problems (same 32 benign "multiple conflicting drivers for
   ...neural_processor.\gi" warnings documented since EXP-0001).
+
+[2026-09-05] EXP-0011 -- dataflow_core N_SLOTS=8 (M10, "numero
+processor" axis, via harness_dataflow_core.v, extending M7's own
+N_SLOTS=2/4 sweep to the real DSP ceiling predicted by DEC-0005)
+LUT4=6439  CCU2C=996  TRELLIS_FF=9053  MULT18X18D=64 (64/72=88.9% of
+  the LFE5U-45F's total DSP budget -- matches DEC-0005's M2-era
+  prediction almost exactly, since dataflow_core's per-slot DSP cost
+  is just neural_processor's own P_IN=8 DSP cost x N_SLOTS)
+DP16KD=0 (expected, DEC-0009). CHECK: 0 problems (same benign
+  "multiple conflicting drivers" warnings as every other neural_processor
+  instantiation since EXP-0001).

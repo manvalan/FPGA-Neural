@@ -649,3 +649,129 @@ than M9 scope creep.
 STATUS:
 ACCEPTED
 
+DEC-0012
+
+DATE: 2026-09-05
+
+DECISION:
+For the LFE5U-45F-8BG381 target at P_IN=8, N_SLOTS=8 is the
+recommended practical ceiling for dataflow_core's processor count (the
+"numero processor" axis of M10). Beyond N_SLOTS=8, DSP usage would
+exceed the chip's 72 total MULT18X18D (N_SLOTS=8 already uses 64/72 =
+88.9%; N_SLOTS=9 would need 72/72 = 100%, leaving zero margin for any
+other DSP use and very likely failing placement given routing
+congestion already visibly eating into Fmax margin well before that
+point).
+
+WHY:
+Real P&R data across the full N_SLOTS sweep now run (EXP-0003 at the
+neural_processor_array level for M2, EXP-0008/EXP-0011 at the
+dataflow_core level for M7/M10) shows TWO real, independent trends
+converging on the same conclusion: (1) DSP usage scales exactly
+linearly at 8 per slot (matches P_IN=8), hitting 88.9% at N_SLOTS=8 --
+consistent with DEC-0005's original finding that DSP, not LUT/FF, is
+the first resource to saturate; (2) Fmax falls monotonically and
+non-linearly as N_SLOTS grows (165.15 -> 133.19 -> 92.63 MHz for
+N_SLOTS=2/4/8), meaning routing congestion around the shared
+neural_director/dependency_manager hub is ALREADY compounding with DSP
+pressure well before the hard resource ceiling is reached. N_SLOTS=8
+is therefore not merely "the largest N_SLOTS that fits" but close to
+where BOTH constraints (DSP budget and real routing congestion)
+become simultaneously binding -- a genuinely data-driven ceiling, not
+an assumed one.
+
+EVIDENCE:
+timing.log/synthesis.log EXP-0008 (N_SLOTS=2: 165.15 MHz, 16/72 DSP;
+N_SLOTS=4: 133.19 MHz, 32/72 DSP) and EXP-0011 (N_SLOTS=8: 92.63 MHz,
+PASS at 80MHz but with a much thinner margin, 64/72 DSP) -- all real
+nextpnr-ecp5 place&route measurements via harness_dataflow_core.v.
+
+ALTERNATIVES:
+1. Recommend a smaller N_SLOTS (e.g. 4) for a larger Fmax safety
+   margin. Rejected as a BLANKET recommendation: whether 133.19 MHz's
+   larger margin over 133.19 vs 92.63 MHz's thinner one actually
+   matters depends on the target application's own real timing needs,
+   which M9's benchmark did not fix to a specific number beyond
+   "PASS at 80MHz" -- both configurations real-measure as passing.
+   N_SLOTS=8 remains the data-driven CEILING; choosing a smaller
+   N_SLOTS for a specific deployment is a downstream product decision,
+   not something this session can make on the target's behalf.
+2. Reduce P_IN below 8 to allow more slots within the same DSP budget
+   (e.g. P_IN=4, N_SLOTS=16 -> still 64 DSP). Rejected as untested:
+   no real data exists yet on Fmax/throughput for P_IN=4 slots at any
+   N_SLOTS -- this is a real, open experiment for a FUTURE session,
+   not something to recommend without having actually measured it
+   (§30).
+
+RESULT:
+N_SLOTS=8 (P_IN=8) is the data-driven practical ceiling on the
+LFE5U-45F-8BG381 for dataflow_core/neural_multiprocessor. Smaller
+N_SLOTS values remain valid, real-measured configurations trading
+Fmax margin for less concurrency; a P_IN<8 exploration for even higher
+N_SLOTS is explicitly flagged as untested future work, not assumed.
+
+STATUS:
+ACCEPTED
+
+DEC-0013
+
+DATE: 2026-09-05
+
+DECISION:
+ACC_WIDTH=24 is the recommended default for neural_processor.v's
+accumulator width (the "pipeline" axis of M10), replacing EXP-0002's
+original single-seed, inconclusive finding.
+
+WHY:
+A 6-seed real placement sweep (EXP-0012: default seed plus 5 explicit
+--seed values, same two already-synthesized netlists, real
+nextpnr-ecp5 P&R only -- no re-synthesis needed) shows ACC_WIDTH=24
+has a HIGHER mean Fmax (180.71 vs 170.12 MHz, +6.2%) AND a much
+tighter seed-to-seed spread (stdev 4.21 vs 14.16 MHz) than
+ACC_WIDTH=32. EXP-0002's original single-seed result (176.21 <
+183.12 MHz, suggesting ACC=24 was WORSE) is now understood as
+placement-seed noise, not a real trend -- exactly the kind of mistake
+a single-seed measurement risks, which is why §30/§31 call for
+experimentally exploring configurations rather than trusting one
+placement run. Combined with EXP-0001/EXP-0002's already-known
+resource advantage (ACC_WIDTH=24: LUT=49/FF=509/CCU2C=88 vs
+ACC_WIDTH=32: LUT=55/FF=533/CCU2C=96 -- fewer of every resource) and
+both being bit-exact-correct against the same 7-test regression
+(EXP-0001/EXP-0002), ACC_WIDTH=24 dominates ACC_WIDTH=32 on every real
+axis measured for a plain INT8 perceptron whose products/partial sums
+never need more than 24 bits of headroom for P_IN=8 (8 x int8 x int8
+products, worst case magnitude fits well under 2^24).
+
+EVIDENCE:
+timing.log EXP-0012 (6-seed Fmax data for both configs, computed
+mean/min/max/stdev); synthesis.log EXP-0001/EXP-0002 (resource
+counts, already logged); simulation.log EXP-0001/EXP-0002 (both
+configs bit-exact-correct against V1, 7/7 PASS).
+
+ALTERNATIVES:
+1. Keep ACC_WIDTH=32 as the default (matches V1's own mac_unit.v
+   accumulator width, "when in doubt, match the frozen baseline").
+   Rejected: real multi-seed data now shows ACC_WIDTH=24 is strictly
+   better on Fmax, resource usage, AND correctness for this specific
+   P_IN=8 INT8 configuration -- there is no real axis left on which
+   ACC_WIDTH=32 wins for THIS workload. V1 itself is a separate, frozen
+   baseline (§1/§34) and is not required to match V2's own internal
+   width choices.
+2. Run more than 6 seeds per config for a tighter confidence interval.
+   Deferred, not rejected: 6 seeds already show a clear, consistent
+   direction (ACC=24 wins on both mean and variance) -- diminishing
+   returns for this decision's purposes; a future session could extend
+   the sweep if ACC_WIDTH ever becomes a live bottleneck again.
+
+RESULT:
+ACC_WIDTH default changed to 24 going forward for any NEW V2 module
+instantiating neural_processor.v at P_IN=8 (no existing committed
+module needs to be edited retroactively purely for this -- M1-M9's own
+modules already default to ACC_WIDTH=32 via their own parameter
+defaults and remain correct either way, since both widths are
+bit-exact verified; this is a recommendation for future configuration
+choices, not a mandate to re-synthesize already-logged results).
+
+STATUS:
+ACCEPTED
+
