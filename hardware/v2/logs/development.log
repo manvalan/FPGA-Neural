@@ -159,3 +159,25 @@ errors: nessun bug RTL, solo 2 bug di testbench (vedi experiments.log
   EXP-0006).
 decision: vedi decisions.log DEC-0007.
 next_action: M6 -- dependency_manager.v.
+
+[2026-09-05T18:00:00Z] commit=2e4cedc session=v2-M6-dependency-manager
+module: hardware/v2/rtl/dependency_manager.v
+action: implementato M6 -- tabella di dipendenze (node_id/state/
+  required/resolved/producer_ids, campi esatti §10), wake-up su
+  completamento produttore, dispatch first-found-ready verso il
+  Director (M5).
+reason: roadmap M6.
+result: 4/4 test PASS su un piccolo DAG a mano (node2 dipende da
+  ENTRAMBI node0+node1 -- dipendenze multiple; node3 dipende solo da
+  node0 -- risultato condiviso/piu' consumer). Confermato: node3 pronto
+  subito dopo node0, node2 resta WAITING finche' anche node1 non
+  completa. Sintesi reale: 0 problemi, 763 LUT4/474 FF/0 DSP/0 CCU2C.
+  Fmax reale (nessun harness necessario stavolta): 155.30 MHz.
+errors: un errore di sintassi nel testbench (nested replication senza
+  livello di parentesi extra), non un bug RTL.
+decision: vedi decisions.log DEC-0008 (nessun forwarding di valori
+  ancora, nessun riuso degli slot ancora -- entrambi rimandati
+  esplicitamente).
+next_action: M7 -- dataflow_core.v, prima integrazione di
+  Director+Dependency Manager+Memory Manager+Processor Array+Buffer
+  in un unico top-level.

@@ -322,3 +322,46 @@ next_action: M6 -- dependency_manager.v (ready/waiting queue,
   dependency counters, wake-up, producer tracking) -- the first
   milestone where job READINESS itself, not just free-slot dispatch,
   becomes the Director's actual gating condition.
+
+EXP-0007
+timestamp: 2026-09-05T18:00:00Z
+git_commit: 2e4cedc (+ uncommitted M6 work)
+session: v2-M6-dependency-manager
+module: hardware/v2/rtl/dependency_manager.v
+configuration: N_NODES=8 (sim), N_NODES=16 (synth default),
+  MAX_DEPS=4, ADDR_WIDTH=23
+action: M6 -- dependency-count tracking table (node_id/state/
+  required_dependencies/resolved_dependencies/producer_ids, §10
+  exact field list), first-found-ready dispatch to the Director.
+command (sim, Verilator): verilator --binary --timing -j 0 -Wno-fatal
+  --top-module tb -o /tmp/vtb_dep hardware/v2/rtl/dependency_manager.v
+  hardware/v2/sim/tb_dependency_manager.v && /tmp/vtb_dep
+command (synth/timing): yosys -p "synth_ecp5 -json .../top.json -top
+  dependency_manager" hardware/v2/rtl/dependency_manager.v;
+  nextpnr-ecp5 --45k --package CABGA381 --speed 8 --freq 80
+  --lpf-allow-unconstrained (no timing harness needed this time --
+  module's ports fit within the TRELLIS_IO budget as a bare top-level).
+result:
+  SIMULATED: 4/4 tests PASS on a small hand-built DAG (node0, node1:
+    no dependencies; node2: depends on BOTH node0 and node1 --
+    "dipendenze multiple"; node3: depends on node0 ALONE -- "risultati
+    condivisi... piu' consumer"): node0/node1 dispatch immediately;
+    node3 becomes READY the cycle node0's producer_done arrives (before
+    node1 completes); node2 stays WAITING until BOTH node0 AND node1
+    have completed, confirmed by an explicit negative check (still
+    WAITING after only one of its two dependencies resolved).
+  SYNTHESIZED: 0 CHECK problems, 763 LUT4, 474 TRELLIS_FF, 0 DSP,
+    0 CCU2C.
+  POST-P&R (real, no harness needed): Fmax = 155.30 MHz, PASS at
+    80MHz.
+errors: one testbench syntax error (nested nonblocking nested-
+  replication `{(N){M{1'b0}}}` needs an extra brace level, Verilator
+  correctly rejected it) -- fixed by building reg_producer_ids via
+  explicit bit-slice assignment instead of one big concatenation
+  expression. Not an RTL bug.
+decision: see decisions.log DEC-0008 (no value forwarding yet, no
+  slot reclamation yet -- both explicitly deferred, not missing by
+  oversight).
+next_action: M7 -- dataflow_core.v, integrating Director + Dependency
+  Manager + Memory Manager + Processor Array + Buffers into one top-
+  level module for the first time.

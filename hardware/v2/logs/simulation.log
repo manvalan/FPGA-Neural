@@ -54,3 +54,9 @@ test: 4 cases (3-jobs-2-slots first-free dispatch + queueing,
   backpressure fill/recover)
 simulator: Verilator 5.050 (--binary --timing)
 PASS/FAIL: 4/4 PASS
+
+[2026-09-05] EXP-0007 -- hardware/v2/sim/tb_dependency_manager.v
+test: 4 cases on a 4-node DAG (2 independent + 1 dual-dependency +
+  1 single-dependency-shared-producer)
+simulator: Verilator 5.050 (--binary --timing)
+PASS/FAIL: 4/4 PASS

@@ -49,3 +49,8 @@ Fmax: 165.86 MHz -- PASS at 80MHz (real place&route measurement)
 see errors.log ERR-0005 for why), real nextpnr-ecp5 --45k --package
 CABGA381 --speed 8 --freq 80 --lpf-allow-unconstrained
 Fmax: 250.50 MHz -- PASS at 80MHz (real place&route measurement)
+
+[2026-09-05] EXP-0007 -- dependency_manager (N_NODES=16, standalone,
+no harness needed), real nextpnr-ecp5 --45k --package CABGA381
+--speed 8 --freq 80 --lpf-allow-unconstrained
+Fmax: 155.30 MHz -- PASS at 80MHz (real place&route measurement)

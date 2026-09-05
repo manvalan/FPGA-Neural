@@ -81,3 +81,10 @@ timing harness -- see errors.log ERR-0005)
 | Module          | Fmax (POST-P&R) | LUT | FF  | DSP | CCU2C |
 |------------------|------------------|-----|-----|-----|-------|
 | neural_director (N_SLOTS=4) | 250.50 MHz | 382 | 366 | 0 | 4 |
+
+[2026-09-05] M6 Dependency Manager (real standalone synthesis + P&R,
+no harness needed)
+
+| Module              | Fmax (POST-P&R) | LUT | FF  | DSP | CCU2C |
+|----------------------|------------------|-----|-----|-----|-------|
+| dependency_manager (N_NODES=16) | 155.30 MHz | 763 | 474 | 0 | 0 |

@@ -389,3 +389,69 @@ experimentally-driven milestone per §9's own text.
 
 STATUS:
 ACCEPTED
+
+---
+
+DEC-0008
+
+DATE: 2026-09-05
+
+DECISION:
+dependency_manager.v (M6) does NOT implement §11's direct producer-
+to-consumer VALUE forwarding (bypassing the Result Buffer/external-
+memory round-trip). It tracks dependency COUNTS and READINESS only --
+"has this node's data become available", resolved via a
+producer_done_node_id tag matched against each waiting node's own
+producer_ids list. A ready node's job descriptor still points at
+result_addr (wherever the Memory Manager, M4, wrote the producer's
+actual result), which is how a consumer finds its real input data
+today. Additionally, node table slots are NOT reclaimed after
+dispatch (ST_DISPATCHED is terminal) -- a full graph run allocates its
+N_NODES once, not a reusable pool.
+
+WHY:
+§11 itself frames forwarding as an optimization ("quando possibile"),
+not a correctness requirement -- the dependency-COUNTING mechanism
+(§10's actual explicit field list: node_id/state/required_dependencies/
+resolved_dependencies/producer_information) is what gates correct
+scheduling; forwarding is a bandwidth/latency optimization on top of
+an already-correct base. Implementing real value forwarding would
+require reworking the Neural Processor's operand path (M1) and Memory
+Manager's fetch path (M4) to support a bypass source in addition to
+PSRAM -- a bigger change that should be justified by real measured
+data (§22/§30: no invented results) showing memory bandwidth is
+actually the bottleneck, not assumed now. Slot non-reclamation is
+similarly a scope choice: reclaiming/reusing node table entries mid-run
+only matters for graphs that run longer than N_NODES distinct node
+launches, or that need dynamic re-registration -- not exercised by
+this milestone's own test (a bounded DAG, registered once, run once).
+
+EVIDENCE:
+hardware/v2/sim/tb_dependency_manager.v -- 4/4 tests pass demonstrating
+multi-dependency (node2 needs both node0 AND node1) and shared-
+producer/multi-consumer wake-up (node0's single completion correctly
+satisfies both node3 fully and node2 partially) using ONLY the
+counting mechanism, no forwarded values -- confirming the counting-
+only design is sufficient for correct scheduling.
+
+ALTERNATIVES:
+1. Implement value forwarding now (Producer -> Consumer FIFO directly,
+   per §11's diagram). Rejected: no measured evidence yet that the
+   PSRAM round-trip is a real bottleneck (§22 measurements are M9's
+   job); adding it now would be exactly the kind of unmeasured,
+   assumption-driven change §30 warns against.
+2. Reclaim/reuse node table slots after dispatch. Rejected: adds
+   real complexity (a free-list, or requiring producer_done for a
+   DISPATCHED node to also clear it) for a scenario (graphs needing
+   more distinct node launches than N_NODES, or dynamic re-
+   registration) this milestone's test doesn't exercise -- revisit if
+   a real M7+ integration scenario needs it.
+
+RESULT:
+dependency_manager.v as implemented: pure dependency-count tracking,
+first-found-ready dispatch to the Director (M5), no value forwarding,
+no slot reclamation. Both explicitly noted as deferred, not silently
+missing.
+
+STATUS:
+ACCEPTED

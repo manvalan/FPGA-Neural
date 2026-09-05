@@ -43,3 +43,6 @@ LUT4=851  TRELLIS_FF=789  CCU2C=108  MULT18X18D=0 (expected, no
 
 [2026-09-05] EXP-0006 -- neural_director (N_SLOTS=4, standalone)
 LUT4=382  TRELLIS_FF=366  CCU2C=4  DSP=0. CHECK: 0 problems.
+
+[2026-09-05] EXP-0007 -- dependency_manager (N_NODES=16, MAX_DEPS=4)
+LUT4=763  TRELLIS_FF=474  CCU2C=0  DSP=0. CHECK: 0 problems.

@@ -31,8 +31,11 @@ reali, non solo scritto).
       first-free. 4/4 test PASS (dispatch + coda + backpressure reale
       su N_SLOTS=2). FSM ridotta a 4 stati, dependency rimandata a M6
       (`logs/decisions.log` DEC-0007). Fmax 250.50 MHz.
-- [ ] **M6 — Dependency Manager** (`dependency_manager.v`), ready/waiting
-      queue, dependency counters, wake-up, producer tracking.
+- [x] **M6 — Dependency Manager** (`dependency_manager.v`), ready/waiting
+      queue, dependency counters, wake-up, producer tracking. 4/4 test
+      PASS (dipendenze multiple + produttore condiviso/piu' consumer).
+      Fmax 155.30 MHz. Forwarding di valori e riuso slot rimandati
+      (`logs/decisions.log` DEC-0008).
 - [ ] **M7 — Dataflow Core** (`dataflow_core.v`), integrazione completa.
 - [ ] **M8 — PSRAM integration**, controller V1 non modificato, misura reale.
 - [ ] **M9 — Full benchmark**, tabella V1 vs V2 (§32 del mandato).
