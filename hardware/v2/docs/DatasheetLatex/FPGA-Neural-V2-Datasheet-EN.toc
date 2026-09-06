@@ -1,0 +1,30 @@
+\babel@toc {english}{}\relax 
+\contentsline {chapter}{\numberline {1}Overview}{1}{chapter.1}%
+\contentsline {section}{\numberline {1.1}Document scope and status labels}{1}{section.1.1}%
+\contentsline {section}{\numberline {1.2}Frozen reference configuration}{1}{section.1.2}%
+\contentsline {chapter}{\numberline {2}Architecture}{2}{chapter.2}%
+\contentsline {section}{\numberline {2.1}Compute: Neural Multiprocessor}{2}{section.2.1}%
+\contentsline {section}{\numberline {2.2}Unified single-SDRAM memory}{2}{section.2.2}%
+\contentsline {section}{\numberline {2.3}Read-timing discipline (ERR-0025)}{3}{section.2.3}%
+\contentsline {chapter}{\numberline {3}Clock and reset architecture}{4}{chapter.3}%
+\contentsline {section}{\numberline {3.1}Clock generation}{4}{section.3.1}%
+\contentsline {section}{\numberline {3.2}Reset architecture}{4}{section.3.2}%
+\contentsline {chapter}{\numberline {4}Host interface (SPI)}{5}{chapter.4}%
+\contentsline {section}{\numberline {4.1}Opcodes}{5}{section.4.1}%
+\contentsline {section}{\numberline {4.2}Verification}{5}{section.4.2}%
+\contentsline {chapter}{\numberline {5}Pinout, place-and-route, and timing}{6}{chapter.5}%
+\contentsline {section}{\numberline {5.1}Final pinout}{6}{section.5.1}%
+\contentsline {section}{\numberline {5.2}Synthesis (real, this revision)}{6}{section.5.2}%
+\contentsline {section}{\numberline {5.3}Place and route: 8-seed timing table}{6}{section.5.3}%
+\contentsline {chapter}{\numberline {6}Power, SDRAM electrical, and configuration}{8}{chapter.6}%
+\contentsline {section}{\numberline {6.1}Power architecture -- status: OPEN}{8}{section.6.1}%
+\contentsline {section}{\numberline {6.2}SDRAM electrical / timing sign-off -- status: PARTIAL}{8}{section.6.2}%
+\contentsline {section}{\numberline {6.3}Configuration -- status: OPEN}{8}{section.6.3}%
+\contentsline {chapter}{\numberline {7}Benchmarks}{9}{chapter.7}%
+\contentsline {section}{\numberline {7.1}Internal benchmark: D-Stress workload}{9}{section.7.1}%
+\contentsline {section}{\numberline {7.2}Host-interface pacing benchmark}{9}{section.7.2}%
+\contentsline {section}{\numberline {7.3}Software reference comparison}{9}{section.7.3}%
+\contentsline {chapter}{\numberline {8}Chip readiness and roadmap}{11}{chapter.8}%
+\contentsline {section}{\numberline {8.1}Precise readiness checklist}{11}{section.8.1}%
+\contentsline {section}{\numberline {8.2}Final answer}{11}{section.8.2}%
+\contentsline {section}{\numberline {8.3}Roadmap}{11}{section.8.3}%

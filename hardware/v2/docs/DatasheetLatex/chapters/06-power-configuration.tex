@@ -1,0 +1,42 @@
+\chapter{Power, SDRAM electrical, and configuration}
+
+\section{Power architecture -- status: OPEN}
+Rail \emph{voltages} are real, DATASHEET VALUEs from the actual ECP5
+and \code{AS4C4M16SA-6TIN} datasheets; regulator selection, current
+budget, and decoupling are \textbf{not} finalized in this revision.
+
+\begin{tabularx}{\textwidth}{L{2.6cm}L{2.2cm}Y}
+\toprule
+\rowh \thd{Rail} & \thd{Nominal} & \thd{Status} \\
+\midrule
+VCC (core) & 1.1\,V & DATASHEET VALUE; regulator TBD \\
+\rowa VCCAUX & 2.5\,V & DATASHEET VALUE; regulator TBD \\
+VCCIO 6/7 (SDRAM) & 3.3\,V (assumed) & matches SDRAM's own LVCMOS33 need; not independently re-verified \\
+\rowa SDRAM VDD/VDDQ & 3.3\,V & DATASHEET VALUE (\code{AS4C4M16SA-6TIN}) \\
+\bottomrule
+\end{tabularx}
+
+No real power-estimation tool was run against the actual synthesized
+netlist this revision; a real, computed current budget therefore
+remains an OPEN item, not an invented number.
+
+\section{SDRAM electrical / timing sign-off -- status: PARTIAL}
+\code{AS4C4M16SA-6TIN} is a standard JEDEC SDR SDRAM; the controller
+(\code{sdram\_controller.v}) implements a real power-up wait, mode
+register set, and periodic AUTO REFRESH, verified functionally in
+simulation (init/refresh/read/write/burst/masked-write, 40 real
+refresh events per D-Stress run, zero corruption). A byte-for-byte
+cross-check of the controller's own timing constants against the
+device's real datasheet parameters (CAS latency, \sig{tRCD},
+\sig{tRP}, refresh interval, setup/hold) was \textbf{not} independently
+re-performed this revision -- simulation-level correctness is
+established; a dedicated datasheet-parameter audit remains an OPEN
+item before board layout.
+
+\section{Configuration -- status: OPEN}
+Standard ECP5 JTAG (\sig{TDI}/\sig{TDO}/\sig{TCK}/\sig{TMS}) and
+configuration (\sig{PROGRAMN}/\sig{INITN}/\sig{DONE}/\sig{CCLK}) pins
+are identified and standard (real balls listed in
+\code{docs/pinouts.md}); JTAG remains available regardless of boot
+mode. No configuration-flash part number has been selected, and no
+SPI-flash-boot-vs-JTAG-only decision has been made this revision.

@@ -1,0 +1,98 @@
+// FPGA-Neural V2 -- FINAL board-level top constraints (STEP-final).
+// Target: fpga_neural_v2_top (N_SLOTS=2 default in this file's own
+// simulation-facing top; the frozen hardware reference is N_SLOTS=4,
+// synthesized separately at that parameter value -- see the synthesis
+// log for the actual instantiation used for these P&R runs).
+// FPGA:   LFE5U-45F-8BG381, package CABGA381, speed grade -8
+//
+// This supersedes hardware/v2/constraints/v2_unified.lpf (which
+// constrained the OLDER nms_neural_multiprocessor_sdram_unified.v
+// simulation-facing top, with its raw 110-pin reg_* bus and an
+// assumed-already-80MHz `clk` input). The board-level top has NO
+// reg_* ports at all -- job registration is via 4 real SPI pins,
+// and the input clock is a real 16MHz oscillator feeding a real
+// EHXPLLL (ecp5_pll_sys_clk.v), not a pre-generated 80MHz.
+//
+// Every ball below is real, sourced from the official Lattice
+// pinout CSV (FPGA-SC-02034-3-0-ECP5U-45-Pinout.csv rev 3.0,
+// ~/Downloads/, cross-referenced against docs/pinouts.md) -- none
+// invented. osc_clk/ext_rst_n reuse the SAME real balls (H5/B4) as
+// V1's own validated spi_neuron_top.lpf and the previous v2_unified
+// .lpf (same physical clock/reset pins on this package regardless of
+// which V2 top-level is programmed). The 4 SPI pins and pll_locked
+// are NEW real balls from banks 6/7 (plain GPIO, dual function "-"
+// in the CSV, not previously used by the 37-signal SDRAM bus).
+
+BLOCK ASYNCPATHS;
+BLOCK RESETPATHS;
+
+// Real 16MHz board oscillator (external to the FPGA; EHXPLLL inside
+// the design generates the internal 64MHz system clock -- see
+// ecp5_pll_sys_clk.v's own FREQUENCY_PIN_CLKI/CLKOP attributes,
+// which nextpnr-ecp5 reads automatically for the generated-clock
+// domain; no separate LPF entry is needed for the internal 64MHz net).
+FREQUENCY PORT "osc_clk" 16 MHZ;
+LOCATE COMP "osc_clk" SITE "H5";
+IOBUF PORT "osc_clk" IO_TYPE=LVCMOS33;
+
+LOCATE COMP "ext_rst_n" SITE "B4";
+IOBUF PORT "ext_rst_n" IO_TYPE=LVCMOS33;
+
+// ---- real SPI host interface (4 pins, banks 6/7) ----
+LOCATE COMP "spi_sclk"  SITE "L3"; IOBUF PORT "spi_sclk"  IO_TYPE=LVCMOS33;
+LOCATE COMP "spi_mosi"  SITE "M3"; IOBUF PORT "spi_mosi"  IO_TYPE=LVCMOS33;
+LOCATE COMP "spi_miso"  SITE "L2"; IOBUF PORT "spi_miso"  IO_TYPE=LVCMOS33;
+LOCATE COMP "spi_cs_n"  SITE "N2"; IOBUF PORT "spi_cs_n"  IO_TYPE=LVCMOS33;
+
+// ---- PLL lock status (debug/bring-up signal, real ball) ----
+LOCATE COMP "pll_locked" SITE "L1"; IOBUF PORT "pll_locked" IO_TYPE=LVCMOS33;
+
+// ---- SDRAM interface (37 signals), unchanged from v2_unified.lpf,
+// real balls, banks 6/7 ----
+LOCATE COMP "sdram_cke"    SITE "B5"; IOBUF PORT "sdram_cke"    IO_TYPE=LVCMOS33;
+LOCATE COMP "sdram_cs_n"   SITE "C5"; IOBUF PORT "sdram_cs_n"   IO_TYPE=LVCMOS33;
+LOCATE COMP "sdram_ras_n"  SITE "C4"; IOBUF PORT "sdram_ras_n"  IO_TYPE=LVCMOS33;
+LOCATE COMP "sdram_cas_n"  SITE "A3"; IOBUF PORT "sdram_cas_n"  IO_TYPE=LVCMOS33;
+LOCATE COMP "sdram_we_n"   SITE "B3"; IOBUF PORT "sdram_we_n"   IO_TYPE=LVCMOS33;
+
+LOCATE COMP "sdram_ba[0]"  SITE "E4"; IOBUF PORT "sdram_ba[0]"  IO_TYPE=LVCMOS33;
+LOCATE COMP "sdram_ba[1]"  SITE "C3"; IOBUF PORT "sdram_ba[1]"  IO_TYPE=LVCMOS33;
+
+LOCATE COMP "sdram_a[0]"   SITE "D5"; IOBUF PORT "sdram_a[0]"   IO_TYPE=LVCMOS33;
+LOCATE COMP "sdram_a[1]"   SITE "D3"; IOBUF PORT "sdram_a[1]"   IO_TYPE=LVCMOS33;
+LOCATE COMP "sdram_a[2]"   SITE "F4"; IOBUF PORT "sdram_a[2]"   IO_TYPE=LVCMOS33;
+LOCATE COMP "sdram_a[3]"   SITE "E5"; IOBUF PORT "sdram_a[3]"   IO_TYPE=LVCMOS33;
+LOCATE COMP "sdram_a[4]"   SITE "E3"; IOBUF PORT "sdram_a[4]"   IO_TYPE=LVCMOS33;
+LOCATE COMP "sdram_a[5]"   SITE "F5"; IOBUF PORT "sdram_a[5]"   IO_TYPE=LVCMOS33;
+LOCATE COMP "sdram_a[6]"   SITE "A2"; IOBUF PORT "sdram_a[6]"   IO_TYPE=LVCMOS33;
+LOCATE COMP "sdram_a[7]"   SITE "B1"; IOBUF PORT "sdram_a[7]"   IO_TYPE=LVCMOS33;
+LOCATE COMP "sdram_a[8]"   SITE "C2"; IOBUF PORT "sdram_a[8]"   IO_TYPE=LVCMOS33;
+LOCATE COMP "sdram_a[9]"   SITE "C1"; IOBUF PORT "sdram_a[9]"   IO_TYPE=LVCMOS33;
+LOCATE COMP "sdram_a[10]"  SITE "D2"; IOBUF PORT "sdram_a[10]"  IO_TYPE=LVCMOS33;
+LOCATE COMP "sdram_a[11]"  SITE "D1"; IOBUF PORT "sdram_a[11]"  IO_TYPE=LVCMOS33;
+
+LOCATE COMP "sdram_dq[0]"  SITE "E1"; IOBUF PORT "sdram_dq[0]"  IO_TYPE=LVCMOS33;
+LOCATE COMP "sdram_dq[1]"  SITE "G5"; IOBUF PORT "sdram_dq[1]"  IO_TYPE=LVCMOS33;
+LOCATE COMP "sdram_dq[2]"  SITE "H3"; IOBUF PORT "sdram_dq[2]"  IO_TYPE=LVCMOS33;
+LOCATE COMP "sdram_dq[3]"  SITE "J5"; IOBUF PORT "sdram_dq[3]"  IO_TYPE=LVCMOS33;
+LOCATE COMP "sdram_dq[4]"  SITE "K3"; IOBUF PORT "sdram_dq[4]"  IO_TYPE=LVCMOS33;
+LOCATE COMP "sdram_dq[5]"  SITE "K2"; IOBUF PORT "sdram_dq[5]"  IO_TYPE=LVCMOS33;
+LOCATE COMP "sdram_dq[6]"  SITE "H1"; IOBUF PORT "sdram_dq[6]"  IO_TYPE=LVCMOS33;
+LOCATE COMP "sdram_dq[7]"  SITE "J1"; IOBUF PORT "sdram_dq[7]"  IO_TYPE=LVCMOS33;
+LOCATE COMP "sdram_dq[8]"  SITE "K1"; IOBUF PORT "sdram_dq[8]"  IO_TYPE=LVCMOS33;
+LOCATE COMP "sdram_dq[9]"  SITE "K4"; IOBUF PORT "sdram_dq[9]"  IO_TYPE=LVCMOS33;
+LOCATE COMP "sdram_dq[10]" SITE "L4"; IOBUF PORT "sdram_dq[10]" IO_TYPE=LVCMOS33;
+LOCATE COMP "sdram_dq[11]" SITE "L5"; IOBUF PORT "sdram_dq[11]" IO_TYPE=LVCMOS33;
+LOCATE COMP "sdram_dq[12]" SITE "M5"; IOBUF PORT "sdram_dq[12]" IO_TYPE=LVCMOS33;
+LOCATE COMP "sdram_dq[13]" SITE "M4"; IOBUF PORT "sdram_dq[13]" IO_TYPE=LVCMOS33;
+LOCATE COMP "sdram_dq[14]" SITE "N4"; IOBUF PORT "sdram_dq[14]" IO_TYPE=LVCMOS33;
+LOCATE COMP "sdram_dq[15]" SITE "N5"; IOBUF PORT "sdram_dq[15]" IO_TYPE=LVCMOS33;
+
+LOCATE COMP "sdram_dqm[0]" SITE "P5"; IOBUF PORT "sdram_dqm[0]" IO_TYPE=LVCMOS33;
+LOCATE COMP "sdram_dqm[1]" SITE "N3"; IOBUF PORT "sdram_dqm[1]" IO_TYPE=LVCMOS33;
+
+// All 16 top-level ports of fpga_neural_v2_top are now real-ball
+// assigned: osc_clk, ext_rst_n, spi_sclk, spi_mosi, spi_miso,
+// spi_cs_n, sdram_cke, sdram_cs_n, sdram_ras_n, sdram_cas_n,
+// sdram_we_n, sdram_ba[1:0], sdram_a[11:0], sdram_dq[15:0],
+// sdram_dqm[1:0], pll_locked -- no placeholders remain in THIS LPF.

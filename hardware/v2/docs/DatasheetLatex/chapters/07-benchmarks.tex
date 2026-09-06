@@ -1,0 +1,67 @@
+\chapter{Benchmarks}
+
+\section{Internal benchmark: D-Stress workload}
+256 independent neurons, 128 inputs each (16 tiles of \code{P\_IN}=8),
+one shared activation vector -- the project's own existing, reused
+benchmark, run against the final, frozen RTL via Verilator.
+
+\begin{tabularx}{\textwidth}{L{2cm}L{2.4cm}L{2.4cm}Y}
+\toprule
+\rowh \thd{Config} & \thd{Cycles} & \thd{Correctness} & \thd{Latency @ 64\,MHz} \\
+\midrule
+N=2 & 49\,788 & 256/256 \PASS & 777.9\,\textmu s \\
+\rowa N=4 & 49\,771 & 256/256 \PASS & 777.7\,\textmu s \\
+\bottomrule
+\end{tabularx}
+
+Cycle counts are \textbf{simulation-verified} (Verilator, bit-exact)
+and unchanged before/after the ERR-0025 read-timing fix. Latency at
+64\,MHz is a \textbf{derived} figure (cycles~/~clock), not an
+independently re-simulated wall-clock measurement, and is not a
+measured-hardware number (no fabricated board exists).
+
+N=4 barely improves over N=2 on this specific workload
+($49\,771$ vs.\ $49\,788$ cycles) because the workload is dominated by
+shared-SDRAM and shared-activation-fill traffic, not by raw MAC
+throughput -- consistent with this project's own prior STEP17/18
+memory-bound-vs-compute-bound findings, not a new anomaly.
+
+\section{Host-interface pacing benchmark}
+The board-level SPI smoke test (\S\ref{sec:host}) exercises single-job,
+back-to-back, and gap-swept (100\,ns/5\,000\,ns/50\,000\,ns/$\sim$85\,\textmu s)
+dispatch patterns -- all 11/11 bit-exact -- establishing that realistic
+host pacing does not, itself, change correctness (only the STEP19-era
+registered-read bug did, and that is fixed).
+
+\section{Software reference comparison}
+\textbf{No physical ESP32 (or other embedded MCU) hardware is
+available in this environment.} A real ESP32 benchmark was
+\emph{not} performed, and no ESP32 number is estimated or invented
+here -- this is a disclosed OPEN item, not a claimed result.
+
+As an honest, clearly-labeled illustrative data point only, the
+identical D-Stress arithmetic (256 neurons $\times$ 128 INT8 MACs,
+ReLU + INT8 saturate) was compiled (\code{cc~-O2}) and run on the
+\emph{development machine itself} (Apple M4, arm64 -- \textbf{not}
+an embedded target):
+
+\begin{tabularx}{\textwidth}{L{4.4cm}Y}
+\toprule
+\rowh \thd{Metric} & \thd{Value} \\
+\midrule
+Platform & Apple M4 (arm64), \code{cc -O2}, single-threaded scalar C \\
+\rowa Latency, full 256-neuron batch & 1.28\,\textmu s \\
+Throughput & $2.56\times10^{10}$ MAC/s \\
+\bottomrule
+\end{tabularx}
+
+On this specific, tiny workload, a modern, auto-vectorizing,
+multi-GHz superscalar CPU outperforms the current FPGA design's
+\emph{simulated} cycle count in raw latency. This is reported
+honestly rather than omitted: FPGA-Neural V2's real value proposition
+is a deterministic, low-power, standalone SDRAM-attached accelerator
+for hosts that do \emph{not} have this class of CPU (e.g.\ an
+ESP32-class microcontroller) -- not a claim of outperforming a
+desktop-class processor on this workload size. A real, meaningful
+software baseline for THAT comparison requires the actual embedded
+target hardware, which remains unavailable this revision.

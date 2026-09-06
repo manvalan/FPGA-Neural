@@ -1,0 +1,86 @@
+\chapter{Architecture}
+
+\section{Compute: Neural Multiprocessor}
+Each of the \code{N\_PROCESSORS} Neural Processors is an independent
+INT8 datapath: \code{P\_IN}=8 parallel multipliers feeding a balanced
+binary adder tree into a 32-bit accumulator, followed by ReLU and INT8
+saturation -- byte-for-byte identical to \code{neural\_processor.v},
+unmodified since before the V2 single-SDRAM freeze. Job dispatch is a
+real dependency-graph pipeline:
+
+\begin{center}
+\begin{tikzpicture}[node distance=5mm and 6mm,font=\scriptsize]
+  \node[fnreg] (host) {SPI host\\bridge};
+  \node[fnreg,right=of host] (dm) {Dependency\\Manager};
+  \node[fnreg,right=of dm] (dir) {Neural\\Director};
+  \node[fnreg,below=of dir] (mm) {Memory Manager\\(per slot)};
+  \node[fnreg,left=of mm] (np) {Neural\\Processor};
+  \draw[fnarrow] (host) -- (dm);
+  \draw[fnarrow] (dm) -- (dir);
+  \draw[fnarrow] (dir) -- (mm);
+  \draw[fnarrow] (mm) -- (np);
+\end{tikzpicture}
+\end{center}
+
+The Dependency Manager holds a per-node table (state, required/
+resolved producer count, job descriptor fields) and hands READY nodes
+to the Director one at a time (valid/ready, backpressure-safe). The
+Director allocates the first free processor slot (first-free, not
+load-balanced) and frees it the instant that slot's job completes.
+
+\section{Unified single-SDRAM memory}
+\begin{center}
+\begin{tikzpicture}[node distance=6mm and 10mm,font=\footnotesize]
+  \node[fnblockT,minimum width=50mm,minimum height=20mm] (fpga){};
+  \node[anchor=north,font=\bfseries,text=fnDark] at (fpga.north){FPGA};
+  \node[fnreg,fill=white] (np) at ([yshift=2mm]fpga.center){4$\times$ Neural Processor};
+  \node[fnreg,fill=white,below=2mm of np] (be){Unified SDRAM Backend / Arbiter};
+  \node[fnblock,right=16mm of fpga,minimum height=20mm] (ram){\code{AS4C4M16SA-6TIN}\\Weights\\Activations\\Results};
+  \draw[fnbus] (fpga.east|-be) -- node[fnlbl,above]{16-bit SDRAM bus} (ram);
+\end{tikzpicture}
+\end{center}
+
+\code{sdram\_unified\_backend.v} owns exactly one \code{sdram\_
+controller.v} instance and presents two logical ports:
+\begin{itemize}
+\item \textbf{W} (weight fetch): 64-bit, read-only, a 4-entry
+  fully-associative ``other half'' cache (round-robin eviction --
+  safe under any sizing, since an evicted-too-early entry only costs
+  an extra real fetch, never wrong data).
+\item \textbf{AR} (activation fill + result write-back): 16-bit,
+  read/write, byte-maskable via real SDR SDRAM DQM semantics
+  (\code{lb\_n}/\code{ub\_n}).
+\end{itemize}
+Both ports are, in turn, each arbitrated across the N\_PROCESSORS
+slots by a generic, reused \code{slot\_mem\_arbiter} (a proven,
+pending-latch-based, single-owner-until-ready design used identically
+throughout this project).
+
+\subsection*{Official V2 memory map}
+\begin{tabularx}{\textwidth}{L{3.2cm}L{3.2cm}Y}
+\toprule
+\rowh \thd{Region} & \thd{Base address} & \thd{Notes} \\
+\midrule
+Weights & \code{0x010000} & 1\,MB-aligned \\
+\rowa Activations & \code{0x200000} & 1\,MB-aligned \\
+Results & \code{0x300000} & 1\,MB-aligned \\
+\bottomrule
+\end{tabularx}
+All three regions are non-overlapping within the single 8\,MB
+(\code{0x000000}--\code{0x7FFFFF}) SDRAM address space. Base addresses
+are host-programmable per job (via \code{WRITE\_JOB}'s own
+\code{x\_base}/\code{w\_base}/\code{result\_addr} fields), not hard-coded
+in the datapath.
+
+\section{Read-timing discipline (ERR-0025)}
+The shared weight and activation SRAMs (\code{nms\_weight\_packed.v},
+\code{nms\_activation\_replicated.v}) use \textbf{combinational} read
+ports, matching the exact 1-cycle latency assumption of the per-slot
+Memory Manager's own pipelined read-ahead consumer. An earlier,
+registered-read implementation added one uncounted cycle of latency
+that a busy, multi-tile job's own prefetch lead time always absorbed
+invisibly, but that an uncontested single-tile job exposed on its
+first (only) tile -- found and fixed via this revision's own
+board-level SPI integration testing, with zero regression to the
+existing bit-exact regression suite (identical cycle counts before and
+after the fix).
