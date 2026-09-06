@@ -1,0 +1,17 @@
+metric,n_slots2,n_slots4,unit,classification
+sdram_req_count,4096,4096,transactions,INTEGRATED BENCHMARK
+sdram_ready_count,4096,4096,transactions,INTEGRATED BENCHMARK
+sdram_wr_count,0,0,transactions (weight fetch is read-only),INTEGRATED BENCHMARK
+sdram_busy_cycles,49404,49392,cycles,INTEGRATED BENCHMARK
+sdram_busy_pct,94.71,99.92,percent of total_cycles,DERIVED
+sdram_refresh_count,42,40,real AUTO REFRESH commands issued,INTEGRATED BENCHMARK
+sdram_request_latency_min,10,10,cycles (req-to-ready single controller port),INTEGRATED BENCHMARK
+sdram_request_latency_max,16,16,cycles,INTEGRATED BENCHMARK
+sdram_request_latency_avg,10.06,10.06,cycles,INTEGRATED BENCHMARK
+isolated_single_txn_cycles_80mhz,10,10,cycles (Phase 4/6 isolated regression baseline),RTL SIMULATION
+n_way_arbitration_overhead_cycles_per_tile,2.73,2.07,cycles/tile (measured cycles/tile minus isolated single-txn cost),DERIVED
+sdram_avg_bytes_per_cycle,0.6282,0.6629,bytes/cycle,DERIVED
+sdram_sustained_bandwidth_mb_s,50.26,53.04,MB/s (bytes_per_cycle * 80MHz),DERIVED
+sdram_nominal_bandwidth_mb_s,160.0,160.0,MB/s (2 bytes x16 * 80MHz),THEORETICAL
+bandwidth_utilization_pct,31.4,33.2,percent of nominal,DERIVED
+bottleneck_classification,MEMORY_BANDWIDTH_LIMIT,MEMORY_BANDWIDTH_LIMIT,"qualitative (sdram_busy_pct near-saturated, avg latency near the fixed minimum -> not latency-bound; modest N-way arbitration overhead present but small relative to the controller's own fixed per-transaction cost -> not primarily arbitration-bound)",DERIVED

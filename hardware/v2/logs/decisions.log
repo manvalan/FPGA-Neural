@@ -1032,3 +1032,1007 @@ active.
 STATUS:
 ACCEPTED
 
+
+DEC-0017
+timestamp: 2026-09-05T21:55:00Z
+git_commit: 63cac6a7e5e0126bb13bea89dfe21966d5c9a1a5 (+ uncommitted NMS STEP1 work)
+DECISION: Adopt EXP-0017's measured bandwidth/prefetch-depth floors as
+  the NMS (Neural Memory System) design target for STEP3 onward,
+  instead of assuming any bank count/SRAM width/prefetch policy a
+  priori (per the user's own explicit STEP ordering).
+WHY: EXP-0017 shows the real, unmodified neural_processor.v's own
+  demand is exactly 16 bytes/cycle/slot (2*P_IN) once latency is
+  hidden -- a hard, derivable floor, not a guess -- and that
+  PREFETCH_DEPTH (not bandwidth) is what determines whether that floor
+  is actually reachable under nonzero round-trip latency. Designing
+  the NMS's SRAM/bank width and prefetch queue depth against these
+  measured numbers, rather than an arbitrarily "large" local memory,
+  directly follows the user's own stated final rule (optimize for
+  sustained compute throughput, not for maximum RAM capacity).
+EVIDENCE: EXP-0017 (768-point real Verilator sweep, N_SLOTS x
+  PREFETCH_DEPTH x LATENCY x BANDWIDTH).
+ALTERNATIVES CONSIDERED:
+1. Skip the bandwidth study and directly size the NMS off the V1/V2
+   PSRAM controller's own already-measured page-mode timing. Rejected
+   for this step: the user explicitly asked for an idealized,
+   architecture-agnostic study FIRST (STEP1), to avoid anchoring the
+   NMS's own internal SRAM/banking design on the existing PSRAM
+   controller's specific timing before knowing what the compute
+   fabric actually needs -- the real PSRAM's own achievable bandwidth
+   is a separate, still-pending measurement (real page-mode
+   byte/cycle rate from psram_controller.v) that determines whether
+   16*N_SLOTS bytes/cycle is even reachable from the real backing
+   store, but does not change what the compute fabric NEEDS.
+2. Design PREFETCH_DEPTH generously oversized (e.g. always 16) rather
+   than latency-dependent. Rejected: EXP-0017 shows PREFETCH_DEPTH=16
+   is NOT enough at latency=16 (83.4%, not 90%+) -- an oversized-but-
+   fixed prefetch depth is not obviously safe either; the real design
+   parameter is PREFETCH_DEPTH scaled to the REAL, separately-measured
+   round-trip latency of whatever backing-store interface the NMS
+   ends up using, not a single fixed guess.
+RESULT: STEP1 (bandwidth requirement study) is closed. Minimum
+  aggregate bandwidth floor = 16*N_SLOTS bytes/cycle (hard, derived
+  from real P_IN=8 compute rate). PREFETCH_DEPTH must be sized against
+  the REAL round-trip latency of whatever backing store STEP3-STEP7
+  eventually select, not fixed independently of it.
+STATUS: ACCEPTED
+
+DEC-0018
+timestamp: 2026-09-05T22:20:00Z
+git_commit: 63cac6a7e5e0126bb13bea89dfe21966d5c9a1a5 (+ uncommitted NMS STEP1/STEP3 work)
+DECISION: Adopt "banked Activation SRAM, N_BANKS = N_SLOTS, with
+  broadcast-on-same-address and round-robin arbitration on conflict"
+  as the STEP4 candidate architecture for the NMS's shared activation
+  memory, to replace hardware/v2/rtl/activation_cache.v's single-tag
+  design. Weight memory: private per-slot bank (no sharing, no
+  arbitration needed at all), per STEP2's own analytical conclusion.
+WHY: EXP-0018 shows this specific combination is the ONLY tested
+  configuration that keeps utilization high (~98-99%) across every
+  N_SLOTS and every realistic dispatch stagger tested -- it is the
+  first real, measured evidence in this whole project that N_SLOTS=2
+  can genuinely beat N_SLOTS=1, and N_SLOTS=4 beat N_SLOTS=2, without
+  the shared memory nullifying the parallelism (the user's own stated
+  success criterion, NMS spec §18).
+EVIDENCE: EXP-0018 (80-point real Verilator sweep).
+ALTERNATIVES CONSIDERED:
+1. Keep N_BANKS=1 (today's single shared activation port/cache).
+   Rejected: EXP-0018 reproduces V2's own real bottleneck exactly
+   (49.8% utilization loss from a single cycle of stagger at
+   N_SLOTS=2) -- this is the architecture being replaced, not a
+   candidate.
+2. N_BANKS fixed at some value smaller than N_SLOTS (e.g. always 2 or
+   4, to save BRAM). Rejected as the DEFAULT: EXP-0018 shows graceful
+   but real degradation once stagger exceeds what N_BANKS<N_SLOTS can
+   absorb (e.g. N_SLOTS=8/N_BANKS=4/stagger=8: 49.8%) -- a smaller,
+   fixed bank count is a real, legitimate STEP4 candidate to compare
+   against N_BANKS=N_SLOTS on real BRAM/Fmax cost (a smaller N_BANKS
+   might still be the right trade for large N_SLOTS if DP16KD cost
+   dominates), but is not adopted as the default without that real
+   synthesis data.
+3. Skip banking, rely purely on broadcast at N_BANKS=1 and force
+   perfectly synchronized (zero-stagger) dispatch. Rejected: requires
+   redesigning the Neural Director's own dispatch timing to guarantee
+   lockstep across all N_SLOTS, a much larger and more fragile change
+   than banking the memory, and still fails the instant any slot
+   stalls elsewhere in the pipeline (a stall breaks lockstep exactly
+   like stagger does).
+RESULT: STEP3's core question (does ANY tested memory organization let
+  N_SLOTS actually scale) is answered YES, in simulation, for banked
+  activation with N_BANKS=N_SLOTS. This is a SIMULATION-level result
+  only -- real Fmax/DP16KD/LUT cost of the broadcast/bank-select logic
+  at each N_SLOTS is NOT yet measured (STEP4 candidate selection, then
+  STEP5/6 real synthesis, still pending).
+STATUS: ACCEPTED (as the leading STEP4 candidate, not yet as a final
+  architecture -- real synthesis data required before STEP7 selection)
+
+DEC-0019
+timestamp: 2026-09-06T00:00:00Z
+git_commit: 5c9ec61 (+ uncommitted NMS STEP4/5/6 work)
+DECISION: Select Candidate A ("replicated" -- N_SLOTS private full-
+  vector activation copies, broadcast-write fill, zero-contention
+  private reads, hardware/v2/nms/rtl/nms_activation_replicated.v) as
+  the NMS's Activation SRAM architecture, over Candidate B (banked +
+  round-robin arbiter + broadcast crossbar).
+WHY: EXP-0019's real synthesis+PnR data shows Candidate A strictly
+  dominates Candidate B on every measured axis at every tested
+  N_SLOTS: 2-4x higher real Fmax, ~24x fewer LUTs at N_SLOTS=8
+  (MAX_TILES=16), and structurally starvation-free correctness (no
+  arbiter exists to get wrong). The real BRAM cost of replication (8
+  DP16KD at N_SLOTS=8/MAX_TILES=256, 7% of the chip) is small and
+  honestly acceptable for this project's own realistic workload sizes.
+  Both candidates already achieved the SAME real cycle-level throughput
+  in simulation (EXP-0018, since both implement the identical logical
+  broadcast-when-shared / fair-when-contended semantics) -- so once
+  cycle-level behavior is equal, the real hardware cost comparison
+  (this experiment) is the only thing left to decide between them, and
+  it is not close.
+EVIDENCE: EXP-0019 (7 real synthesis+PnR runs), cross-referenced
+  against EXP-0018's own cycle-level equivalence.
+ALTERNATIVES CONSIDERED:
+1. Candidate B (banked+broadcast) at N_BANKS=N_SLOTS. Rejected: real,
+   measured Fmax/LUT cost is far worse at every N_SLOTS with no
+   throughput benefit over Candidate A (EXP-0018 already showed both
+   reach the same ~99% utilization ceiling) -- banking only pays off
+   over replication if replication's BRAM cost becomes the binding
+   constraint, which it does not at this project's own realistic
+   vector lengths (MAX_TILES<=256 uses <=8 DP16KD at N_SLOTS=8, 7% of
+   chip).
+2. Candidate B with a smaller fixed N_BANKS (e.g. 4) to save further
+   BRAM at higher N_SLOTS. Rejected: EXP-0019 shows this variant costs
+   MORE LUTs than N_BANKS=N_SLOTS (1667 vs 3348 COMB is fewer in
+   absolute terms, but still ~12x Candidate A's 138 at the same
+   N_SLOTS=8) for LOWER Fmax AND (per EXP-0018) a real cycle-count
+   regression from contention -- worse on every axis simultaneously,
+   not a genuine trade.
+3. Skip replication concerns and just always use Candidate A
+   regardless of vector length, without measuring larger MAX_TILES.
+   Rejected implicitly: EXP-0019 deliberately measured MAX_TILES=256
+   (not just 16) specifically because the user's own NMS spec (§6)
+   warned against exactly this kind of unverified assumption (M3's own
+   "shallower depth = less BRAM" lesson) -- the real DP16KD cost at a
+   realistic depth needed to be confirmed acceptable, not assumed.
+RESULT: NMS Activation SRAM = Candidate A (replicated). Real,
+  synthesis-confirmed cost at N_SLOTS=8/MAX_TILES=256: 8 DP16KD (7% of
+  chip), 137 LUT4-equivalent COMB cells, Fmax=130.70 MHz in isolation
+  (component-level, not yet the full-system integrated number).
+  CAVEAT, stated honestly: replication's BRAM cost scales with
+  N_SLOTS x vector depth -- if a future workload needs a MUCH longer
+  shared activation vector (MAX_TILES in the thousands) at N_SLOTS=8,
+  this cost should be re-measured before assuming it stays cheap; not
+  re-tested this round since it exceeds this project's own current
+  realistic workload sizes (largest tested workload uses MAX_TILES=16,
+  ch. "Large/Stress" workloads in the frozen V2 final benchmark).
+STATUS: ACCEPTED
+
+DEC-0020
+timestamp: 2026-09-06T01:10:00Z
+git_commit: 5c9ec61 (+ uncommitted NMS work)
+DECISION: Select Candidate W2 "packed" (per-MAC-lane narrow memories,
+  hardware/v2/nms/rtl/nms_weight_packed.v) as the NMS's Weight SRAM
+  architecture, over Candidate W1 "direct" (one wide native-width
+  memory per slot, mirroring weight_buffer.v's own M3-era structure).
+WHY: EXP-0020's real synthesis+PnR data shows packed uses the IDENTICAL
+  real DP16KD count as direct at every N_SLOTS and every tested depth
+  (BRAM cost is unaffected by this choice), while using ~1.9x fewer
+  LUTs and ~2x fewer FFs at N_SLOTS=8/MAX_TILES=256, for comparable
+  Fmax. There is no real axis on which direct wins meaningfully; at
+  the shallow depth this project's current workloads actually use
+  (MAX_TILES=16) the two candidates are identical, so packed is never
+  worse and sometimes meaningfully cheaper.
+EVIDENCE: EXP-0020 (12 real synthesis+PnR runs).
+ALTERNATIVES CONSIDERED:
+1. Candidate W1 (direct), matching the already-existing
+   weight_buffer.v structure for continuity/familiarity. Rejected:
+   "already exists elsewhere in the codebase" is not, by this
+   project's own stated discipline, a reason to prefer a real,
+   measured LUT/FF cost regression with no offsetting benefit.
+2. Skip re-measuring at MAX_TILES=256 since M3 already established
+   weight_buffer's DP16KD count is depth-insensitive. Rejected: M3's
+   own finding was about DEPTH insensitivity for ONE fixed width/
+   packing; this decision is specifically about WIDTH/PACKING choice,
+   a different variable, and the user's own NMS spec (S6) explicitly
+   asked this not be assumed by analogy.
+RESULT: NMS Weight SRAM = Candidate W2 (packed, per-lane). Combined
+  with DEC-0019's Activation SRAM (replicated) selection: at
+  N_SLOTS=8/MAX_TILES=256 (a realistic deep shared vector), the
+  combined real BRAM cost of BOTH memories is 8 (activation) + 8
+  (weight) = 16 DP16KD, 14.8% of the LFE5U-45F's 108 total -- an
+  honestly affordable real cost for this project's own realistic
+  workload sizes.
+STATUS: ACCEPTED
+
+DEC-0021
+timestamp: 2026-09-06T01:55:00Z
+git_commit: 5c9ec61 (+ uncommitted NMS STEP8 work)
+DECISION: Accept nms_dataflow_core.v (Dependency Manager + Neural
+  Director reused verbatim + N_SLOTS x nms_memory_manager/
+  neural_processor + shared nms_activation_fill_ctrl, backed by
+  nms_activation_replicated.v/nms_weight_packed.v) as the STEP8 NMS
+  integration, now bit-exact verified end-to-end.
+WHY: EXP-0021 confirms the two independently-decided memory pieces
+  (DEC-0019 Activation SRAM replicated, DEC-0020 Weight SRAM packed)
+  compose correctly into the full real dependency-wake-up loop,
+  including the specific shared-activation-broadcast and multi-tile
+  scenarios this new architecture must handle that the OLD memory_
+  manager.v + activation_cache.v design already handled differently.
+  Both real bugs found (ERR-0013) were caught by DELIBERATELY testing
+  scenarios the OLD design's own testbenches never needed to cover
+  (multi-tile jobs interacting with the NEW private-fetch-restart
+  logic) -- consistent with this project's own standing practice of
+  writing tests that specifically target what changed, not just
+  reusing old tests unchanged.
+EVIDENCE: EXP-0021 (7/7 bit-exact tests, 2 real bugs found and fixed).
+ALTERNATIVES CONSIDERED:
+1. Trust the two memory pieces' own isolated verification (EXP-0018/
+   0019/0020's own testbenches) as sufficient, skip a dedicated full-
+   integration test. Rejected: EXP-0021 found 2 real bugs that existed
+   ONLY in the glue logic (nms_memory_manager.v) connecting the two
+   already-verified pieces together -- isolated correctness of each
+   piece does not imply correctness of their composition, the same
+   lesson this project already learned at M4/M7/M8 (dataflow_core.v's
+   own real integration bugs, ERR-0006/0008).
+RESULT: STEP8 (full NMS integration) is functionally complete and
+  bit-exact verified at N_SLOTS=2. Real Fmax/resource cost of the FULL
+  integrated system (not just the isolated Activation/Weight SRAM
+  candidates from EXP-0019/0020) is NOT yet measured -- that is STEP9's
+  own job, alongside a real cycle-count benchmark comparable to V2's
+  own frozen final-benchmark campaign.
+STATUS: ACCEPTED
+
+DEC-0022
+timestamp: 2026-09-06T03:20:00Z
+git_commit: 5c9ec61 (+ uncommitted NMS STEP9/STEP10 work)
+DECISION: Recommend the NMS (nms_neural_multiprocessor.v) at
+  N_SLOTS=2 as a real, measured upgrade over Current V2
+  (neural_multiprocessor.v) at its own recommended N_SLOTS=2 (DEC-0014):
+  +6.0% real wall-clock throughput, -55.3% LUT4, -10.2% FF, higher
+  real Fmax margin (93.10 vs 87.72 MHz), for the SAME DSP/BRAM cost,
+  on the IDENTICAL D-Stress workload, bit-exact. Do NOT recommend NMS
+  at N_SLOTS=4/8 yet -- Current V2 is REALLY faster there (12.9% at
+  N=4) until nms_activation_fill_ctrl.v's own priority-scan is
+  pipelined (EXP-0022's own identified, concrete, not-yet-attempted
+  fix).
+WHY: This is the first NMS number that is directly, apples-to-apples
+  comparable to V2's own already-logged real numbers (same workload,
+  same golden-model verification, same real V1 PSRAM chain, same real
+  synthesis toolchain) -- every earlier NMS decision (DEC-0019/0020/
+  0021) was internally consistent but never checked against V2's own
+  real baseline until now. The result confirms the entire NMS
+  redesign's own central thesis (EXP-0018: banked/replicated on-chip
+  organization removes the SAME-cycle contention that both
+  activation_cache.v, DEC-0016, and now nms_activation_fill_ctrl.v's
+  OWN priority-scan can reintroduce in a different form) while also
+  HONESTLY surfacing that the redesign is not uniformly better --
+  N_SLOTS=4/8's real Fmax regression is a genuine, measured cost, not
+  glossed over.
+EVIDENCE: EXP-0022 (real synthesis+PnR for N_SLOTS=1/2/4/8, real
+  256-neuron D-Stress benchmark for N_SLOTS=2/4 through the real V1
+  PSRAM chain, cross-referenced against V2's own already-logged
+  D-Stress numbers, benchmark.log EXP-0016).
+ALTERNATIVES CONSIDERED:
+1. Recommend NMS unconditionally (all N_SLOTS). Rejected: EXP-0022's
+   own real N=4 data shows Current V2 winning there (0.871x) -- an
+   unconditional recommendation would contradict this project's own
+   central discipline (never round a real regression up to a win).
+2. Withhold any recommendation until the fill-controller pipelining
+   fix is implemented and re-measured at N=4/8. Rejected: N_SLOTS=2 is
+   ALREADY the project's own standing recommended default (DEC-0014),
+   confirmed unaffected by either DEC-0019/0020's own memory redesign
+   or this session's own findings -- there is no reason to withhold a
+   real, measured win in the range that already matters while a
+   separate, clearly-scoped follow-up (N=4/8 Fmax) remains open.
+RESULT: NMS is a real, net improvement at N_SLOTS<=2 (the range this
+  project actually recommends); N_SLOTS=4/8 remain a real, open,
+  honestly-flagged regression pending the fill-controller pipelining
+  fix identified in EXP-0022. This closes the NMS roadmap (STEP1-
+  STEP10) for the current round.
+STATUS: ACCEPTED (N_SLOTS<=2 recommendation); N_SLOTS=4/8 status
+  REMAINS OPEN, not resolved this round.
+
+DEC-0023
+timestamp: 2026-09-05T23:41:08Z
+topic: NMS STEP11 (real weight prefetch & latency hiding) -- final
+  outcome and PREFETCH_DISTANCE recommendation.
+context: STEP11 was commissioned specifically because EXP-0022 found
+  prefetch_effectiveness~=0% and weight-related stall~=92.5% at
+  N_SLOTS=2, and demanded a REAL weight prefetch engine that
+  demonstrably solves it, with an explicit A/B/C outcome framework
+  (A=success, sustained MAC/cycle>=90% of theoretical + utilization
+  >=90% + Fmax>=80MHz; B=partial, latency solved but bandwidth
+  insufficient; C=failure, prefetch cannot materially reduce stalls).
+options_considered:
+  1. Declare Outcome A (success) -- REJECTED: not supported by any
+     real measurement. Sustained MAC/cycle reaches only 2.8% (N=1) /
+     1.2% (N=2) of the required 90%-of-theoretical target (EXP-0024).
+  2. Declare Outcome C (failure) uniformly across all N_SLOTS --
+     REJECTED as too coarse: N_SLOTS=1 DOES show a real, reproducible,
+     bit-exact-verified ~10.3% cycle reduction (181489->162876 cycles)
+     directly attributable to the new engine eliminating the old
+     per-tile-boundary control-plane restart gap -- a genuine, if
+     small, causal effect that must not be erased by an overly blunt
+     verdict.
+  3. Declare Outcome B for N_SLOTS=1 (real latency-hiding effect
+     proven, remaining gap is bandwidth) + Outcome C for N_SLOTS=2
+     (zero measured effect, port already saturated by cross-slot
+     contention before any lookahead scheme can act) -- SELECTED.
+     This is the only framing that matches EXP-0024's own actual,
+     dis-aggregated numbers rather than averaging away the real
+     N_SLOTS=1-vs-2 divergence STEP11's own experiment discovered.
+decision: STEP11 outcome is B(N_SLOTS=1) / C(N_SLOTS=2), NOT A.
+  - N_SLOTS=1: PARTIAL SUCCESS. The real weight_prefetch_engine.v
+    mechanism WORKS AS DESIGNED (continuous cross-tile-boundary word
+    streaming against the real single-outstanding-transaction PSRAM
+    protocol, verified bit-exact in tb_weight_prefetch.v and in the
+    real D-Stress integration) and delivers a real, reproducible
+    -10.3% cycle-count improvement. It falls far short of the 90%-
+    utilization target (achieves 2.8% of the required sustained
+    MAC/cycle) because the real, physical PSRAM bandwidth itself
+    (not latency) is now the dominant remaining limiter -- quantified
+    at EXP-0024: a ~35.8x real bandwidth increase would be needed to
+    reach the target.
+  - N_SLOTS=2 (this project's own primary reference configuration):
+    FAILURE against the "materially reduce stalls" criterion. Every
+    PREFETCH_DISTANCE from 1 to 16 produces a statistically
+    indistinguishable cycle count (185390-185410, 0.011% spread), and
+    the result is functionally identical to the pre-STEP11 "Current
+    NMS" baseline (185645 cycles, EXP-0022) -- a -0.13% difference,
+    i.e. no real effect. Root cause: the single physical PSRAM port
+    is ALREADY saturated (90.5% utilization, unchanged from the
+    baseline) by the natural interleaving of two slots' own real
+    traffic through slot_mem_arbiter's round-robin arbitration, before
+    any lookahead/buffering scheme ever gets a chance to hide latency
+    -- there is no idle port time left to hide INTO. This is a real,
+    external, physical bandwidth ceiling (the single real
+    ISSI IS66WVE4M16EBLL-70BLI PSRAM chip's own access timing,
+    contended by N_SLOTS clients), not an RTL-scheduling defect.
+  Explicit answer to STEP11's own mandated architectural question
+  ("is the current PSRAM bandwidth sufficient once latency is
+  hidden?"): NO. It was never primarily a latency problem at
+  N_SLOTS=2 (the port has no idle time to begin with); it is, and
+  remains, a bandwidth problem, requiring more real physical PSRAM
+  throughput (wider bus, multiple independent banks/ports, or a
+  faster backing technology) to progress further -- outside this
+  STEP's own RTL-scheduling scope, and NOT something a "next
+  redesign" of the on-chip scheduler alone can fix (per this STEP's
+  own explicit "do NOT proceed to another major redesign without
+  evidence" instruction).
+PREFETCH_DISTANCE recommendation: PFD=2. Every PFD>=2 tested (2, 4, 8,
+  16) is measurement-identical to PFD=2 at BOTH N_SLOTS=1 and
+  N_SLOTS=2 -- there is zero additional measured benefit from any
+  deeper buffering, so per this STEP's own explicit "a deeper prefetch
+  buffer is NOT automatically better; find the smallest implementation
+  that achieves the required utilization" instruction, PFD=2 is the
+  Pareto-optimal choice among the values that show any benefit at all
+  (PFD=1 is measurably worse at N_SLOTS=1; PFD=1..16 are indistinguish-
+  able at N_SLOTS=2, so PFD=2 costs nothing extra there either).
+  Resource cost at PFD=2 is also equal-to-slightly-cheaper than PFD=8
+  (N=1: LUT4 1333 vs 1464, -9.0%; N=2: LUT4 1941 vs 1908, +1.7% --
+  a wash) with comparable Fmax (N=1: 132.26 vs 137.76MHz; N=2: 97.16
+  vs 95.25MHz).
+production_recommendation: do NOT adopt nms_neural_multiprocessor_pf
+  (weight_prefetch_engine.v) as the default NMS configuration at
+  N_SLOTS>=2 -- it is resource/Fmax-neutral versus the existing
+  Current NMS baseline (nms_neural_multiprocessor.v) but provides no
+  real throughput benefit there, so switching adds real design/
+  verification surface (a new module, a new testbench, a new failure
+  mode class already found once as ERR-0015) for zero measured gain.
+  At N_SLOTS=1 specifically, where a real ~10% win exists, it MAY be
+  worth adopting once a real workload exists where N_SLOTS=1's own
+  per-slot bandwidth is not already the bottleneck -- not the case
+  for D-Stress's own dense-layer, non-reusable-weight access pattern.
+  Both nms_neural_multiprocessor.v (Current NMS baseline) and
+  nms_neural_multiprocessor_pf.v (weight-prefetch variant) are
+  PRESERVED side-by-side in the repository per this STEP's own
+  explicit "keep the current working configuration available for A/B
+  comparison" constraint -- neither supersedes the other.
+future_work: the real, evidence-backed next architectural question is
+  real PSRAM bandwidth itself (wider data bus, multiple independent
+  PSRAM banks/ports, or a different/faster backing memory technology)
+  -- explicitly flagged as future work, NOT undertaken this round per
+  this STEP's own "do not proceed to another major redesign without
+  evidence" instruction; STEP11's own evidence base (EXP-0024) is
+  exactly the evidence such a future redesign would need to start
+  from.
+STATUS: STEP11 CLOSED. Outcome B (N_SLOTS=1, partial) / C (N_SLOTS=2,
+  failure against the 90% target). PFD=2 recommended if the engine is
+  used at all. NMS baseline (nms_neural_multiprocessor.v) remains the
+  project's own default reference configuration, unchanged.
+
+DEC-0024
+timestamp: 2026-09-06T01:00:00Z
+topic: NMS STEP13 (batch/continuous processor) -- architectural
+  direction, chosen based on EXP-0025's own RTL trace rather than the
+  governing spec's own initial conceptual framing.
+context: STEP13's own spec asked for a "batch/continuous neuron
+  execution model" (multiple neurons per dispatch, or a continuous
+  neuron stream) to amortize per-neuron control overhead, framed
+  around EXP-0024's ~68.5-cycles/neuron non-memory floor. Step 1 of
+  that spec explicitly required tracing the REAL RTL before assuming
+  where those cycles go, rather than accepting "dispatch overhead" as
+  a given label.
+options_considered:
+  1. Batch/pipeline job dispatch (Model B/C from the governing spec:
+     amortize per-neuron dispatch overhead across K neurons or a
+     continuous neuron stream) -- REJECTED as the PRIMARY fix (though
+     still worth a secondary pass): EXP-0025's own cycle-exact trace
+     shows job-dispatch/drain overhead is only ~4.5 of the 68.5
+     cycles/neuron floor (6.6%). Batching neurons would leave 93.4% of
+     the real floor completely untouched.
+  2. Redesign neural_processor.v's own datapath/pipeline (Outcome C
+     from the governing spec) -- REJECTED: EXP-0025 shows NP's own
+     interface (operand_ready held continuously high through
+     NP_WAIT_OPERANDS) is ALREADY capable of accepting a new tile
+     every cycle; it is not the bottleneck and does not need to change
+     (consistent with STEP11's own established "do not modify
+     neural_processor.v unless absolutely necessary" precedent, which
+     continues to hold).
+  3. Pipeline the per-TILE operand-delivery logic inside the memory
+     manager (a NEW execution granularity: continuous tile streaming
+     within a job, via a read-ahead pipeline + skid buffer, decoupling
+     "issue the next tile's SRAM read" from "wait for the current tile
+     to be fully consumed") -- SELECTED. This directly targets the
+     93.4%-of-the-floor component EXP-0025 traced to
+     nms_memory_manager_pf.v's own un-pipelined
+     read_issued->read_ready->present->consumed chain (4 cycles/tile,
+     zero overlap between tiles, despite both the local SRAMs'
+     1-cycle read latency and NP's own continuous-acceptance capability
+     allowing a true 1-cycle/tile steady state).
+decision: implement `nms_memory_manager_stream.v` as a NEW A/B variant
+  (nms_memory_manager_pf.v itself left UNTOUCHED, per this project's
+  own established "preserve the working baseline" discipline) that
+  replaces ST_RUN's sequential 4-state-per-tile chain with a pipelined
+  read-ahead design: a `rd_ptr` (read-issue pointer, independent of the
+  consumption pointer) that issues a new SRAM read every cycle it is
+  legal to do so (bounded by n_tiles/wgt_ready_count/usable_act, same
+  gating semantics as the old `can_present`), landing in a 1-deep skid
+  buffer that presents `operand_valid` to NP; NP's own continuous
+  operand_ready drains the skid buffer every cycle it is full, freeing
+  it for the next read's arrival the same cycle. Target: ~1 cycle/tile
+  steady state (down from 4), i.e. up to a real, RTL-level ~4x
+  reduction in the dominant floor component. weight_prefetch_engine.v
+  and the outer job FSM (ST_IDLE/ST_WAIT_RESULT/ST_WRITE_RES/ST_DONE)
+  are unchanged; only ST_RUN's internal operand-delivery logic differs.
+  Job-dispatch batching (Model B/C) is deferred as a SECONDARY,
+  smaller-impact follow-up, only worth pursuing once the dominant
+  93.4% component has been addressed and its own new ceiling measured.
+STATUS: DIRECTION SET. Implementation, bit-exact verification, and
+  ideal-memory/real-memory re-benchmarking follow in EXP-0026+.
+
+DEC-0025
+timestamp: 2026-09-06T02:30:00Z
+topic: NMS STEP13 (batch/continuous processor) -- final outcome and
+  adoption decision.
+context: STEP13 asked whether changing execution granularity removes
+  the ~11.674%-utilization ceiling EXP-0024 found for N_SLOTS=2, and
+  demanded an experimentally-proven (not assumed) answer, with an
+  explicit A/B/C/D outcome framework.
+evidence_summary:
+  - EXP-0025 (RTL trace, zero real memory latency): traced the ACTUAL
+    RTL rather than assuming -- found the dominant real floor (93.4%
+    of EXP-0024's measured "non-memory" cycles) is NOT per-job dispatch
+    overhead but a 4-cycles/tile FSM-serialization bug in
+    nms_memory_manager_pf.v's own ST_RUN state (read_issued->
+    read_ready->present->consumed, strictly sequential, zero overlap
+    between tiles), despite neither the local SRAMs (1-cycle latency)
+    nor neural_processor.v (designed for continuous 1-tile/cycle
+    acceptance) requiring this.
+  - This redirected the architecture AWAY from the governing spec's
+    own initial framing ("batch K neurons per dispatch") and TOWARD a
+    pipelined, continuous per-TILE operand-delivery redesign within
+    the memory manager -- a genuine example of evidence overriding an
+    initial conceptual hypothesis, exactly as the spec's own Step1
+    demanded ("do not assume the architecture from filenames/specs;
+    trace the actual RTL").
+  - nms_memory_manager_stream.v (NEW, DEC-0024) implements this fix: a
+    read-ahead pointer (rd_ptr) + 1-deep skid buffer, decoupling
+    "issue next tile's SRAM read" from "current tile consumed".
+  - EXP-0026 (isolated, real weight_prefetch_engine active): the fix
+    works exactly as designed, but immediately exposed a SECOND, freshly
+    discovered bottleneck at the SAME numeric value (4 cycles/tile):
+    weight_prefetch_engine.v's own word-fetch rate, capped by the real
+    16-bit PSRAM bus width (P_IN=8 bytes / 2 bytes-per-word = 4 word-
+    transactions/tile, 1 cycle/word minimum even at zero real latency).
+    Net real-system benefit at TODAY's bandwidth: ~0% (confirmed by
+    EXP-0028's real D-Stress re-benchmark: 185270 vs 185398 cycles,
+    -0.07%, noise-level).
+  - EXP-0027 (control experiment, weight-fetch bypassed -- the Step6
+    k->infinity endpoint): PROVES the fix removes a real, structural,
+    4x ceiling: with the weight-fetch bottleneck removed, the NEW
+    design achieves genuine 1-cycle/tile sustained throughput (100% of
+    P_IN=8's own theoretical per-tile acceptance rate), where the OLD
+    design (nms_memory_manager_pf.v, confirmed via EXP-0025's own
+    trace) is HARD-CAPPED at 4 cycles/tile (25%) regardless of
+    bandwidth -- it cannot benefit from ANY future bandwidth increase
+    without also fixing this same FSM-serialization bug.
+  - EXP-0028: bit-exact PASS (256/256 neurons), resource/Fmax
+    real-measured: both N=1 and N=2 PASS the 80MHz target
+    (142.92MHz/92.57MHz respectively), resource cost within +/-6% of
+    the "_pf" baseline -- no combinational-controller blowup.
+decision: this is an Outcome B (STEP13's own framework: "batching/
+  continuous execution helps, but another bottleneck appears") --
+  SPECIFICALLY: the executed fix (continuous per-tile streaming, NOT
+  neuron-batching) is real, correct, bit-exact, and REMOVES a genuine,
+  previously-hidden, hard architectural ceiling in the memory manager
+  (proven via EXP-0027's direct control experiment). But it delivers
+  ZERO measurable improvement TODAY because a second, independent,
+  currently-co-dominant bottleneck (weight-fetch word-granularity,
+  tied to the real 16-bit PSRAM bus) already caps the system at
+  exactly the same rate -- this second bottleneck is a hardware
+  bandwidth-width constraint, NOT something any further on-chip
+  scheduling redesign (memory-manager pipelining, neuron batching, or
+  otherwise) can fix without ALSO widening the real external memory
+  interface.
+  ADOPT nms_memory_manager_stream.v / nms_dataflow_core_stream.v /
+  nms_neural_multiprocessor_stream.v as the NEW reference NMS
+  configuration going forward (strict improvement: same bit-exact
+  correctness, same resource/Fmax class, REQUIRED groundwork for any
+  future bandwidth increase to actually translate into a throughput
+  gain -- without this fix, a future wider/faster PSRAM would
+  immediately hit the OLD 4-cycles/tile FSM ceiling and deliver at
+  most 25% of the bandwidth improvement's potential benefit).
+  nms_memory_manager_pf.v and nms_memory_manager.v are BOTH preserved,
+  unmodified, for historical A/B/C reference, per this project's own
+  established discipline.
+  Neuron-batching (the spec's OWN original Model B/C) is NOT pursued
+  further: EXP-0025 already showed job-dispatch overhead is only ~4.5
+  of the ~68.5-cycle/neuron floor (6.6%) -- a much smaller opportunity
+  than the ~64-cycle/neuron (93.4%) tile-serialization bug just fixed,
+  and would deliver no benefit at today's bandwidth for the same
+  reason (weight-fetch-rate-bound).
+STATUS: STEP13 CLOSED. Outcome B. Fix adopted (real, bit-exact,
+  resource-neutral, structurally necessary for any future bandwidth
+  gain), but the immediate, measurable N=2 utilization number is
+  UNCHANGED from EXP-0024's own baseline -- the honest answer to
+  "does N=4/N=8 become viable" is NOT YET: viability now depends
+  entirely on real external memory bandwidth (see the STEP13 summary
+  report's own final decision section for the precise quantification).
+
+DEC-0026
+timestamp: 2026-09-06T03:05:00Z
+topic: NMS STEP14 Part B -- minimum fix for the N_SLOTS=4
+  activation-fill-controller Fmax regression.
+context: EXP-0029's exact post-P&R critical-path trace located the
+  N=4 failure (55.22 MHz vs 80 MHz target) to two chained, un-
+  pipelined 16-bit magnitude comparisons inside
+  nms_activation_fill_ctrl.v: max_n_tiles's own computation (line 92,
+  an N_SLOTS-wide running-max over per-slot n_tiles) feeding DIRECTLY,
+  same-cycle, into the resident_count < max_n_tiles refill/continue
+  decision (line 165).
+options_considered:
+  1. Redesign the whole fill controller (e.g. per-slot distributed
+     fill engines) -- REJECTED as disproportionate: the measured
+     critical path is two specific comparisons, not a structural
+     issue with the single-tag/shared-controller design itself
+     (DEC-0016's own choice, still valid).
+  2. Register max_n_tiles one cycle before its use in the
+     resident_count comparison -- SELECTED. This is the smallest
+     change that breaks the two chained comparisons into separate
+     clock edges, directly targeting the exact two RTL lines EXP-0029
+     identified. The refill-decision path is evaluated only once per
+     tile-fill-trigger boundary (not every per-tile-consumption cycle,
+     which STEP13's streaming fix already fully decoupled from this
+     controller) -- one added cycle of latency here has no measurable
+     effect on steady-state throughput.
+decision: implement nms_activation_fill_ctrl_v2.v: identical external
+  interface and behavior to nms_activation_fill_ctrl.v, except
+  max_n_tiles is registered (max_n_tiles_reg <= max_n_tiles every
+  cycle, same combinational computation as before) and the ST_IDLE
+  refill/continue condition compares resident_count against
+  max_n_tiles_reg (the one-cycle-old, REGISTERED value) instead of the
+  same-cycle combinational max_n_tiles. nms_activation_fill_ctrl.v
+  itself is left UNTOUCHED (A/B preservation, same discipline as every
+  prior STEP). Verify: (1) real re-synthesis+P&R at N=4 reaches
+  >=80MHz, (2) bit-exact correctness unchanged (the one-cycle-later
+  refill decision cannot change WHAT gets fetched, only WHEN the
+  decision is made, and only at fill-trigger boundaries already
+  gated by pf_busy/state==ST_IDLE), (3) steady-state per-tile cycle
+  count unchanged (no new serialization introduced, per STEP14's own
+  explicit B4 requirement).
+STATUS: implementation + verification follow in EXP-0030.
+
+DEC-0027
+timestamp: 2026-09-06T03:45:00Z
+topic: NMS STEP14 Part B -- final decision on the activation-fill
+  controller timing fix.
+evidence: EXP-0029 (exact critical path trace), EXP-0030 (2-stage fix,
+  N=4 Fmax 55.22->106.81MHz, +93.4%, bit-exact PASS, zero N=2
+  regression), EXP-0031 (N=8 exploratory: DSP/LUT/FF feasible, Fmax
+  still fails at 52.25MHz -- same O(N_SLOTS) fold, not yet addressed).
+decision: ADOPT nms_activation_fill_ctrl_v3.v as the reference
+  activation-fill controller for N_SLOTS>=4 configurations. It is a
+  strict improvement (real Fmax +93.4% at N=4, bit-exact, resource-
+  neutral-to-slightly-cheaper, zero throughput regression at N=2) that
+  directly satisfies STEP14's own B4 requirement (higher Fmax +
+  preserved parallelism, not Fmax via serialization -- verified: N=2
+  cycle count and sustained MAC/cycle are numerically IDENTICAL
+  before/after this fix). nms_activation_fill_ctrl.v (original) and
+  nms_activation_fill_ctrl_v2.v (insufficient 1-stage fix) are
+  preserved for reference; v3 supersedes v2 as the working candidate.
+  N=8 remains NOT timing-feasible with this fix alone (Fmax=52.25MHz)
+  -- the underlying O(N_SLOTS) max-fold chain was shifted, not
+  eliminated. This is flagged as concrete future work (a genuine
+  balanced-tree or log2(N_SLOTS)-scaling pipeline for the fold stage)
+  and NOT undertaken this round, consistent with N=8's own explicit
+  "exploratory, does not need to pass" scope.
+STATUS: Part B closed. N=4 acceptance criterion #3 (Fmax>=80MHz) is
+  MET (106.81MHz). Criteria #1/#2 (bit-exact, no deadlock) MET.
+  Criteria #4/#5 (throughput improvement, parallel efficiency) are
+  addressed jointly with Part A/C below, since Part B alone does not
+  change memory bandwidth -- see the STEP14 combined summary.
+
+DEC-0028
+timestamp: 2026-09-06T04:15:00Z
+topic: NMS STEP14 Part A5 -- logical weight-path width vs. real
+  physical PSRAM bandwidth.
+context: EXP-0032 established that a LOGICAL 64-bit weight interface
+  (weight_prefetch_engine_wide.v, simulation-only) removes the
+  weight-fetch bottleneck entirely (1 cycle/tile, matching the
+  streaming memory manager's own ceiling). STEP14's own explicit A5
+  instruction: do NOT assume a wider logical interface automatically
+  means the real physical memory can deliver that bandwidth --
+  measure the difference between logical and physical bandwidth
+  explicitly.
+analysis (no new RTL/synthesis needed -- a direct consequence of
+  already-measured real data from STEP11-13): the REAL, physical V1
+  PSRAM chain (memory_interface.v -> psram_controller.v -> the real
+  ISSI IS66WVE4M16EBLL-70BLI x16 chip) is FIXED at a 16-bit physical
+  data bus -- this is real hardware, not an RTL parameter. The
+  ALREADY-EXISTING weight_prefetch_engine.v (real, 16-bit, used
+  throughout STEP11-13 and re-verified unchanged in STEP14 Part B) IS
+  PRECISELY what a "64-bit logical / 16-bit physical" packing adapter
+  would produce: it already assembles one 64-bit logical tile from
+  4 sequential real 16-bit word transactions -- exactly the packing
+  behavior A5 asks to explore. Its own real, repeatedly-measured
+  result (EXP-0025/26/28, real V1 PSRAM chain): 4 cycles/tile in
+  steady state, IDENTICAL to the MEM_DATA_WIDTH=16 ideal-memory result
+  from EXP-0032 -- because the REAL transaction count (4 sequential
+  16-bit word fetches) is unchanged regardless of what the LOGICAL
+  interface upstream claims its width is. A logical 64-bit (or wider)
+  interface, if backed by ONLY a real 16-bit physical bus, delivers
+  EXACTLY the same real throughput as a native 16-bit design -- the
+  logical width is not itself a source of real bandwidth; it is only
+  useful if the PHYSICAL interface is ALSO widened to match.
+decision: no new "packing adapter" RTL module was built, since the
+  real, already-verified weight_prefetch_engine.v IS that adapter in
+  effect (logically requesting a 64-bit tile, physically issuing 4
+  real 16-bit transactions) and its real measured behavior already
+  answers A5 directly and conclusively: LOGICAL width alone provides
+  ZERO real throughput benefit without a matching PHYSICAL bandwidth
+  increase. To realize EXP-0032's ideal 64-bit ceiling (1 cycle/tile)
+  on real hardware would require the PHYSICAL PSRAM interface itself
+  to widen (e.g. a real 64-bit-wide external memory bus, or 4 parallel
+  16-bit PSRAM chips banked together) -- a board/silicon-level change,
+  explicitly outside this STEP's own RTL-scheduling scope, and NOT
+  something achievable by ANY further RTL redesign of
+  weight_prefetch_engine.v/nms_memory_manager_stream.v alone.
+STATUS: Part A closed. The 64-bit architectural requirement is
+  precisely established (EXP-0032); its real-hardware realization is
+  explicitly a future hardware (not RTL) dependency.
+
+DEC-0029
+timestamp: 2026-09-06T05:45:00Z
+topic: STEP15 -- physical memory bandwidth recommendation for the
+  next board revision.
+evidence: EXP-0034 (real 16-bit baseline, 17.0 cycles/tile single-
+  slot), EXP-0035 (RTL-validated page-mode model, 32/64/128-bit:
+  9.0/5.0/5.0 cycles/tile, 128-bit confirmed a genuine plateau not a
+  regression), EXP-0036 (DERIVED full N=2/4/8 system projection:
+  16->32 bit gives 1.889x real speedup, 32->64 gives a further 1.80x,
+  64->128 gives none; utilization stays at 0.55%/1.05%/1.88%/1.88% of
+  theoretical throughout -- memory-bound at every width tested, no
+  crossover to compute-bound reached).
+decision: recommend a 32-bit physical weight-fetch interface,
+  implemented as TWO parallel instances of the EXISTING, already-
+  qualified ISSI IS66WVE4M16EBLL-70BLI (16-bit each, shared address/
+  control bus, independent DQ), for the next board revision.
+  Rationale: (1) real, substantial ~1.9x end-to-end speedup, the
+  largest single real gain available from ANY bus-width change
+  investigated; (2) LOW risk -- reuses an already-qualified, already-
+  characterized part and controller family (psram_controller.v's own
+  timing model needs only straightforward duplication, not a new
+  protocol); (3) LOW-moderate PCB/pin cost (+~16 I/O pins over today's
+  45, one additional chip footprint) vs. 64-bit's +~48 pins and 3
+  additional footprints. 64-bit is NOT recommended for the immediate
+  next revision: its own additional ~1.8x gain is real but arrives at
+  much higher pin/PCB/power/routing cost, and the system remains
+  overwhelmingly memory-bound (1.88% utilization) even at 64-bit --
+  i.e. 64-bit is not "wasted" but is also nowhere near sufficient to
+  reach a genuinely compute-bound regime, making its extra cost harder
+  to justify as a STANDALONE next step. 128-bit is explicitly NOT
+  recommended -- confirmed (EXP-0035) to provide zero additional
+  benefit over 64-bit in this single-tile-per-request architecture.
+  Alternative technology flagged for a LONGER-TERM, more ambitious
+  future revision (not this one): HyperRAM/HyperBus or Octal-SPI
+  (xSPI) class memories offer a fundamentally different pin/bandwidth
+  trade-off (typically ~11-13 pins total, vs. today's 45 for 16-bit
+  parallel, or ~61/93 for 32/64-bit parallel) and could plausibly
+  exceed even a 64-bit parallel option's bandwidth at LOWER pin cost
+  -- but require an entirely new controller (different, DDR-based
+  protocol) and are a genuinely separate engineering initiative, not
+  a simple bus-width bump. Recommended as the direction to pursue IF
+  a future revision needs to seriously chase a much-higher utilization
+  target rather than the incremental (though real) gains a wider
+  parallel bus provides.
+  EXPLICIT CAVEAT carried forward from EXP-0036: the ~1.9x/1.8x real
+  speedup projections are DERIVED (calibrated against the real 16-bit
+  measurement, not independently re-measured in a full new multi-slot
+  RTL campaign at 32/64-bit) and could be optimistic if per-transaction
+  arbitration overhead does not scale down proportionally with
+  transaction duration -- flagged explicitly as the next concrete
+  experiment (see the STEP15 report's own final recommendation) before
+  committing board layout resources.
+STATUS: STEP15 CLOSED. Recommendation stands pending the flagged
+  follow-up validation (full multi-slot RTL resynthesis at 32-bit) to
+  de-risk the DERIVED projection before committing to PCB layout.
+
+DEC-0030
+timestamp: 2026-09-06T07:00:00Z
+topic: STEP15 continuation -- full RTL+synthesis+P&R validation of
+  the real dual-chip 32-bit PSRAM architecture (DEC-0029's own
+  recommendation), and reassessment of 64-bit given the validated
+  32-bit result.
+evidence: EXP-0037 (dual-chip controller: 3 real bugs found and
+  fixed -- address-space mismatch, mem_ready timing misalignment,
+  testbench DEPTH-too-small -- bit-exact PASS post-fix, real cycles/
+  tile=8.5488, single-slot uncontended), EXP-0038 (full N=2/4 real
+  system, bit-exact PASS 256/256, REAL speedup 2.496x @ N=4 --
+  substantially exceeding the STEP15-prior-round DERIVED 1.89x
+  projection, traced to the separate-physical-port architecture
+  eliminating weight/activation/writeback cross-traffic contention,
+  not merely widening the bus), EXP-0039 (real synthesis+P&R for the
+  ACTUAL target LFE5U-45F-8CABGA381: a real I/O infeasibility found
+  and fixed -- 245 total TRELLIS_IO, 157 already committed, 88 free,
+  the first-draft separate-pin-per-chip interface needed 90 [2 over
+  budget]; fixed by sharing address/control between the two chips
+  [a real, valid PCB technique, not a synthesis trick] down to 61
+  pins; final: Fmax=110.28MHz PASS [actually EXCEEDING the STEP14
+  baseline's 106.81MHz], TRELLIS_IO=218/245 [88.9%, 27 spare],
+  resources +4-5% over baseline, bit-exact re-confirmed unchanged).
+decision: EXECUTIVE CONCLUSION -- **YES WITH CONDITIONS**. The 32-bit
+  dual-chip PSRAM architecture is VALIDATED at RTL+synthesis+P&R
+  level: real 2.496x end-to-end speedup, real Fmax IMPROVEMENT
+  (110.28 vs 106.81MHz), real bit-exact correctness, real (if tight)
+  I/O feasibility on the actual target package. CONDITIONS: (1) the
+  design now consumes 88.9% of the package's total I/O (218/245) --
+  any FUTURE interface addition (e.g. a real host/SPI command
+  interface to replace the current wide parallel test-harness
+  registration port, which alone commits 181 of the 157 "existing"
+  pins) must be planned with this headroom in mind; (2) the address/
+  control-sharing pin optimization is a REQUIRED part of the
+  recommended architecture, not optional -- the naive "fully separate
+  per-chip pins" version does not fit this package at all.
+  64-bit REASSESSMENT: NOT PIN-FEASIBLE on this exact package as
+  currently architected -- a 4-chip 64-bit weight interface (same
+  address/control-sharing technique) needs 93 pins; combined with the
+  existing 157-pin commitment, this totals 250, exceeding the
+  package's own 245-pin budget by 5 pins, BEFORE even considering
+  Fmax/LUT/FF cost or the incremental-speedup-per-pin question Part 8
+  asked for. 64-bit is therefore NOT evaluated further as a real
+  option for this board revision without ALSO redesigning the
+  existing registration/host interface to free up pins -- a separate,
+  larger initiative outside this validation's own scope.
+  Full bandwidth breakdown (single-slot real, EXP-0037): nominal
+  320MB/s (32-bit@80MHz) -> usable 74.86MB/s (23.4% of nominal, 76.6%
+  lost to real per-transaction controller overhead -- NOT primarily
+  page-transitions specifically, which cost only ~1.6% of nominal;
+  the dominant loss is the fundamentally non-bursting, one-
+  transaction-at-a-time protocol) -> effective system-level (N=4,
+  real arbitration contention across 4 slots) 35.41MB/s (11.1% of
+  nominal). Compute utilization: 1.383% of the N=4 theoretical
+  32 MAC/cycle ceiling -- the architecture remains firmly memory-
+  bound, exactly as STEP15's own prior round predicted, now with a
+  real, independently-measured number rather than a projection.
+STATUS: STEP15 continuation CLOSED. 32-bit dual-chip architecture
+  recommended for the next board revision, WITH the stated I/O-budget
+  conditions. 64-bit is off the table for THIS board without a
+  separate host-interface redesign. Full report:
+  hardware/v2/reports/step15_32bit_validation.md.
+
+DEC-0031
+timestamp: 2026-09-06T06:08:18Z
+context: STEP16 -- definitive validation of a single Alliance Memory
+  AS4C4M16SA-6TIN SDR SDRAM chip against the already-validated
+  dual-PSRAM 32-bit architecture (DEC-0030), per the governing spec's
+  own explicit, binding closure instruction: reach ONE of A (adopt
+  SDRAM) / B (keep dual-PSRAM) / C (SDRAM superior but not worth it),
+  supported entirely by real RTL simulation, real synthesis, real
+  place & route, and real measured cycles -- never estimated -- and
+  treat the memory-exploration phase as closed afterward.
+evidence: a real, isolated-and-validated sdram_controller.v (BURST_LEN
+  =4, matching the natural P_IN*DATA_WIDTH/16=4-word tile size) passed
+  9/9 real Verilator regressions (100/133/166MHz x burst 1/4/8,
+  460/460 tests each) after 5 real protocol bugs were found and fixed
+  via simulation (ERR-0016 through ERR-0020 -- an A10 address-bit
+  mis-position, two model-side one-cycle-late data-capture bugs, and
+  two variants of a real req/refresh arbitration race, the second only
+  exposed by the full-system Phase 5 integration benchmark, not the
+  isolated regression). Integrated into the real FPGA-Neural datapath
+  (nms_neural_multiprocessor_sdram.v, forked from the dual32 baseline
+  with ONLY the wide weight-fetch backend replaced) and benchmarked
+  with the real D-Stress workload (256 neurons, bit-exact vs golden)
+  at both N=2 (52161 cycles, 3.552x vs the original 16-bit baseline,
+  1.451x vs dual32) and N=4 (49430 cycles, 3.738x vs original, 1.498x
+  vs dual32). Real Yosys synthesis + nextpnr-ecp5 P&R for the actual
+  LFE5U-45F-8CABGA381 target succeeded at both N_SLOTS, with real I/O
+  headroom improved over the baseline (194/245 vs dual32's own 218/245
+  TRELLIS_IO) but real Fmax lower (81.55MHz best-of-3-seeds at N=4 vs
+  the baseline's own reported 110.28MHz, root cause of the gap not
+  conclusively isolated -- the limiting critical path traces entirely
+  to dependency_manager.v, unchanged shared logic, not the new SDRAM
+  design itself).
+decision: A -- ADOPT SDRAM. The governing spec's own explicit decisive
+  test (does SDRAM's real N=4 speedup clearly exceed dual-PSRAM's own
+  2.496x?) is satisfied with real margin (3.738x, +49.7% relative),
+  not a marginal difference. SDRAM also wins real, measured PCB
+  simplicity (1 chip vs 2, ~38 pins vs 61, real 24-pin I/O saving) and
+  real N=4 effective bandwidth (53.04 vs 35.41 MB/s) despite HALF the
+  nominal raw bus width (160 vs 320 MB/s @80MHz) -- a genuine "measure,
+  don't assume nominal bandwidth wins" result. It loses on real Fmax
+  (81.55 vs 110.28MHz) and required more debugging (5 bugs vs 3),
+  both real, disclosed risks -- but both designs independently close
+  real timing at the actual 80MHz operating point the whole comparison
+  is built on, and the spec's own priority order does not make a
+  lower-priority shortfall (timing headroom) override a clear win on
+  the criterion it itself designated as decisive (performance vs the
+  2.496x reference, item 4, following correctness/reliability/timing
+  which neither design fails outright).
+confidence: MEDIUM (not HIGH) -- the real, unresolved Fmax gap and the
+  larger real protocol surface (more bugs found, all now fixed and
+  reverified) are genuine, disclosed reasons for caution, even though
+  they do not change the decision itself.
+STATUS: STEP16 CLOSED. Hardware memory architecture for V2: single-
+  chip SDR SDRAM (Alliance Memory AS4C4M16SA-6TIN), BURST_LEN=4
+  controller. Per the governing spec's own explicit, binding
+  instruction, the memory-exploration phase is now closed -- no
+  further alternative memory technologies will be proposed for V2
+  unless a technical violation makes this validation impossible to
+  stand on as written. Full report:
+  hardware/v2/reports/step16_sdram_validation.md.
+
+DEC-0032
+timestamp: 2026-09-06T10:22:22Z
+context: STEP17 -- real N=4 timing-closure investigation and
+  throughput decomposition for the SDRAM architecture adopted in
+  DEC-0031. Explicitly NOT reopening the SDRAM-vs-dual-PSRAM decision;
+  scope is understanding and (if safely possible) improving the N=4
+  Fmax margin, and characterizing where the 49,430 D-Stress cycles are
+  actually spent.
+evidence: real post-P&R critical-path tracing (EXP-0044) shows the
+  N=4 Fmax ceiling (81.55MHz best-of-3-seeds) is dominated by
+  dependency_manager.v's own first_ready_idx priority-encoder scan --
+  a module completely unchanged from the dual-PSRAM baseline. Re-
+  synthesizing that SAME unmodified baseline at N=4 with the identical
+  toolchain gives only 87.26MHz best-of-3-seeds, NOT the originally
+  reported 110.28MHz -- meaning the real, apples-to-apples SDRAM-vs-
+  dual-PSRAM Fmax gap at N=4 is ~7%, not ~26%. Both architectures show
+  a large, shared N=2->N=4 Fmax drop, confirming N-scaling (not SDRAM
+  integration) as the primary driver. A candidate minimal fix
+  (pipelining the priority-encoder scan by one cycle) was implemented
+  and found to introduce a real double-dispatch correctness bug
+  (ERR-0021) on a second, more careful attempt too -- reverted in
+  full. Separately, real cycle-decomposition and SDRAM-controller
+  instrumentation (EXP-0045) shows the N=4 system is memory-bandwidth-
+  bound (SDRAM controller busy 99.92% of the run, request latency at
+  its own fixed minimum), with real processors delivering a useful
+  tile only ~2.06% of the available slot-cycle budget.
+decision: KEEP the STEP16 SDRAM RTL and architecture EXACTLY as
+  validated, with NO changes. N=4 already meets the governing spec's
+  own hard minimum (Fmax >= 80MHz: 81.55MHz, POST-P&R, best-of-3-
+  seeds) without any modification. Do not ship the attempted
+  dependency_manager.v pipeline fix (reverted, real correctness risk
+  in a heavily-reused shared module, for a Fmax gain that further
+  analysis shows was based on a non-reproducible baseline comparison
+  anyway). Do not pursue N=8 this round (memory-bandwidth-bound
+  behavior at N=4 already, confirmed by real controller-busy
+  measurements, means N=8 would need an external-memory-bandwidth
+  improvement first to pay off, not merely more parallelism).
+rationale: per the governing spec's own FINAL RULE ("preserve the
+  working architecture... the objective is not the prettiest Fmax
+  number"), a real, measured, hard-minimum-satisfying result that
+  requires no RTL change is preferred over an unproven timing
+  optimization with a demonstrated correctness failure mode, especially
+  once the underlying comparison motivating the optimization (110.28
+  vs 81.55MHz) was itself shown to not be apples-to-apples.
+STATUS: STEP17 CLOSED. N=4 SDRAM architecture (STEP16, DEC-0031)
+  stands, unmodified, as the validated V2 baseline: Fmax 81.55MHz
+  (POST-P&R, best-of-3-seeds, >=80MHz hard minimum met), 49430 D-Stress
+  cycles, bit-exact PASS, real bottleneck for further throughput
+  identified as external SDRAM bandwidth (not compute, not Fmax, not
+  arbitration). Full report:
+  hardware/v2/reports/step17_n4_timing_throughput.md.
+
+DEC-0033
+timestamp: 2026-09-06T10:45:21Z
+context: STEP18 -- SDRAM transaction efficiency and weight-path
+  scaling. Explicitly NOT reopening the SDRAM device choice (DEC-0031/
+  0032 remain closed). Scope: extract maximum useful throughput from
+  the already-adopted single-chip AS4C4M16SA-6TIN SDRAM architecture
+  via transaction/packing/burst/buffer changes only.
+evidence: real measurement (EXP-0047) refutes the governing spec's own
+  stated working hypothesis (multiple transactions per tile) --
+  STEP16 already achieves exactly 1 transaction/tile via MEM_DATA_
+  WIDTH=64. The real inefficiency is fixed per-transaction always-
+  precharge overhead (6 of 10 cycles at BURST_LEN=4). A new memory-
+  side-only module, sdram_weight_backend_pack128.v (BURST_LEN=8, 2
+  tiles/real transaction, N_ENTRIES=4 address-tagged cache), was
+  built, and after fixing a real single-entry-cache regression found
+  via full-system benchmarking (ERR-0022), delivers a real, validated,
+  bit-exact 9.1% D-Stress cycle reduction at BOTH N=2 and N=4
+  (EXP-0046), with N=4 Fmax essentially unchanged (81.47 vs 81.55MHz,
+  POST-P&R, best-of-3-seeds) and a modest resource increase (TRELLIS_
+  FF +4.3%, TRELLIS_COMB +10.7%, no new I/O pins).
+decision: ADOPT sdram_weight_backend_pack128.v (BURST_LEN=8,
+  N_ENTRIES=4) as the new N=4 (and N=2) V2 weight-fetch backend,
+  replacing STEP16's sdram_weight_backend.v (BURST_LEN=4, no cache).
+  weight_prefetch_engine_wide.v, neural_processor.v, dependency_
+  manager.v, and the STEP13 streaming tile-delivery architecture are
+  all UNCHANGED -- this is a pure memory-side substitution. All ten
+  of the governing spec's own decision criteria are satisfied: bit-
+  exact, no deadlock/timeout/dropped-or-duplicated jobs, SDRAM
+  protocol correct (reuses the already-validated sdram_controller.v
+  unmodified, just at BURST_LEN=8), N=4 Fmax>=80MHz (81.47MHz), 
+  D-Stress cycles improve (-9.1%), sustained MAC/cycle improves
+  (+10.0%), memory efficiency improves (33.2%->36.5% of nominal
+  bandwidth), no hidden processor serialization.
+  Also decided: do NOT attempt a true multi-outstanding-request
+  controller redesign or a page-mode/keep-row-open controller rewrite
+  this round -- both are real, correctly-identified further
+  opportunities (the row-open/close overhead specifically IS now the
+  next bottleneck), but are materially larger changes than this
+  round's "smallest possible" mandate; deferred as explicit future
+  work, not silently dropped.
+STATUS: STEP18 CLOSED. New V2 baseline: N=4 SDRAM with the pack128
+  weight-fetch backend -- 44,935 D-Stress cycles (vs 49,430 before),
+  Fmax 81.47MHz (POST-P&R, best-of-3-seeds, >=80MHz met), bit-exact
+  PASS, 194/245 I/O (unchanged). Next bottleneck identified as the
+  SDRAM controller's own fixed always-precharge transaction overhead,
+  not physical bandwidth, burst organization, Memory Manager,
+  activation traffic, or compute. Full report:
+  hardware/v2/reports/step18_sdram_transaction_efficiency.md.
+
+DEC-0034
+timestamp: 2026-09-06T11:26:46Z
+context: FPGA-Neural V2 FASE #1 hardware freeze -- the user's own
+  explicit, binding requirement: the physical V2 board must have
+  EXACTLY ONE external memory device (SDRAM), serving weights,
+  activations, AND results. The prior architecture (STEP16-18) still
+  physically depended on hardware/v1/rtl/psram_controller.v for
+  activation-fill and result-writeback -- a real, disqualifying gap
+  the audit surfaced, not a cosmetic detail (it meant the V2 board, as
+  validated through STEP18, would have needed TWO physical memory
+  chips, not one).
+evidence: built sdram_unified_backend.v (EXP-0048), a new memory-side-
+  only module presenting the same external contracts weight_prefetch_
+  engine_wide.v, nms_activation_fill_ctrl_v3.v, and nms_memory_
+  manager_stream_wide.v already used -- none of those modules, nor
+  neural_processor.v, nor dependency_manager.v, changed at all. Real
+  SDR SDRAM DQM per-byte write masking (a genuine, tested extension to
+  sdram_controller.v, zero regression across 461/461 tests at all 9
+  existing frequency/burst configs) makes single-byte result writes
+  correct inside a shared 128-bit burst with no read-modify-write.
+  After fixing a real deadlock and a real off-by-one data-corruption
+  bug found via full-system (not isolated) testing (ERR-0023), the
+  full N=4 AND N=2 D-Stress benchmark passes bit-exact (256/256),
+  with real sustained operation across 40 real AUTO REFRESH events.
+  Real post-P&R synthesis confirms a real 45-pin I/O reduction
+  (194->149/245 TRELLIS_IO) exactly matching the removed PSRAM
+  interface's own pin count, and comparable-or-better LUT/FF resource
+  usage. Real timing, however, REGRESSED: only 1/8 P&R seeds reach
+  >=80MHz (66.97-81.84MHz range) vs the STEP18 dual-memory baseline's
+  own 5/8 -- a real, disclosed, unresolved CRITICAL finding, not
+  hidden by citing only the best seed. The critical path itself is
+  unchanged (still dependency_manager.v's own pre-existing first_
+  ready_idx/reg_ready chain, confirmed by direct P&R critical-path
+  tracing on the best seed) -- the regression is attributed to overall
+  added die/routing pressure squeezing an already-marginal, shared,
+  pre-existing bottleneck, not a new defect in the new RTL.
+decision: ADOPT the single-SDRAM architecture (nms_neural_
+  multiprocessor_sdram_unified.v) as the V2 FASE #1 hardware-freeze
+  reference, per the user's own explicit, binding mandate -- this
+  decision is NOT contingent on matching or beating STEP18's own
+  Fmax, since the governing spec explicitly prioritizes the single-
+  external-memory architectural constraint over Fmax margin ("prima
+  rendi il sistema CORRECT... poi misura... NON introdurre una
+  seconda memoria per risolvere il problema"). hardware/v1/rtl/
+  psram_controller.v and memory_interface.v are REMOVED from the V2
+  physical instantiation path (not modified -- V1 itself remains
+  fully intact and untouched, still the golden reference, still real,
+  synthesizable, and still used by nothing in the frozen V2
+  hierarchy). The real memory map (weights @0x010000, activations
+  @0x200000, results @0x300000, all within the single 8MB SDRAM) is
+  now the official V2 addressing convention -- see MEMORY_ARCHITECTURE
+  .md.
+  Explicitly NOT resolved this round (real, disclosed OPEN/CRITICAL
+  items, not silently dropped): the MARGINAL (1/8 seed) timing result
+  itself; a true ball-level V2 pinout (still blocked on the real
+  Lattice CABGA381 pin-map data source, unavailable this session); the
+  16MHz-oscillator-vs-80MHz-system-clock gap (no PLL exists in the
+  RTL); a physical (non-parallel-bus) host interface (the 110-pin
+  raw reg_* bus is a test-harness convenience, not a real board
+  interface); power/configuration-flash component selection.
+STATUS: FASE #1 (hardware freeze scope) CLOSED for the architectural
+  decision itself -- single external SDRAM is the definitive V2
+  memory architecture, PSRAM dependency is REMOVED from the V2
+  physical path. CHIP READINESS remains NO overall (see CHIP_
+  READINESS.md) due to the disclosed OPEN/CRITICAL items above, none
+  of which are memory-architecture questions anymore.

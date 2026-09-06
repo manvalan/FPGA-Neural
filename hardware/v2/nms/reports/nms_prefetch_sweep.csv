@@ -1,0 +1,16 @@
+configuration,n_slots,pfd,latency_class,cycles,psram_util_pct,weight_stall_pct,prefetch_effectiveness_pct,sustained_mac_per_cycle,theoretical_mac_per_cycle,utilization_pct_of_theoretical,fmax_mhz,lut4,ccu2c,ff,dsp,bram,classification
+current_nms_baseline,2,n/a,real_v1_psram,185645,90.4,92.5,0.0,0.1765,16,1.10,93.10,1948,266,3522,16,0,POST-P&R MEASURED Fmax/resources + RTL SIMULATION cycles (EXP-0022)
+nms_plus_prefetch,1,1,real_v1_psram,181489,59.3,87.91,0.02,0.1806,8,2.26,n/a,n/a,n/a,n/a,n/a,n/a,RTL SIMULATION (EXP-0024)
+nms_plus_prefetch,1,2,real_v1_psram,162876,66.4,86.44,0.39,0.2012,8,2.52,132.26,1333,203,2245,8,0,POST-P&R MEASURED Fmax/resources + RTL SIMULATION cycles (EXP-0024)
+nms_plus_prefetch,1,4,real_v1_psram,162876,66.4,86.44,0.39,0.2012,8,2.52,n/a,n/a,n/a,n/a,n/a,n/a,RTL SIMULATION (EXP-0024)
+nms_plus_prefetch,1,8,real_v1_psram,162876,66.4,86.44,0.39,0.2012,8,2.52,137.76,1464,200,2245,8,0,POST-P&R MEASURED Fmax/resources + RTL SIMULATION cycles (EXP-0024)
+nms_plus_prefetch,1,16,real_v1_psram,162876,66.4,86.44,0.39,0.2012,8,2.52,n/a,n/a,n/a,n/a,n/a,n/a,RTL SIMULATION (EXP-0024)
+nms_plus_prefetch,2,1,real_v1_psram,185410,90.5,93.32,0.78,0.1767,16,1.10,n/a,n/a,n/a,n/a,n/a,n/a,RTL SIMULATION (EXP-0024)
+nms_plus_prefetch,2,2,real_v1_psram,185408,90.5,93.32,0.78,0.1767,16,1.10,97.16,1941,368,3449,16,0,POST-P&R MEASURED Fmax/resources + RTL SIMULATION cycles (EXP-0024)
+nms_plus_prefetch,2,4,real_v1_psram,185404,90.5,93.32,0.78,0.1767,16,1.10,n/a,n/a,n/a,n/a,n/a,n/a,RTL SIMULATION (EXP-0024)
+nms_plus_prefetch,2,8,real_v1_psram,185398,90.5,93.32,0.78,0.1767,16,1.10,95.25,1908,362,3449,16,0,POST-P&R MEASURED Fmax/resources + RTL SIMULATION cycles (EXP-0024)
+nms_plus_prefetch,2,16,real_v1_psram,185390,90.5,93.33,0.78,0.1768,16,1.11,n/a,n/a,n/a,n/a,n/a,n/a,RTL SIMULATION (EXP-0024)
+ideal_memory_pfd_sweep,1_or_2,1,latency_0-1_cyc,n/a,n/a,n/a,n/a,n/a,n/a,n/a,n/a,n/a,n/a,n/a,n/a,IDEAL-MEMORY SIMULATION (EXP-0023) -- min PFD for >=90% util at latency 0-1 is PFD=4
+ideal_memory_pfd_sweep,1_or_2,1,latency_2-4_cyc,n/a,n/a,n/a,n/a,n/a,n/a,n/a,n/a,n/a,n/a,n/a,n/a,IDEAL-MEMORY SIMULATION (EXP-0023) -- min PFD for >=90% util at latency 2-4 is PFD=8
+ideal_memory_pfd_sweep,1_or_2,1,latency_8_cyc,n/a,n/a,n/a,n/a,n/a,n/a,n/a,n/a,n/a,n/a,n/a,n/a,IDEAL-MEMORY SIMULATION (EXP-0023) -- min PFD for >=90% util at latency 8 is PFD=16
+ideal_memory_pfd_sweep,1_or_2,1,latency_16_cyc,n/a,n/a,n/a,n/a,n/a,n/a,n/a,n/a,n/a,n/a,n/a,n/a,IDEAL-MEMORY SIMULATION (EXP-0023) -- min PFD for >=90% util at latency 16 is PFD=32

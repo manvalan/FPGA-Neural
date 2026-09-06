@@ -1,0 +1,6 @@
+mem_data_width_bits,words_per_tile,steady_state_cycles_per_tile,total_cycles_16tile_job,bit_exact,classification
+16,4,4,80,PASS,RTL SIMULATION isolated ideal-memory (EXP-0032) -- matches real weight_prefetch_engine.v exactly (EXP-0025/26)
+32,2,2,48,PASS,RTL SIMULATION isolated ideal-memory (EXP-0032)
+64,1,1,32,PASS,RTL SIMULATION isolated ideal-memory (EXP-0032) -- exact architectural point: matches P_IN*DATA_WIDTH=64 bits, removes weight-fetch bottleneck entirely (1 cycle/tile = 100% of neural_processor.v's own theoretical per-tile acceptance rate)
+128,1,1,32,PASS,RTL SIMULATION isolated ideal-memory (EXP-0032) -- IDENTICAL to 64-bit, zero further benefit (bus wider than one tile cannot deliver more than 1 tile/transaction in this design)
+16 (real V1 PSRAM physical bus),4,4,n/a,PASS,REAL-PSRAM SIM (EXP-0025/26/28/30) -- physical reality: real bus is fixed at 16 bits regardless of any logical-width experiment; a 64-bit LOGICAL interface backed by the real 16-bit PHYSICAL bus reproduces this exact row (DEC-0028), not the 64-bit row above

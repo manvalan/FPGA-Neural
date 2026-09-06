@@ -1,0 +1,5 @@
+config,n_slots,trellis_io,trellis_ff,trellis_comb,mult18x18d,dp16kd,trellis_ramw,classification
+baseline,4,194,6215,5516,32,0,173,POST-P&R
+pack128,4,194,6483,6106,32,0,189,POST-P&R
+baseline,2,194,3724,3783,16,0,109,POST-SYNTHESIS (yosys pre-map, N=2 not separately P&R'd with full util report in STEP17)
+pack128,2,194,not_captured,not_captured,16,0,not_captured,POST-SYNTHESIS (yosys ran; single-seed P&R for Fmax only)

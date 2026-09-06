@@ -1,0 +1,7 @@
+n_slots,variant,fmax_mhz,pass_80mhz,lut4,ccu2c,ff,dsp,bit_exact,total_cycles,classification
+4,original (nms_activation_fill_ctrl.v),55.22,FAIL,2937,705,5877,32,PASS,184771,POST-P&R MEASURED + RTL SIM (EXP-0028/STEP13)
+4,v2 (max_n_tiles registered once),72.78,FAIL,n/a,n/a,n/a,32,n/a,n/a,POST-P&R MEASURED (EXP-0030) -- real improvement (+31.8%) but insufficient alone
+4,v3 (2-stage: tag-equality/masking THEN max-fold),106.81,PASS,2776,705,5957,32,PASS,184771,POST-P&R MEASURED + RTL SIM bit-exact 256/256 (EXP-0030) -- ADOPTED
+1,v3,142.92,PASS,n/a,n/a,n/a,8,n/a,n/a,POST-P&R MEASURED (EXP-0030, carried from actfix1 build -- v3 not independently re-measured at N=1, expected >=v2's N=1 result)
+2,v3,n/a,PASS(inferred),n/a,n/a,n/a,16,PASS,185270,RTL SIM bit-exact, cycles identical to pre-fix baseline (EXP-0030) -- zero regression confirmed
+8,v3,52.25,FAIL,4653,1367,10855,64,PASS,184771,POST-P&R MEASURED (EXP-0031, exploratory) + RTL SIM bit-exact (EXP-0030-class run) -- DSP/LUT/FF all feasible, Fmax fails: same O(N_SLOTS) max-fold chain reappears at 2x depth, not yet re-pipelined for N=8

@@ -12,3 +12,46 @@ NP_ERROR as an isolated fault (report + exclude from scheduling) rather
 than a system-wide halt, once the Director (M5) exists to observe it.
 No shared/global reset or shared bus signal is driven by any single
 processor's error state at M1.
+
+[2026-09-05] NMS STEP2 -- closed-form traffic model (activation/weight/
+result bytes/cycle), cross-validated against EXP-0017's real simulated
+floor.
+Per slot, at steady-state 1 tile/cycle compute consumption (P_IN=8,
+DATA_WIDTH=8):
+  WEIGHT traffic: never shared across neurons (each neuron owns its
+    weight vector) -- exactly P_IN=8 bytes/cycle/slot, always, with no
+    possible amortization.
+  ACTIVATION traffic: WORST CASE (no sharing, e.g. a cache miss every
+    tile, or genuinely different x_base per concurrent request) is
+    also P_IN=8 bytes/cycle/slot -- identical to weight traffic, since
+    both halves of a tile are the same size. BEST CASE (many neurons
+    of one layer sharing one x_base, fetched once and served from an
+    on-chip buffer thereafter -- exactly what
+    hardware/v2/rtl/activation_cache.v already exploits, DEC-0016) is
+    close to 0 bytes/cycle/slot amortized across the whole layer after
+    the first fetch.
+  RESULT traffic: exactly 1 byte per completed neuron, spread over
+    that neuron's own n_tiles cycles -- 1/n_tiles bytes/cycle/slot,
+    negligible next to activation/weight for any realistic n_tiles
+    (e.g. 1/16 for a 16-tile neuron) -- a low-bandwidth, low-priority
+    background stream, matching the LOW-priority scheduler tier the
+    user's own NMS spec calls for.
+TOTAL per-slot demand: 8 B/cycle/slot (weight only, activation fully
+  amortized -- the aggressive/ideal NMS target) to 16 B/cycle/slot
+  (weight + activation, no sharing exploited -- the SAFE worst-case
+  floor). The 16 B/cycle/slot worst case is EXACTLY EXP-0017's own
+  measured simulated floor (TILE_BYTES=2*P_IN modeled combined,
+  unshared activation+weight per tile) -- a clean cross-validation of
+  the simulated result against the closed-form model, not a
+  coincidence: EXP-0017's harness never modeled activation sharing at
+  all (every tile issues its own fresh 16-byte fetch), i.e. it directly
+  measured the worst-case floor this note derives analytically.
+IMPLICATION for STEP3 (bank/bandwidth architectural sweep): the NMS's
+  own Activation SRAM (built correctly -- banked/pipelined, not the
+  current single-tag, Fmax-fragile activation_cache.v) is what
+  determines whether the system sits near the 8 B/cycle/slot ideal or
+  the 16 B/cycle/slot worst case for a given workload's real
+  producer/consumer locality -- the Weight SRAM's own bandwidth
+  requirement is fixed and non-negotiable at P_IN bytes/cycle/slot
+  regardless of any caching scheme (weights are never shared, per
+  §6/§11 of the user's own NMS spec).

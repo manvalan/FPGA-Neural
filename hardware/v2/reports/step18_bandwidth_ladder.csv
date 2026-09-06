@@ -1,0 +1,8 @@
+layer,value_mb_s,pct_of_nominal,classification,source
+theoretical_sdram_nominal,160.0,100.0,THEORETICAL,2 bytes x16 x 80MHz
+controller_max_isolated_burst4,64.0,40.0,RTL SIMULATION,STEP16 EXP-0041 isolated regression (10 cyc/txn @80MHz, 8 bytes/txn)
+controller_max_isolated_burst8_packed,~114.3,~71.4,RTL SIMULATION,STEP18 isolated pack128 regression (16 cyc/txn @80MHz for a full pair + amortized 1-cyc cache hit = 17cyc/16bytes)
+realistic_sustained_n4_baseline,53.04,33.2,INTEGRATED BENCHMARK,STEP16/17 N4 D-Stress (BURST_LEN=4, 1 tile/txn)
+realistic_sustained_n4_pack128,58.34,36.5,INTEGRATED BENCHMARK,STEP18 N4 D-Stress (BURST_LEN=8 packed, N_ENTRIES=4 cache)
+realistic_sustained_n2_baseline,50.26,31.4,INTEGRATED BENCHMARK,STEP16/17 N2 D-Stress
+realistic_sustained_n2_pack128,55.30,34.6,INTEGRATED BENCHMARK,STEP18 N2 D-Stress

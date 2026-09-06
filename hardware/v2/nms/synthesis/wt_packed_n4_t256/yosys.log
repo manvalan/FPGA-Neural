@@ -1,0 +1,1840 @@
+
+ /----------------------------------------------------------------------------\
+ |  yosys -- Yosys Open SYnthesis Suite                                       |
+ |  Copyright (C) 2012 - 2026  Claire Xenia Wolf <claire@yosyshq.com>         |
+ |  Distributed under an ISC-like license, type "license" to see terms        |
+ \----------------------------------------------------------------------------/
+ Yosys 0.68+post (git sha1 c12172fbae8af5e20f6fb52e3d4e92d56ed587b6, Release, AppleClang clang++ 21.0.0.21000101)
+
+-- Running command `read_verilog hardware/v2/nms/rtl/nms_weight_packed.v hardware/v2/nms/synthesis/harness_nms_weight_packed.v; chparam -set N_SLOTS 4 -set MAX_TILES 256 harness_nms_weight_packed; synth_ecp5 -json hardware/v2/nms/synthesis/wt_packed_n4_t256/top.json -top harness_nms_weight_packed' --
+
+1. Executing Verilog-2005 frontend: hardware/v2/nms/rtl/nms_weight_packed.v
+Parsing Verilog input from `hardware/v2/nms/rtl/nms_weight_packed.v' to AST representation.
+Generating RTLIL representation for module `\nms_weight_packed'.
+Successfully finished Verilog frontend.
+
+2. Executing Verilog-2005 frontend: hardware/v2/nms/synthesis/harness_nms_weight_packed.v
+Parsing Verilog input from `hardware/v2/nms/synthesis/harness_nms_weight_packed.v' to AST representation.
+Generating RTLIL representation for module `\harness_nms_weight_packed'.
+Successfully finished Verilog frontend.
+Parameter \N_SLOTS = 4
+Parameter \MAX_TILES = 256
+
+3. Executing AST frontend in derive mode using pre-parsed AST for module `\harness_nms_weight_packed'.
+Parameter \N_SLOTS = 4
+Parameter \MAX_TILES = 256
+Generating RTLIL representation for module `$paramod$732dd3e4b12116a352abc787a52956ea59845b04\harness_nms_weight_packed'.
+
+4. Executing SYNTH_LATTICE pass.
+
+4.1. Executing Verilog-2005 frontend: /opt/homebrew/bin/../share/yosys/lattice/cells_sim_ecp5.v
+Parsing Verilog input from `/opt/homebrew/bin/../share/yosys/lattice/cells_sim_ecp5.v' to AST representation.
+Generating RTLIL representation for module `\LUT4'.
+Generating RTLIL representation for module `\$__ABC9_LUT5'.
+Generating RTLIL representation for module `\$__ABC9_LUT6'.
+Generating RTLIL representation for module `\$__ABC9_LUT7'.
+Generating RTLIL representation for module `\L6MUX21'.
+Generating RTLIL representation for module `\TRELLIS_RAM16X2'.
+Generating RTLIL representation for module `\PFUMX'.
+Generating RTLIL representation for module `\TRELLIS_DPR16X4'.
+Generating RTLIL representation for module `\DPR16X4C'.
+Generating RTLIL representation for module `\LUT2'.
+Generating RTLIL representation for module `\TRELLIS_FF'.
+Generating RTLIL representation for module `\TRELLIS_IO'.
+Generating RTLIL representation for module `\INV'.
+Generating RTLIL representation for module `\TRELLIS_COMB'.
+Generating RTLIL representation for module `\VLO'.
+Generating RTLIL representation for module `\VHI'.
+Generating RTLIL representation for module `\FD1P3AX'.
+Generating RTLIL representation for module `\FD1P3AY'.
+Generating RTLIL representation for module `\FD1P3BX'.
+Generating RTLIL representation for module `\FD1P3DX'.
+Generating RTLIL representation for module `\FD1P3IX'.
+Generating RTLIL representation for module `\FD1P3JX'.
+Generating RTLIL representation for module `\FD1S3AX'.
+Generating RTLIL representation for module `\FD1S3AY'.
+Generating RTLIL representation for module `\FD1S3BX'.
+Generating RTLIL representation for module `\FD1S3DX'.
+Generating RTLIL representation for module `\FD1S3IX'.
+Generating RTLIL representation for module `\FD1S3JX'.
+Generating RTLIL representation for module `\IFS1P3BX'.
+Generating RTLIL representation for module `\IFS1P3DX'.
+Generating RTLIL representation for module `\IFS1P3IX'.
+Generating RTLIL representation for module `\IFS1P3JX'.
+Generating RTLIL representation for module `\OFS1P3BX'.
+Generating RTLIL representation for module `\OFS1P3DX'.
+Generating RTLIL representation for module `\OFS1P3IX'.
+Generating RTLIL representation for module `\OFS1P3JX'.
+Generating RTLIL representation for module `\IB'.
+Generating RTLIL representation for module `\IBPU'.
+Generating RTLIL representation for module `\IBPD'.
+Generating RTLIL representation for module `\OB'.
+Generating RTLIL representation for module `\OBZ'.
+Generating RTLIL representation for module `\OBZPU'.
+Generating RTLIL representation for module `\OBZPD'.
+Generating RTLIL representation for module `\OBCO'.
+Generating RTLIL representation for module `\BB'.
+Generating RTLIL representation for module `\BBPU'.
+Generating RTLIL representation for module `\BBPD'.
+Generating RTLIL representation for module `\ILVDS'.
+Generating RTLIL representation for module `\OLVDS'.
+Generating RTLIL representation for module `\CCU2C'.
+Generating RTLIL representation for module `\DP16KD'.
+Replacing existing blackbox module `\FD1P3AX' at /opt/homebrew/bin/../share/yosys/lattice/cells_ff.vh:2.1-2.261.
+Generating RTLIL representation for module `\FD1P3AX'.
+Replacing existing blackbox module `\FD1P3AY' at /opt/homebrew/bin/../share/yosys/lattice/cells_ff.vh:3.1-3.261.
+Generating RTLIL representation for module `\FD1P3AY'.
+Replacing existing blackbox module `\FD1P3BX' at /opt/homebrew/bin/../share/yosys/lattice/cells_ff.vh:4.1-4.261.
+Generating RTLIL representation for module `\FD1P3BX'.
+Replacing existing blackbox module `\FD1P3DX' at /opt/homebrew/bin/../share/yosys/lattice/cells_ff.vh:5.1-5.261.
+Generating RTLIL representation for module `\FD1P3DX'.
+Replacing existing blackbox module `\FD1P3IX' at /opt/homebrew/bin/../share/yosys/lattice/cells_ff.vh:6.1-6.261.
+Generating RTLIL representation for module `\FD1P3IX'.
+Replacing existing blackbox module `\FD1P3JX' at /opt/homebrew/bin/../share/yosys/lattice/cells_ff.vh:7.1-7.261.
+Generating RTLIL representation for module `\FD1P3JX'.
+Replacing existing blackbox module `\FD1S3AX' at /opt/homebrew/bin/../share/yosys/lattice/cells_ff.vh:8.1-8.261.
+Generating RTLIL representation for module `\FD1S3AX'.
+Replacing existing blackbox module `\FD1S3AY' at /opt/homebrew/bin/../share/yosys/lattice/cells_ff.vh:9.1-9.261.
+Generating RTLIL representation for module `\FD1S3AY'.
+Replacing existing blackbox module `\FD1S3BX' at /opt/homebrew/bin/../share/yosys/lattice/cells_ff.vh:10.1-10.261.
+Generating RTLIL representation for module `\FD1S3BX'.
+Replacing existing blackbox module `\FD1S3DX' at /opt/homebrew/bin/../share/yosys/lattice/cells_ff.vh:11.1-11.261.
+Generating RTLIL representation for module `\FD1S3DX'.
+Replacing existing blackbox module `\FD1S3IX' at /opt/homebrew/bin/../share/yosys/lattice/cells_ff.vh:12.1-12.261.
+Generating RTLIL representation for module `\FD1S3IX'.
+Replacing existing blackbox module `\FD1S3JX' at /opt/homebrew/bin/../share/yosys/lattice/cells_ff.vh:13.1-13.261.
+Generating RTLIL representation for module `\FD1S3JX'.
+Replacing existing blackbox module `\IFS1P3BX' at /opt/homebrew/bin/../share/yosys/lattice/cells_ff.vh:26.1-26.301.
+Generating RTLIL representation for module `\IFS1P3BX'.
+Replacing existing blackbox module `\IFS1P3DX' at /opt/homebrew/bin/../share/yosys/lattice/cells_ff.vh:27.1-27.301.
+Generating RTLIL representation for module `\IFS1P3DX'.
+Replacing existing blackbox module `\IFS1P3IX' at /opt/homebrew/bin/../share/yosys/lattice/cells_ff.vh:28.1-28.301.
+Generating RTLIL representation for module `\IFS1P3IX'.
+Replacing existing blackbox module `\IFS1P3JX' at /opt/homebrew/bin/../share/yosys/lattice/cells_ff.vh:29.1-29.301.
+Generating RTLIL representation for module `\IFS1P3JX'.
+Replacing existing blackbox module `\OFS1P3BX' at /opt/homebrew/bin/../share/yosys/lattice/cells_ff.vh:31.1-31.302.
+Generating RTLIL representation for module `\OFS1P3BX'.
+Replacing existing blackbox module `\OFS1P3DX' at /opt/homebrew/bin/../share/yosys/lattice/cells_ff.vh:32.1-32.302.
+Generating RTLIL representation for module `\OFS1P3DX'.
+Replacing existing blackbox module `\OFS1P3IX' at /opt/homebrew/bin/../share/yosys/lattice/cells_ff.vh:33.1-33.302.
+Generating RTLIL representation for module `\OFS1P3IX'.
+Replacing existing blackbox module `\OFS1P3JX' at /opt/homebrew/bin/../share/yosys/lattice/cells_ff.vh:34.1-34.302.
+Generating RTLIL representation for module `\OFS1P3JX'.
+Replacing existing blackbox module `\IB' at /opt/homebrew/bin/../share/yosys/lattice/cells_io.vh:2.1-2.157.
+Generating RTLIL representation for module `\IB'.
+Replacing existing blackbox module `\IBPU' at /opt/homebrew/bin/../share/yosys/lattice/cells_io.vh:3.1-3.157.
+Generating RTLIL representation for module `\IBPU'.
+Replacing existing blackbox module `\IBPD' at /opt/homebrew/bin/../share/yosys/lattice/cells_io.vh:4.1-4.157.
+Generating RTLIL representation for module `\IBPD'.
+Replacing existing blackbox module `\OB' at /opt/homebrew/bin/../share/yosys/lattice/cells_io.vh:5.1-5.157.
+Generating RTLIL representation for module `\OB'.
+Replacing existing blackbox module `\OBZ' at /opt/homebrew/bin/../share/yosys/lattice/cells_io.vh:6.1-6.164.
+Generating RTLIL representation for module `\OBZ'.
+Replacing existing blackbox module `\OBZPU' at /opt/homebrew/bin/../share/yosys/lattice/cells_io.vh:7.1-7.164.
+Generating RTLIL representation for module `\OBZPU'.
+Replacing existing blackbox module `\OBZPD' at /opt/homebrew/bin/../share/yosys/lattice/cells_io.vh:8.1-8.164.
+Generating RTLIL representation for module `\OBZPD'.
+Replacing existing blackbox module `\OBCO' at /opt/homebrew/bin/../share/yosys/lattice/cells_io.vh:9.1-9.90.
+Generating RTLIL representation for module `\OBCO'.
+Replacing existing blackbox module `\BB' at /opt/homebrew/bin/../share/yosys/lattice/cells_io.vh:10.1-10.179.
+Generating RTLIL representation for module `\BB'.
+Replacing existing blackbox module `\BBPU' at /opt/homebrew/bin/../share/yosys/lattice/cells_io.vh:11.1-11.179.
+Generating RTLIL representation for module `\BBPU'.
+Replacing existing blackbox module `\BBPD' at /opt/homebrew/bin/../share/yosys/lattice/cells_io.vh:12.1-12.179.
+Generating RTLIL representation for module `\BBPD'.
+Replacing existing blackbox module `\ILVDS' at /opt/homebrew/bin/../share/yosys/lattice/cells_io.vh:13.1-13.139.
+Generating RTLIL representation for module `\ILVDS'.
+Replacing existing blackbox module `\OLVDS' at /opt/homebrew/bin/../share/yosys/lattice/cells_io.vh:14.1-14.146.
+Generating RTLIL representation for module `\OLVDS'.
+Successfully finished Verilog frontend.
+
+4.2. Executing Verilog-2005 frontend: /opt/homebrew/bin/../share/yosys/lattice/cells_bb_ecp5.v
+Parsing Verilog input from `/opt/homebrew/bin/../share/yosys/lattice/cells_bb_ecp5.v' to AST representation.
+Generating RTLIL representation for module `\GSR'.
+Generating RTLIL representation for module `\PUR'.
+Generating RTLIL representation for module `\SGSR'.
+Generating RTLIL representation for module `\PDPW16KD'.
+Generating RTLIL representation for module `\MULT18X18D'.
+Generating RTLIL representation for module `\ALU54B'.
+Generating RTLIL representation for module `\CLKDIVF'.
+Generating RTLIL representation for module `\PCSCLKDIV'.
+Generating RTLIL representation for module `\DCSC'.
+Generating RTLIL representation for module `\DCCA'.
+Generating RTLIL representation for module `\ECLKSYNCB'.
+Generating RTLIL representation for module `\ECLKBRIDGECS'.
+Generating RTLIL representation for module `\DELAYF'.
+Generating RTLIL representation for module `\DELAYG'.
+Generating RTLIL representation for module `\USRMCLK'.
+Generating RTLIL representation for module `\DQSBUFM'.
+Generating RTLIL representation for module `\DDRDLLA'.
+Generating RTLIL representation for module `\DLLDELD'.
+Generating RTLIL representation for module `\IDDRX1F'.
+Generating RTLIL representation for module `\IDDRX2F'.
+Generating RTLIL representation for module `\IDDR71B'.
+Generating RTLIL representation for module `\IDDRX2DQA'.
+Generating RTLIL representation for module `\ODDRX1F'.
+Generating RTLIL representation for module `\ODDRX2F'.
+Generating RTLIL representation for module `\ODDR71B'.
+Generating RTLIL representation for module `\OSHX2A'.
+Generating RTLIL representation for module `\TSHX2DQA'.
+Generating RTLIL representation for module `\TSHX2DQSA'.
+Generating RTLIL representation for module `\ODDRX2DQA'.
+Generating RTLIL representation for module `\ODDRX2DQSB'.
+Generating RTLIL representation for module `\EHXPLLL'.
+Generating RTLIL representation for module `\DTR'.
+Generating RTLIL representation for module `\OSCG'.
+Generating RTLIL representation for module `\EXTREFB'.
+Generating RTLIL representation for module `\JTAGG'.
+Generating RTLIL representation for module `\DCUA'.
+Successfully finished Verilog frontend.
+
+4.3. Executing HIERARCHY pass (managing design hierarchy).
+
+4.3.1. Analyzing design hierarchy..
+Top module:  \harness_nms_weight_packed
+Used module:     \nms_weight_packed
+Parameter \DATA_WIDTH = 8
+Parameter \P_IN = 8
+Parameter \N_SLOTS = 4
+Parameter \MAX_TILES = 256
+
+4.3.2. Executing AST frontend in derive mode using pre-parsed AST for module `\nms_weight_packed'.
+Parameter \DATA_WIDTH = 8
+Parameter \P_IN = 8
+Parameter \N_SLOTS = 4
+Parameter \MAX_TILES = 256
+Generating RTLIL representation for module `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed'.
+
+4.3.3. Analyzing design hierarchy..
+Top module:  \harness_nms_weight_packed
+Used module:     $paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed
+
+4.3.4. Analyzing design hierarchy..
+Top module:  \harness_nms_weight_packed
+Used module:     $paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed
+Removing unused module `\nms_weight_packed'.
+Removed 1 unused modules.
+
+4.4. Executing PROC pass (convert processes to netlists).
+
+4.4.1. Executing PROC_CLEAN pass (remove empty switches from decision trees).
+Cleaned up 0 empty switches.
+
+4.4.2. Executing PROC_RMDEAD pass (remove dead branches from decision trees).
+Marked 1 switch rules as full_case in process $proc$hardware/v2/nms/synthesis/harness_nms_weight_packed.v:19$300 in module harness_nms_weight_packed.
+Marked 1 switch rules as full_case in process $proc$hardware/v2/nms/synthesis/harness_nms_weight_packed.v:41$305 in module harness_nms_weight_packed.
+Marked 1 switch rules as full_case in process $proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$815 in module $paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.
+Marked 1 switch rules as full_case in process $proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$807 in module $paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.
+Marked 1 switch rules as full_case in process $proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$799 in module $paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.
+Marked 1 switch rules as full_case in process $proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$791 in module $paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.
+Marked 1 switch rules as full_case in process $proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$783 in module $paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.
+Marked 1 switch rules as full_case in process $proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$775 in module $paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.
+Marked 1 switch rules as full_case in process $proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$767 in module $paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.
+Marked 1 switch rules as full_case in process $proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$759 in module $paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.
+Marked 1 switch rules as full_case in process $proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$751 in module $paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.
+Marked 1 switch rules as full_case in process $proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$743 in module $paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.
+Marked 1 switch rules as full_case in process $proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$735 in module $paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.
+Marked 1 switch rules as full_case in process $proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$727 in module $paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.
+Marked 1 switch rules as full_case in process $proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$719 in module $paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.
+Marked 1 switch rules as full_case in process $proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$711 in module $paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.
+Marked 1 switch rules as full_case in process $proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$703 in module $paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.
+Marked 1 switch rules as full_case in process $proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$695 in module $paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.
+Marked 1 switch rules as full_case in process $proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$687 in module $paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.
+Marked 1 switch rules as full_case in process $proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$679 in module $paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.
+Marked 1 switch rules as full_case in process $proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$671 in module $paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.
+Marked 1 switch rules as full_case in process $proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$663 in module $paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.
+Marked 1 switch rules as full_case in process $proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$655 in module $paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.
+Marked 1 switch rules as full_case in process $proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$647 in module $paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.
+Marked 1 switch rules as full_case in process $proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$639 in module $paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.
+Marked 1 switch rules as full_case in process $proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$631 in module $paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.
+Marked 1 switch rules as full_case in process $proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$623 in module $paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.
+Marked 1 switch rules as full_case in process $proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$615 in module $paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.
+Marked 1 switch rules as full_case in process $proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$607 in module $paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.
+Marked 1 switch rules as full_case in process $proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$599 in module $paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.
+Marked 1 switch rules as full_case in process $proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$591 in module $paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.
+Marked 1 switch rules as full_case in process $proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$583 in module $paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.
+Marked 1 switch rules as full_case in process $proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$575 in module $paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.
+Marked 1 switch rules as full_case in process $proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$567 in module $paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.
+Removed a total of 0 dead cases.
+
+4.4.3. Executing PROC_PRUNE pass (remove redundant assignments in processes).
+Removed 2 redundant assignments.
+Promoted 98 assignments to connections.
+
+4.4.4. Executing PROC_INIT pass (extract init attributes).
+
+4.4.5. Executing PROC_ARST pass (detect async resets in processes).
+
+4.4.6. Executing PROC_ROM pass (convert switches to ROMs).
+Converted 0 switches.
+<suppressed ~66 debug messages>
+
+4.4.7. Executing PROC_MUX pass (convert decision trees to multiplexers).
+Creating decoders for process `\harness_nms_weight_packed.$proc$hardware/v2/nms/synthesis/harness_nms_weight_packed.v:19$300'.
+     1/1: $0\lfsr[31:0]
+Creating decoders for process `\harness_nms_weight_packed.$proc$hardware/v2/nms/synthesis/harness_nms_weight_packed.v:41$305'.
+     1/3: $0\chk[7:0]
+     2/3: $1\chk_next[7:0]
+     3/3: $1\k[31:0]
+Creating decoders for process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$815'.
+     1/4: $1$memwr$\GEN_SLOT[3].GEN_LANE[7].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$566_EN[7:0]$821
+     2/4: $1$memwr$\GEN_SLOT[3].GEN_LANE[7].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$566_DATA[7:0]$820
+     3/4: $1$memwr$\GEN_SLOT[3].GEN_LANE[7].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$566_ADDR[7:0]$819
+     4/4: $0\GEN_SLOT[3].GEN_LANE[7].rd_data_reg[7:0]
+Creating decoders for process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$807'.
+     1/4: $1$memwr$\GEN_SLOT[3].GEN_LANE[6].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$565_EN[7:0]$813
+     2/4: $1$memwr$\GEN_SLOT[3].GEN_LANE[6].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$565_DATA[7:0]$812
+     3/4: $1$memwr$\GEN_SLOT[3].GEN_LANE[6].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$565_ADDR[7:0]$811
+     4/4: $0\GEN_SLOT[3].GEN_LANE[6].rd_data_reg[7:0]
+Creating decoders for process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$799'.
+     1/4: $1$memwr$\GEN_SLOT[3].GEN_LANE[5].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$564_EN[7:0]$805
+     2/4: $1$memwr$\GEN_SLOT[3].GEN_LANE[5].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$564_DATA[7:0]$804
+     3/4: $1$memwr$\GEN_SLOT[3].GEN_LANE[5].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$564_ADDR[7:0]$803
+     4/4: $0\GEN_SLOT[3].GEN_LANE[5].rd_data_reg[7:0]
+Creating decoders for process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$791'.
+     1/4: $1$memwr$\GEN_SLOT[3].GEN_LANE[4].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$563_EN[7:0]$797
+     2/4: $1$memwr$\GEN_SLOT[3].GEN_LANE[4].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$563_DATA[7:0]$796
+     3/4: $1$memwr$\GEN_SLOT[3].GEN_LANE[4].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$563_ADDR[7:0]$795
+     4/4: $0\GEN_SLOT[3].GEN_LANE[4].rd_data_reg[7:0]
+Creating decoders for process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$783'.
+     1/4: $1$memwr$\GEN_SLOT[3].GEN_LANE[3].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$562_EN[7:0]$789
+     2/4: $1$memwr$\GEN_SLOT[3].GEN_LANE[3].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$562_DATA[7:0]$788
+     3/4: $1$memwr$\GEN_SLOT[3].GEN_LANE[3].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$562_ADDR[7:0]$787
+     4/4: $0\GEN_SLOT[3].GEN_LANE[3].rd_data_reg[7:0]
+Creating decoders for process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$775'.
+     1/4: $1$memwr$\GEN_SLOT[3].GEN_LANE[2].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$561_EN[7:0]$781
+     2/4: $1$memwr$\GEN_SLOT[3].GEN_LANE[2].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$561_DATA[7:0]$780
+     3/4: $1$memwr$\GEN_SLOT[3].GEN_LANE[2].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$561_ADDR[7:0]$779
+     4/4: $0\GEN_SLOT[3].GEN_LANE[2].rd_data_reg[7:0]
+Creating decoders for process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$767'.
+     1/4: $1$memwr$\GEN_SLOT[3].GEN_LANE[1].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$560_EN[7:0]$773
+     2/4: $1$memwr$\GEN_SLOT[3].GEN_LANE[1].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$560_DATA[7:0]$772
+     3/4: $1$memwr$\GEN_SLOT[3].GEN_LANE[1].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$560_ADDR[7:0]$771
+     4/4: $0\GEN_SLOT[3].GEN_LANE[1].rd_data_reg[7:0]
+Creating decoders for process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$759'.
+     1/4: $1$memwr$\GEN_SLOT[3].GEN_LANE[0].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$559_EN[7:0]$765
+     2/4: $1$memwr$\GEN_SLOT[3].GEN_LANE[0].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$559_DATA[7:0]$764
+     3/4: $1$memwr$\GEN_SLOT[3].GEN_LANE[0].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$559_ADDR[7:0]$763
+     4/4: $0\GEN_SLOT[3].GEN_LANE[0].rd_data_reg[7:0]
+Creating decoders for process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$751'.
+     1/4: $1$memwr$\GEN_SLOT[2].GEN_LANE[7].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$558_EN[7:0]$757
+     2/4: $1$memwr$\GEN_SLOT[2].GEN_LANE[7].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$558_DATA[7:0]$756
+     3/4: $1$memwr$\GEN_SLOT[2].GEN_LANE[7].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$558_ADDR[7:0]$755
+     4/4: $0\GEN_SLOT[2].GEN_LANE[7].rd_data_reg[7:0]
+Creating decoders for process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$743'.
+     1/4: $1$memwr$\GEN_SLOT[2].GEN_LANE[6].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$557_EN[7:0]$749
+     2/4: $1$memwr$\GEN_SLOT[2].GEN_LANE[6].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$557_DATA[7:0]$748
+     3/4: $1$memwr$\GEN_SLOT[2].GEN_LANE[6].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$557_ADDR[7:0]$747
+     4/4: $0\GEN_SLOT[2].GEN_LANE[6].rd_data_reg[7:0]
+Creating decoders for process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$735'.
+     1/4: $1$memwr$\GEN_SLOT[2].GEN_LANE[5].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$556_EN[7:0]$741
+     2/4: $1$memwr$\GEN_SLOT[2].GEN_LANE[5].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$556_DATA[7:0]$740
+     3/4: $1$memwr$\GEN_SLOT[2].GEN_LANE[5].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$556_ADDR[7:0]$739
+     4/4: $0\GEN_SLOT[2].GEN_LANE[5].rd_data_reg[7:0]
+Creating decoders for process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$727'.
+     1/4: $1$memwr$\GEN_SLOT[2].GEN_LANE[4].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$555_EN[7:0]$733
+     2/4: $1$memwr$\GEN_SLOT[2].GEN_LANE[4].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$555_DATA[7:0]$732
+     3/4: $1$memwr$\GEN_SLOT[2].GEN_LANE[4].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$555_ADDR[7:0]$731
+     4/4: $0\GEN_SLOT[2].GEN_LANE[4].rd_data_reg[7:0]
+Creating decoders for process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$719'.
+     1/4: $1$memwr$\GEN_SLOT[2].GEN_LANE[3].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$554_EN[7:0]$725
+     2/4: $1$memwr$\GEN_SLOT[2].GEN_LANE[3].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$554_DATA[7:0]$724
+     3/4: $1$memwr$\GEN_SLOT[2].GEN_LANE[3].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$554_ADDR[7:0]$723
+     4/4: $0\GEN_SLOT[2].GEN_LANE[3].rd_data_reg[7:0]
+Creating decoders for process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$711'.
+     1/4: $1$memwr$\GEN_SLOT[2].GEN_LANE[2].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$553_EN[7:0]$717
+     2/4: $1$memwr$\GEN_SLOT[2].GEN_LANE[2].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$553_DATA[7:0]$716
+     3/4: $1$memwr$\GEN_SLOT[2].GEN_LANE[2].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$553_ADDR[7:0]$715
+     4/4: $0\GEN_SLOT[2].GEN_LANE[2].rd_data_reg[7:0]
+Creating decoders for process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$703'.
+     1/4: $1$memwr$\GEN_SLOT[2].GEN_LANE[1].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$552_EN[7:0]$709
+     2/4: $1$memwr$\GEN_SLOT[2].GEN_LANE[1].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$552_DATA[7:0]$708
+     3/4: $1$memwr$\GEN_SLOT[2].GEN_LANE[1].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$552_ADDR[7:0]$707
+     4/4: $0\GEN_SLOT[2].GEN_LANE[1].rd_data_reg[7:0]
+Creating decoders for process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$695'.
+     1/4: $1$memwr$\GEN_SLOT[2].GEN_LANE[0].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$551_EN[7:0]$701
+     2/4: $1$memwr$\GEN_SLOT[2].GEN_LANE[0].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$551_DATA[7:0]$700
+     3/4: $1$memwr$\GEN_SLOT[2].GEN_LANE[0].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$551_ADDR[7:0]$699
+     4/4: $0\GEN_SLOT[2].GEN_LANE[0].rd_data_reg[7:0]
+Creating decoders for process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$687'.
+     1/4: $1$memwr$\GEN_SLOT[1].GEN_LANE[7].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$550_EN[7:0]$693
+     2/4: $1$memwr$\GEN_SLOT[1].GEN_LANE[7].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$550_DATA[7:0]$692
+     3/4: $1$memwr$\GEN_SLOT[1].GEN_LANE[7].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$550_ADDR[7:0]$691
+     4/4: $0\GEN_SLOT[1].GEN_LANE[7].rd_data_reg[7:0]
+Creating decoders for process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$679'.
+     1/4: $1$memwr$\GEN_SLOT[1].GEN_LANE[6].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$549_EN[7:0]$685
+     2/4: $1$memwr$\GEN_SLOT[1].GEN_LANE[6].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$549_DATA[7:0]$684
+     3/4: $1$memwr$\GEN_SLOT[1].GEN_LANE[6].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$549_ADDR[7:0]$683
+     4/4: $0\GEN_SLOT[1].GEN_LANE[6].rd_data_reg[7:0]
+Creating decoders for process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$671'.
+     1/4: $1$memwr$\GEN_SLOT[1].GEN_LANE[5].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$548_EN[7:0]$677
+     2/4: $1$memwr$\GEN_SLOT[1].GEN_LANE[5].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$548_DATA[7:0]$676
+     3/4: $1$memwr$\GEN_SLOT[1].GEN_LANE[5].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$548_ADDR[7:0]$675
+     4/4: $0\GEN_SLOT[1].GEN_LANE[5].rd_data_reg[7:0]
+Creating decoders for process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$663'.
+     1/4: $1$memwr$\GEN_SLOT[1].GEN_LANE[4].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$547_EN[7:0]$669
+     2/4: $1$memwr$\GEN_SLOT[1].GEN_LANE[4].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$547_DATA[7:0]$668
+     3/4: $1$memwr$\GEN_SLOT[1].GEN_LANE[4].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$547_ADDR[7:0]$667
+     4/4: $0\GEN_SLOT[1].GEN_LANE[4].rd_data_reg[7:0]
+Creating decoders for process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$655'.
+     1/4: $1$memwr$\GEN_SLOT[1].GEN_LANE[3].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$546_EN[7:0]$661
+     2/4: $1$memwr$\GEN_SLOT[1].GEN_LANE[3].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$546_DATA[7:0]$660
+     3/4: $1$memwr$\GEN_SLOT[1].GEN_LANE[3].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$546_ADDR[7:0]$659
+     4/4: $0\GEN_SLOT[1].GEN_LANE[3].rd_data_reg[7:0]
+Creating decoders for process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$647'.
+     1/4: $1$memwr$\GEN_SLOT[1].GEN_LANE[2].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$545_EN[7:0]$653
+     2/4: $1$memwr$\GEN_SLOT[1].GEN_LANE[2].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$545_DATA[7:0]$652
+     3/4: $1$memwr$\GEN_SLOT[1].GEN_LANE[2].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$545_ADDR[7:0]$651
+     4/4: $0\GEN_SLOT[1].GEN_LANE[2].rd_data_reg[7:0]
+Creating decoders for process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$639'.
+     1/4: $1$memwr$\GEN_SLOT[1].GEN_LANE[1].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$544_EN[7:0]$645
+     2/4: $1$memwr$\GEN_SLOT[1].GEN_LANE[1].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$544_DATA[7:0]$644
+     3/4: $1$memwr$\GEN_SLOT[1].GEN_LANE[1].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$544_ADDR[7:0]$643
+     4/4: $0\GEN_SLOT[1].GEN_LANE[1].rd_data_reg[7:0]
+Creating decoders for process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$631'.
+     1/4: $1$memwr$\GEN_SLOT[1].GEN_LANE[0].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$543_EN[7:0]$637
+     2/4: $1$memwr$\GEN_SLOT[1].GEN_LANE[0].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$543_DATA[7:0]$636
+     3/4: $1$memwr$\GEN_SLOT[1].GEN_LANE[0].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$543_ADDR[7:0]$635
+     4/4: $0\GEN_SLOT[1].GEN_LANE[0].rd_data_reg[7:0]
+Creating decoders for process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$623'.
+     1/4: $1$memwr$\GEN_SLOT[0].GEN_LANE[7].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$542_EN[7:0]$629
+     2/4: $1$memwr$\GEN_SLOT[0].GEN_LANE[7].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$542_DATA[7:0]$628
+     3/4: $1$memwr$\GEN_SLOT[0].GEN_LANE[7].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$542_ADDR[7:0]$627
+     4/4: $0\GEN_SLOT[0].GEN_LANE[7].rd_data_reg[7:0]
+Creating decoders for process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$615'.
+     1/4: $1$memwr$\GEN_SLOT[0].GEN_LANE[6].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$541_EN[7:0]$621
+     2/4: $1$memwr$\GEN_SLOT[0].GEN_LANE[6].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$541_DATA[7:0]$620
+     3/4: $1$memwr$\GEN_SLOT[0].GEN_LANE[6].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$541_ADDR[7:0]$619
+     4/4: $0\GEN_SLOT[0].GEN_LANE[6].rd_data_reg[7:0]
+Creating decoders for process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$607'.
+     1/4: $1$memwr$\GEN_SLOT[0].GEN_LANE[5].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$540_EN[7:0]$613
+     2/4: $1$memwr$\GEN_SLOT[0].GEN_LANE[5].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$540_DATA[7:0]$612
+     3/4: $1$memwr$\GEN_SLOT[0].GEN_LANE[5].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$540_ADDR[7:0]$611
+     4/4: $0\GEN_SLOT[0].GEN_LANE[5].rd_data_reg[7:0]
+Creating decoders for process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$599'.
+     1/4: $1$memwr$\GEN_SLOT[0].GEN_LANE[4].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$539_EN[7:0]$605
+     2/4: $1$memwr$\GEN_SLOT[0].GEN_LANE[4].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$539_DATA[7:0]$604
+     3/4: $1$memwr$\GEN_SLOT[0].GEN_LANE[4].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$539_ADDR[7:0]$603
+     4/4: $0\GEN_SLOT[0].GEN_LANE[4].rd_data_reg[7:0]
+Creating decoders for process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$591'.
+     1/4: $1$memwr$\GEN_SLOT[0].GEN_LANE[3].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$538_EN[7:0]$597
+     2/4: $1$memwr$\GEN_SLOT[0].GEN_LANE[3].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$538_DATA[7:0]$596
+     3/4: $1$memwr$\GEN_SLOT[0].GEN_LANE[3].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$538_ADDR[7:0]$595
+     4/4: $0\GEN_SLOT[0].GEN_LANE[3].rd_data_reg[7:0]
+Creating decoders for process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$583'.
+     1/4: $1$memwr$\GEN_SLOT[0].GEN_LANE[2].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$537_EN[7:0]$589
+     2/4: $1$memwr$\GEN_SLOT[0].GEN_LANE[2].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$537_DATA[7:0]$588
+     3/4: $1$memwr$\GEN_SLOT[0].GEN_LANE[2].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$537_ADDR[7:0]$587
+     4/4: $0\GEN_SLOT[0].GEN_LANE[2].rd_data_reg[7:0]
+Creating decoders for process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$575'.
+     1/4: $1$memwr$\GEN_SLOT[0].GEN_LANE[1].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$536_EN[7:0]$581
+     2/4: $1$memwr$\GEN_SLOT[0].GEN_LANE[1].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$536_DATA[7:0]$580
+     3/4: $1$memwr$\GEN_SLOT[0].GEN_LANE[1].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$536_ADDR[7:0]$579
+     4/4: $0\GEN_SLOT[0].GEN_LANE[1].rd_data_reg[7:0]
+Creating decoders for process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$567'.
+     1/4: $1$memwr$\GEN_SLOT[0].GEN_LANE[0].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$535_EN[7:0]$573
+     2/4: $1$memwr$\GEN_SLOT[0].GEN_LANE[0].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$535_DATA[7:0]$572
+     3/4: $1$memwr$\GEN_SLOT[0].GEN_LANE[0].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$535_ADDR[7:0]$571
+     4/4: $0\GEN_SLOT[0].GEN_LANE[0].rd_data_reg[7:0]
+
+4.4.8. Executing PROC_DLATCH pass (convert process syncs to latches).
+
+4.4.9. Executing PROC_DFF pass (convert process syncs to FFs).
+Creating register for signal `\harness_nms_weight_packed.\lfsr' using process `\harness_nms_weight_packed.$proc$hardware/v2/nms/synthesis/harness_nms_weight_packed.v:19$300'.
+  created $dff cell `$procdff$1187' with positive edge clock.
+Creating register for signal `\harness_nms_weight_packed.\k' using process `\harness_nms_weight_packed.$proc$hardware/v2/nms/synthesis/harness_nms_weight_packed.v:41$305'.
+  created $dff cell `$procdff$1188' with positive edge clock.
+Creating register for signal `\harness_nms_weight_packed.\chk' using process `\harness_nms_weight_packed.$proc$hardware/v2/nms/synthesis/harness_nms_weight_packed.v:41$305'.
+  created $dff cell `$procdff$1189' with positive edge clock.
+Creating register for signal `\harness_nms_weight_packed.\chk_next' using process `\harness_nms_weight_packed.$proc$hardware/v2/nms/synthesis/harness_nms_weight_packed.v:41$305'.
+  created $dff cell `$procdff$1190' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.\GEN_SLOT[3].GEN_LANE[7].rd_data_reg' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$815'.
+  created $dff cell `$procdff$1191' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[3].GEN_LANE[7].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$566_ADDR' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$815'.
+  created $dff cell `$procdff$1192' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[3].GEN_LANE[7].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$566_DATA' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$815'.
+  created $dff cell `$procdff$1193' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[3].GEN_LANE[7].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$566_EN' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$815'.
+  created $dff cell `$procdff$1194' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.\GEN_SLOT[3].GEN_LANE[6].rd_data_reg' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$807'.
+  created $dff cell `$procdff$1195' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[3].GEN_LANE[6].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$565_ADDR' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$807'.
+  created $dff cell `$procdff$1196' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[3].GEN_LANE[6].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$565_DATA' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$807'.
+  created $dff cell `$procdff$1197' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[3].GEN_LANE[6].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$565_EN' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$807'.
+  created $dff cell `$procdff$1198' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.\GEN_SLOT[3].GEN_LANE[5].rd_data_reg' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$799'.
+  created $dff cell `$procdff$1199' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[3].GEN_LANE[5].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$564_ADDR' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$799'.
+  created $dff cell `$procdff$1200' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[3].GEN_LANE[5].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$564_DATA' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$799'.
+  created $dff cell `$procdff$1201' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[3].GEN_LANE[5].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$564_EN' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$799'.
+  created $dff cell `$procdff$1202' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.\GEN_SLOT[3].GEN_LANE[4].rd_data_reg' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$791'.
+  created $dff cell `$procdff$1203' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[3].GEN_LANE[4].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$563_ADDR' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$791'.
+  created $dff cell `$procdff$1204' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[3].GEN_LANE[4].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$563_DATA' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$791'.
+  created $dff cell `$procdff$1205' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[3].GEN_LANE[4].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$563_EN' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$791'.
+  created $dff cell `$procdff$1206' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.\GEN_SLOT[3].GEN_LANE[3].rd_data_reg' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$783'.
+  created $dff cell `$procdff$1207' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[3].GEN_LANE[3].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$562_ADDR' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$783'.
+  created $dff cell `$procdff$1208' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[3].GEN_LANE[3].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$562_DATA' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$783'.
+  created $dff cell `$procdff$1209' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[3].GEN_LANE[3].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$562_EN' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$783'.
+  created $dff cell `$procdff$1210' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.\GEN_SLOT[3].GEN_LANE[2].rd_data_reg' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$775'.
+  created $dff cell `$procdff$1211' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[3].GEN_LANE[2].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$561_ADDR' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$775'.
+  created $dff cell `$procdff$1212' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[3].GEN_LANE[2].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$561_DATA' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$775'.
+  created $dff cell `$procdff$1213' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[3].GEN_LANE[2].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$561_EN' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$775'.
+  created $dff cell `$procdff$1214' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.\GEN_SLOT[3].GEN_LANE[1].rd_data_reg' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$767'.
+  created $dff cell `$procdff$1215' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[3].GEN_LANE[1].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$560_ADDR' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$767'.
+  created $dff cell `$procdff$1216' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[3].GEN_LANE[1].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$560_DATA' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$767'.
+  created $dff cell `$procdff$1217' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[3].GEN_LANE[1].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$560_EN' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$767'.
+  created $dff cell `$procdff$1218' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.\GEN_SLOT[3].GEN_LANE[0].rd_data_reg' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$759'.
+  created $dff cell `$procdff$1219' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[3].GEN_LANE[0].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$559_ADDR' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$759'.
+  created $dff cell `$procdff$1220' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[3].GEN_LANE[0].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$559_DATA' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$759'.
+  created $dff cell `$procdff$1221' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[3].GEN_LANE[0].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$559_EN' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$759'.
+  created $dff cell `$procdff$1222' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.\GEN_SLOT[2].GEN_LANE[7].rd_data_reg' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$751'.
+  created $dff cell `$procdff$1223' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[2].GEN_LANE[7].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$558_ADDR' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$751'.
+  created $dff cell `$procdff$1224' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[2].GEN_LANE[7].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$558_DATA' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$751'.
+  created $dff cell `$procdff$1225' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[2].GEN_LANE[7].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$558_EN' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$751'.
+  created $dff cell `$procdff$1226' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.\GEN_SLOT[2].GEN_LANE[6].rd_data_reg' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$743'.
+  created $dff cell `$procdff$1227' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[2].GEN_LANE[6].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$557_ADDR' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$743'.
+  created $dff cell `$procdff$1228' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[2].GEN_LANE[6].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$557_DATA' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$743'.
+  created $dff cell `$procdff$1229' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[2].GEN_LANE[6].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$557_EN' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$743'.
+  created $dff cell `$procdff$1230' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.\GEN_SLOT[2].GEN_LANE[5].rd_data_reg' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$735'.
+  created $dff cell `$procdff$1231' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[2].GEN_LANE[5].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$556_ADDR' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$735'.
+  created $dff cell `$procdff$1232' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[2].GEN_LANE[5].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$556_DATA' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$735'.
+  created $dff cell `$procdff$1233' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[2].GEN_LANE[5].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$556_EN' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$735'.
+  created $dff cell `$procdff$1234' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.\GEN_SLOT[2].GEN_LANE[4].rd_data_reg' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$727'.
+  created $dff cell `$procdff$1235' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[2].GEN_LANE[4].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$555_ADDR' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$727'.
+  created $dff cell `$procdff$1236' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[2].GEN_LANE[4].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$555_DATA' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$727'.
+  created $dff cell `$procdff$1237' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[2].GEN_LANE[4].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$555_EN' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$727'.
+  created $dff cell `$procdff$1238' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.\GEN_SLOT[2].GEN_LANE[3].rd_data_reg' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$719'.
+  created $dff cell `$procdff$1239' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[2].GEN_LANE[3].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$554_ADDR' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$719'.
+  created $dff cell `$procdff$1240' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[2].GEN_LANE[3].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$554_DATA' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$719'.
+  created $dff cell `$procdff$1241' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[2].GEN_LANE[3].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$554_EN' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$719'.
+  created $dff cell `$procdff$1242' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.\GEN_SLOT[2].GEN_LANE[2].rd_data_reg' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$711'.
+  created $dff cell `$procdff$1243' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[2].GEN_LANE[2].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$553_ADDR' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$711'.
+  created $dff cell `$procdff$1244' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[2].GEN_LANE[2].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$553_DATA' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$711'.
+  created $dff cell `$procdff$1245' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[2].GEN_LANE[2].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$553_EN' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$711'.
+  created $dff cell `$procdff$1246' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.\GEN_SLOT[2].GEN_LANE[1].rd_data_reg' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$703'.
+  created $dff cell `$procdff$1247' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[2].GEN_LANE[1].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$552_ADDR' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$703'.
+  created $dff cell `$procdff$1248' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[2].GEN_LANE[1].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$552_DATA' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$703'.
+  created $dff cell `$procdff$1249' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[2].GEN_LANE[1].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$552_EN' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$703'.
+  created $dff cell `$procdff$1250' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.\GEN_SLOT[2].GEN_LANE[0].rd_data_reg' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$695'.
+  created $dff cell `$procdff$1251' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[2].GEN_LANE[0].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$551_ADDR' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$695'.
+  created $dff cell `$procdff$1252' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[2].GEN_LANE[0].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$551_DATA' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$695'.
+  created $dff cell `$procdff$1253' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[2].GEN_LANE[0].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$551_EN' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$695'.
+  created $dff cell `$procdff$1254' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.\GEN_SLOT[1].GEN_LANE[7].rd_data_reg' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$687'.
+  created $dff cell `$procdff$1255' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[1].GEN_LANE[7].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$550_ADDR' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$687'.
+  created $dff cell `$procdff$1256' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[1].GEN_LANE[7].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$550_DATA' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$687'.
+  created $dff cell `$procdff$1257' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[1].GEN_LANE[7].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$550_EN' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$687'.
+  created $dff cell `$procdff$1258' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.\GEN_SLOT[1].GEN_LANE[6].rd_data_reg' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$679'.
+  created $dff cell `$procdff$1259' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[1].GEN_LANE[6].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$549_ADDR' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$679'.
+  created $dff cell `$procdff$1260' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[1].GEN_LANE[6].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$549_DATA' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$679'.
+  created $dff cell `$procdff$1261' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[1].GEN_LANE[6].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$549_EN' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$679'.
+  created $dff cell `$procdff$1262' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.\GEN_SLOT[1].GEN_LANE[5].rd_data_reg' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$671'.
+  created $dff cell `$procdff$1263' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[1].GEN_LANE[5].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$548_ADDR' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$671'.
+  created $dff cell `$procdff$1264' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[1].GEN_LANE[5].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$548_DATA' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$671'.
+  created $dff cell `$procdff$1265' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[1].GEN_LANE[5].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$548_EN' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$671'.
+  created $dff cell `$procdff$1266' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.\GEN_SLOT[1].GEN_LANE[4].rd_data_reg' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$663'.
+  created $dff cell `$procdff$1267' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[1].GEN_LANE[4].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$547_ADDR' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$663'.
+  created $dff cell `$procdff$1268' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[1].GEN_LANE[4].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$547_DATA' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$663'.
+  created $dff cell `$procdff$1269' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[1].GEN_LANE[4].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$547_EN' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$663'.
+  created $dff cell `$procdff$1270' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.\GEN_SLOT[1].GEN_LANE[3].rd_data_reg' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$655'.
+  created $dff cell `$procdff$1271' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[1].GEN_LANE[3].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$546_ADDR' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$655'.
+  created $dff cell `$procdff$1272' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[1].GEN_LANE[3].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$546_DATA' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$655'.
+  created $dff cell `$procdff$1273' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[1].GEN_LANE[3].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$546_EN' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$655'.
+  created $dff cell `$procdff$1274' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.\GEN_SLOT[1].GEN_LANE[2].rd_data_reg' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$647'.
+  created $dff cell `$procdff$1275' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[1].GEN_LANE[2].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$545_ADDR' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$647'.
+  created $dff cell `$procdff$1276' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[1].GEN_LANE[2].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$545_DATA' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$647'.
+  created $dff cell `$procdff$1277' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[1].GEN_LANE[2].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$545_EN' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$647'.
+  created $dff cell `$procdff$1278' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.\GEN_SLOT[1].GEN_LANE[1].rd_data_reg' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$639'.
+  created $dff cell `$procdff$1279' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[1].GEN_LANE[1].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$544_ADDR' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$639'.
+  created $dff cell `$procdff$1280' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[1].GEN_LANE[1].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$544_DATA' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$639'.
+  created $dff cell `$procdff$1281' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[1].GEN_LANE[1].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$544_EN' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$639'.
+  created $dff cell `$procdff$1282' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.\GEN_SLOT[1].GEN_LANE[0].rd_data_reg' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$631'.
+  created $dff cell `$procdff$1283' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[1].GEN_LANE[0].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$543_ADDR' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$631'.
+  created $dff cell `$procdff$1284' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[1].GEN_LANE[0].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$543_DATA' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$631'.
+  created $dff cell `$procdff$1285' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[1].GEN_LANE[0].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$543_EN' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$631'.
+  created $dff cell `$procdff$1286' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.\GEN_SLOT[0].GEN_LANE[7].rd_data_reg' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$623'.
+  created $dff cell `$procdff$1287' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[0].GEN_LANE[7].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$542_ADDR' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$623'.
+  created $dff cell `$procdff$1288' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[0].GEN_LANE[7].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$542_DATA' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$623'.
+  created $dff cell `$procdff$1289' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[0].GEN_LANE[7].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$542_EN' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$623'.
+  created $dff cell `$procdff$1290' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.\GEN_SLOT[0].GEN_LANE[6].rd_data_reg' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$615'.
+  created $dff cell `$procdff$1291' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[0].GEN_LANE[6].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$541_ADDR' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$615'.
+  created $dff cell `$procdff$1292' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[0].GEN_LANE[6].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$541_DATA' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$615'.
+  created $dff cell `$procdff$1293' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[0].GEN_LANE[6].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$541_EN' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$615'.
+  created $dff cell `$procdff$1294' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.\GEN_SLOT[0].GEN_LANE[5].rd_data_reg' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$607'.
+  created $dff cell `$procdff$1295' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[0].GEN_LANE[5].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$540_ADDR' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$607'.
+  created $dff cell `$procdff$1296' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[0].GEN_LANE[5].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$540_DATA' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$607'.
+  created $dff cell `$procdff$1297' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[0].GEN_LANE[5].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$540_EN' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$607'.
+  created $dff cell `$procdff$1298' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.\GEN_SLOT[0].GEN_LANE[4].rd_data_reg' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$599'.
+  created $dff cell `$procdff$1299' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[0].GEN_LANE[4].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$539_ADDR' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$599'.
+  created $dff cell `$procdff$1300' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[0].GEN_LANE[4].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$539_DATA' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$599'.
+  created $dff cell `$procdff$1301' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[0].GEN_LANE[4].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$539_EN' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$599'.
+  created $dff cell `$procdff$1302' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.\GEN_SLOT[0].GEN_LANE[3].rd_data_reg' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$591'.
+  created $dff cell `$procdff$1303' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[0].GEN_LANE[3].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$538_ADDR' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$591'.
+  created $dff cell `$procdff$1304' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[0].GEN_LANE[3].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$538_DATA' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$591'.
+  created $dff cell `$procdff$1305' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[0].GEN_LANE[3].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$538_EN' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$591'.
+  created $dff cell `$procdff$1306' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.\GEN_SLOT[0].GEN_LANE[2].rd_data_reg' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$583'.
+  created $dff cell `$procdff$1307' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[0].GEN_LANE[2].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$537_ADDR' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$583'.
+  created $dff cell `$procdff$1308' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[0].GEN_LANE[2].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$537_DATA' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$583'.
+  created $dff cell `$procdff$1309' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[0].GEN_LANE[2].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$537_EN' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$583'.
+  created $dff cell `$procdff$1310' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.\GEN_SLOT[0].GEN_LANE[1].rd_data_reg' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$575'.
+  created $dff cell `$procdff$1311' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[0].GEN_LANE[1].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$536_ADDR' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$575'.
+  created $dff cell `$procdff$1312' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[0].GEN_LANE[1].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$536_DATA' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$575'.
+  created $dff cell `$procdff$1313' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[0].GEN_LANE[1].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$536_EN' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$575'.
+  created $dff cell `$procdff$1314' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.\GEN_SLOT[0].GEN_LANE[0].rd_data_reg' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$567'.
+  created $dff cell `$procdff$1315' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[0].GEN_LANE[0].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$535_ADDR' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$567'.
+  created $dff cell `$procdff$1316' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[0].GEN_LANE[0].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$535_DATA' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$567'.
+  created $dff cell `$procdff$1317' with positive edge clock.
+Creating register for signal `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$memwr$\GEN_SLOT[0].GEN_LANE[0].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$535_EN' using process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$567'.
+  created $dff cell `$procdff$1318' with positive edge clock.
+
+4.4.10. Executing PROC_MEMWR pass (convert process memory writes to cells).
+
+4.4.11. Executing PROC_CLEAN pass (remove empty switches from decision trees).
+Found and cleaned up 1 empty switch in `\harness_nms_weight_packed.$proc$hardware/v2/nms/synthesis/harness_nms_weight_packed.v:19$300'.
+Removing empty process `harness_nms_weight_packed.$proc$hardware/v2/nms/synthesis/harness_nms_weight_packed.v:19$300'.
+Found and cleaned up 1 empty switch in `\harness_nms_weight_packed.$proc$hardware/v2/nms/synthesis/harness_nms_weight_packed.v:41$305'.
+Removing empty process `harness_nms_weight_packed.$proc$hardware/v2/nms/synthesis/harness_nms_weight_packed.v:41$305'.
+Found and cleaned up 2 empty switches in `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$815'.
+Removing empty process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$815'.
+Found and cleaned up 2 empty switches in `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$807'.
+Removing empty process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$807'.
+Found and cleaned up 2 empty switches in `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$799'.
+Removing empty process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$799'.
+Found and cleaned up 2 empty switches in `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$791'.
+Removing empty process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$791'.
+Found and cleaned up 2 empty switches in `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$783'.
+Removing empty process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$783'.
+Found and cleaned up 2 empty switches in `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$775'.
+Removing empty process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$775'.
+Found and cleaned up 2 empty switches in `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$767'.
+Removing empty process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$767'.
+Found and cleaned up 2 empty switches in `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$759'.
+Removing empty process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$759'.
+Found and cleaned up 2 empty switches in `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$751'.
+Removing empty process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$751'.
+Found and cleaned up 2 empty switches in `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$743'.
+Removing empty process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$743'.
+Found and cleaned up 2 empty switches in `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$735'.
+Removing empty process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$735'.
+Found and cleaned up 2 empty switches in `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$727'.
+Removing empty process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$727'.
+Found and cleaned up 2 empty switches in `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$719'.
+Removing empty process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$719'.
+Found and cleaned up 2 empty switches in `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$711'.
+Removing empty process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$711'.
+Found and cleaned up 2 empty switches in `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$703'.
+Removing empty process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$703'.
+Found and cleaned up 2 empty switches in `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$695'.
+Removing empty process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$695'.
+Found and cleaned up 2 empty switches in `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$687'.
+Removing empty process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$687'.
+Found and cleaned up 2 empty switches in `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$679'.
+Removing empty process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$679'.
+Found and cleaned up 2 empty switches in `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$671'.
+Removing empty process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$671'.
+Found and cleaned up 2 empty switches in `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$663'.
+Removing empty process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$663'.
+Found and cleaned up 2 empty switches in `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$655'.
+Removing empty process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$655'.
+Found and cleaned up 2 empty switches in `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$647'.
+Removing empty process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$647'.
+Found and cleaned up 2 empty switches in `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$639'.
+Removing empty process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$639'.
+Found and cleaned up 2 empty switches in `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$631'.
+Removing empty process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$631'.
+Found and cleaned up 2 empty switches in `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$623'.
+Removing empty process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$623'.
+Found and cleaned up 2 empty switches in `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$615'.
+Removing empty process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$615'.
+Found and cleaned up 2 empty switches in `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$607'.
+Removing empty process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$607'.
+Found and cleaned up 2 empty switches in `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$599'.
+Removing empty process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$599'.
+Found and cleaned up 2 empty switches in `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$591'.
+Removing empty process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$591'.
+Found and cleaned up 2 empty switches in `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$583'.
+Removing empty process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$583'.
+Found and cleaned up 2 empty switches in `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$575'.
+Removing empty process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$575'.
+Found and cleaned up 2 empty switches in `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$567'.
+Removing empty process `$paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.$proc$hardware/v2/nms/rtl/nms_weight_packed.v:40$567'.
+Cleaned up 66 empty switches.
+
+4.4.12. Executing OPT_EXPR pass (perform const folding).
+Optimizing module harness_nms_weight_packed.
+<suppressed ~1 debug messages>
+Optimizing module $paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.
+
+4.5. Executing CHECK pass (checking for obvious problems).
+Checking module harness_nms_weight_packed...
+Checking module $paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed...
+Found and reported 0 problems.
+
+4.6. Executing FLATTEN pass (flatten design).
+Deleting now unused module $paramod$01c1b177b4e21cad8cb8d0255aedb61291a7366c\nms_weight_packed.
+<suppressed ~1 debug messages>
+
+4.7. Executing TRIBUF pass.
+
+4.8. Executing DEMINOUT pass (demote inout ports to input or output).
+
+4.9. Executing OPT_EXPR pass (perform const folding).
+Optimizing module harness_nms_weight_packed.
+
+4.10. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \harness_nms_weight_packed..
+Removed 296 unused cells and 631 unused wires.
+<suppressed ~355 debug messages>
+
+4.11. Executing CHECK pass (checking for obvious problems).
+Checking module harness_nms_weight_packed...
+Found and reported 0 problems.
+
+4.12. Executing OPT pass (performing simple optimizations).
+
+4.12.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module harness_nms_weight_packed.
+
+4.12.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\harness_nms_weight_packed'.
+Computing hashes of 40 cells of `\harness_nms_weight_packed'.
+Finding duplicate cells in `\harness_nms_weight_packed'.
+Removed a total of 0 cells.
+
+4.12.3. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \harness_nms_weight_packed..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+      Replacing known input bits on port B of cell $flatten\dut.$procmux$916: \lfsr [7:0] -> { \lfsr [7:4] 1'1 \lfsr [2:0] }
+      Replacing known input bits on port B of cell $flatten\dut.$procmux$1180: \lfsr [7:0] -> { \lfsr [7:1] 1'1 }
+      Replacing known input bits on port B of cell $flatten\dut.$procmux$1183: \lfsr [7:0] -> { \lfsr [7:1] 1'1 }
+      Replacing known input bits on port B of cell $flatten\dut.$procmux$1092: \lfsr [7:0] -> { \lfsr [7:2] 1'1 \lfsr [0] }
+      Replacing known input bits on port B of cell $flatten\dut.$procmux$1004: \lfsr [7:0] -> { \lfsr [7:3] 1'1 \lfsr [1:0] }
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~36 debug messages>
+
+4.12.4. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \harness_nms_weight_packed.
+    Consolidated identical input bits for $mux cell $flatten\dut.$procmux$913:
+      Old ports: A=8'00000000, B=8'11111111, Y=$flatten\dut.$0$memwr$\GEN_SLOT[3].GEN_LANE[0].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$559_EN[7:0]$762
+      New ports: A=1'0, B=1'1, Y=$flatten\dut.$0$memwr$\GEN_SLOT[3].GEN_LANE[0].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$559_EN[7:0]$762 [0]
+      New connections: $flatten\dut.$0$memwr$\GEN_SLOT[3].GEN_LANE[0].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$559_EN[7:0]$762 [7:1] = { $flatten\dut.$0$memwr$\GEN_SLOT[3].GEN_LANE[0].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$559_EN[7:0]$762 [0] $flatten\dut.$0$memwr$\GEN_SLOT[3].GEN_LANE[0].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$559_EN[7:0]$762 [0] $flatten\dut.$0$memwr$\GEN_SLOT[3].GEN_LANE[0].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$559_EN[7:0]$762 [0] $flatten\dut.$0$memwr$\GEN_SLOT[3].GEN_LANE[0].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$559_EN[7:0]$762 [0] $flatten\dut.$0$memwr$\GEN_SLOT[3].GEN_LANE[0].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$559_EN[7:0]$762 [0] $flatten\dut.$0$memwr$\GEN_SLOT[3].GEN_LANE[0].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$559_EN[7:0]$762 [0] $flatten\dut.$0$memwr$\GEN_SLOT[3].GEN_LANE[0].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$559_EN[7:0]$762 [0] }
+    Consolidated identical input bits for $mux cell $flatten\dut.$procmux$1089:
+      Old ports: A=8'00000000, B=8'11111111, Y=$flatten\dut.$0$memwr$\GEN_SLOT[1].GEN_LANE[0].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$543_EN[7:0]$634
+      New ports: A=1'0, B=1'1, Y=$flatten\dut.$0$memwr$\GEN_SLOT[1].GEN_LANE[0].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$543_EN[7:0]$634 [0]
+      New connections: $flatten\dut.$0$memwr$\GEN_SLOT[1].GEN_LANE[0].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$543_EN[7:0]$634 [7:1] = { $flatten\dut.$0$memwr$\GEN_SLOT[1].GEN_LANE[0].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$543_EN[7:0]$634 [0] $flatten\dut.$0$memwr$\GEN_SLOT[1].GEN_LANE[0].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$543_EN[7:0]$634 [0] $flatten\dut.$0$memwr$\GEN_SLOT[1].GEN_LANE[0].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$543_EN[7:0]$634 [0] $flatten\dut.$0$memwr$\GEN_SLOT[1].GEN_LANE[0].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$543_EN[7:0]$634 [0] $flatten\dut.$0$memwr$\GEN_SLOT[1].GEN_LANE[0].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$543_EN[7:0]$634 [0] $flatten\dut.$0$memwr$\GEN_SLOT[1].GEN_LANE[0].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$543_EN[7:0]$634 [0] $flatten\dut.$0$memwr$\GEN_SLOT[1].GEN_LANE[0].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$543_EN[7:0]$634 [0] }
+    Consolidated identical input bits for $mux cell $flatten\dut.$procmux$1177:
+      Old ports: A=8'00000000, B=8'11111111, Y=$flatten\dut.$0$memwr$\GEN_SLOT[0].GEN_LANE[0].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$535_EN[7:0]$570
+      New ports: A=1'0, B=1'1, Y=$flatten\dut.$0$memwr$\GEN_SLOT[0].GEN_LANE[0].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$535_EN[7:0]$570 [0]
+      New connections: $flatten\dut.$0$memwr$\GEN_SLOT[0].GEN_LANE[0].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$535_EN[7:0]$570 [7:1] = { $flatten\dut.$0$memwr$\GEN_SLOT[0].GEN_LANE[0].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$535_EN[7:0]$570 [0] $flatten\dut.$0$memwr$\GEN_SLOT[0].GEN_LANE[0].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$535_EN[7:0]$570 [0] $flatten\dut.$0$memwr$\GEN_SLOT[0].GEN_LANE[0].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$535_EN[7:0]$570 [0] $flatten\dut.$0$memwr$\GEN_SLOT[0].GEN_LANE[0].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$535_EN[7:0]$570 [0] $flatten\dut.$0$memwr$\GEN_SLOT[0].GEN_LANE[0].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$535_EN[7:0]$570 [0] $flatten\dut.$0$memwr$\GEN_SLOT[0].GEN_LANE[0].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$535_EN[7:0]$570 [0] $flatten\dut.$0$memwr$\GEN_SLOT[0].GEN_LANE[0].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$535_EN[7:0]$570 [0] }
+    Consolidated identical input bits for $mux cell $flatten\dut.$procmux$1001:
+      Old ports: A=8'00000000, B=8'11111111, Y=$flatten\dut.$0$memwr$\GEN_SLOT[2].GEN_LANE[0].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$551_EN[7:0]$698
+      New ports: A=1'0, B=1'1, Y=$flatten\dut.$0$memwr$\GEN_SLOT[2].GEN_LANE[0].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$551_EN[7:0]$698 [0]
+      New connections: $flatten\dut.$0$memwr$\GEN_SLOT[2].GEN_LANE[0].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$551_EN[7:0]$698 [7:1] = { $flatten\dut.$0$memwr$\GEN_SLOT[2].GEN_LANE[0].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$551_EN[7:0]$698 [0] $flatten\dut.$0$memwr$\GEN_SLOT[2].GEN_LANE[0].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$551_EN[7:0]$698 [0] $flatten\dut.$0$memwr$\GEN_SLOT[2].GEN_LANE[0].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$551_EN[7:0]$698 [0] $flatten\dut.$0$memwr$\GEN_SLOT[2].GEN_LANE[0].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$551_EN[7:0]$698 [0] $flatten\dut.$0$memwr$\GEN_SLOT[2].GEN_LANE[0].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$551_EN[7:0]$698 [0] $flatten\dut.$0$memwr$\GEN_SLOT[2].GEN_LANE[0].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$551_EN[7:0]$698 [0] $flatten\dut.$0$memwr$\GEN_SLOT[2].GEN_LANE[0].mem$hardware/v2/nms/rtl/nms_weight_packed.v:42$551_EN[7:0]$698 [0] }
+  Optimizing cells in module \harness_nms_weight_packed.
+Performed a total of 4 changes.
+
+4.12.5. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\harness_nms_weight_packed'.
+Computing hashes of 40 cells of `\harness_nms_weight_packed'.
+Finding duplicate cells in `\harness_nms_weight_packed'.
+Computing hashes of 39 cells of `\harness_nms_weight_packed'.
+Finding duplicate cells in `\harness_nms_weight_packed'.
+<suppressed ~3 debug messages>
+Removed a total of 1 cells.
+
+4.12.6. Executing OPT_DFF pass (perform DFF optimizations).
+
+4.12.7. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \harness_nms_weight_packed..
+Removed 0 unused cells and 1 unused wires.
+<suppressed ~1 debug messages>
+
+4.12.8. Executing OPT_EXPR pass (perform const folding).
+Optimizing module harness_nms_weight_packed.
+
+4.12.9. Rerunning OPT passes. (Maybe there is more to do..)
+
+4.12.10. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \harness_nms_weight_packed..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~34 debug messages>
+
+4.12.11. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \harness_nms_weight_packed.
+Performed a total of 0 changes.
+
+4.12.12. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\harness_nms_weight_packed'.
+Computing hashes of 39 cells of `\harness_nms_weight_packed'.
+Finding duplicate cells in `\harness_nms_weight_packed'.
+Removed a total of 0 cells.
+
+4.12.13. Executing OPT_DFF pass (perform DFF optimizations).
+
+4.12.14. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \harness_nms_weight_packed..
+
+4.12.15. Executing OPT_EXPR pass (perform const folding).
+Optimizing module harness_nms_weight_packed.
+
+4.12.16. Finished fast OPT passes. (There is nothing left to do.)
+
+4.13. Executing FSM pass (extract and optimize FSM).
+
+4.13.1. Executing FSM_DETECT pass (finding FSMs in design).
+
+4.13.2. Executing FSM_EXTRACT pass (extracting FSM from design).
+
+4.13.3. Executing FSM_OPT pass (simple optimizations of FSMs).
+
+4.13.4. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \harness_nms_weight_packed..
+
+4.13.5. Executing FSM_OPT pass (simple optimizations of FSMs).
+
+4.13.6. Executing FSM_RECODE pass (re-assigning FSM state encoding).
+
+4.13.7. Executing FSM_INFO pass (dumping all available information on FSM cells).
+
+4.13.8. Executing FSM_MAP pass (mapping FSMs to basic logic).
+
+4.14. Executing OPT pass (performing simple optimizations).
+
+4.14.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module harness_nms_weight_packed.
+
+4.14.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\harness_nms_weight_packed'.
+Computing hashes of 39 cells of `\harness_nms_weight_packed'.
+Finding duplicate cells in `\harness_nms_weight_packed'.
+Removed a total of 0 cells.
+
+4.14.3. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \harness_nms_weight_packed..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~34 debug messages>
+
+4.14.4. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \harness_nms_weight_packed.
+Performed a total of 0 changes.
+
+4.14.5. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\harness_nms_weight_packed'.
+Computing hashes of 39 cells of `\harness_nms_weight_packed'.
+Finding duplicate cells in `\harness_nms_weight_packed'.
+Removed a total of 0 cells.
+
+4.14.6. Executing OPT_DFF pass (perform DFF optimizations).
+Adding SRST signal on $procdff$1187 ($dff) from module harness_nms_weight_packed (D = { \lfsr [30:7] $xor$hardware/v2/nms/synthesis/harness_nms_weight_packed.v:21$304_Y }, Q = { \lfsr [31:8] \lfsr [0] }, rval = 25'0000000000000000000000001).
+Adding SRST signal on $procdff$1189 ($dff) from module harness_nms_weight_packed (D = $xor$hardware/v2/nms/synthesis/harness_nms_weight_packed.v:47$309_Y, Q = \chk, rval = 8'00000000).
+Adding EN signal on $flatten\dut.$procdff$1283 ($dff) from module harness_nms_weight_packed (D = $flatten\dut.$memrd$\GEN_SLOT[1].GEN_LANE[0].mem$hardware/v2/nms/rtl/nms_weight_packed.v:45$638_DATA, Q = \dut.GEN_SLOT[1].GEN_LANE[0].rd_data_reg).
+Adding EN signal on $flatten\dut.$procdff$1251 ($dff) from module harness_nms_weight_packed (D = $flatten\dut.$memrd$\GEN_SLOT[2].GEN_LANE[0].mem$hardware/v2/nms/rtl/nms_weight_packed.v:45$702_DATA, Q = \dut.GEN_SLOT[2].GEN_LANE[0].rd_data_reg).
+Adding EN signal on $flatten\dut.$procdff$1315 ($dff) from module harness_nms_weight_packed (D = $flatten\dut.$memrd$\GEN_SLOT[0].GEN_LANE[0].mem$hardware/v2/nms/rtl/nms_weight_packed.v:45$574_DATA, Q = \dut.GEN_SLOT[0].GEN_LANE[0].rd_data_reg).
+Adding EN signal on $flatten\dut.$procdff$1219 ($dff) from module harness_nms_weight_packed (D = $flatten\dut.$memrd$\GEN_SLOT[3].GEN_LANE[0].mem$hardware/v2/nms/rtl/nms_weight_packed.v:45$766_DATA, Q = \dut.GEN_SLOT[3].GEN_LANE[0].rd_data_reg).
+
+4.14.7. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \harness_nms_weight_packed..
+Removed 5 unused cells and 5 unused wires.
+<suppressed ~6 debug messages>
+
+4.14.8. Executing OPT_EXPR pass (perform const folding).
+Optimizing module harness_nms_weight_packed.
+
+4.14.9. Rerunning OPT passes. (Maybe there is more to do..)
+
+4.14.10. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \harness_nms_weight_packed..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~24 debug messages>
+
+4.14.11. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \harness_nms_weight_packed.
+Performed a total of 0 changes.
+
+4.14.12. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\harness_nms_weight_packed'.
+Computing hashes of 35 cells of `\harness_nms_weight_packed'.
+Finding duplicate cells in `\harness_nms_weight_packed'.
+Removed a total of 0 cells.
+
+4.14.13. Executing OPT_DFF pass (perform DFF optimizations).
+
+4.14.14. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \harness_nms_weight_packed..
+
+4.14.15. Executing OPT_EXPR pass (perform const folding).
+Optimizing module harness_nms_weight_packed.
+
+4.14.16. Finished fast OPT passes. (There is nothing left to do.)
+
+4.15. Executing WREDUCE pass (reducing word size of cells).
+Removed top 24 bits (of 32) from mux cell harness_nms_weight_packed.$procmux$824 ($mux).
+Removed top 56 bits (of 256) from wire harness_nms_weight_packed.rd_data_flat.
+Removed top 24 bits (of 32) from wire harness_nms_weight_packed.$0\lfsr[31:0].
+
+4.16. Executing PEEPOPT pass (run peephole optimizers).
+
+4.17. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \harness_nms_weight_packed..
+Removed 0 unused cells and 2 unused wires.
+<suppressed ~1 debug messages>
+
+4.18. Executing SHARE pass (SAT-based resource sharing).
+
+4.19. Executing TECHMAP pass (map to technology primitives).
+
+4.19.1. Executing Verilog-2005 frontend: /opt/homebrew/bin/../share/yosys/cmp2lut.v
+Parsing Verilog input from `/opt/homebrew/bin/../share/yosys/cmp2lut.v' to AST representation.
+Generating RTLIL representation for module `\_90_lut_cmp_'.
+Successfully finished Verilog frontend.
+
+4.19.2. Continuing TECHMAP pass.
+No more expansions possible.
+<suppressed ~6 debug messages>
+
+4.20. Executing OPT_EXPR pass (perform const folding).
+Optimizing module harness_nms_weight_packed.
+
+4.21. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \harness_nms_weight_packed..
+
+4.22. Executing TECHMAP pass (map to technology primitives).
+
+4.22.1. Executing Verilog-2005 frontend: /opt/homebrew/bin/../share/yosys/mul2dsp.v
+Parsing Verilog input from `/opt/homebrew/bin/../share/yosys/mul2dsp.v' to AST representation.
+Generating RTLIL representation for module `\_80_mul'.
+Generating RTLIL representation for module `\_90_soft_mul'.
+Successfully finished Verilog frontend.
+
+4.22.2. Continuing TECHMAP pass.
+No more expansions possible.
+<suppressed ~4 debug messages>
+
+4.23. Executing TECHMAP pass (map to technology primitives).
+
+4.23.1. Executing Verilog-2005 frontend: /opt/homebrew/bin/../share/yosys/lattice/dsp_map_18x18.v
+Parsing Verilog input from `/opt/homebrew/bin/../share/yosys/lattice/dsp_map_18x18.v' to AST representation.
+Generating RTLIL representation for module `$__MUL18X18'.
+Successfully finished Verilog frontend.
+
+4.23.2. Continuing TECHMAP pass.
+No more expansions possible.
+<suppressed ~3 debug messages>
+
+4.24. Executing ALUMACC pass (create $alu and $macc cells).
+Extracting $alu and $macc cells in module harness_nms_weight_packed:
+  created 0 $alu and 0 $macc cells.
+
+4.25. Executing OPT pass (performing simple optimizations).
+
+4.25.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module harness_nms_weight_packed.
+
+4.25.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\harness_nms_weight_packed'.
+Computing hashes of 35 cells of `\harness_nms_weight_packed'.
+Finding duplicate cells in `\harness_nms_weight_packed'.
+Removed a total of 0 cells.
+
+4.25.3. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \harness_nms_weight_packed..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~24 debug messages>
+
+4.25.4. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \harness_nms_weight_packed.
+Performed a total of 0 changes.
+
+4.25.5. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\harness_nms_weight_packed'.
+Computing hashes of 35 cells of `\harness_nms_weight_packed'.
+Finding duplicate cells in `\harness_nms_weight_packed'.
+Removed a total of 0 cells.
+
+4.25.6. Executing OPT_DFF pass (perform DFF optimizations).
+
+4.25.7. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \harness_nms_weight_packed..
+
+4.25.8. Executing OPT_EXPR pass (perform const folding).
+Optimizing module harness_nms_weight_packed.
+
+4.25.9. Finished fast OPT passes. (There is nothing left to do.)
+
+4.26. Executing MEMORY pass.
+
+4.26.1. Executing OPT_MEM pass (optimize memories).
+Performed a total of 0 transformations.
+
+4.26.2. Executing OPT_MEM_PRIORITY pass (removing unnecessary memory write priority relations).
+Performed a total of 0 transformations.
+
+4.26.3. Executing OPT_MEM_FEEDBACK pass (finding memory read-to-write feedback paths).
+  Analyzing harness_nms_weight_packed.dut.GEN_SLOT[1].GEN_LANE[0].mem write port 0.
+  Analyzing harness_nms_weight_packed.dut.GEN_SLOT[2].GEN_LANE[0].mem write port 0.
+  Analyzing harness_nms_weight_packed.dut.GEN_SLOT[3].GEN_LANE[0].mem write port 0.
+  Analyzing harness_nms_weight_packed.dut.GEN_SLOT[0].GEN_LANE[0].mem write port 0.
+
+4.26.4. Executing MEMORY_BMUX2ROM pass (converting muxes to ROMs).
+
+4.26.5. Executing MEMORY_DFF pass (merging $dff cells to $memrd).
+Checking read port `\dut.GEN_SLOT[1].GEN_LANE[0].mem'[0] in module `\harness_nms_weight_packed': merging output FF to cell.
+    Write port 0: non-transparent.
+Checking read port `\dut.GEN_SLOT[2].GEN_LANE[0].mem'[0] in module `\harness_nms_weight_packed': merging output FF to cell.
+    Write port 0: non-transparent.
+Checking read port `\dut.GEN_SLOT[3].GEN_LANE[0].mem'[0] in module `\harness_nms_weight_packed': merging output FF to cell.
+    Write port 0: non-transparent.
+Checking read port `\dut.GEN_SLOT[0].GEN_LANE[0].mem'[0] in module `\harness_nms_weight_packed': merging output FF to cell.
+    Write port 0: non-transparent.
+
+4.26.6. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \harness_nms_weight_packed..
+Removed 4 unused cells and 36 unused wires.
+<suppressed ~5 debug messages>
+
+4.26.7. Executing MEMORY_SHARE pass (consolidating $memrd/$memwr cells).
+
+4.26.8. Executing OPT_MEM_WIDEN pass (optimize memories where all ports are wide).
+Performed a total of 0 transformations.
+
+4.26.9. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \harness_nms_weight_packed..
+
+4.26.10. Executing MEMORY_COLLECT pass (generating $mem cells).
+
+4.27. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \harness_nms_weight_packed..
+
+4.28. Executing MEMORY_LIBMAP pass (mapping memories to cells).
+mapping memory harness_nms_weight_packed.dut.GEN_SLOT[2].GEN_LANE[0].mem via $__DP16KD_
+mapping memory harness_nms_weight_packed.dut.GEN_SLOT[1].GEN_LANE[0].mem via $__DP16KD_
+mapping memory harness_nms_weight_packed.dut.GEN_SLOT[3].GEN_LANE[0].mem via $__DP16KD_
+mapping memory harness_nms_weight_packed.dut.GEN_SLOT[0].GEN_LANE[0].mem via $__DP16KD_
+<suppressed ~2020 debug messages>
+
+4.29. Executing TECHMAP pass (map to technology primitives).
+
+4.29.1. Executing Verilog-2005 frontend: /opt/homebrew/bin/../share/yosys/lattice/lutrams_map_trellis.v
+Parsing Verilog input from `/opt/homebrew/bin/../share/yosys/lattice/lutrams_map_trellis.v' to AST representation.
+Generating RTLIL representation for module `$__TRELLIS_DPR16X4_'.
+Successfully finished Verilog frontend.
+
+4.29.2. Executing Verilog-2005 frontend: /opt/homebrew/bin/../share/yosys/lattice/brams_map_16kd.v
+Parsing Verilog input from `/opt/homebrew/bin/../share/yosys/lattice/brams_map_16kd.v' to AST representation.
+Generating RTLIL representation for module `$__DP16KD_'.
+Generating RTLIL representation for module `$__PDPW16KD_'.
+Successfully finished Verilog frontend.
+
+4.29.3. Continuing TECHMAP pass.
+Using template $paramod$aeda6af72dd43b6dcc814a6c1f1c1fc277ba8bab$__DP16KD_ for cells of type $__DP16KD_.
+Using template $paramod$eed5c07ccc20b30fea5f07adc53d361b0ef0f8bc$__DP16KD_ for cells of type $__DP16KD_.
+No more expansions possible.
+<suppressed ~67 debug messages>
+
+4.30. Executing OPT pass (performing simple optimizations).
+
+4.30.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module harness_nms_weight_packed.
+<suppressed ~193 debug messages>
+
+4.30.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\harness_nms_weight_packed'.
+Computing hashes of 24 cells of `\harness_nms_weight_packed'.
+Finding duplicate cells in `\harness_nms_weight_packed'.
+Computing hashes of 23 cells of `\harness_nms_weight_packed'.
+Finding duplicate cells in `\harness_nms_weight_packed'.
+<suppressed ~3 debug messages>
+Removed a total of 1 cells.
+
+4.30.3. Executing OPT_DFF pass (perform DFF optimizations).
+
+4.30.4. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \harness_nms_weight_packed..
+Removed 0 unused cells and 104 unused wires.
+<suppressed ~1 debug messages>
+
+4.30.5. Finished fast OPT passes.
+
+4.31. Executing MEMORY_MAP pass (converting memories to logic and flip-flops).
+
+4.32. Executing OPT pass (performing simple optimizations).
+
+4.32.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module harness_nms_weight_packed.
+
+4.32.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\harness_nms_weight_packed'.
+Computing hashes of 23 cells of `\harness_nms_weight_packed'.
+Finding duplicate cells in `\harness_nms_weight_packed'.
+Removed a total of 0 cells.
+
+4.32.3. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \harness_nms_weight_packed..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~4 debug messages>
+
+4.32.4. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \harness_nms_weight_packed.
+Performed a total of 0 changes.
+
+4.32.5. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\harness_nms_weight_packed'.
+Computing hashes of 23 cells of `\harness_nms_weight_packed'.
+Finding duplicate cells in `\harness_nms_weight_packed'.
+Removed a total of 0 cells.
+
+4.32.6. Executing OPT_DFF pass (perform DFF optimizations).
+Setting constant 1-bit at position 0 on $auto$mem.cc:1647:emulate_read_first$1414 ($dff) from module harness_nms_weight_packed.
+
+4.32.7. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \harness_nms_weight_packed..
+
+4.32.8. Executing OPT_EXPR pass (perform const folding).
+Optimizing module harness_nms_weight_packed.
+
+4.32.9. Rerunning OPT passes. (Maybe there is more to do..)
+
+4.32.10. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \harness_nms_weight_packed..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~4 debug messages>
+
+4.32.11. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \harness_nms_weight_packed.
+Performed a total of 0 changes.
+
+4.32.12. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\harness_nms_weight_packed'.
+Computing hashes of 23 cells of `\harness_nms_weight_packed'.
+Finding duplicate cells in `\harness_nms_weight_packed'.
+Removed a total of 0 cells.
+
+4.32.13. Executing OPT_DFF pass (perform DFF optimizations).
+Setting constant 1-bit at position 0 on $auto$mem.cc:1169:emulate_transparency$1417 ($dffe) from module harness_nms_weight_packed.
+
+4.32.14. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \harness_nms_weight_packed..
+
+4.32.15. Executing OPT_EXPR pass (perform const folding).
+Optimizing module harness_nms_weight_packed.
+
+4.32.16. Rerunning OPT passes. (Maybe there is more to do..)
+
+4.32.17. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Running muxtree optimizer on module \harness_nms_weight_packed..
+  Creating internal representation of mux trees.
+  Evaluating internal representation of mux trees.
+  Analyzing evaluation results.
+Removed 0 multiplexer ports.
+<suppressed ~4 debug messages>
+
+4.32.18. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+  Optimizing cells in module \harness_nms_weight_packed.
+Performed a total of 0 changes.
+
+4.32.19. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\harness_nms_weight_packed'.
+Computing hashes of 23 cells of `\harness_nms_weight_packed'.
+Finding duplicate cells in `\harness_nms_weight_packed'.
+Removed a total of 0 cells.
+
+4.32.20. Executing OPT_DFF pass (perform DFF optimizations).
+
+4.32.21. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \harness_nms_weight_packed..
+
+4.32.22. Executing OPT_EXPR pass (perform const folding).
+Optimizing module harness_nms_weight_packed.
+
+4.32.23. Finished fast OPT passes. (There is nothing left to do.)
+
+4.33. Executing TECHMAP pass (map to technology primitives).
+
+4.33.1. Executing Verilog-2005 frontend: /opt/homebrew/bin/../share/yosys/techmap.v
+Parsing Verilog input from `/opt/homebrew/bin/../share/yosys/techmap.v' to AST representation.
+Generating RTLIL representation for module `\_90_simplemap_bool_ops'.
+Generating RTLIL representation for module `\_90_simplemap_reduce_ops'.
+Generating RTLIL representation for module `\_90_simplemap_logic_ops'.
+Generating RTLIL representation for module `\_90_simplemap_compare_ops'.
+Generating RTLIL representation for module `\_90_simplemap_various'.
+Generating RTLIL representation for module `\_90_simplemap_registers'.
+Generating RTLIL representation for module `\_90_shift_ops_shr_shl_sshl_sshr'.
+Generating RTLIL representation for module `\_90_shift_shiftx'.
+Generating RTLIL representation for module `\_90_fa'.
+Generating RTLIL representation for module `\_90_lcu_brent_kung'.
+Generating RTLIL representation for module `\_90_alu'.
+Generating RTLIL representation for module `\_90_macc'.
+Generating RTLIL representation for module `\_90_alumacc'.
+Generating RTLIL representation for module `$__div_mod_u'.
+Generating RTLIL representation for module `$__div_mod_trunc'.
+Generating RTLIL representation for module `\_90_div'.
+Generating RTLIL representation for module `\_90_mod'.
+Generating RTLIL representation for module `$__div_mod_floor'.
+Generating RTLIL representation for module `\_90_divfloor'.
+Generating RTLIL representation for module `\_90_modfloor'.
+Generating RTLIL representation for module `\_90_pow'.
+Generating RTLIL representation for module `\_90_demux'.
+Generating RTLIL representation for module `\_90_lut'.
+Generating RTLIL representation for module `$connect'.
+Generating RTLIL representation for module `$input_port'.
+Successfully finished Verilog frontend.
+
+4.33.2. Executing Verilog-2005 frontend: /opt/homebrew/bin/../share/yosys/lattice/arith_map_ccu2c.v
+Parsing Verilog input from `/opt/homebrew/bin/../share/yosys/lattice/arith_map_ccu2c.v' to AST representation.
+Generating RTLIL representation for module `\_80_ccu2c_alu'.
+Successfully finished Verilog frontend.
+
+4.33.3. Continuing TECHMAP pass.
+Using extmapper simplemap for cells of type $dffe.
+Using extmapper simplemap for cells of type $dff.
+Using extmapper simplemap for cells of type $mux.
+Using extmapper simplemap for cells of type $and.
+Using extmapper simplemap for cells of type $eq.
+Using extmapper simplemap for cells of type $sdff.
+Using extmapper simplemap for cells of type $xor.
+No more expansions possible.
+<suppressed ~95 debug messages>
+
+4.34. Executing OPT pass (performing simple optimizations).
+
+4.34.1. Executing OPT_EXPR pass (perform const folding).
+Optimizing module harness_nms_weight_packed.
+<suppressed ~1 debug messages>
+
+4.34.2. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\harness_nms_weight_packed'.
+Computing hashes of 129 cells of `\harness_nms_weight_packed'.
+Finding duplicate cells in `\harness_nms_weight_packed'.
+Removed a total of 0 cells.
+
+4.34.3. Executing OPT_DFF pass (perform DFF optimizations).
+
+4.34.4. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \harness_nms_weight_packed..
+Removed 1 unused cells and 1 unused wires.
+<suppressed ~2 debug messages>
+
+4.34.5. Finished fast OPT passes.
+
+4.35. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \harness_nms_weight_packed..
+
+4.36. Executing DFFLEGALIZE pass (convert FFs to types supported by the target).
+
+4.37. Executing OPT_MERGE pass (detect identical cells).
+Finding identical cells in module `\harness_nms_weight_packed'.
+Computing hashes of 128 cells of `\harness_nms_weight_packed'.
+Finding duplicate cells in `\harness_nms_weight_packed'.
+Removed a total of 0 cells.
+
+4.38. Executing TECHMAP pass (map to technology primitives).
+
+4.38.1. Executing Verilog-2005 frontend: /opt/homebrew/bin/../share/yosys/lattice/cells_map_trellis.v
+Parsing Verilog input from `/opt/homebrew/bin/../share/yosys/lattice/cells_map_trellis.v' to AST representation.
+Generating RTLIL representation for module `$_DFF_N_'.
+Generating RTLIL representation for module `$_DFF_P_'.
+Generating RTLIL representation for module `$_DFFE_NN_'.
+Generating RTLIL representation for module `$_DFFE_PN_'.
+Generating RTLIL representation for module `$_DFFE_NP_'.
+Generating RTLIL representation for module `$_DFFE_PP_'.
+Generating RTLIL representation for module `$_DFF_NP0_'.
+Generating RTLIL representation for module `$_DFF_NP1_'.
+Generating RTLIL representation for module `$_DFF_PP0_'.
+Generating RTLIL representation for module `$_DFF_PP1_'.
+Generating RTLIL representation for module `$_SDFF_NP0_'.
+Generating RTLIL representation for module `$_SDFF_NP1_'.
+Generating RTLIL representation for module `$_SDFF_PP0_'.
+Generating RTLIL representation for module `$_SDFF_PP1_'.
+Generating RTLIL representation for module `$_DFFE_NP0P_'.
+Generating RTLIL representation for module `$_DFFE_NP1P_'.
+Generating RTLIL representation for module `$_DFFE_PP0P_'.
+Generating RTLIL representation for module `$_DFFE_PP1P_'.
+Generating RTLIL representation for module `$_DFFE_NP0N_'.
+Generating RTLIL representation for module `$_DFFE_NP1N_'.
+Generating RTLIL representation for module `$_DFFE_PP0N_'.
+Generating RTLIL representation for module `$_DFFE_PP1N_'.
+Generating RTLIL representation for module `$_SDFFE_NP0P_'.
+Generating RTLIL representation for module `$_SDFFE_NP1P_'.
+Generating RTLIL representation for module `$_SDFFE_PP0P_'.
+Generating RTLIL representation for module `$_SDFFE_PP1P_'.
+Generating RTLIL representation for module `$_SDFFE_NP0N_'.
+Generating RTLIL representation for module `$_SDFFE_NP1N_'.
+Generating RTLIL representation for module `$_SDFFE_PP0N_'.
+Generating RTLIL representation for module `$_SDFFE_PP1N_'.
+Generating RTLIL representation for module `$_ALDFF_NP_'.
+Generating RTLIL representation for module `$_ALDFF_PP_'.
+Generating RTLIL representation for module `$_ALDFFE_NPN_'.
+Generating RTLIL representation for module `$_ALDFFE_NPP_'.
+Generating RTLIL representation for module `$_ALDFFE_PPN_'.
+Generating RTLIL representation for module `$_ALDFFE_PPP_'.
+Generating RTLIL representation for module `\FD1P3AX'.
+Generating RTLIL representation for module `\FD1P3AY'.
+Generating RTLIL representation for module `\FD1P3BX'.
+Generating RTLIL representation for module `\FD1P3DX'.
+Generating RTLIL representation for module `\FD1P3IX'.
+Generating RTLIL representation for module `\FD1P3JX'.
+Generating RTLIL representation for module `\FD1S3AX'.
+Generating RTLIL representation for module `\FD1S3AY'.
+Generating RTLIL representation for module `\FD1S3BX'.
+Generating RTLIL representation for module `\FD1S3DX'.
+Generating RTLIL representation for module `\FD1S3IX'.
+Generating RTLIL representation for module `\FD1S3JX'.
+Generating RTLIL representation for module `\IFS1P3BX'.
+Generating RTLIL representation for module `\IFS1P3DX'.
+Generating RTLIL representation for module `\IFS1P3IX'.
+Generating RTLIL representation for module `\IFS1P3JX'.
+Generating RTLIL representation for module `\OFS1P3BX'.
+Generating RTLIL representation for module `\OFS1P3DX'.
+Generating RTLIL representation for module `\OFS1P3IX'.
+Generating RTLIL representation for module `\OFS1P3JX'.
+Generating RTLIL representation for module `\IB'.
+Generating RTLIL representation for module `\IBPU'.
+Generating RTLIL representation for module `\IBPD'.
+Generating RTLIL representation for module `\OB'.
+Generating RTLIL representation for module `\OBZ'.
+Generating RTLIL representation for module `\OBZPU'.
+Generating RTLIL representation for module `\OBZPD'.
+Generating RTLIL representation for module `\OBCO'.
+Generating RTLIL representation for module `\BB'.
+Generating RTLIL representation for module `\BBPU'.
+Generating RTLIL representation for module `\BBPD'.
+Generating RTLIL representation for module `\ILVDS'.
+Generating RTLIL representation for module `\OLVDS'.
+Successfully finished Verilog frontend.
+
+4.38.2. Continuing TECHMAP pass.
+Using template $paramod$_DFF_P_\_TECHMAP_WIREINIT_Q_=1'x for cells of type $_DFF_P_.
+Using template $_SDFF_PP0_ for cells of type $_SDFF_PP0_.
+Using template $_SDFF_PP1_ for cells of type $_SDFF_PP1_.
+Using template $paramod$_DFFE_PP_\_TECHMAP_WIREINIT_Q_=1'x for cells of type $_DFFE_PP_.
+No more expansions possible.
+<suppressed ~149 debug messages>
+
+4.39. Executing OPT_EXPR pass (perform const folding).
+Optimizing module harness_nms_weight_packed.
+
+4.40. Executing SIMPLEMAP pass (map simple cells to gate primitives).
+
+4.41. Executing LATTICE_GSR pass (implement FF init values).
+Handling GSR in harness_nms_weight_packed.
+
+4.42. Executing ATTRMVCP pass (move or copy attributes).
+
+4.43. Executing OPT_CLEAN pass (remove unused cells and wires).
+Finding unused cells or wires in module \harness_nms_weight_packed..
+Removed 0 unused cells and 265 unused wires.
+<suppressed ~1 debug messages>
+
+4.44. Executing CHECK pass (checking for obvious problems).
+Checking module harness_nms_weight_packed...
+Found and reported 0 problems.
+
+4.45. Executing TECHMAP pass (map to technology primitives).
+
+4.45.1. Executing Verilog-2005 frontend: /opt/homebrew/bin/../share/yosys/lattice/latches_map.v
+Parsing Verilog input from `/opt/homebrew/bin/../share/yosys/lattice/latches_map.v' to AST representation.
+Generating RTLIL representation for module `$_DLATCH_N_'.
+Generating RTLIL representation for module `$_DLATCH_P_'.
+Successfully finished Verilog frontend.
+
+4.45.2. Continuing TECHMAP pass.
+No more expansions possible.
+<suppressed ~4 debug messages>
+
+4.46. Executing ABC9 pass.
+
+4.46.1. Executing ABC9_OPS pass (helper functions for ABC9).
+
+4.46.2. Executing ABC9_OPS pass (helper functions for ABC9).
+
+4.46.3. Executing SCC pass (detecting logic loops).
+Found 0 SCCs in module harness_nms_weight_packed.
+Found 0 SCCs.
+
+4.46.4. Executing ABC9_OPS pass (helper functions for ABC9).
+
+4.46.5. Executing TECHMAP pass (map to technology primitives).
+
+4.46.5.1. Executing Verilog-2005 frontend: /opt/homebrew/bin/../share/yosys/techmap.v
+Parsing Verilog input from `/opt/homebrew/bin/../share/yosys/techmap.v' to AST representation.
+Generating RTLIL representation for module `\_90_simplemap_bool_ops'.
+Generating RTLIL representation for module `\_90_simplemap_reduce_ops'.
+Generating RTLIL representation for module `\_90_simplemap_logic_ops'.
+Generating RTLIL representation for module `\_90_simplemap_compare_ops'.
+Generating RTLIL representation for module `\_90_simplemap_various'.
+Generating RTLIL representation for module `\_90_simplemap_registers'.
+Generating RTLIL representation for module `\_90_shift_ops_shr_shl_sshl_sshr'.
+Generating RTLIL representation for module `\_90_shift_shiftx'.
+Generating RTLIL representation for module `\_90_fa'.
+Generating RTLIL representation for module `\_90_lcu_brent_kung'.
+Generating RTLIL representation for module `\_90_alu'.
+Generating RTLIL representation for module `\_90_macc'.
+Generating RTLIL representation for module `\_90_alumacc'.
+Generating RTLIL representation for module `$__div_mod_u'.
+Generating RTLIL representation for module `$__div_mod_trunc'.
+Generating RTLIL representation for module `\_90_div'.
+Generating RTLIL representation for module `\_90_mod'.
+Generating RTLIL representation for module `$__div_mod_floor'.
+Generating RTLIL representation for module `\_90_divfloor'.
+Generating RTLIL representation for module `\_90_modfloor'.
+Generating RTLIL representation for module `\_90_pow'.
+Generating RTLIL representation for module `\_90_demux'.
+Generating RTLIL representation for module `\_90_lut'.
+Generating RTLIL representation for module `$connect'.
+Generating RTLIL representation for module `$input_port'.
+Successfully finished Verilog frontend.
+
+4.46.5.2. Continuing TECHMAP pass.
+No more expansions possible.
+<suppressed ~165 debug messages>
+
+4.46.6. Executing OPT pass (performing simple optimizations).
+
+4.46.6.1. Executing OPT_EXPR pass (perform const folding).
+
+4.46.6.2. Executing OPT_MERGE pass (detect identical cells).
+Removed a total of 0 cells.
+
+4.46.6.3. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
+Removed 0 multiplexer ports.
+
+4.46.6.4. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
+Performed a total of 0 changes.
+
+4.46.6.5. Executing OPT_MERGE pass (detect identical cells).
+Removed a total of 0 cells.
+
+4.46.6.6. Executing OPT_DFF pass (perform DFF optimizations).
+
+4.46.6.7. Executing OPT_CLEAN pass (remove unused cells and wires).
+
+4.46.6.8. Executing OPT_EXPR pass (perform const folding).
+
+4.46.6.9. Finished fast OPT passes. (There is nothing left to do.)
+
+4.46.7. Executing TECHMAP pass (map to technology primitives).
+
+4.46.7.1. Executing Verilog-2005 frontend: /opt/homebrew/bin/../share/yosys/abc9_map.v
+Parsing Verilog input from `/opt/homebrew/bin/../share/yosys/abc9_map.v' to AST representation.
+Successfully finished Verilog frontend.
+
+4.46.7.2. Continuing TECHMAP pass.
+No more expansions possible.
+<suppressed ~2 debug messages>
+
+4.46.8. Executing Verilog-2005 frontend: /opt/homebrew/bin/../share/yosys/abc9_model.v
+Parsing Verilog input from `/opt/homebrew/bin/../share/yosys/abc9_model.v' to AST representation.
+Generating RTLIL representation for module `$__ABC9_DELAY'.
+Generating RTLIL representation for module `$__ABC9_SCC_BREAKER'.
+Generating RTLIL representation for module `$__DFF_N__$abc9_flop'.
+Generating RTLIL representation for module `$__DFF_P__$abc9_flop'.
+Successfully finished Verilog frontend.
+
+4.46.9. Executing ABC9_OPS pass (helper functions for ABC9).
+
+4.46.10. Executing ABC9_OPS pass (helper functions for ABC9).
+
+4.46.11. Executing ABC9_OPS pass (helper functions for ABC9).
+<suppressed ~2 debug messages>
+
+4.46.12. Executing AIGMAP pass (map logic to AIG).
+Module harness_nms_weight_packed: replaced 64 cells with 427 new cells, skipped 64 cells.
+  replaced 3 cell types:
+      15 $_MUX_
+       7 $_OR_
+      42 $_XOR_
+  not replaced 5 cell types:
+       1 $_AND_
+       2 $_NOT_
+       1 $scopeinfo
+      56 TRELLIS_FF
+       4 DP16KD
+
+4.46.12.1. Executing ABC9_OPS pass (helper functions for ABC9).
+
+4.46.12.2. Executing ABC9_OPS pass (helper functions for ABC9).
+
+4.46.12.3. Executing XAIGER backend.
+<suppressed ~5 debug messages>
+Extracted 179 AND gates and 586 wires from module `harness_nms_weight_packed' to a netlist network with 98 inputs and 65 outputs.
+
+4.46.12.4. Executing ABC9_EXE pass (technology mapping using ABC9).
+
+4.46.12.5. Executing ABC9.
+Running ABC command: "<yosys-exe-dir>/yosys-abc" -s -f <abc-temp-dir>/abc.script 2>&1
+ABC: ======== ABC command line "source <abc-temp-dir>/abc.script"
+ABC: + read_lut <abc-temp-dir>/input.lut 
+ABC: + read_box <abc-temp-dir>/input.box 
+ABC: + &read <abc-temp-dir>/input.xaig 
+ABC: + &ps 
+ABC: <abc-temp-dir>/input : i/o =     98/     65  and =     178  lev =   10 (1.63)  mem = 0.01 MB  box = 0  bb = 0
+ABC: + &scorr 
+ABC: Warning: The network is combinational.
+ABC: + &sweep 
+ABC: + &dc2 
+ABC: + &dch -f -r 
+ABC: + &ps 
+ABC: <abc-temp-dir>/input : i/o =     98/     65  and =     384  lev =    6 (1.09)  mem = 0.01 MB  ch =   45  box = 0  bb = 0
+ABC: cst =       0  cls =     37  lit =      45  unused =     400  proof =     0
+ABC: + &if -W 300 -v 
+ABC: K = 7. Memory (bytes): Truth =    0. Cut =   76. Obj =  156. Set =  780. CutMin = no
+ABC: Node =     384.  Ch =    37.  Total mem =    0.09 MB. Peak cut mem =    0.01 MB.
+ABC: P:  Del = 1530.00.  Ar =      71.0.  Edge =      117.  Cut =     5463.  T =     0.00 sec
+ABC: P:  Del = 1530.00.  Ar =      71.0.  Edge =      117.  Cut =     5461.  T =     0.00 sec
+ABC: P:  Del = 1530.00.  Ar =      65.0.  Edge =      120.  Cut =     6694.  T =     0.00 sec
+ABC: F:  Del = 1510.00.  Ar =      42.0.  Edge =      120.  Cut =     5812.  T =     0.00 sec
+ABC: A:  Del = 1510.00.  Ar =      42.0.  Edge =      120.  Cut =     6061.  T =     0.00 sec
+ABC: A:  Del = 1510.00.  Ar =      42.0.  Edge =      120.  Cut =     6058.  T =     0.00 sec
+ABC: Total time =     0.00 sec
+ABC: + &write -n <abc-temp-dir>/output.aig 
+ABC: + &mfs 
+ABC: Timing manager is given but there is no GIA of boxes.
+ABC: Error: Abc_FrameUpdateGia(): Transformation has failed.
+ABC: + &ps -l 
+ABC: <abc-temp-dir>/input : i/o =     98/     65  and =     177  lev =    6 (1.09)  mem = 0.01 MB  box = 0  bb = 0
+ABC: Mapping (K=7)  :  lut =     31  edge =     120  lev =    3 (0.42)  mem = 0.00 MB
+ABC: LUT = 31 : 2=1 3.2 %  3=8 25.8 %  4=19 61.3 %  5=1 3.2 %  6=1 3.2 %  7=1 3.2 %  Ave = 3.87
+ABC: + &write -n <abc-temp-dir>/output.aig 
+ABC: + &verify 
+ABC: Networks are equivalent.  Time =     0.01 sec
+ABC: + time 
+ABC: elapse: 0.02 seconds, total: 0.02 seconds
+
+4.46.12.6. Executing AIGER frontend.
+<suppressed ~8 debug messages>
+Removed 344 unused cells and 459 unused wires.
+
+4.46.12.7. Executing ABC_OPS_REINTEGRATE pass (reintegrate ABC mapped design into module).
+ABC RESULTS:              $lut cells:       31
+ABC RESULTS:           input signals:       10
+ABC RESULTS:          output signals:        8
+<suppressed ~326 debug messages>
+Removing temp directory.
+
+4.46.13. Executing TECHMAP pass (map to technology primitives).
+
+4.46.13.1. Executing Verilog-2005 frontend: /opt/homebrew/bin/../share/yosys/abc9_unmap.v
+Parsing Verilog input from `/opt/homebrew/bin/../share/yosys/abc9_unmap.v' to AST representation.
+Generating RTLIL representation for module `$__DFF_x__$abc9_flop'.
+Generating RTLIL representation for module `$__ABC9_SCC_BREAKER'.
+Successfully finished Verilog frontend.
+
+4.46.13.2. Continuing TECHMAP pass.
+No more expansions possible.
+<suppressed ~5 debug messages>
+Removed 13 unused cells and 621 unused wires.
+
+4.47. Executing TECHMAP pass (map to technology primitives).
+
+4.47.1. Executing Verilog-2005 frontend: /opt/homebrew/bin/../share/yosys/lattice/cells_map_trellis.v
+Parsing Verilog input from `/opt/homebrew/bin/../share/yosys/lattice/cells_map_trellis.v' to AST representation.
+Generating RTLIL representation for module `$_DFF_N_'.
+Generating RTLIL representation for module `$_DFF_P_'.
+Generating RTLIL representation for module `$_DFFE_NN_'.
+Generating RTLIL representation for module `$_DFFE_PN_'.
+Generating RTLIL representation for module `$_DFFE_NP_'.
+Generating RTLIL representation for module `$_DFFE_PP_'.
+Generating RTLIL representation for module `$_DFF_NP0_'.
+Generating RTLIL representation for module `$_DFF_NP1_'.
+Generating RTLIL representation for module `$_DFF_PP0_'.
+Generating RTLIL representation for module `$_DFF_PP1_'.
+Generating RTLIL representation for module `$_SDFF_NP0_'.
+Generating RTLIL representation for module `$_SDFF_NP1_'.
+Generating RTLIL representation for module `$_SDFF_PP0_'.
+Generating RTLIL representation for module `$_SDFF_PP1_'.
+Generating RTLIL representation for module `$_DFFE_NP0P_'.
+Generating RTLIL representation for module `$_DFFE_NP1P_'.
+Generating RTLIL representation for module `$_DFFE_PP0P_'.
+Generating RTLIL representation for module `$_DFFE_PP1P_'.
+Generating RTLIL representation for module `$_DFFE_NP0N_'.
+Generating RTLIL representation for module `$_DFFE_NP1N_'.
+Generating RTLIL representation for module `$_DFFE_PP0N_'.
+Generating RTLIL representation for module `$_DFFE_PP1N_'.
+Generating RTLIL representation for module `$_SDFFE_NP0P_'.
+Generating RTLIL representation for module `$_SDFFE_NP1P_'.
+Generating RTLIL representation for module `$_SDFFE_PP0P_'.
+Generating RTLIL representation for module `$_SDFFE_PP1P_'.
+Generating RTLIL representation for module `$_SDFFE_NP0N_'.
+Generating RTLIL representation for module `$_SDFFE_NP1N_'.
+Generating RTLIL representation for module `$_SDFFE_PP0N_'.
+Generating RTLIL representation for module `$_SDFFE_PP1N_'.
+Generating RTLIL representation for module `$_ALDFF_NP_'.
+Generating RTLIL representation for module `$_ALDFF_PP_'.
+Generating RTLIL representation for module `$_ALDFFE_NPN_'.
+Generating RTLIL representation for module `$_ALDFFE_NPP_'.
+Generating RTLIL representation for module `$_ALDFFE_PPN_'.
+Generating RTLIL representation for module `$_ALDFFE_PPP_'.
+Generating RTLIL representation for module `\FD1P3AX'.
+Generating RTLIL representation for module `\FD1P3AY'.
+Generating RTLIL representation for module `\FD1P3BX'.
+Generating RTLIL representation for module `\FD1P3DX'.
+Generating RTLIL representation for module `\FD1P3IX'.
+Generating RTLIL representation for module `\FD1P3JX'.
+Generating RTLIL representation for module `\FD1S3AX'.
+Generating RTLIL representation for module `\FD1S3AY'.
+Generating RTLIL representation for module `\FD1S3BX'.
+Generating RTLIL representation for module `\FD1S3DX'.
+Generating RTLIL representation for module `\FD1S3IX'.
+Generating RTLIL representation for module `\FD1S3JX'.
+Generating RTLIL representation for module `\IFS1P3BX'.
+Generating RTLIL representation for module `\IFS1P3DX'.
+Generating RTLIL representation for module `\IFS1P3IX'.
+Generating RTLIL representation for module `\IFS1P3JX'.
+Generating RTLIL representation for module `\OFS1P3BX'.
+Generating RTLIL representation for module `\OFS1P3DX'.
+Generating RTLIL representation for module `\OFS1P3IX'.
+Generating RTLIL representation for module `\OFS1P3JX'.
+Generating RTLIL representation for module `\IB'.
+Generating RTLIL representation for module `\IBPU'.
+Generating RTLIL representation for module `\IBPD'.
+Generating RTLIL representation for module `\OB'.
+Generating RTLIL representation for module `\OBZ'.
+Generating RTLIL representation for module `\OBZPU'.
+Generating RTLIL representation for module `\OBZPD'.
+Generating RTLIL representation for module `\OBCO'.
+Generating RTLIL representation for module `\BB'.
+Generating RTLIL representation for module `\BBPU'.
+Generating RTLIL representation for module `\BBPD'.
+Generating RTLIL representation for module `\ILVDS'.
+Generating RTLIL representation for module `\OLVDS'.
+Generating RTLIL representation for module `$lut'.
+Successfully finished Verilog frontend.
+
+4.47.2. Continuing TECHMAP pass.
+Using template $paramod$fd904e9e35cfd343a9df248824bd3f1408724879$lut for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000011\LUT=8'10111000 for cells of type $lut.
+Using template $paramod$ffbdf3001f0d2972a014e8e8948b59dcda97f633$lut for cells of type $lut.
+Using template $paramod$17f1b90a5c6d7e6613368c5e7d3f44dd634e59e2$lut for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000010\LUT=4'0100 for cells of type $lut.
+Using template $paramod$b661b352aaaaede82eff10093f8e324f8c958894$lut for cells of type $lut.
+Using template $paramod$b86b68a00733dbecb31d58a14a13683475a2002a$lut for cells of type $lut.
+Using template $paramod$d2b5e7b5429639878c0a614cf001753581eebd9c$lut for cells of type $lut.
+Using template $paramod$6ed82a5d3084c810f3ff97e53f9bda11e08152bf$lut for cells of type $lut.
+Using template $paramod$251994398653c4cf8de320f1e306e535d5d2d624$lut for cells of type $lut.
+Using template $paramod$6a34cd5b50e324824168b4186d0b04ba5e83b039$lut for cells of type $lut.
+Using template $paramod$5ed059b4e4d917104a14ca4288ca3f18f1408bd6$lut for cells of type $lut.
+Using template $paramod$lut\WIDTH=32'00000000000000000000000000000011\LUT=8'10010110 for cells of type $lut.
+No more expansions possible.
+<suppressed ~272 debug messages>
+
+4.48. Executing OPT_LUT_INS pass (discard unused LUT inputs).
+Optimizing LUTs in harness_nms_weight_packed.
+  Optimizing lut $abc$2938$lut$aiger2937$112.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.lut2 (4 -> 0)
+  Optimizing lut $abc$2938$lut$aiger2937$105.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.lut4 (4 -> 0)
+  Optimizing lut $abc$2938$lut$aiger2937$105.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.lut5 (4 -> 0)
+  Optimizing lut $abc$2938$lut$aiger2937$105.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.lut6 (4 -> 0)
+  Optimizing lut $abc$2938$lut$aiger2937$105.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.lut7 (4 -> 0)
+  Optimizing lut $abc$2938$lut$aiger2937$112.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.lut1 (4 -> 0)
+  Optimizing lut $abc$2938$lut$aiger2937$112.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.lut0 (4 -> 0)
+  Optimizing lut $abc$2938$lut$aiger2937$105.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.lut1 (4 -> 0)
+  Optimizing lut $abc$2938$lut$aiger$o0.genblk1.genblk1.genblk1.genblk1.genblk1.lut0 (4 -> 0)
+Removed 0 unused cells and 67 unused wires.
+
+4.49. Executing AUTONAME pass.
+Renamed 168 objects in module harness_nms_weight_packed.
+<suppressed ~168 debug messages>
+
+4.50. Executing HIERARCHY pass (managing design hierarchy).
+Attribute `top' found on module `harness_nms_weight_packed'. Setting top module to harness_nms_weight_packed.
+
+4.50.1. Analyzing design hierarchy..
+Top module:  \harness_nms_weight_packed
+
+4.50.2. Analyzing design hierarchy..
+Top module:  \harness_nms_weight_packed
+Removed 0 unused modules.
+
+4.51. Printing statistics.
+
+=== harness_nms_weight_packed ===
+
+        +----------Local Count, excluding submodules.
+        | 
+       82 wires
+     1508 wire bits
+       82 public wires
+     1508 public wire bits
+        4 ports
+       18 port bits
+        5 cells
+        1   $scopeinfo
+        4   DP16KD
+      109 submodules
+        4   L6MUX21
+       42   LUT4
+        7   PFUMX
+       56   TRELLIS_FF
+
+=== design hierarchy ===
+
+        +----------Count including submodules.
+        | 
+        5 harness_nms_weight_packed
+
+        +----------Count including submodules.
+        | 
+       82 wires
+     1508 wire bits
+       82 public wires
+     1508 public wire bits
+        4 ports
+       18 port bits
+        - memories
+        - memory bits
+        - processes
+        5 cells
+        1   $scopeinfo
+        4   DP16KD
+      109 submodules
+        4   L6MUX21
+       42   LUT4
+        7   PFUMX
+       56   TRELLIS_FF
+
+4.52. Executing CHECK pass (checking for obvious problems).
+Checking module harness_nms_weight_packed...
+Found and reported 0 problems.
+
+4.53. Executing JSON backend.
+
+End of script. Logfile hash: 1b25e8506b, time: 0.43s, user: 0.39s, system: 0.01s, MEM: 32.58 MB peak
+Yosys 0.68+post (git sha1 c12172fbae8af5e20f6fb52e3d4e92d56ed587b6, Release, AppleClang clang++ 21.0.0.21000101)
+Time spent: 42% 21x read_verilog (0 sec), 33% 11x techmap (0 sec), ...

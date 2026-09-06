@@ -385,3 +385,716 @@ DIAGNOSIS METHOD (item 1): periodic $display cycle-by-cycle tracing of
   own owner/grant state, added temporarily to tb_memory_manager.v and
   removed once the bug was isolated and fixed -- the same "trace real
   signals, don't guess" discipline used throughout this project.
+
+ERR-0011
+timestamp: 2026-09-05T21:45:00Z
+git_commit: 63cac6a7e5e0126bb13bea89dfe21966d5c9a1a5 (+ uncommitted NMS STEP1 work)
+session: v2-NMS-STEP1-bandwidth-study
+module: hardware/v2/nms/rtl/ideal_memory_model.v, hardware/v2/nms/sim/tb_bandwidth_study.v
+context: building the NMS (Neural Memory System) STEP1 bandwidth
+  requirement study harness (EXP-0017) -- a NEW, simulation-only
+  idealized backing-store model + testbench, not part of the frozen
+  V2 datapath. Three real bugs were found and fixed in this new
+  harness itself before its output could be trusted, via the same
+  "trace real signals, don't guess" discipline as ERR-0006..0010.
+
+1. REGISTERED-GRANT DOUBLE ADMISSION (ideal_memory_model.v, first
+   revision):
+   SYMPTOM: the very first sweep combination hung indefinitely (no
+     CSV row produced after 2+ minutes of wall-clock simulation,
+     manually killed).
+   ROOT CAUSE: req_ready was a REGISTERED output (visible one cycle
+     after the arbiter's own grant decision), so a requester holding
+     req_valid high (standard valid/ready) would still see req_valid
+     asserted for a second cycle after being granted -- the arbiter's
+     round-robin scan would find that same still-high req_valid and
+     grant it AGAIN, double-admitting one logical request (or worse,
+     re-granting indefinitely under some timing, causing the hang).
+   FIX: made req_ready purely COMBINATIONAL (same cycle as req_valid,
+     ordinary same-cycle valid/ready), computed in a separate
+     always @* block; the clocked state-update logic reuses that same
+     cycle's combinational grant decision via non-blocking assignment.
+
+2. SINGLE-TRANSFER-AT-A-TIME SERIALIZATION CAP (ideal_memory_model.v,
+   second revision, after fixing item 1):
+   SYMPTOM: measured utilization collapsed to exactly 1/N_SLOTS at
+     every N_SLOTS>1 configuration regardless of configured bandwidth
+     (even cfg_bw_bytes=64, far above TILE_BYTES=16) -- a
+     suspiciously exact, BW-independent ratio, not a physically
+     motivated curve.
+   ROOT CAUSE: the model's "busy port" served only ONE TILE_BYTES-
+     sized transfer at a time regardless of cfg_bw_bytes, capping
+     aggregate system throughput at exactly 1 transfer/cycle once
+     bandwidth exceeded TILE_BYTES -- bandwidth above the per-transfer
+     floor was silently discarded instead of enabling several
+     concurrent transfers to drain in the same cycle.
+   FIX: rewrote the drain stage as a shared per-cycle byte BUDGET
+     (cfg_bw_bytes) applied against the queue head, completing as
+     many whole TILE_BYTES-sized transfers as the budget allows in one
+     cycle (bounded unrolled loop, MAX_ITERS=16) before carrying any
+     leftover partial progress to the next cycle -- correctly
+     separates aggregate BANDWIDTH from per-transfer LATENCY.
+
+3. SINGLE-FLAG ISSUANCE THROTTLE (tb_bandwidth_study.v):
+   SYMPTOM: even after fixing items 1-2, utilization plateaued at
+     ~50% regardless of configured bandwidth (>=16) or
+     PREFETCH_DEPTH (tested up to 8) at latency=0 -- again a
+     suspiciously round, BW/PFD-independent ceiling.
+   ROOT CAUSE: each per-slot feeder tracked outstanding fetches with a
+     single registered `fetch_pending` flag (set, wait a cycle, clear
+     on grant, re-evaluate `want_fetch` only the FOLLOWING cycle) --
+     a serial ~2-cycle round trip per request REGARDLESS of
+     PREFETCH_DEPTH, an artificial testbench-side issuance-rate cap
+     unrelated to the memory bandwidth actually being studied.
+   FIX: tied `mem_req_valid` COMBINATIONALLY to `want_fetch` (safe
+     since ideal_memory_model's own admission is unconstrained,
+     req_ready mirrors req_valid every cycle) -- removed the
+     fetch_pending latch entirely, allowing issuance at up to
+     1 request/cycle/requester, matching real achievable demand.
+
+DIAGNOSIS METHOD: for item 1, direct hang observation + manual kill.
+  For items 2-3, isolated single-requester debug harnesses
+  (/tmp/tb_debug.v, /tmp/tb_debug2.v, not committed -- throwaway)
+  with cycle-by-cycle $display tracing of ideal_memory_model's own
+  internal head_active/head_remain/inq_count/lat_count via
+  hierarchical reference from the testbench, comparing the isolated
+  harness's hand-derivable expected rate (TILE_BYTES/cfg_bw_bytes
+  cycles/transfer) against the full sweep's reported utilization to
+  locate exactly which stage diverged from the physically-expected
+  value -- each bug was caught specifically because the buggy result
+  was a suspiciously ROUND, BW/PFD-INDEPENDENT ratio (1/N_SLOTS, then
+  0.5) rather than a smoothly-varying, physically-motivated curve.
+VERIFICATION: after all three fixes, minimum aggregate bandwidth for
+  >=90/95/99% of compute-only throughput scales EXACTLY linearly with
+  N_SLOTS at 16 bytes/cycle/slot (matching the raw P_IN=8 tile
+  demand, 2*P_IN bytes/tile at 1 tile/cycle) -- see EXP-0017.
+
+ERR-0012
+timestamp: 2026-09-05T22:10:00Z
+git_commit: 63cac6a7e5e0126bb13bea89dfe21966d5c9a1a5 (+ uncommitted NMS STEP3 work)
+session: v2-NMS-STEP3-bank-contention
+module: hardware/v2/nms/sim/tb_bank_contention.v
+context: building EXP-0018's bank-contention harness. Two real bugs
+  found via literal simulation hangs, same "trace real signals, don't
+  guess" discipline as ERR-0006..0011.
+
+1. FIXED-PRIORITY STARVATION:
+   SYMPTOM: every N_SLOTS>=2 run hung indefinitely at the very first
+     sweep combination (N_BANKS=1, stagger=0).
+   ROOT CAUSE: the bank arbiter picked the LOWEST-INDEX requester in a
+     bank every cycle, unconditionally -- with N_BANKS=1 and 2+ slots
+     wanting genuinely different tile indices, the lowest-index slot
+     always won every tie, permanently starving every other slot
+     (whose tile_idx never advances, so its done_flag never sets, so
+     the sweep driver's own "while(!all_done)" loop never exits).
+   FIX: added a per-bank ROUND-ROBIN priority pointer, rotated to
+     (last winner's index + 1) after every cycle it wins -- guarantees
+     every requester is eventually served even under permanent
+     contention. Directly matches the user's own NMS spec requirement
+     ("Evita starvation", §10).
+2. STAGE-BOOKKEEPING/DUT MISMATCH (job_started latched on job_ready
+   alone):
+   SYMPTOM: after fixing item 1, every combo with STAGGER>0 still hung
+     on its LAST slot.
+   ROOT CAUSE: `if (!job_started[s] && job_ready_s[s]) job_started[s]
+     <= 1;` gated only on job_ready_s[s], which neural_processor.v
+     asserts whenever it is idle REGARDLESS of job_valid -- for a
+     staggered slot whose job_valid gate hadn't opened yet, job_ready
+     was already high (idle) at cycle 0, so job_started[s] latched
+     immediately and incorrectly, permanently deasserting job_valid_s[s]
+     (`gate && !job_started[s]`) before the real, staggered job_valid
+     pulse was ever generated -- the testbench's own bookkeeping
+     believed the job had started while the real DUT (neural_processor.v)
+     sat in NP_IDLE forever, never having seen a real job_valid&&
+     job_ready handshake.
+   FIX: gated the latch on the ACTUAL accepted handshake,
+     `job_valid_s[s] && job_ready_s[s]`, not job_ready_s[s] alone.
+DIAGNOSIS METHOD: cycle-by-cycle $display tracing (tile_idx, np_state,
+  req/ack, done flags per slot) added to a throwaway debug copy of the
+  testbench, with a hard cycle-count bailout to avoid an actual
+  infinite wait -- isolated item 2 specifically by noticing np_state
+  for the stalled slot stayed at NP_IDLE (0) forever even though this
+  testbench's own act_req_valid for that slot was already high,
+  meaning the DUT and the testbench bookkeeping disagreed about
+  whether the job had started.
+VERIFICATION: after both fixes, all 4 N_SLOTS x 20 combos (80 total)
+  complete and produce the clean, monotonic-in-N_BANKS,
+  monotonic-in-stagger results reported in EXP-0018.
+
+ERR-0013
+timestamp: 2026-09-06T01:45:00Z
+git_commit: 5c9ec61 (+ uncommitted NMS STEP8 work)
+session: v2-NMS-STEP8-integration
+module: hardware/v2/nms/rtl/nms_memory_manager.v
+context: building/verifying nms_dataflow_core.v (STEP8 full NMS
+  integration: Dependency Manager -> Neural Director -> N_SLOTS x
+  (nms_memory_manager + neural_processor), backed by
+  nms_activation_replicated.v/nms_activation_fill_ctrl.v/
+  nms_weight_packed.v). Two real bugs found and fixed before trusting
+  correctness, via the same "trace real signals, don't guess"
+  discipline as ERR-0006..0012.
+
+1. MISSING SECOND PIPELINE STAGE ON SRAM READS:
+   SYMPTOM: node0's own first (and only) tile computed result=0
+     instead of the expected 48 (2*3*8) -- a real, deterministic
+     wrong-answer bug, not a hang.
+   ROOT CAUSE: both nms_activation_replicated.v and
+     nms_weight_packed.v register rd_en THEN register the memory read
+     off that same registered rd_en (`if (rd_en) rd_data_reg <=
+     mem[addr];`) -- asserting rd_en at cycle T only becomes visible
+     to the SRAM's own always block at cycle T+1, which THEN schedules
+     the actual read for T+2. nms_memory_manager.v's own read-issue
+     logic used a SINGLE `read_issued` flag, capturing act_rd_data/
+     wgt_rd_data into input_data/weight_data exactly the cycle
+     `read_issued` first became visible (T+1) -- one full cycle too
+     early, grabbing the SRAM's stale (pre-read) output. Traced via
+     cycle-by-cycle tracing of act_rd_en/act_rd_data/wgt_rd_en/
+     wgt_rd_data/operand_valid/input_data/weight_data: at the exact
+     cycle op_valid first asserted, act_rd_data/wgt_rd_data already
+     held the CORRECT values (2 and 3) but input_data/weight_data
+     (captured the SAME cycle via non-blocking assignment) still read
+     as their PREVIOUS value (0), one cycle stale.
+   FIX: added a second flag (`read_ready`), turning the single-stage
+     read_issued -> capture sequence into a genuine 2-stage pipeline
+     (read_issued: SRAM now computing; read_ready: SRAM output now
+     valid, capture NOW) matching the SRAM's own real 2-cycle
+     rd_en-to-data latency.
+2. STALE-VALUE RACE IN THE PRIVATE WEIGHT PREFETCH RESTART LOGIC:
+   SYMPTOM: not caught by any n_tiles=1 test (all of this file's first
+     3 test groups used n_tiles=1) -- would have silently corrupted
+     every n_tiles>1 job, duplicating/skipping alternating tiles.
+   ROOT CAUSE: `if (job_active_reg && !pf_busy && !pf_start &&
+     (wgt_fetched < n_tiles_reg[...])) pf_start<=1; pf_w_addr<=
+     w_base_reg + wgt_fetched*P_IN;` fires the SAME cycle pf_done
+     completes a fetch (prefetch_engine.v's own ST_DONE clears
+     fetch_busy the same cycle it pulses fetch_done), reading the OLD
+     (pre-increment) wgt_fetched -- re-issuing a fetch for the tile
+     that JUST completed instead of the next one; that duplicate
+     fetch's own later completion then writes into the NEXT tile's
+     SRAM slot using the WRONG (duplicated) source data. Same bug
+     CLASS as ERR-0006 (gating solely on a signal with its own
+     same-cycle side effect).
+   FIX: added `&& !pf_done` to the restart condition.
+DIAGNOSIS METHOD: cycle-by-cycle $display tracing (act_rd_en/
+  act_rd_addr/act_rd_data/wgt_rd_en/wgt_rd_addr/wgt_rd_data/
+  operand_valid/input_data/weight_data, and separately mm_state/
+  np_state/result_valid/result_ready/result_data) added temporarily to
+  tb_nms_dataflow_core.v, gated by $time ranges around the specific
+  job windows of interest, removed once each bug was isolated and
+  fixed. Item 2 was only found AFTER item 1's fix, once a new
+  n_tiles=4 test (added specifically because every prior test used
+  n_tiles=1 and could not have exercised this path) was written and
+  initially failed.
+VERIFICATION: after both fixes, tb_nms_dataflow_core.v passes 7/7
+  (same DAG-dependency shape as tb_dataflow_core.v's own M7 test;
+  shared-x_base broadcast-fill test across 2 concurrently-dispatched
+  slots; new n_tiles=4 multi-tile test) at N_SLOTS=2, bit-exact.
+
+ERR-0014
+timestamp: 2026-09-06T03:00:00Z
+git_commit: 5c9ec61 (+ uncommitted NMS STEP9 work)
+session: v2-NMS-STEP9-real-benchmark
+module: hardware/v2/nms/rtl/nms_memory_manager.v,
+  hardware/v2/nms/rtl/nms_activation_fill_ctrl.v,
+  hardware/v2/nms/rtl/nms_dataflow_core.v
+context: running a REAL D-Stress-scale benchmark (256 neurons, 16
+  tiles each -- exactly MAX_TILES) through the real V1 PSRAM chain for
+  STEP9. Every prior NMS test (tb_nms_dataflow_core.v, STEP8) used
+  n_tiles in {1,4}, never n_tiles==MAX_TILES exactly -- this one real,
+  necessary scale change (16-tile neurons, matching the project's own
+  realistic dense-layer workloads) exposed THREE compounding real bugs,
+  all instances of the SAME root cause, found via a real hang (0/8
+  neurons completed) traced cycle-by-cycle across three separate fix
+  attempts.
+ROOT CAUSE (all three items): TIW=$clog2(MAX_TILES) sizes an SRAM
+  ADDRESS field (0..MAX_TILES-1), but several signals in this new
+  architecture are COUNTERS whose real value must reach MAX_TILES
+  itself (e.g. wgt_fetched/tile_idx/resident_count when a job's own
+  n_tiles equals MAX_TILES exactly) -- one bit short of what a counter
+  needs, though exactly right for an address.
+1. nms_memory_manager.v: `n_tiles_reg[TIW-1:0]` truncated the 16-bit
+   n_tiles value (16) down to 4 bits, wrapping it to 0 -- every
+   "< n_tiles" check was permanently false, so wgt_fetched never even
+   STARTED advancing (stuck at 0 forever). Fixed: compare the full
+   16-bit n_tiles_reg directly (zero-extending the narrower counter),
+   never truncate n_tiles_reg itself.
+2. Same modules: tile_idx/wgt_fetched/resident_count were themselves
+   declared TIW-bit (0..15 max), so even after fixing item 1's
+   comparison, incrementing wgt_fetched from 15 wrapped it back to 0
+   instead of reaching 16 -- an infinite re-fetch loop (real PSRAM
+   utilization visibly rose to 90%+ with zero forward progress).
+   Fixed: introduced a separate CNTW=$clog2(MAX_TILES+1) width for
+   these specific counters (one bit wider than TIW), keeping TIW only
+   for the SRAM address ports these counters occasionally drive
+   (explicit truncation at those specific assignment sites, always
+   safe since addressing only ever happens while the counter is
+   provably < MAX_TILES).
+3. Introduced WHILE fixing item 1: `can_present`'s own second term was
+   mistakenly rewritten to compare wgt_fetched against n_tiles_reg
+   (checking "is the fetch done" instead of the actually-needed "is
+   THIS tile's weight available", i.e. tile_idx < wgt_fetched) -- once
+   wgt_fetched legitimately reached n_tiles (16), that comparison went
+   permanently false and deadlocked consumption of the LAST tile
+   forever even though every tile was genuinely ready (real activation
+   resident_count kept climbing normally the whole time, isolating
+   this as a logic error, not a data/timing problem).
+4. Introduced WHILE fixing item 2: nms_dataflow_core.v's own top-level
+   wire connecting nms_activation_fill_ctrl.v's resident_count output
+   to nms_memory_manager.v's act_resident_count input was declared
+   `[TIW-1:0]` (4 bits), NOT widened to CNTW (5 bits) alongside the two
+   modules it connects -- a real value of 16 was silently truncated to
+   0 AT THE WIRE ITSELF, even though both endpoint modules' own
+   internal logic was by then already correct. Found by tracing
+   act_resident_count jumping from 15 directly to 0 (skipping 16)
+   exactly the cycle the real fetch completed pf_done=1.
+DIAGNOSIS METHOD: cycle-by-cycle $display tracing added to a scaled-
+  down repro (8 neurons instead of 256, same real PSRAM model/n_tiles
+  =16) at each of 3 successive fix attempts, isolating each remaining
+  symptom (wgt_fetched stuck at 0 -> wgt_fetched wrapping 15->0
+  forever -> resident_count itself jumping 15->0 instead of reaching
+  16) before moving to the next. One self-inflicted tracing mistake
+  along the way (re-copying the clean testbench source over an
+  already-instrumented copy, silently producing zero debug output
+  until noticed and corrected) cost one extra iteration but found
+  nothing new.
+VERIFICATION: after all four fixes, the scaled-down 8-neuron repro
+  passes bit-exact (6465 cycles), and the REAL, full-scale D-Stress
+  workload (256 neurons, 16 tiles each, through the real V1 PSRAM
+  chain) passes 256/256 bit-exact vs the golden model -- see EXP-0022.
+
+ERR-0015
+timestamp: 2026-09-05T23:41:08Z
+module: hardware/v2/nms/rtl/weight_prefetch_engine.v
+severity: CRITICAL (real, reproducible full deadlock -- 0/256 neurons
+  ever completed, watchdog timeout at 2,000,000 cycles, 0.0% PSRAM
+  utilization for the entire run)
+found_during: STEP11's own real, full-scale N_SLOTS=1 D-Stress
+  PREFETCH_DISTANCE sweep (PFD in {1,2,4,8,16,32}) through
+  tb_nms_dstress_pf.v -- required by the STEP11 spec's own explicit
+  instruction not to assume PFD=32 is simply "unnecessary" but to
+  actually measure it ("larger [PFD], if necessary").
+symptom: at PFD=32 (MAX_TILES=16, so CNTW=$clog2(MAX_TILES+1)=5 bits),
+  every one of the 256 D-Stress neurons hung forever -- the engine
+  never issued a single mem_req for the entire run.
+root_cause: window_limit was computed as
+  `consumed_count + PREFETCH_DISTANCE[CNTW-1:0]` -- i.e. the
+  PREFETCH_DISTANCE PARAMETER ITSELF (not a tile counter, unlike every
+  prior instance of this bug class) was truncated down to CNTW bits
+  before the addition. For MAX_TILES=16, CNTW=5 bits (0..31), so
+  PFD=32 (6'b100000) truncates to 5'b00000 = 0. window_limit then
+  equals consumed_count exactly, forever, so `fetch_tile < window_limit`
+  is never true (fetch_tile >= consumed_count always holds by
+  construction) -- more_to_fetch is permanently false, and the engine
+  never fetches a single word.
+  Same ROOT CAUSE CLASS as ERR-0014 (a value that must be able to
+  reach/exceed a bound gets silently wrapped by a too-narrow field),
+  but this time the truncated value is a user-supplied, unbounded
+  build-time PARAMETER (PREFETCH_DISTANCE) rather than an internal
+  tile counter -- a genuinely new instance, not a recurrence of the
+  same fixed bug, since PREFETCH_DISTANCE did not exist before this
+  STEP.
+fix: widened window_limit (and the two `fetch_tile [+1] < window_limit`
+  comparisons that use it) to a fixed 32-bit width, computed as
+  `{{(32-CNTW){1'b0}}, consumed_count} + PREFETCH_DISTANCE` (the
+  parameter itself, un-truncated) compared against a zero-extended
+  fetch_tile -- see weight_prefetch_engine.v's own updated comment at
+  the window_limit declaration.
+verification: added a dedicated ERR-0015 regression case to
+  tb_weight_prefetch.v (`err0015_large_pfd_test`, gated `if (PFD>=32)`
+  so the file stays valid for every PFD it's compiled with) running a
+  full MAX_TILES=16 job at PFD=32 -- PASSES bit-exact post-fix
+  (confirmed: "PASS n_tiles=16 PFD=32 EXTRA_WAIT=0: ready_count=16,
+  all tiles bit-exact"). Re-ran the full tb_weight_prefetch.v suite at
+  PFD in {1,2,4,8,32}: 10/10 (9/9 at PFD=32, since the PFD/PFD+1 job-
+  size edge case is n/a once PFD>=MAX_TILES) tests PASS, 0 errors, at
+  every PFD tested.
+secondary testbench-only issue found and fixed alongside (NOT an RTL
+  bug): tb_weight_prefetch.v's own `run_job(base, PFD, ...)` /
+  `run_job(base, PFD+1, ...)` edge-case calls and its windowing-cap
+  test's expected value both silently assumed PFD < MAX_TILES (asking
+  for a PFD+1-tile job when PFD+1 > MAX_TILES is asking the weight
+  SRAM to hold more tiles than it has, and the windowing cap can never
+  reach PFD once n_tiles/MAX_TILES itself is the tighter bound) --
+  fixed by gating those two run_job calls on `PFD < MAX_TILES` and
+  changing the windowing-cap expectation to `min(PFD, MAX_TILES)`.
+impact_on_step11_conclusions: none -- PFD=32 was never the STEP11
+  benchmark's real focus (the D-Stress MAX_TILES=16 workload makes any
+  PFD>=16 equivalent to "unbounded"); this bug would only have
+  surfaced if a user tried MAX_TILES>32 with a correspondingly large
+  PFD. Fixed regardless, since a build-time parameter silently
+  deadlocking the whole design outside its narrow tested range is a
+  real correctness defect, not a documentation footnote.
+
+ERR-0016
+timestamp: 2026-09-06T06:08:18Z
+module: hardware/v2/nms/rtl/sdram_controller.v
+severity: CRITICAL (real, reproducible bank-open-forever condition;
+  every READ/WRITE after the first corrupted the next transaction)
+found_during: STEP16 Phase 3 isolated regression (tb_sdram_controller.v,
+  BURST_LEN=4, CLK_FREQ_MHZ=166) -- first full run produced 0/460 tests
+  passed, 460 errors, with the real timing-checked sdram_model.v itself
+  flagging "ACTIVATE to bank 0 while already active" on nearly every
+  transaction.
+symptom: every ACTIVATE after the very first one hit a real protocol
+  violation in the behavioral model (bank never precharged/closed by
+  the previous transaction), and every read returned corrupted/shifted
+  data as a side effect of the row/bank state being wrong.
+root_cause: the READ/WRITE command's own address word was built as
+  `sdram_a <= {3'b000, 1'b1, req_col_reg}` with req_col_reg 8 bits wide
+  -- 3+1+8=12 bits total (correct width), but the concatenation placed
+  the auto-precharge '1' bit at position a[8], not a[10] where the
+  device's mode register / command decode actually expects it. A10 was
+  therefore always 0 on every real READ/WRITE -- auto-precharge was
+  silently never requested, so every opened row/bank stayed active
+  forever, and the next ACTIVATE (to a different row) hit a real
+  already-active bank.
+found_by: static/hand trace of the FSM against the model's own
+  violation messages -- not assumed, root-caused from the actual
+  simulation log.
+fix: `sdram_a <= {4'b0100, req_col_reg};` -- places the '1' at bit 10
+  exactly, with a[11]/a[9]/a[8] correctly tied 0.
+verification: re-ran tb_sdram_controller.v (BURST_LEN=4, 166MHz) --
+  the "ACTIVATE while already active" violation disappeared completely;
+  see ERR-0017/ERR-0018 for the remaining data-corruption bugs found
+  after this fix, and EXP-0040 for the final clean 460/460 PASS run.
+
+ERR-0017
+timestamp: 2026-09-06T06:08:18Z
+module: hardware/v2/nms/sim/sdram_model.v
+severity: HIGH (every WRITE burst's first word was silently dropped)
+found_during: STEP16 Phase 3 regression, same debugging session as
+  ERR-0016 (found immediately after fixing the A10 bug, since data
+  corruption persisted with the ACTIVATE violations gone).
+symptom: after ERR-0016's fix, reads still came back shifted -- the
+  first data word of every burst was missing/zero, later words shifted
+  down by one burst position.
+root_cause: the model captured write data into `mem[]` only from the
+  registered `wr_burst_active`-gated block, which does not become true
+  until the cycle AFTER the WRITE command is decoded. But real SDR
+  SDRAM presents the FIRST write word on DQ CONCURRENTLY with the
+  WRITE command itself, not one cycle later -- so the model's own
+  capture logic was structurally one cycle too late for word 0, and
+  silently never wrote it anywhere.
+fix: in the `cmd_write` branch (command-decode cycle itself), capture
+  word 0 directly into `mem[ba,bank_row[ba],a[7:0]]` right there, and
+  initialize `wr_col`/`wr_remaining` to already point at the SECOND
+  word/column for the (unchanged) registered continuation logic to
+  handle words 1..N-1. Special-cased burst_len==1 (single-word write,
+  no continuation needed).
+verification: re-ran the regression -- write side now matches the
+  controller's own per-cycle DQ timing exactly (confirmed by hand
+  cycle-trace before re-running); see ERR-0018 for the matching
+  read-side bug found next, and EXP-0040 for the final clean run.
+
+ERR-0018
+timestamp: 2026-09-06T06:08:18Z
+module: hardware/v2/nms/sim/sdram_model.v
+severity: HIGH (every READ burst arrived corrupted/shifted by two
+  cycles' worth of latency, in two separate compounding sub-bugs)
+found_during: STEP16 Phase 3 regression, immediately after ERR-0017's
+  fix (write side alone did not clear the corruption -- read side had
+  its own, structurally identical class of bug, discovered by the same
+  cycle-exact hand trace method used for ERR-0016/ERR-0017).
+symptom: reads still returned data shifted by 1-2 burst positions with
+  leading zeros, even though the underlying stored memory content was
+  now correct (per ERR-0017's fix).
+root_cause (two distinct, compounding one-cycle-latency bugs):
+  (a) the model's read-side pipe insertion was gated by the registered
+  `rd_burst_active`, which -- exactly like ERR-0017's write-side bug --
+  becomes true only the cycle AFTER the READ command is decoded, adding
+  a spurious extra pipeline cycle before the first word ever entered
+  the CAS-latency shift register.
+  (b) independently, the model's DQ output was driven through its own
+  registered NBA stage (`dq_out <= rd_pipe[0]` inside the same
+  always block), adding ANOTHER cycle of latency beyond the shift
+  register's own CAS_LATENCY depth -- real SDR SDRAM's output register
+  is already accounted for inside the published CAS_LATENCY spec value,
+  so this was a redundant, uncounted-for extra stage unique to how the
+  model was built (a 16-entry shift array PLUS a separate registered
+  output buffer), not something the controller's own CAS_LATENCY-cycle
+  wait_cnt derivation could have anticipated.
+fix: (a) mirrored the ERR-0017 write-side fix -- in the `cmd_read`
+  branch (command-decode cycle itself), insert word 0 directly into
+  `rd_pipe[cas_latency-1]` and initialize `rd_col`/`rd_remaining` to
+  already point at the second word for the registered continuation
+  logic (again special-cased burst_len==1). (b) converted `dq_out`/
+  `dq_out_en` from `reg` (NBA-driven) to `wire` (combinational,
+  `= rd_pipe[0]` / `= rd_valid_pipe[0]`), removing the extra output
+  register stage entirely.
+verification: re-ran tb_sdram_controller.v (BURST_LEN=4, 166MHz) after
+  both fixes -- 460/460 tests PASS, 0 errors, bit-exact across every
+  Phase 3 scenario (A/B/E/F/H/I/G). See EXP-0040 for the full result.
+
+ERR-0019
+timestamp: 2026-09-06T06:08:18Z
+module: hardware/v2/nms/rtl/sdram_controller.v
+severity: CRITICAL (real, reproducible full deadlock -- caller waits
+  forever for `ready` that never comes)
+found_during: STEP16 Phase 4 real 100/133/166MHz x BURST_LEN{1,4,8}
+  measurement sweep -- 8/9 configurations passed cleanly, but
+  BURST_LEN=1 @ CLK_FREQ_MHZ=133 hung indefinitely (confirmed via a
+  backgrounded run: >50s of continuous 100% CPU with zero output,
+  killed and root-caused rather than assumed to be a slow-but-finite
+  run).
+symptom: tb_sdram_controller.v's do_transaction task deadlocks inside
+  `while (!ready) @(posedge clk);` for one specific transaction in the
+  400-iteration Test G sequence, at this one specific frequency/burst
+  combination (BURST_LEN=4 and BURST_LEN=8 at the same 133MHz did NOT
+  hang, confirmed by isolated re-run).
+root_cause: this project's own established mem_req convention (per
+  weight_prefetch_engine.v's header comment) is a SINGLE-CYCLE req
+  pulse, not a held/latched signal. sdram_controller.v's S_IDLE state
+  gave periodic AUTO REFRESH unconditional priority over a same-cycle
+  `req` ("if (refresh_timer==0) ... else if (req) ..."), and did
+  nothing to capture the request's fields when refresh won -- so if a
+  test vector's req pulse happened to land on the exact cycle
+  refresh_timer reached 0, the request was silently discarded: the
+  caller's req had already gone low again on the next cycle (per the
+  single-pulse convention), the controller served the refresh with no
+  memory of the missed request, and no `ready` ever followed. This is
+  a general protocol race, not something inherent to 133MHz or
+  BURST_LEN=1 specifically -- it only reproduced there because that is
+  where this test sequence's absolute cycle counts happened to align
+  the two events; the SAME race is latent at any frequency/burst
+  length whenever a real caller's timing lines up unluckily.
+fix: added a `req_pending` register that latches a fresh req's
+  wr/bank/row/col/wdata fields in S_IDLE the instant req is seen,
+  regardless of whether refresh wins arbitration that same cycle.
+  Added `eff_wr/eff_bank/eff_row/eff_col/eff_wdata` combinational
+  wires (`req ? <live input> : <latched req_*_reg>`) so the one real
+  S_IDLE branch that starts a transaction handles both "req arriving
+  fresh this cycle" and "req deferred behind a just-finished refresh"
+  uniformly, without duplicating the ACTIVATE-issuing code path.
+  `req_pending` resets to 0 under `rst`.
+verification: re-ran the full 3x3 (100/133/166MHz x BURST_LEN 1/4/8)
+  sweep after the fix -- all 9 configurations now PASS 460/460, 0
+  errors, including the previously-hanging BURST_LEN=1/133MHz case
+  (re-confirmed finishing in <1s wall time, not merely "eventually").
+  See EXP-0041 for the full sweep result and the real measured
+  cycles/transaction used for Phase 4's throughput calculations.
+
+ERR-0020
+timestamp: 2026-09-06T06:08:18Z
+module: hardware/v2/nms/rtl/sdram_controller.v
+severity: CRITICAL (real, reproducible full-system deadlock -- 28/256
+  neurons never completed, both slots of an N=2 run permanently
+  starved; the isolated single-requester regression NEVER exercised
+  this because it always issues req from S_IDLE, never overlapping a
+  real arbiter's own outstanding-transaction bookkeeping)
+found_during: STEP16 Phase 5 real FPGA-Neural integration (tb_nms_
+  dstress_sdram.v, N_SLOTS_CFG=2, D-Stress 256-neuron workload) -- the
+  SAME workload at N_SLOTS_CFG=4 passed cleanly (49430 cycles, 256/256
+  bit-exact), but N_SLOTS_CFG=2 hung at 228/256 neurons after 2,000,000
+  watchdog cycles (40x more cycles than N=4's entire run took to
+  finish all 256).
+symptom: added temporary hierarchical debug tracing (both slots' own
+  nms_memory_manager_stream_wide state, plus the SDRAM controller's and
+  slot_mem_arbiter_wide's own internal state) to the watchdog's
+  periodic $display. Trace showed: both slots permanently stuck at
+  tile_idx=0/wgt_ready_count=0 (ST_RUN, waiting forever for the first
+  weight tile), while simultaneously sdram_controller.v itself sat
+  completely idle (req=0, busy=0, state=S_IDLE, req_pending=0) AND
+  slot_mem_arbiter_wide.v's own `owner` register was permanently
+  locked non-zero (a grant it believed was still in flight) with a
+  SECOND port's request stuck in `pending`, unable to ever be granted
+  because the arbiter was waiting for an `m_ready` that would never
+  come from a controller that had already forgotten the request.
+root_cause: ERR-0019's fix only latched a fresh `req` into
+  `req_pending` from WITHIN the S_IDLE case-statement branch. The real
+  arbiter (slot_mem_arbiter_wide.v) pulses its own `m_req` for exactly
+  one cycle the instant it grants a new owner -- which can be ANY
+  cycle, including one where sdram_controller.v happens to be mid-
+  refresh (S_REFRESH_WAIT) or finishing a PREVIOUS transaction's own
+  PRECHARGE_WAIT tail, i.e. NOT executing the S_IDLE branch that
+  cycle. In that case the old fix's own req-latch code never even ran,
+  so the request was silently dropped exactly as it was before
+  ERR-0019's fix -- just for a DIFFERENT interfering state (a real
+  case the isolated regression's own single-requester testbench could
+  never reach, since it always waits for `busy==0` -- itself only
+  cleared in S_IDLE -- before ever asserting req, so its req pulses
+  are always S_IDLE-synchronous by construction).
+fix: moved the req-latching code out of the S_IDLE branch entirely and
+  into the always-executed section that runs every cycle regardless of
+  `state` (alongside the existing unconditional refresh_timer
+  decrement) -- so a req pulse arriving during ANY state is captured
+  into req_pending/req_*_reg, not just one arriving while already in
+  S_IDLE. S_IDLE's own servicing logic (`req || req_pending`, `eff_*`
+  wires) is unchanged.
+verification: re-ran the full Phase 3 isolated regression (9/9
+  frequency/burst-length configurations, 460/460 tests each) --
+  unaffected, still 100% PASS, confirming the fix is a pure superset
+  (catches a strictly larger set of req-arrival cycles, changes no
+  existing passing behavior). Re-ran the STEP16 Phase 5 N=2 D-Stress
+  benchmark -- now PASSES cleanly, 256/256 neurons bit-exact, 52161
+  total cycles (previously hung indefinitely). Re-ran N=4 -- unchanged,
+  49430 cycles (confirms the fix does not alter already-correct
+  behavior, only recovers previously-lost requests). See EXP-0042 for
+  the full Phase 5 N=2/N=4 integration results.
+
+ERR-0021
+timestamp: 2026-09-06T10:22:22Z
+module: hardware/v2/rtl/dependency_manager.v
+severity: HIGH (real, reproducible bit-exact regression -- a node
+  dispatched twice; caught before being kept, via a standalone
+  regression, NOT shipped)
+found_during: STEP17 Part A's own "minimum fix experiment" -- an
+  attempt to pipeline the first_ready_idx/any_ready priority-encoder
+  scan (EXP-0044's own identified critical path) by one register
+  stage, to shorten the scan-to-array-read combinational chain that
+  limits N=4 Fmax to 81.55MHz.
+symptom: after the fix, the full N=2/N=4 D-Stress regression showed
+  jobs_allocated=266 (N=2) / 268 (N=4), both > the expected 256 --
+  and roughly half the 256 neurons' results read back as 0 instead of
+  their real golden value. A minimal standalone unit test (16
+  independent always-ready nodes, `ready_ready` held high, isolated
+  from the rest of the system) reproduced the exact mechanism: node 0
+  is DISPATCHED TWICE, at cycles 20ns apart (exactly one extra pipeline
+  cycle).
+root_cause: the scan (`first_ready_idx`/`any_ready`) is combinational
+  over node_state's PRE-edge value. On the exact cycle a dispatch
+  COMMITS (`ready_valid && ready_ready`, which schedules node_state
+  [ready_node_id] <= ST_DISPATCHED for the following cycle), the scan
+  THAT SAME cycle still sees the dispatching node as READY (its state
+  has not committed yet) -- an unconditional one-cycle register of the
+  scan's output would capture this still-READY snapshot, and one cycle
+  later (once node_state has actually committed and ready_valid has
+  dropped), the dispatch branch would fire again using the now-stale
+  snapshot, re-dispatching the just-dispatched node. A first attempted
+  repair -- gating the register update by `!ready_valid` -- did NOT fix
+  it: traced further (via the same standalone unit test) and found the
+  gate blocks the register from updating during the COMMIT cycle
+  itself (correct), but the register had ALREADY captured the stale
+  "node is READY" snapshot ONE CYCLE EARLIER (at the cycle the dispatch
+  was merely INITIATED, before ready_valid even reads 1), and that
+  stale value survives frozen through the commit cycle (blocked by the
+  gate) and is consumed immediately after, still stale by exactly one
+  cycle relative to the real commit.
+fix: NONE SHIPPED. The change was reverted in full (`git checkout --
+  hardware/v2/rtl/dependency_manager.v`), restoring the exact STEP16-
+  validated RTL. Re-confirmed via the full N=2/N=4 D-Stress regression
+  that reverting restores the original correct behavior (256/256
+  bit-exact, 49430/52161 cycles, matching STEP16 exactly).
+impact: none on the shipped design -- caught entirely within STEP17's
+  own investigation, before any P&R or benchmark result relying on the
+  broken version was reported as final. Documented here so a future
+  attempt at pipelining this scan does not repeat the same two failed
+  approaches; a fully correct version (if attempted again) will need
+  to reconcile the snapshot-capture cycle with the commit cycle more
+  carefully than a simple `!ready_valid` gate -- e.g. by explicitly
+  invalidating the registered snapshot when its own named node is the
+  one just committed, not merely suppressing updates during the commit
+  cycle.
+
+ERR-0022
+timestamp: 2026-09-06T12:30:00Z
+module: hardware/v2/nms/rtl/sdram_weight_backend_pack128.v (STEP18,
+  first draft)
+severity: HIGH (real, measured throughput REGRESSION -- not a crash or
+  data-corruption bug, but a real performance defect that would have
+  shipped as a "fix" if not benchmarked end-to-end before accepting it)
+found_during: STEP18 Part C/D "weight packing" experiment -- a new
+  BURST_LEN=8 (128-bit/16-byte, 2-tile) SDRAM weight-fetch wrapper,
+  designed to halve the number of real SDRAM transactions needed per
+  P8 weight tile by caching the "other half" of each 128-bit fetch for
+  the next sequential request.
+symptom: isolated unit-test regression (tb_sdram_weight_backend_pack128
+  .v, single requester, sequential access) passed 20/20, showing the
+  intended ~50% cache-hit rate (10 real fetches @16 cycles + 10 cache
+  hits @1 cycle for 20 requests). But the FULL N=4 D-Stress integration
+  benchmark got WORSE, not better: 74,004 cycles vs the STEP16 baseline
+  's 49,430 (+49.7%), despite remaining bit-exact correct.
+root_cause: the first draft used a SINGLE cache entry. In the real
+  system, N_SLOTS=4 independent memory managers share this ONE
+  physical backend through slot_mem_arbiter_wide.v, which interleaves
+  their requests round-robin. A single cache entry holding slot A's
+  own "other half" gets overwritten by slot B's own "other half" (a
+  DIFFERENT address) before slot A's memory manager ever comes back
+  around to request its own paired tile -- so nearly EVERY access
+  became a real 16-cycle miss instead of the intended ~50% instant
+  hit, and 16 cycles/miss is WORSE than the STEP16 baseline's 10-cycle
+  BURST_LEN=4 transactions. This was found by actually running the
+  full integrated benchmark, not by trusting the isolated single-
+  requester unit test's own PASS result -- exactly the class of gap
+  the governing spec's own "this hypothesis MUST be tested, not
+  assumed" instruction anticipates.
+fix: widened the cache from 1 entry to N_ENTRIES (parameter, sized to
+  the real N_SLOTS in the system, default 4) with fully-associative
+  address-tag lookup and simple round-robin eviction. This is SAFE
+  regardless of sizing accuracy (an evicted-too-early entry only costs
+  an extra real fetch -- a performance effect, never incorrect data,
+  since a cache MISS always falls back to a real, address-exact
+  fetch) and bounded correctly by construction: each slot has at most
+  one outstanding request at a time (the existing memory manager's own
+  design), so at most N_SLOTS "pending other halves" can exist
+  simultaneously in real traffic -- never more than N_ENTRIES=N_SLOTS.
+verification: re-ran the full N=2/N=4 D-Stress regression -- now a
+  REAL improvement: N=4 44,935 cycles (-9.1% vs the 49,430 baseline),
+  N=2 47,399 cycles (-9.1% vs the 52,161 baseline), both 256/256
+  bit-exact. See EXP-0046 for the full before/after comparison.
+
+ERR-0023
+timestamp: 2026-09-06T11:26:46Z
+module: hardware/v2/nms/rtl/sdram_unified_backend.v (STEP19, new module)
+severity: CRITICAL (real, reproducible full-system deadlock -- 0/256
+  neurons completed; found immediately on the first real N=4 D-Stress
+  integration run, before being shipped)
+found_during: STEP19 -- consolidating the two previously-separate
+  physical memory paths (weight-fetch SDRAM + activation/result PSRAM)
+  into ONE physical SDRAM chip serving all three traffic classes
+  through a single sdram_controller.v instance, per this step's own
+  explicit "single external SDRAM only" mandate.
+symptom: the isolated unit regression (tb_sdram_unified_backend.v,
+  single requester on each of the W and AR ports, no contention)
+  passed 40/40. The first full N=4 D-Stress integration run deadlocked
+  completely: jobs_allocated stuck at 12, tiles_delivered=0,
+  neurons_completed=0/256, watchdog timeout at 2,000,000 cycles, AR
+  arbiter-side utilization pegged at 100% (permanently stuck).
+root_cause: this is the SAME bug class as ERR-0019/ERR-0020 in sdram_
+  controller.v itself, recurring one layer up. sdram_unified_backend.v
+  's own top-level S_IDLE arbitration between its W (weight) and AR
+  (activation/result) ports only checked the LIVE w_req/ar_req signals
+  -- a single-cycle req pulse (this project's own established
+  convention) arriving on a cycle this backend happened to be busy
+  servicing the OTHER port was silently dropped, and the caller
+  (slot_mem_arbiter.v or slot_mem_arbiter_wide.v) waited forever for a
+  `ready` that would never come. Under real N=4 contention (weight
+  prefetch traffic and the very first activation-fill read racing for
+  the same physical port from the start), this raced and deadlocked
+  immediately -- the isolated single-requester test structurally could
+  not reach this case (no contention exists there).
+fix (round 1): added req_pending latches for both W and AR ports,
+  mirroring sdram_controller.v's own corrected ERR-0020 fix (latch
+  unconditionally, every cycle, regardless of current state). This
+  introduced a SECOND, different real bug (see below) before the full
+  fix was correct.
+fix (round 2, the actual bug this ID documents): the unconditional
+  latch fires whenever w_req is seen, INCLUDING the cycle a request is
+  ALSO being fully serviced via the W-port's own single-cycle cache-hit
+  fast path (w_cache_hit, reused from sdram_weight_backend_pack128.v's
+  own STEP18 caching logic) -- that fast path does not go through the
+  same-cycle "new transaction" branch and therefore never clears the
+  just-set w_req_pending latch. The result: after every cache-hit
+  service, w_req_pending is left spuriously set, and on the FOLLOWING
+  idle cycle the backend issues a bogus extra real SDRAM fetch using
+  the STALE latched address from the already-completed request --
+  which then delivers ITS OWN (stale, wrong) data as if it were the
+  response to the NEXT genuinely new request, shifting every
+  subsequent W-port response by one position. Found via the isolated
+  regression itself regressing from 40/40 to 26/40 after round-1's own
+  fix, with a clear "off by one iteration" failure signature (got ==
+  previous iteration's own expected value) -- traced by hand-cycle
+  tracing the interaction between the unconditional latch and the
+  case-statement's own NBA ordering (last assignment in the same
+  always block, same time step, wins).
+fix (final): the w_cache_hit branch now explicitly clears
+  w_req_pending itself (`w_req_pending <= 1'b0`), overriding the
+  spurious set from the SAME cycle's unconditional latch (textually
+  later in the same always block, so it wins per standard Verilog NBA
+  ordering) -- cancelling the latch precisely when (and only when) the
+  SAME cycle's request was ALREADY fully handled via the fast path.
+verification: re-ran the isolated unit regression (40/40 PASS,
+  restored) and the full N=4 AND N=2 D-Stress integration benchmark --
+  both now PASS bit-exact (256/256 neurons), with real, sustained
+  multi-hundred-refresh-interval operation and zero deadlock/timeout/
+  dropped/duplicated results. See EXP-0048 for the full integration
+  results.

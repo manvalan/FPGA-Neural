@@ -1,0 +1,552 @@
+
+
+Info: Logic utilisation before packing:
+Info:     Total LUT4s:      4846/43848    11%
+Info:         logic LUTs:   2812/43848     6%
+Info:         carry LUTs:    996/43848     2%
+Info:           RAM LUTs:    692/ 5481    12%
+Info:          RAMW LUTs:    346/10962     3%
+
+Info:      Total DFFs:      6004/43848    13%
+
+Info: Packing IOs..
+Info: $psram_dq[15]$iobuf_i: psram_dq_$_TBUF__Y.Y
+Info: $psram_dq[14]$iobuf_i: psram_dq_$_TBUF__Y_15.Y
+Info: $psram_dq[13]$iobuf_i: psram_dq_$_TBUF__Y_14.Y
+Info: $psram_dq[12]$iobuf_i: psram_dq_$_TBUF__Y_13.Y
+Info: $psram_dq[11]$iobuf_i: psram_dq_$_TBUF__Y_12.Y
+Info: $psram_dq[10]$iobuf_i: psram_dq_$_TBUF__Y_11.Y
+Info: $psram_dq[9]$iobuf_i: psram_dq_$_TBUF__Y_10.Y
+Info: $psram_dq[8]$iobuf_i: psram_dq_$_TBUF__Y_9.Y
+Info: $psram_dq[7]$iobuf_i: psram_dq_$_TBUF__Y_8.Y
+Info: $psram_dq[6]$iobuf_i: psram_dq_$_TBUF__Y_7.Y
+Info: $psram_dq[5]$iobuf_i: psram_dq_$_TBUF__Y_6.Y
+Info: $psram_dq[4]$iobuf_i: psram_dq_$_TBUF__Y_5.Y
+Info: $psram_dq[3]$iobuf_i: psram_dq_$_TBUF__Y_4.Y
+Info: $psram_dq[2]$iobuf_i: psram_dq_$_TBUF__Y_3.Y
+Info: $psram_dq[1]$iobuf_i: psram_dq_$_TBUF__Y_2.Y
+Info: $psram_dq[0]$iobuf_i: psram_dq_$_TBUF__Y_1.Y
+Info: Packing constants..
+Info: Packing carries...
+Info: Packing LUTs...
+Info: Packing LUT5-7s...
+Info: Packing FFs...
+Info:     2736 FFs paired with LUTs.
+Info: Generating derived timing constraints...
+Info: Promoting globals...
+Info:     promoting clock net clk$TRELLIS_IO_IN to global network
+Info: Checksum: 0x649504e0
+
+Info: Device utilisation:
+Info: 	          TRELLIS_IO:     157/    245    64%
+Info: 	                DCCA:       1/     56     1%
+Info: 	              DP16KD:       0/    108     0%
+Info: 	          MULT18X18D:      32/     72    44%
+Info: 	              ALU54B:       0/     36     0%
+Info: 	             EHXPLLL:       0/      4     0%
+Info: 	             EXTREFB:       0/      2     0%
+Info: 	                DCUA:       0/      2     0%
+Info: 	           PCSCLKDIV:       0/      2     0%
+Info: 	             IOLOGIC:       0/    160     0%
+Info: 	            SIOLOGIC:       0/     85     0%
+Info: 	                 GSR:       0/      1     0%
+Info: 	               JTAGG:       0/      1     0%
+Info: 	                OSCG:       0/      1     0%
+Info: 	               SEDGA:       0/      1     0%
+Info: 	                 DTR:       0/      1     0%
+Info: 	             USRMCLK:       0/      1     0%
+Info: 	             CLKDIVF:       0/      4     0%
+Info: 	           ECLKSYNCB:       0/     10     0%
+Info: 	             DLLDELD:       0/      8     0%
+Info: 	              DDRDLL:       0/      4     0%
+Info: 	             DQSBUFM:       0/     10     0%
+Info: 	     TRELLIS_ECLKBUF:       0/      8     0%
+Info: 	        ECLKBRIDGECS:       0/      2     0%
+Info: 	                DCSC:       0/      2     0%
+Info: 	          TRELLIS_FF:    6004/  43848    13%
+Info: 	        TRELLIS_COMB:    5080/  43848    11%
+Info: 	        TRELLIS_RAMW:     173/   5481     3%
+
+Info: Placed 0 cells based on constraints.
+Info: Creating initial analytic placement for 6193 cells, random placement wirelen = 501683.
+Info:     at initial placer iter 0, wirelen = 18522
+Info:     at initial placer iter 1, wirelen = 15366
+Info:     at initial placer iter 2, wirelen = 14364
+Info:     at initial placer iter 3, wirelen = 13481
+Info: Running main analytical placer, max placement attempts per cell = 16379226.
+Info:     at iteration #1, type ALL: wirelen solved = 13356, spread = 91775, legal = 102139; time = 0.14s
+Info:     at iteration #2, type ALL: wirelen solved = 20348, spread = 65450, legal = 76519; time = 0.10s
+Info:     at iteration #3, type ALL: wirelen solved = 24614, spread = 57698, legal = 66114; time = 0.09s
+Info:     at iteration #4, type ALL: wirelen solved = 28073, spread = 53999, legal = 65606; time = 0.10s
+Info:     at iteration #5, type ALL: wirelen solved = 28434, spread = 52381, legal = 65600; time = 0.10s
+Info:     at iteration #6, type ALL: wirelen solved = 29167, spread = 50620, legal = 63488; time = 0.11s
+Info:     at iteration #7, type ALL: wirelen solved = 29950, spread = 51283, legal = 63584; time = 0.10s
+Info:     at iteration #8, type ALL: wirelen solved = 30855, spread = 50533, legal = 61410; time = 0.10s
+Info:     at iteration #9, type ALL: wirelen solved = 31395, spread = 50508, legal = 60313; time = 0.09s
+Info:     at iteration #10, type ALL: wirelen solved = 32403, spread = 50131, legal = 61572; time = 0.11s
+Info:     at iteration #11, type ALL: wirelen solved = 32885, spread = 50204, legal = 61427; time = 0.10s
+Info:     at iteration #12, type ALL: wirelen solved = 33025, spread = 51042, legal = 62928; time = 0.10s
+Info:     at iteration #13, type ALL: wirelen solved = 33453, spread = 51250, legal = 60701; time = 0.08s
+Info:     at iteration #14, type ALL: wirelen solved = 33853, spread = 52032, legal = 64518; time = 0.09s
+Info: HeAP Placer Time: 1.99s
+Info:   of which solving equations: 1.01s
+Info:   of which spreading cells: 0.18s
+Info:   of which strict legalisation: 0.46s
+
+Info: Running simulated annealing placer for refinement.
+Info:   at iteration #1: temp = 0.000000, timing cost = 204, wirelen = 60313
+Info:   at iteration #5: temp = 0.000000, timing cost = 150, wirelen = 54376
+Info:   at iteration #10: temp = 0.000000, timing cost = 136, wirelen = 52588
+Info:   at iteration #15: temp = 0.000000, timing cost = 133, wirelen = 51968
+Info:   at iteration #20: temp = 0.000000, timing cost = 133, wirelen = 51723
+Info:   at iteration #25: temp = 0.000000, timing cost = 133, wirelen = 51589
+Info:   at iteration #25: temp = 0.000000, timing cost = 133, wirelen = 51590 
+Info: SA placement time 4.18s
+
+Info: Max frequency for clock '$glbnet$clk$TRELLIS_IO_IN': 48.70 MHz (FAIL at 80.00 MHz)
+
+Info: Max delay <async>                           -> <async>                          : 12.27 ns
+Info: Max delay <async>                           -> posedge $glbnet$clk$TRELLIS_IO_IN: 18.50 ns
+Info: Max delay posedge $glbnet$clk$TRELLIS_IO_IN -> <async>                          : 8.64 ns
+
+Info: Slack histogram:
+Info:  legend: * represents 51 endpoint(s)
+Info:          + represents [1,51) endpoint(s)
+Info: [ -8033,  -7035) |+
+Info: [ -7035,  -6037) |+
+Info: [ -6037,  -5039) | 
+Info: [ -5039,  -4041) | 
+Info: [ -4041,  -3043) | 
+Info: [ -3043,  -2045) | 
+Info: [ -2045,  -1047) | 
+Info: [ -1047,    -49) | 
+Info: [   -49,    949) |+
+Info: [   949,   1947) |*+
+Info: [  1947,   2945) |*******+
+Info: [  2945,   3943) |***+
+Info: [  3943,   4941) |*****+
+Info: [  4941,   5939) |***********+
+Info: [  5939,   6937) |***************+
+Info: [  6937,   7935) |*********************+
+Info: [  7935,   8933) |*************************************+
+Info: [  8933,   9931) |************************************************************ 
+Info: [  9931,  10929) |***********************************************************+
+Info: [ 10929,  11927) |****************************************************+
+Info: Checksum: 0x7342e501
+Info: Routing globals...
+Info:     routing clock net $glbnet$clk$TRELLIS_IO_IN using global 0
+
+Info: Routing..
+Info: Setting up routing queue.
+Info: Routing 30507 arcs.
+Info:            |   (re-)routed arcs  |   delta    | remaining|       time spent     |
+Info:    IterCnt |  w/ripup   wo/ripup |  w/r  wo/r |      arcs| batch(sec) total(sec)|
+Info:       1000 |       31        968 |   31   968 |     29549|       0.24       0.24|
+Info:       2000 |      131       1868 |  100   900 |     28655|       0.14       0.38|
+Info:       3000 |      212       2787 |   81   919 |     27753|       0.13       0.51|
+Info:       4000 |      270       3729 |   58   942 |     26815|       0.13       0.64|
+Info:       5000 |      447       4552 |  177   823 |     26025|       0.11       0.75|
+Info:       6000 |      500       5499 |   53   947 |     25084|       0.09       0.84|
+Info:       7000 |      597       6368 |   97   869 |     24211|       0.12       0.96|
+Info:       8000 |      696       7255 |   99   887 |     23327|       0.11       1.08|
+Info:       9000 |      776       8174 |   80   919 |     22413|       0.10       1.18|
+Info:      10000 |      825       9125 |   49   951 |     21464|       0.10       1.28|
+Info:      11000 |      865      10085 |   40   960 |     20513|       0.10       1.38|
+Info:      12000 |      917      11026 |   52   941 |     19566|       0.13       1.51|
+Info:      13000 |      972      11968 |   55   942 |     18633|       0.08       1.59|
+Info:      14000 |     1037      12887 |   65   919 |     17735|       0.11       1.70|
+Info:      15000 |     1085      13823 |   48   936 |     16788|       0.08       1.78|
+Info:      16000 |     1126      14775 |   41   952 |     15844|       0.09       1.87|
+Info:      17000 |     1169      15711 |   43   936 |     14899|       0.08       1.96|
+Info:      18000 |     1200      16627 |   31   916 |     13934|       0.09       2.05|
+Info:      19000 |     1243      17551 |   43   924 |     12980|       0.08       2.12|
+Info:      20000 |     1276      18433 |   33   882 |     12015|       0.08       2.20|
+Info:      21000 |     1314      19344 |   38   911 |     11057|       0.06       2.26|
+Info:      22000 |     1349      20244 |   35   900 |     10101|       0.08       2.35|
+Info:      23000 |     1404      21102 |   55   858 |      9173|       0.06       2.41|
+Info:      24000 |     1449      21998 |   45   896 |      8226|       0.11       2.52|
+Info:      25000 |     1496      22909 |   47   911 |      7276|       0.06       2.59|
+Info:      26000 |     1587      23817 |   91   908 |      6402|       0.15       2.74|
+Info:      27000 |     1672      24732 |   85   915 |      5516|       0.08       2.81|
+Info:      28000 |     1825      25579 |  153   847 |      4756|       0.18       2.99|
+Info:      29000 |     1958      26446 |  133   867 |      3926|       0.10       3.09|
+Info:      30000 |     2056      27326 |   98   880 |      3049|       0.15       3.24|
+Info:      31000 |     2142      28190 |   86   864 |      2149|       0.25       3.49|
+Info:      32000 |     2264      29037 |  122   847 |      1336|       0.37       3.86|
+Info:      33000 |     2437      29828 |  173   791 |       612|       0.57       4.44|
+Info:      33917 |     2655      30496 |  218   668 |         0|       1.12       5.56|
+Info: Routing complete.
+Info: Router1 time 5.56s
+Info: Checksum: 0x198c1857
+
+Info: Critical path report for clock '$glbnet$clk$TRELLIS_IO_IN' (posedge -> posedge):
+Info:       type curr  total name
+Info:   clk-to-q  0.40  0.40 Source u_dataflow_core.GEN_SLOT[0].u_mm.x_base_reg_TRELLIS_FF_Q_19.Q
+Info:    routing  0.89  1.29 Net u_dataflow_core.job_x_base_flat[19] (46,30) -> (46,33)
+Info:                          Sink u_dataflow_core.GEN_SLOT[0].u_mm.wgt_rd_en_TRELLIS_FF_Q_DI_LUT4_Z_C_LUT4_Z_D_LUT4_Z_1_D_L6MUX21_Z_D1_PFUMX_Z_ALUT_LUT4_Z.D
+Info:                          Defined in:
+Info:                               hardware/v2/nms/rtl/nms_activation_fill_ctrl.v:38.44-38.55
+Info:      logic  0.18  1.47 Source u_dataflow_core.GEN_SLOT[0].u_mm.wgt_rd_en_TRELLIS_FF_Q_DI_LUT4_Z_C_LUT4_Z_D_LUT4_Z_1_D_L6MUX21_Z_D1_PFUMX_Z_ALUT_LUT4_Z.F
+Info:    routing  0.00  1.47 Net u_dataflow_core.GEN_SLOT[0].u_mm.wgt_rd_en_TRELLIS_FF_Q_DI_LUT4_Z_C_LUT4_Z_D_LUT4_Z_1_D_L6MUX21_Z_D1_PFUMX_Z_ALUT (46,33) -> (46,33)
+Info:                          Sink u_dataflow_core.GEN_SLOT[0].u_mm.wgt_rd_en_TRELLIS_FF_Q_DI_LUT4_Z_C_LUT4_Z_D_LUT4_Z_1_D_L6MUX21_Z_D1_PFUMX_Z_BLUT_LUT4_Z.F1
+Info:                          Defined in:
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/cells_map_trellis.v:141.30-141.32
+Info:      logic  0.13  1.59 Source u_dataflow_core.GEN_SLOT[0].u_mm.wgt_rd_en_TRELLIS_FF_Q_DI_LUT4_Z_C_LUT4_Z_D_LUT4_Z_1_D_L6MUX21_Z_D1_PFUMX_Z_BLUT_LUT4_Z.OFX
+Info:    routing  0.00  1.59 Net u_dataflow_core.GEN_SLOT[0].u_mm.wgt_rd_en_TRELLIS_FF_Q_DI_LUT4_Z_C_LUT4_Z_D_LUT4_Z_1_D_L6MUX21_Z_D1 (46,33) -> (46,33)
+Info:                          Sink u_dataflow_core.GEN_SLOT[0].u_mm.wgt_rd_en_TRELLIS_FF_Q_DI_LUT4_Z_C_LUT4_Z_D_LUT4_Z_1_D_L6MUX21_Z_D1_PFUMX_Z_ALUT_LUT4_Z.FXB
+Info:                          Defined in:
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/cells_map_trellis.v:141.38-141.40
+Info:      logic  0.18  1.77 Source u_dataflow_core.GEN_SLOT[0].u_mm.wgt_rd_en_TRELLIS_FF_Q_DI_LUT4_Z_C_LUT4_Z_D_LUT4_Z_1_D_L6MUX21_Z_D1_PFUMX_Z_ALUT_LUT4_Z.OFX
+Info:    routing  0.88  2.65 Net u_dataflow_core.GEN_SLOT[0].u_mm.wgt_rd_en_TRELLIS_FF_Q_DI_LUT4_Z_C_LUT4_Z_D_LUT4_Z_1_D[3] (46,33) -> (47,36)
+Info:                          Sink u_dataflow_core.GEN_SLOT[0].u_mm.wgt_rd_en_TRELLIS_FF_Q_DI_LUT4_Z_C_LUT4_Z_D_LUT4_Z_1.D
+Info:                          Defined in:
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/cells_map_trellis.v:108.23-108.24
+Info:      logic  0.18  2.84 Source u_dataflow_core.GEN_SLOT[0].u_mm.wgt_rd_en_TRELLIS_FF_Q_DI_LUT4_Z_C_LUT4_Z_D_LUT4_Z_1.F
+Info:    routing  1.01  3.84 Net u_dataflow_core.GEN_SLOT[0].u_mm.wgt_rd_en_TRELLIS_FF_Q_DI_LUT4_Z_C_LUT4_Z_D[2] (47,36) -> (37,37)
+Info:                          Sink u_dataflow_core.GEN_SLOT[0].u_mm.wgt_rd_en_TRELLIS_FF_Q_DI_LUT4_Z_C_LUT4_Z.C
+Info:                          Defined in:
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/cells_map_trellis.v:108.23-108.24
+Info:      logic  0.18  4.02 Source u_dataflow_core.GEN_SLOT[0].u_mm.wgt_rd_en_TRELLIS_FF_Q_DI_LUT4_Z_C_LUT4_Z.F
+Info:    routing  0.52  4.54 Net u_dataflow_core.GEN_SLOT[0].u_mm.wgt_rd_en_TRELLIS_FF_Q_DI_LUT4_Z_C[1] (37,37) -> (38,37)
+Info:                          Sink u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_B0_LUT4_Z_C_LUT4_Z_C_LUT4_Z_C_LUT4_Z_D_LUT4_Z.D
+Info:                          Defined in:
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/cells_map_trellis.v:108.23-108.24
+Info:      logic  0.18  4.72 Source u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_B0_LUT4_Z_C_LUT4_Z_C_LUT4_Z_C_LUT4_Z_D_LUT4_Z.F
+Info:    routing  0.33  5.05 Net u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_B0_LUT4_Z_C_LUT4_Z_C_LUT4_Z_C_LUT4_Z_D[1] (38,37) -> (38,37)
+Info:                          Sink u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_B0_LUT4_Z_C_LUT4_Z_C_LUT4_Z_C_LUT4_Z_D_LUT4_D.D
+Info:                          Defined in:
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/cells_map_trellis.v:108.23-108.24
+Info:      logic  0.18  5.23 Source u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_B0_LUT4_Z_C_LUT4_Z_C_LUT4_Z_C_LUT4_Z_D_LUT4_D.F
+Info:    routing  0.86  6.08 Net u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_B0_LUT4_Z_C_LUT4_Z_C_LUT4_Z_C_LUT4_Z_D_LUT4_D_Z[1] (38,37) -> (36,36)
+Info:                          Sink u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_B0_LUT4_Z_C_LUT4_Z_C_LUT4_Z_C_CCU2C_B0$CCU2_COMB1.B
+Info:                          Defined in:
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/cells_map_trellis.v:108.23-108.24
+Info:      logic  0.35  6.44 Source u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_B0_LUT4_Z_C_LUT4_Z_C_LUT4_Z_C_CCU2C_B0$CCU2_COMB1.FCO
+Info:    routing  0.00  6.44 Net $nextpnr_CCU2C_35$CIN (36,36) -> (36,36)
+Info:                          Sink $nextpnr_CCU2C_35$CCU2_COMB0.FCI
+Info:      logic  0.33  6.77 Source $nextpnr_CCU2C_35$CCU2_COMB0.F
+Info:    routing  0.37  7.14 Net u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_B0_LUT4_Z_C_LUT4_Z_C_LUT4_Z_C_CCU2C_B0_CIN_CCU2C_COUT_CIN_CCU2C_COUT_B0[4] (36,36) -> (38,36)
+Info:                          Sink u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_B0_LUT4_Z_C_LUT4_Z_C_LUT4_Z_C_LUT4_Z_D_LUT4_D_Z_LUT4_Z.D
+Info:                          Defined in:
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/cells_map_trellis.v:108.23-108.24
+Info:      logic  0.18  7.32 Source u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_B0_LUT4_Z_C_LUT4_Z_C_LUT4_Z_C_LUT4_Z_D_LUT4_D_Z_LUT4_Z.F
+Info:    routing  0.47  7.79 Net u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_B0_LUT4_Z_C_LUT4_Z_C_LUT4_Z_C[2] (38,36) -> (38,36)
+Info:                          Sink u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_B1_LUT4_Z_C_LUT4_Z_C_CCU2C_B1_COUT_LUT4_D_1_Z_LUT4_Z.D
+Info:                          Defined in:
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/cells_map_trellis.v:108.23-108.24
+Info:      logic  0.18  7.97 Source u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_B1_LUT4_Z_C_LUT4_Z_C_CCU2C_B1_COUT_LUT4_D_1_Z_LUT4_Z.F
+Info:    routing  0.90  8.87 Net u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_B1_LUT4_Z_C_LUT4_Z_C_CCU2C_B1_COUT_LUT4_D_1_Z[1] (38,36) -> (34,35)
+Info:                          Sink u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_B1_LUT4_Z_C_LUT4_Z_C_CCU2C_B1_CIN_CCU2C_COUT$CCU2_COMB0.B
+Info:                          Defined in:
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/cells_map_trellis.v:108.23-108.24
+Info:      logic  0.35  9.23 Source u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_B1_LUT4_Z_C_LUT4_Z_C_CCU2C_B1_CIN_CCU2C_COUT$CCU2_COMB0.FCO
+Info:    routing  0.00  9.23 Net u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_B1_LUT4_Z_C_LUT4_Z_C_CCU2C_B1_CIN_CCU2C_COUT$CCU2_FCI_INT (34,35) -> (34,35)
+Info:                          Sink u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_B1_LUT4_Z_C_LUT4_Z_C_CCU2C_B1_CIN_CCU2C_COUT$CCU2_COMB1.FCI
+Info:      logic  0.00  9.23 Source u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_B1_LUT4_Z_C_LUT4_Z_C_CCU2C_B1_CIN_CCU2C_COUT$CCU2_COMB1.FCO
+Info:    routing  0.00  9.23 Net u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_B1_LUT4_Z_C_LUT4_Z_C_CCU2C_B1_CIN (34,35) -> (35,35)
+Info:                          Sink u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_B1_LUT4_Z_C_LUT4_Z_C_CCU2C_B1$CCU2_COMB0.FCI
+Info:                          Defined in:
+Info:                               hardware/v2/nms/rtl/nms_activation_fill_ctrl.v:85.21-85.59
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/ccu2c_sim.vh:9.9-9.13
+Info:      logic  0.06  9.28 Source u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_B1_LUT4_Z_C_LUT4_Z_C_CCU2C_B1$CCU2_COMB0.FCO
+Info:    routing  0.00  9.28 Net u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_B1_LUT4_Z_C_LUT4_Z_C_CCU2C_B1$CCU2_FCI_INT (35,35) -> (35,35)
+Info:                          Sink u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_B1_LUT4_Z_C_LUT4_Z_C_CCU2C_B1$CCU2_COMB1.FCI
+Info:      logic  0.00  9.28 Source u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_B1_LUT4_Z_C_LUT4_Z_C_CCU2C_B1$CCU2_COMB1.FCO
+Info:    routing  0.00  9.28 Net $nextpnr_CCU2C_31$CIN (35,35) -> (35,35)
+Info:                          Sink $nextpnr_CCU2C_31$CCU2_COMB0.FCI
+Info:      logic  0.33  9.61 Source $nextpnr_CCU2C_31$CCU2_COMB0.F
+Info:    routing  0.40  10.01 Net u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_B1_LUT4_Z_C_LUT4_Z_C_CCU2C_B1_COUT (35,35) -> (36,33)
+Info:                          Sink u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_B1_LUT4_Z_C_LUT4_Z_C_CCU2C_B1_COUT_LUT4_D.D
+Info:                          Defined in:
+Info:                               hardware/v2/nms/rtl/nms_activation_fill_ctrl.v:85.21-85.59
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/ccu2c_sim.vh:9.9-9.13
+Info:      logic  0.18  10.19 Source u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_B1_LUT4_Z_C_LUT4_Z_C_CCU2C_B1_COUT_LUT4_D.F
+Info:    routing  0.78  10.96 Net u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_B1_LUT4_Z_C_CCU2C_B1_COUT_LUT4_D_Z_LUT4_Z_C[2] (36,33) -> (35,35)
+Info:                          Sink u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_B1_LUT4_Z_C_LUT4_Z.D
+Info:                          Defined in:
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/cells_map_trellis.v:108.23-108.24
+Info:      logic  0.18  11.14 Source u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_B1_LUT4_Z_C_LUT4_Z.F
+Info:    routing  1.01  12.15 Net u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_B1_LUT4_Z_C[1] (35,35) -> (33,33)
+Info:                          Sink u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_B1_LUT4_Z_C_CCU2C_B1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT$CCU2_COMB1.B
+Info:                          Defined in:
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/cells_map_trellis.v:108.23-108.24
+Info:      logic  0.35  12.50 Source u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_B1_LUT4_Z_C_CCU2C_B1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT$CCU2_COMB1.FCO
+Info:    routing  0.00  12.50 Net u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_B1_LUT4_Z_C_CCU2C_B1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN (33,33) -> (34,33)
+Info:                          Sink u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_B1_LUT4_Z_C_CCU2C_B1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT$CCU2_COMB0.FCI
+Info:                          Defined in:
+Info:                               hardware/v2/nms/rtl/nms_activation_fill_ctrl.v:85.21-85.59
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/ccu2c_sim.vh:9.9-9.13
+Info:      logic  0.06  12.56 Source u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_B1_LUT4_Z_C_CCU2C_B1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT$CCU2_COMB0.FCO
+Info:    routing  0.00  12.56 Net u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_B1_LUT4_Z_C_CCU2C_B1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT$CCU2_FCI_INT (34,33) -> (34,33)
+Info:                          Sink u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_B1_LUT4_Z_C_CCU2C_B1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT$CCU2_COMB1.FCI
+Info:      logic  0.00  12.56 Source u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_B1_LUT4_Z_C_CCU2C_B1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT$CCU2_COMB1.FCO
+Info:    routing  0.00  12.56 Net u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_B1_LUT4_Z_C_CCU2C_B1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN (34,33) -> (34,33)
+Info:                          Sink u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_B1_LUT4_Z_C_CCU2C_B1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT$CCU2_COMB0.FCI
+Info:                          Defined in:
+Info:                               hardware/v2/nms/rtl/nms_activation_fill_ctrl.v:85.21-85.59
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/ccu2c_sim.vh:9.9-9.13
+Info:      logic  0.06  12.62 Source u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_B1_LUT4_Z_C_CCU2C_B1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT$CCU2_COMB0.FCO
+Info:    routing  0.00  12.62 Net u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_B1_LUT4_Z_C_CCU2C_B1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT$CCU2_FCI_INT (34,33) -> (34,33)
+Info:                          Sink u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_B1_LUT4_Z_C_CCU2C_B1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT$CCU2_COMB1.FCI
+Info:      logic  0.00  12.62 Source u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_B1_LUT4_Z_C_CCU2C_B1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT$CCU2_COMB1.FCO
+Info:    routing  0.00  12.62 Net u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_B1_LUT4_Z_C_CCU2C_B1_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN (34,33) -> (34,33)
+Info:                          Sink u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_B1_LUT4_Z_C_CCU2C_B1_CIN_CCU2C_COUT_CIN_CCU2C_COUT$CCU2_COMB0.FCI
+Info:                          Defined in:
+Info:                               hardware/v2/nms/rtl/nms_activation_fill_ctrl.v:85.21-85.59
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/ccu2c_sim.vh:9.9-9.13
+Info:      logic  0.06  12.67 Source u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_B1_LUT4_Z_C_CCU2C_B1_CIN_CCU2C_COUT_CIN_CCU2C_COUT$CCU2_COMB0.FCO
+Info:    routing  0.00  12.67 Net u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_B1_LUT4_Z_C_CCU2C_B1_CIN_CCU2C_COUT_CIN_CCU2C_COUT$CCU2_FCI_INT (34,33) -> (34,33)
+Info:                          Sink u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_B1_LUT4_Z_C_CCU2C_B1_CIN_CCU2C_COUT_CIN_CCU2C_COUT$CCU2_COMB1.FCI
+Info:      logic  0.00  12.67 Source u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_B1_LUT4_Z_C_CCU2C_B1_CIN_CCU2C_COUT_CIN_CCU2C_COUT$CCU2_COMB1.FCO
+Info:    routing  0.00  12.67 Net u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_B1_LUT4_Z_C_CCU2C_B1_CIN_CCU2C_COUT_CIN (34,33) -> (34,33)
+Info:                          Sink u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_B1_LUT4_Z_C_CCU2C_B1_CIN_CCU2C_COUT$CCU2_COMB0.FCI
+Info:                          Defined in:
+Info:                               hardware/v2/nms/rtl/nms_activation_fill_ctrl.v:85.21-85.59
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/ccu2c_sim.vh:9.9-9.13
+Info:      logic  0.06  12.73 Source u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_B1_LUT4_Z_C_CCU2C_B1_CIN_CCU2C_COUT$CCU2_COMB0.FCO
+Info:    routing  0.00  12.73 Net u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_B1_LUT4_Z_C_CCU2C_B1_CIN_CCU2C_COUT$CCU2_FCI_INT (34,33) -> (34,33)
+Info:                          Sink u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_B1_LUT4_Z_C_CCU2C_B1_CIN_CCU2C_COUT$CCU2_COMB1.FCI
+Info:      logic  0.00  12.73 Source u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_B1_LUT4_Z_C_CCU2C_B1_CIN_CCU2C_COUT$CCU2_COMB1.FCO
+Info:    routing  0.00  12.73 Net u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_B1_LUT4_Z_C_CCU2C_B1_CIN (34,33) -> (35,33)
+Info:                          Sink u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_B1_LUT4_Z_C_CCU2C_B1$CCU2_COMB0.FCI
+Info:                          Defined in:
+Info:                               hardware/v2/nms/rtl/nms_activation_fill_ctrl.v:85.21-85.59
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/ccu2c_sim.vh:9.9-9.13
+Info:      logic  0.06  12.78 Source u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_B1_LUT4_Z_C_CCU2C_B1$CCU2_COMB0.FCO
+Info:    routing  0.00  12.78 Net u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_B1_LUT4_Z_C_CCU2C_B1$CCU2_FCI_INT (35,33) -> (35,33)
+Info:                          Sink u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_B1_LUT4_Z_C_CCU2C_B1$CCU2_COMB1.FCI
+Info:      logic  0.00  12.78 Source u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_B1_LUT4_Z_C_CCU2C_B1$CCU2_COMB1.FCO
+Info:    routing  0.00  12.78 Net $nextpnr_CCU2C_33$CIN (35,33) -> (35,33)
+Info:                          Sink $nextpnr_CCU2C_33$CCU2_COMB0.FCI
+Info:      logic  0.33  13.11 Source $nextpnr_CCU2C_33$CCU2_COMB0.F
+Info:    routing  0.34  13.46 Net u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_B1_LUT4_Z_C_CCU2C_B1_COUT (35,33) -> (37,33)
+Info:                          Sink u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_B1_LUT4_Z_C_CCU2C_B1_COUT_LUT4_D.D
+Info:                          Defined in:
+Info:                               hardware/v2/nms/rtl/nms_activation_fill_ctrl.v:85.21-85.59
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/ccu2c_sim.vh:9.9-9.13
+Info:      logic  0.18  13.64 Source u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_B1_LUT4_Z_C_CCU2C_B1_COUT_LUT4_D.F
+Info:    routing  0.22  13.85 Net u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_B0_LUT4_Z_C[2] (37,33) -> (37,33)
+Info:                          Sink u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_B1_LUT4_Z.D
+Info:                          Defined in:
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/cells_map_trellis.v:108.23-108.24
+Info:      logic  0.18  14.03 Source u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_B1_LUT4_Z.F
+Info:    routing  1.01  15.05 Net u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_B1 (37,33) -> (35,32)
+Info:                          Sink u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT$CCU2_COMB1.B
+Info:      logic  0.35  15.40 Source u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT$CCU2_COMB1.FCO
+Info:    routing  0.00  15.40 Net u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN (35,32) -> (35,32)
+Info:                          Sink u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT$CCU2_COMB0.FCI
+Info:                          Defined in:
+Info:                               hardware/v2/nms/rtl/nms_activation_fill_ctrl.v:158.51-158.79
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/ccu2c_sim.vh:9.9-9.13
+Info:      logic  0.06  15.46 Source u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT$CCU2_COMB0.FCO
+Info:    routing  0.00  15.46 Net u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT$CCU2_FCI_INT (35,32) -> (35,32)
+Info:                          Sink u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT$CCU2_COMB1.FCI
+Info:      logic  0.00  15.46 Source u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT$CCU2_COMB1.FCO
+Info:    routing  0.00  15.46 Net u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN (35,32) -> (36,32)
+Info:                          Sink u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT$CCU2_COMB0.FCI
+Info:                          Defined in:
+Info:                               hardware/v2/nms/rtl/nms_activation_fill_ctrl.v:158.51-158.79
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/ccu2c_sim.vh:9.9-9.13
+Info:      logic  0.06  15.51 Source u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT$CCU2_COMB0.FCO
+Info:    routing  0.00  15.51 Net u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT$CCU2_FCI_INT (36,32) -> (36,32)
+Info:                          Sink u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT$CCU2_COMB1.FCI
+Info:      logic  0.00  15.51 Source u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT$CCU2_COMB1.FCO
+Info:    routing  0.00  15.51 Net u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN (36,32) -> (36,32)
+Info:                          Sink u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT$CCU2_COMB0.FCI
+Info:                          Defined in:
+Info:                               hardware/v2/nms/rtl/nms_activation_fill_ctrl.v:158.51-158.79
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/ccu2c_sim.vh:9.9-9.13
+Info:      logic  0.06  15.57 Source u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT$CCU2_COMB0.FCO
+Info:    routing  0.00  15.57 Net u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT$CCU2_FCI_INT (36,32) -> (36,32)
+Info:                          Sink u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT$CCU2_COMB1.FCI
+Info:      logic  0.00  15.57 Source u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT$CCU2_COMB1.FCO
+Info:    routing  0.00  15.57 Net u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT_CIN (36,32) -> (36,32)
+Info:                          Sink u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT$CCU2_COMB0.FCI
+Info:                          Defined in:
+Info:                               hardware/v2/nms/rtl/nms_activation_fill_ctrl.v:158.51-158.79
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/ccu2c_sim.vh:9.9-9.13
+Info:      logic  0.06  15.63 Source u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT$CCU2_COMB0.FCO
+Info:    routing  0.00  15.63 Net u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT$CCU2_FCI_INT (36,32) -> (36,32)
+Info:                          Sink u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT$CCU2_COMB1.FCI
+Info:      logic  0.00  15.63 Source u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_CIN_CCU2C_COUT_CIN_CCU2C_COUT$CCU2_COMB1.FCO
+Info:    routing  0.00  15.63 Net u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_CIN_CCU2C_COUT_CIN (36,32) -> (36,32)
+Info:                          Sink u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_CIN_CCU2C_COUT$CCU2_COMB0.FCI
+Info:                          Defined in:
+Info:                               hardware/v2/nms/rtl/nms_activation_fill_ctrl.v:158.51-158.79
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/ccu2c_sim.vh:9.9-9.13
+Info:      logic  0.06  15.68 Source u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_CIN_CCU2C_COUT$CCU2_COMB0.FCO
+Info:    routing  0.00  15.68 Net u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_CIN_CCU2C_COUT$CCU2_FCI_INT (36,32) -> (36,32)
+Info:                          Sink u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_CIN_CCU2C_COUT$CCU2_COMB1.FCI
+Info:      logic  0.00  15.68 Source u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_CIN_CCU2C_COUT$CCU2_COMB1.FCO
+Info:    routing  0.00  15.68 Net u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT_CIN (36,32) -> (37,32)
+Info:                          Sink u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT$CCU2_COMB0.FCI
+Info:                          Defined in:
+Info:                               hardware/v2/nms/rtl/nms_activation_fill_ctrl.v:158.51-158.79
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/arith_map_ccu2c.v:74.7-80.4
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/ccu2c_sim.vh:9.9-9.13
+Info:      logic  0.06  15.74 Source u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT$CCU2_COMB0.FCO
+Info:    routing  0.00  15.74 Net u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT$CCU2_FCI_INT (37,32) -> (37,32)
+Info:                          Sink u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT$CCU2_COMB1.FCI
+Info:      logic  0.00  15.74 Source u_dataflow_core.u_act_fill.state_TRELLIS_FF_Q_DI_LUT4_Z_D_CCU2C_COUT$CCU2_COMB1.FCO
+Info:    routing  0.00  15.74 Net $nextpnr_CCU2C_25$CIN (37,32) -> (37,32)
+Info:                          Sink $nextpnr_CCU2C_25$CCU2_COMB0.FCI
+Info:      logic  0.33  16.07 Source $nextpnr_CCU2C_25$CCU2_COMB0.F
+Info:    routing  0.82  16.89 Net u_dataflow_core.u_act_fill.pf_start_TRELLIS_FF_Q_LSR[2] (37,32) -> (46,31)
+Info:                          Sink u_dataflow_core.u_act_fill.pf_start_TRELLIS_FF_Q_LSR_LUT4_B.D
+Info:                          Defined in:
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/cells_map_trellis.v:108.23-108.24
+Info:      logic  0.18  17.07 Source u_dataflow_core.u_act_fill.pf_start_TRELLIS_FF_Q_LSR_LUT4_B.F
+Info:    routing  0.59  17.66 Net u_dataflow_core.u_act_fill.pf_start_TRELLIS_FF_Q_LSR_LUT4_B_Z (46,31) -> (41,29)
+Info:                          Sink u_dataflow_core.u_act_fill.pf_addr_TRELLIS_FF_Q_21.CE
+Info:      setup  0.00  17.66 Source u_dataflow_core.u_act_fill.pf_addr_TRELLIS_FF_Q_21.CE
+Info: 6.26 ns logic, 11.40 ns routing
+
+Info: Critical path report for cross-domain path '<async>' -> '<async>':
+Info:       type curr  total name
+Info:     source  0.00  0.00 Source reg_node_id[1]$tr_io.O
+Info:    routing  4.96  4.96 Net reg_node_id[1]$TRELLIS_IO_IN (90,44) -> (17,15)
+Info:                          Sink reg_ready_PFUMX_Z_C0_PFUMX_Z_C0_LUT4_Z_C_LUT4_Z_1.C
+Info:                          Defined in:
+Info:                               hardware/v2/rtl/dependency_manager.v:54.51-54.62
+Info:      logic  0.18  5.14 Source reg_ready_PFUMX_Z_C0_PFUMX_Z_C0_LUT4_Z_C_LUT4_Z_1.F
+Info:    routing  0.88  6.02 Net reg_ready_PFUMX_Z_C0_PFUMX_Z_1_C0[2] (17,15) -> (18,14)
+Info:                          Sink reg_ready_PFUMX_Z_C0_PFUMX_Z_1_C0_LUT4_Z_1_C_LUT4_Z_2.C
+Info:                          Defined in:
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/cells_map_trellis.v:108.23-108.24
+Info:      logic  0.18  6.20 Source reg_ready_PFUMX_Z_C0_PFUMX_Z_1_C0_LUT4_Z_1_C_LUT4_Z_2.F
+Info:    routing  0.58  6.77 Net reg_ready_PFUMX_Z_C0_PFUMX_Z_1_C0_LUT4_Z_1_C[4] (18,14) -> (16,15)
+Info:                          Sink reg_ready_PFUMX_Z_C0_LUT4_Z_D_PFUMX_Z_1_BLUT_LUT4_Z.M
+Info:                          Defined in:
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/cells_map_trellis.v:108.23-108.24
+Info:      logic  0.19  6.97 Source reg_ready_PFUMX_Z_C0_LUT4_Z_D_PFUMX_Z_1_BLUT_LUT4_Z.OFX
+Info:    routing  0.29  7.26 Net reg_ready_PFUMX_Z_C0_LUT4_Z_D[3] (16,15) -> (16,15)
+Info:                          Sink reg_ready_PFUMX_Z_C0_LUT4_Z.D
+Info:                          Defined in:
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/cells_map_trellis.v:108.23-108.24
+Info:      logic  0.18  7.43 Source reg_ready_PFUMX_Z_C0_LUT4_Z.F
+Info:    routing  0.51  7.94 Net reg_ready_PFUMX_Z_C0[4] (16,15) -> (16,16)
+Info:                          Sink reg_ready_PFUMX_Z_BLUT_LUT4_Z.M
+Info:                          Defined in:
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/cells_map_trellis.v:108.23-108.24
+Info:      logic  0.19  8.13 Source reg_ready_PFUMX_Z_BLUT_LUT4_Z.OFX
+Info:    routing  1.25  9.38 Net reg_ready$TRELLIS_IO_OUT (16,16) -> (0,17)
+Info:                          Sink reg_ready$tr_io.I
+Info:                          Defined in:
+Info:                               hardware/v2/rtl/dependency_manager.v:53.52-53.61
+Info: 0.93 ns logic, 8.45 ns routing
+
+Info: Critical path report for cross-domain path '<async>' -> 'posedge $glbnet$clk$TRELLIS_IO_IN':
+Info:       type curr  total name
+Info:     source  0.00  0.00 Source reg_node_id[1]$tr_io.O
+Info:    routing  4.96  4.96 Net reg_node_id[1]$TRELLIS_IO_IN (90,44) -> (17,15)
+Info:                          Sink reg_ready_PFUMX_Z_C0_PFUMX_Z_C0_LUT4_Z_C_LUT4_Z_1.C
+Info:                          Defined in:
+Info:                               hardware/v2/rtl/dependency_manager.v:54.51-54.62
+Info:      logic  0.18  5.14 Source reg_ready_PFUMX_Z_C0_PFUMX_Z_C0_LUT4_Z_C_LUT4_Z_1.F
+Info:    routing  0.88  6.02 Net reg_ready_PFUMX_Z_C0_PFUMX_Z_1_C0[2] (17,15) -> (18,14)
+Info:                          Sink reg_ready_PFUMX_Z_C0_PFUMX_Z_1_C0_LUT4_Z_1_C_LUT4_Z_2.C
+Info:                          Defined in:
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/cells_map_trellis.v:108.23-108.24
+Info:      logic  0.18  6.20 Source reg_ready_PFUMX_Z_C0_PFUMX_Z_1_C0_LUT4_Z_1_C_LUT4_Z_2.F
+Info:    routing  0.58  6.77 Net reg_ready_PFUMX_Z_C0_PFUMX_Z_1_C0_LUT4_Z_1_C[4] (18,14) -> (16,15)
+Info:                          Sink reg_ready_PFUMX_Z_C0_LUT4_Z_D_PFUMX_Z_1_BLUT_LUT4_Z.M
+Info:                          Defined in:
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/cells_map_trellis.v:108.23-108.24
+Info:      logic  0.19  6.97 Source reg_ready_PFUMX_Z_C0_LUT4_Z_D_PFUMX_Z_1_BLUT_LUT4_Z.OFX
+Info:    routing  0.29  7.26 Net reg_ready_PFUMX_Z_C0_LUT4_Z_D[3] (16,15) -> (16,15)
+Info:                          Sink reg_ready_PFUMX_Z_C0_LUT4_Z.D
+Info:                          Defined in:
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/cells_map_trellis.v:108.23-108.24
+Info:      logic  0.18  7.43 Source reg_ready_PFUMX_Z_C0_LUT4_Z.F
+Info:    routing  0.51  7.94 Net reg_ready_PFUMX_Z_C0[4] (16,15) -> (16,16)
+Info:                          Sink reg_ready_PFUMX_Z_BLUT_LUT4_Z.M
+Info:                          Defined in:
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/cells_map_trellis.v:108.23-108.24
+Info:      logic  0.19  8.13 Source reg_ready_PFUMX_Z_BLUT_LUT4_Z.OFX
+Info:    routing  1.31  9.44 Net reg_ready$TRELLIS_IO_OUT (16,16) -> (26,25)
+Info:                          Sink reg_valid_LUT4_B.D
+Info:                          Defined in:
+Info:                               hardware/v2/rtl/dependency_manager.v:53.52-53.61
+Info:      logic  0.18  9.62 Source reg_valid_LUT4_B.F
+Info:    routing  1.47  11.09 Net reg_valid_LUT4_B_Z[2] (26,25) -> (16,17)
+Info:                          Sink u_dataflow_core.u_dep_mgr.node_resolved[12]_TRELLIS_FF_Q_LSR_LUT4_Z_D_LUT4_Z.D
+Info:                          Defined in:
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/cells_map_trellis.v:108.23-108.24
+Info:      logic  0.18  11.27 Source u_dataflow_core.u_dep_mgr.node_resolved[12]_TRELLIS_FF_Q_LSR_LUT4_Z_D_LUT4_Z.F
+Info:    routing  0.86  12.13 Net u_dataflow_core.u_dep_mgr.node_resolved[12]_TRELLIS_FF_Q_LSR_LUT4_Z_D[2] (16,17) -> (13,12)
+Info:                          Sink u_dataflow_core.u_dep_mgr.node_resolved[12]_TRELLIS_FF_Q_LSR_LUT4_Z.D
+Info:                          Defined in:
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/cells_map_trellis.v:108.23-108.24
+Info:      logic  0.18  12.31 Source u_dataflow_core.u_dep_mgr.node_resolved[12]_TRELLIS_FF_Q_LSR_LUT4_Z.F
+Info:    routing  0.39  12.70 Net u_dataflow_core.u_dep_mgr.node_resolved[12]_TRELLIS_FF_Q_LSR[1] (13,12) -> (13,12)
+Info:                          Sink u_dataflow_core.u_dep_mgr.node_producer_ids[50]_LUT4_B_Z_PFUMX_ALUT_Z_LUT4_D_Z_LUT4_D_Z_LUT4_D_Z_LUT4_Z.D
+Info:                          Defined in:
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/cells_map_trellis.v:108.23-108.24
+Info:      logic  0.18  12.88 Source u_dataflow_core.u_dep_mgr.node_producer_ids[50]_LUT4_B_Z_PFUMX_ALUT_Z_LUT4_D_Z_LUT4_D_Z_LUT4_D_Z_LUT4_Z.F
+Info:    routing  0.72  13.60 Net u_dataflow_core.u_dep_mgr.node_producer_ids[50]_LUT4_B_Z_PFUMX_ALUT_Z_LUT4_D_Z_LUT4_D_Z_LUT4_D_Z[2] (13,12) -> (15,13)
+Info:                          Sink u_dataflow_core.u_dep_mgr.node_state[12]_TRELLIS_FF_Q_CE_LUT4_Z.D
+Info:                          Defined in:
+Info:                               /opt/homebrew/bin/../share/yosys/lattice/cells_map_trellis.v:108.23-108.24
+Info:      logic  0.18  13.78 Source u_dataflow_core.u_dep_mgr.node_state[12]_TRELLIS_FF_Q_CE_LUT4_Z.F
+Info:    routing  0.58  14.36 Net u_dataflow_core.u_dep_mgr.node_state[12]_TRELLIS_FF_Q_CE (15,13) -> (17,14)
+Info:                          Sink u_dataflow_core.u_dep_mgr.node_state[12]_TRELLIS_FF_Q_1.CE
+Info:      setup  0.00  14.36 Source u_dataflow_core.u_dep_mgr.node_state[12]_TRELLIS_FF_Q_1.CE
+Info: 1.83 ns logic, 12.53 ns routing
+
+Info: Critical path report for cross-domain path 'posedge $glbnet$clk$TRELLIS_IO_IN' -> '<async>':
+Info:       type curr  total name
+Info:   clk-to-q  0.40  0.40 Source u_psram_ctrl.dq_oe_TRELLIS_FF_Q.Q
+Info:    routing  4.60  4.99 Net u_psram_ctrl.dq_oe (51,8) -> (11,64)
+Info:                          Sink psram_dq[6]$tr_io$invert_T.A
+Info:                          Defined in:
+Info:                               hardware/v1/rtl/psram_controller.v:188.27-188.32
+Info:      logic  0.18  5.17 Source psram_dq[6]$tr_io$invert_T.F
+Info:    routing  0.86  6.03 Net psram_dq[6]$tr_io$invert_T$conn$Z (11,64) -> (11,71)
+Info:                          Sink psram_dq[6]$tr_io.T
+Info: 0.57 ns logic, 5.46 ns routing
+
+ERROR: Max frequency for clock '$glbnet$clk$TRELLIS_IO_IN': 56.62 MHz (FAIL at 80.00 MHz)
+
+Info: Max delay <async>                           -> <async>                          : 9.38 ns
+Info: Max delay <async>                           -> posedge $glbnet$clk$TRELLIS_IO_IN: 14.36 ns
+Info: Max delay posedge $glbnet$clk$TRELLIS_IO_IN -> <async>                          : 6.03 ns
+
+Info: Slack histogram:
+Info:  legend: * represents 59 endpoint(s)
+Info:          + represents [1,59) endpoint(s)
+Info: [ -5161,  -4313) |+
+Info: [ -4313,  -3465) |+
+Info: [ -3465,  -2617) | 
+Info: [ -2617,  -1769) | 
+Info: [ -1769,   -921) | 
+Info: [  -921,    -73) | 
+Info: [   -73,    775) | 
+Info: [   775,   1623) | 
+Info: [  1623,   2471) |+
+Info: [  2471,   3319) |*+
+Info: [  3319,   4167) |******+
+Info: [  4167,   5015) |*+
+Info: [  5015,   5863) |****+
+Info: [  5863,   6711) |*********+
+Info: [  6711,   7559) |**********+
+Info: [  7559,   8407) |*****************+
+Info: [  8407,   9255) |************************+
+Info: [  9255,  10103) |************************************************+
+Info: [ 10103,  10951) |************************************************************ 
+Info: [ 10951,  11799) |*******************************************************+
+0 warnings, 1 error
+
+Info: Program finished normally.

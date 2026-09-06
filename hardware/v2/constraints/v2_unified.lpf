@@ -1,0 +1,89 @@
+// FPGA-Neural V2 -- STEP19 single-SDRAM hardware freeze.
+// Target: nms_neural_multiprocessor_sdram_unified (N_SLOTS=4)
+// FPGA:   LFE5U-45F-8BG381, package CABGA381, speed grade -8
+//
+// STATUS: PARTIAL, now with real ball-level SDRAM assignment (see
+// below for how this improved after the freeze's own documentation
+// was drafted -- the real Lattice pinout CSV, FPGA-SC-02034-3-0-
+// ECP5U-45-Pinout.csv rev 3.0, was found to already be on disk at
+// ~/Downloads/, and its own summary at docs/pinouts.md (repo root)
+// already gives real JTAG/config/power ball assignments -- neither
+// was invented here).
+//
+//   - clk/rst: reuse hardware/v1/constraints/spi_neuron_top.lpf's own
+//     real, already-validated ball assignment for the SAME FPGA/
+//     package (H5, B4) -- the SAME physical signals, zero
+//     reinterpretation.
+//   - sdram_*: real balls from banks 6/7 of the same official CSV,
+//     selected as plain-GPIO pads (no PLL/PCLK dual function, avoiding
+//     balls reserved for clock-capable inputs) -- a real, sourced,
+//     but NOT YET electrically cross-verified assignment (VCCIO6/7
+//     bank voltage compatibility with the AS4C4M16SA-6TIN's own
+//     LVCMOS33 requirement should be confirmed against the real
+//     Lattice hardware checklist before board layout; not done this
+//     round).
+//
+// STILL NOT constrained: the 110-pin reg_* host bus -- deliberately
+// NOT ball-assigned yet, since that bus is itself a real, separate
+// BLOCKER (a raw test-harness parallel bus, not a physical protocol --
+// see PINOUT.md); assigning balls to an interface that will be
+// redesigned would be premature, wasted work.
+
+BLOCK ASYNCPATHS;
+BLOCK RESETPATHS;
+
+FREQUENCY PORT "clk" 80 MHZ;
+
+LOCATE COMP "clk" SITE "H5";
+IOBUF PORT "clk" IO_TYPE=LVCMOS33;
+
+LOCATE COMP "rst" SITE "B4";
+IOBUF PORT "rst" IO_TYPE=LVCMOS33;
+
+// ---- SDRAM interface (37 signals), real balls, banks 6/7 ----
+LOCATE COMP "sdram_cke"    SITE "B5"; IOBUF PORT "sdram_cke"    IO_TYPE=LVCMOS33;
+LOCATE COMP "sdram_cs_n"   SITE "C5"; IOBUF PORT "sdram_cs_n"   IO_TYPE=LVCMOS33;
+LOCATE COMP "sdram_ras_n"  SITE "C4"; IOBUF PORT "sdram_ras_n"  IO_TYPE=LVCMOS33;
+LOCATE COMP "sdram_cas_n"  SITE "A3"; IOBUF PORT "sdram_cas_n"  IO_TYPE=LVCMOS33;
+LOCATE COMP "sdram_we_n"   SITE "B3"; IOBUF PORT "sdram_we_n"   IO_TYPE=LVCMOS33;
+
+LOCATE COMP "sdram_ba[0]"  SITE "E4"; IOBUF PORT "sdram_ba[0]"  IO_TYPE=LVCMOS33;
+LOCATE COMP "sdram_ba[1]"  SITE "C3"; IOBUF PORT "sdram_ba[1]"  IO_TYPE=LVCMOS33;
+
+LOCATE COMP "sdram_a[0]"   SITE "D5"; IOBUF PORT "sdram_a[0]"   IO_TYPE=LVCMOS33;
+LOCATE COMP "sdram_a[1]"   SITE "D3"; IOBUF PORT "sdram_a[1]"   IO_TYPE=LVCMOS33;
+LOCATE COMP "sdram_a[2]"   SITE "F4"; IOBUF PORT "sdram_a[2]"   IO_TYPE=LVCMOS33;
+LOCATE COMP "sdram_a[3]"   SITE "E5"; IOBUF PORT "sdram_a[3]"   IO_TYPE=LVCMOS33;
+LOCATE COMP "sdram_a[4]"   SITE "E3"; IOBUF PORT "sdram_a[4]"   IO_TYPE=LVCMOS33;
+LOCATE COMP "sdram_a[5]"   SITE "F5"; IOBUF PORT "sdram_a[5]"   IO_TYPE=LVCMOS33;
+LOCATE COMP "sdram_a[6]"   SITE "A2"; IOBUF PORT "sdram_a[6]"   IO_TYPE=LVCMOS33;
+LOCATE COMP "sdram_a[7]"   SITE "B1"; IOBUF PORT "sdram_a[7]"   IO_TYPE=LVCMOS33;
+LOCATE COMP "sdram_a[8]"   SITE "C2"; IOBUF PORT "sdram_a[8]"   IO_TYPE=LVCMOS33;
+LOCATE COMP "sdram_a[9]"   SITE "C1"; IOBUF PORT "sdram_a[9]"   IO_TYPE=LVCMOS33;
+LOCATE COMP "sdram_a[10]"  SITE "D2"; IOBUF PORT "sdram_a[10]"  IO_TYPE=LVCMOS33;
+LOCATE COMP "sdram_a[11]"  SITE "D1"; IOBUF PORT "sdram_a[11]"  IO_TYPE=LVCMOS33;
+
+LOCATE COMP "sdram_dq[0]"  SITE "E1"; IOBUF PORT "sdram_dq[0]"  IO_TYPE=LVCMOS33;
+LOCATE COMP "sdram_dq[1]"  SITE "G5"; IOBUF PORT "sdram_dq[1]"  IO_TYPE=LVCMOS33;
+LOCATE COMP "sdram_dq[2]"  SITE "H3"; IOBUF PORT "sdram_dq[2]"  IO_TYPE=LVCMOS33;
+LOCATE COMP "sdram_dq[3]"  SITE "J5"; IOBUF PORT "sdram_dq[3]"  IO_TYPE=LVCMOS33;
+LOCATE COMP "sdram_dq[4]"  SITE "K3"; IOBUF PORT "sdram_dq[4]"  IO_TYPE=LVCMOS33;
+LOCATE COMP "sdram_dq[5]"  SITE "K2"; IOBUF PORT "sdram_dq[5]"  IO_TYPE=LVCMOS33;
+LOCATE COMP "sdram_dq[6]"  SITE "H1"; IOBUF PORT "sdram_dq[6]"  IO_TYPE=LVCMOS33;
+LOCATE COMP "sdram_dq[7]"  SITE "J1"; IOBUF PORT "sdram_dq[7]"  IO_TYPE=LVCMOS33;
+LOCATE COMP "sdram_dq[8]"  SITE "K1"; IOBUF PORT "sdram_dq[8]"  IO_TYPE=LVCMOS33;
+LOCATE COMP "sdram_dq[9]"  SITE "K4"; IOBUF PORT "sdram_dq[9]"  IO_TYPE=LVCMOS33;
+LOCATE COMP "sdram_dq[10]" SITE "L4"; IOBUF PORT "sdram_dq[10]" IO_TYPE=LVCMOS33;
+LOCATE COMP "sdram_dq[11]" SITE "L5"; IOBUF PORT "sdram_dq[11]" IO_TYPE=LVCMOS33;
+LOCATE COMP "sdram_dq[12]" SITE "M5"; IOBUF PORT "sdram_dq[12]" IO_TYPE=LVCMOS33;
+LOCATE COMP "sdram_dq[13]" SITE "M4"; IOBUF PORT "sdram_dq[13]" IO_TYPE=LVCMOS33;
+LOCATE COMP "sdram_dq[14]" SITE "N4"; IOBUF PORT "sdram_dq[14]" IO_TYPE=LVCMOS33;
+LOCATE COMP "sdram_dq[15]" SITE "N5"; IOBUF PORT "sdram_dq[15]" IO_TYPE=LVCMOS33;
+
+LOCATE COMP "sdram_dqm[0]" SITE "P5"; IOBUF PORT "sdram_dqm[0]" IO_TYPE=LVCMOS33;
+LOCATE COMP "sdram_dqm[1]" SITE "N3"; IOBUF PORT "sdram_dqm[1]" IO_TYPE=LVCMOS33;
+
+// ---- OPEN: reg_valid, reg_ready, reg_node_id, reg_required,
+// reg_producer_ids, reg_x_base, reg_w_base, reg_n_tiles,
+// reg_result_addr (110 signals, the raw host/registration bus) --
+// deliberately unassigned, see file header. ----

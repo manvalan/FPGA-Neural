@@ -363,3 +363,127 @@ decision: vedi decisions.log DEC-0016 -- vittoria reale netta
 next_action: nessuna ulteriore richiesta esplicitamente dall'utente per
   questo giro. Datasheet V2 professionale, ora con dati definitivi
   post-ottimizzazione da includere.
+
+=== Sessione: NMS (Neural Memory System) -- avvio, STEP1 ===
+timestamp: 2026-09-05
+session: v2-NMS-STEP1
+Avviato il nuovo progetto NMS (Neural Memory System), richiesto
+dall'utente per superare il collo di bottiglia PSRAM condiviso emerso
+dalla campagna finale V2 (91% utilizzo, N_SLOTS>=2 senza scaling
+reale). Obiettivo: separare COMPUTE DOMAIN (Neural Processor x N) da
+MEMORY DOMAIN (nuovo NMS: scheduler/prefetch/DMA/bank manager) da
+BACKING STORAGE (PSRAM V1, invariata). Sviluppato interamente sotto
+hardware/v2/nms/ (rtl/, sim/, docs/, reports/), senza toccare
+hardware/v2/rtl/ esistente (baseline V2 congelata e sempre
+confrontabile).
+
+Seguito l'ordine di lavoro esplicitamente richiesto dall'utente (NON
+scrivere RTL complesso prima di avere dati): completato STEP1
+(bandwidth requirement study) -- vedi experiments.log EXP-0017,
+errors.log ERR-0011 (3 bug reali trovati e risolti nel NUOVO harness
+di simulazione stesso, non nel V2 congelato), decisions.log DEC-0017.
+Nuovi file: hardware/v2/nms/rtl/ideal_memory_model.v (modello di
+memoria idealizzato, SOLO simulazione, mai sintetizzato),
+hardware/v2/nms/sim/tb_bandwidth_study.v (harness di sweep, riusa
+hardware/v2/rtl/neural_processor.v reale e invariato per il lato
+compute).
+next_action: STEP2 (analisi matematica del traffico, in gran parte
+  derivabile a costo zero dai dati EXP-0017) poi STEP3 (sweep
+  architetturale bank/bandwidth in simulazione, usando i floor di
+  EXP-0017/DEC-0017 come target di progetto, non come ipotesi).
+
+=== Sessione: NMS STEP3 (bank contention sweep) ===
+timestamp: 2026-09-05
+session: v2-NMS-STEP3
+Completato STEP3 (sweep architetturale bank/bandwidth in simulazione).
+Nuovi file: hardware/v2/nms/rtl/ideal_banked_activation.v (modello di
+riferimento a N_BANKS fisso), hardware/v2/nms/sim/tb_bank_contention.v
+(harness di sweep runtime su N_BANKS/stagger). Risultato chiave: con
+N_BANKS=N_SLOTS (banking + broadcast su stesso indirizzo + arbitraggio
+round-robin sui conflitti), lo scaling parallelo aggregato torna quasi
+lineare (N=8 -> 7.87x vs N=1) anche con stagger di dispatch realistico
+-- vedi EXP-0018/DEC-0018. 2 bug reali trovati e risolti nel nuovo
+harness (ERR-0012): priorita' fissa -> starvation permanente; latch
+job_started su job_ready invece che sull'handshake reale job_valid&&
+job_ready.
+next_action: STEP4 -- selezionare 2-3 architetture candidate per la
+  sintesi reale (Yosys+nextpnr-ecp5), usando N_BANKS=N_SLOTS come
+  candidato guida ma confrontando anche N_BANKS<N_SLOTS per il costo
+  reale BRAM/Fmax.
+
+=== Sessione: NMS STEP4/5/6 (candidati Activation + Weight SRAM, sintesi reale) ===
+timestamp: 2026-09-06
+session: v2-NMS-STEP4-STEP5-STEP6
+Completati STEP4 (selezione candidati), STEP5 (sintesi reale) e STEP6
+(place&route reale) per entrambe le meta' del sottosistema memoria NMS:
+
+Activation SRAM: 2 candidati reali (nms_activation_replicated.v,
+nms_activation_banked.v), entrambi verificati bit-exact in simulazione
+(broadcast, no-contesa, contesa forzata sullo stesso banco), poi
+sintetizzati per N_SLOTS=2/4/8 x MAX_TILES=16/256 -- vedi EXP-0019.
+Vinto: replicated (Fmax 2-4x piu' alto, ~24x meno LUT a N_SLOTS=8,
+nessun arbitraggio -> nessuna possibile starvation), costo reale BRAM
+accettabile (8 DP16KD, 7% del chip, a MAX_TILES=256/N_SLOTS=8) --
+DEC-0019.
+
+Weight SRAM: 2 candidati reali (nms_weight_direct.v, nms_weight_packed.v),
+entrambi verificati bit-exact, sintetizzati stesso sweep -- vedi
+EXP-0020. Vinto: packed (stessa BRAM di direct, ~2x meno LUT/FF a
+N_SLOTS=8/MAX_TILES=256, Fmax comparabile) -- DEC-0020.
+
+Costo reale combinato: 16 DP16KD (14.8% del chip) a N_SLOTS=8 con
+vettori profondi realistici -- onestamente accettabile.
+next_action: STEP7 e' concluso per la parte memoria. STEP8 --
+  integrazione NMS completa (prefetch engine, DMA, scheduler,
+  forwarding, interfaccia verso Neural Processor) -- ancora da fare.
+
+=== Sessione: NMS STEP8 (integrazione completa, bit-exact) ===
+timestamp: 2026-09-06
+session: v2-NMS-STEP8
+Completata l'integrazione STEP8: nms_dataflow_core.v (Dependency
+Manager + Neural Director riusati invariati + N_SLOTS x
+nms_memory_manager/neural_processor + nms_activation_fill_ctrl
+condiviso, su nms_activation_replicated.v + nms_weight_packed.v).
+2 bug reali trovati e risolti (ERR-0013): mancava un secondo stadio
+di pipeline sulla lettura SRAM (risultato calcolato = 0 invece del
+valore reale, causa lettura di un ciclo troppo presto); race nel
+riavvio del prefetch peso privato che duplicava/saltava tile alterni
+per job con n_tiles>1 (mai testato prima, dato che i primi test
+usavano tutti n_tiles=1). 7/7 test PASS bit-exact (stesso DAG di
+dataflow_core.v M7, test di broadcast su x_base condiviso, nuovo test
+n_tiles=4) -- EXP-0021/DEC-0021.
+next_action: STEP9 (benchmark end-to-end con Fmax reale da sintesi) e
+  STEP10 (tabella di confronto Current V2 vs NMS).
+
+=== Sessione: NMS STEP9/STEP10 (benchmark reale + confronto finale) -- ROADMAP CHIUSA ===
+timestamp: 2026-09-06
+session: v2-NMS-STEP9-STEP10
+Completati STEP9 (benchmark end-to-end reale, Fmax da sintesi reale) e
+STEP10 (confronto Current V2 vs NMS), chiudendo l'intera roadmap NMS
+(STEP1-STEP10).
+
+Nuovo file: nms_neural_multiprocessor.v (top-level reale, rispecchia
+neural_multiprocessor.v: nms_dataflow_core.v + slot_mem_arbiter.v reale
++ catena PSRAM V1 reale). Sintesi reale N_SLOTS=1/2/4/8. Benchmark
+D-Stress reale (256 neuroni, 16 tile, stesso workload della campagna
+V2) via psram_model.v reale, adattando tb_benchmark_suite.v.
+
+4 bug reali trovati e risolti (ERR-0014), tutti la stessa causa radice:
+un contatore che deve rappresentare il VALORE MAX_TILES stesso (non
+solo indicizzarlo 0..MAX_TILES-1) dichiarato con la larghezza sbagliata
+in 4 punti diversi (nms_memory_manager.v x2, nms_activation_fill_ctrl.v,
+e il wire di collegamento in nms_dataflow_core.v) -- mai esposto prima
+perche' nessun test STEP8 usava n_tiles=MAX_TILES esattamente.
+
+Risultato finale (EXP-0022/DEC-0022): a N_SLOTS=2 (la config
+raccomandata), NMS batte V2 attuale del 6.0% in wall-clock reale
+(93.10MHz vs 87.72MHz Fmax reale) usando il 55% in meno di LUT4 e il
+10% in meno di FF, a parita' di DSP/BRAM, bit-exact sullo stesso
+workload D-Stress. A N_SLOTS=4, invece, V2 attuale vince ancora
+(NMS -12.9%) per un problema di Fmax reale nel fill controller
+condiviso dell'activation (stesso tipo di problema gia' documentato
+per activation_cache.v in DEC-0016) -- pipeline del suo scan di
+priorita' e' il fix concreto, non ancora tentato.
+next_action: pipeline nms_activation_fill_ctrl.v per recuperare
+  N_SLOTS=4/8; completare N_SLOTS=1/8 su D-Stress per parita' con la
+  tabella V2. Nessun'altra richiesta esplicita dall'utente al momento.

@@ -1,0 +1,22 @@
+metric,n_slots2,n_slots4,unit,classification
+total_cycles,52161,49430,cycles,INTEGRATED BENCHMARK
+tiles_delivered,4096,4096,tiles,INTEGRATED BENCHMARK
+slot_cycle_budget,104322,197720,slot-cycles (N_SLOTS*total_cycles),DERIVED
+useful_mac_cycles,4080,4078,slot-cycles (tile-delivery events summed across slots),INTEGRATED BENCHMARK
+useful_mac_cycles_pct,3.91,2.06,percent of slot_cycle_budget,DERIVED
+weight_stall_cycles,86464,179756,slot-cycles,INTEGRATED BENCHMARK
+weight_stall_pct,82.88,90.91,percent of slot_cycle_budget,DERIVED
+per_slot_idle_cycles_sum,1072,1772,slot-cycles (sum of total_cycles-busy_cycles per slot),DERIVED
+per_slot_idle_pct,1.03,0.90,percent of slot_cycle_budget,DERIVED
+unaccounted_residual_slot_cycles,12706,12114,slot-cycles,DERIVED
+unaccounted_residual_pct,12.18,6.13,"percent of slot_cycle_budget (plausibly activation-wait + pipeline/tile-boundary bubbles + dispatch overhead -- NOT separately isolated this round; also includes a small ~16-tile/slot-cycle discrepancy between the two independent tile-delivery counters used, itself unexplained and disclosed rather than papered over)",DERIVED
+startup_cycles,56,56,cycles (before first tile delivered anywhere),INTEGRATED BENCHMARK
+drain_cycles,32,32,cycles (after last tile delivered until completion),INTEGRATED BENCHMARK
+sustained_mac_per_cycle,0.6282,0.6629,MAC/cycle,INTEGRATED BENCHMARK
+theoretical_peak_mac_per_cycle,16,32,MAC/cycle,THEORETICAL
+processor_utilization_pct,3.93,2.07,percent (sustained/theoretical_peak),DERIVED
+active_slots_0_pct,0.03,0.03,percent of cycles,INTEGRATED BENCHMARK
+active_slots_1_pct,2.00,0.03,percent of cycles,INTEGRATED BENCHMARK
+active_slots_2_pct,97.97,0.66,percent of cycles,INTEGRATED BENCHMARK
+active_slots_3_pct,NA,2.07,percent of cycles,INTEGRATED BENCHMARK
+active_slots_4_pct,NA,97.22,percent of cycles,INTEGRATED BENCHMARK

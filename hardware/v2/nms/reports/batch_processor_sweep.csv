@@ -1,0 +1,8 @@
+configuration,n_slots,pfd,cycles,cycles_per_tile_steady_state,sustained_mac_per_cycle,utilization_pct_theoretical,fmax_mhz,lut4,ccu2c,ff,dsp,bram,classification
+current_nms_pf_baseline,2,8,185398,4.0,0.1767,1.10,95.25,1908,362,3449,16,0,POST-P&R MEASURED + RTL SIMULATION (EXP-0024)
+isolated_trace_old_design_zero_latency,1,16,81,4.0,n/a,25.0,n/a,n/a,n/a,n/a,n/a,n/a,RTL SIMULATION isolated (EXP-0025) -- 4 cycles/tile hard floor, independent of memory latency
+isolated_trace_new_design_zero_latency_real_wpf,1,16,80,4.0,n/a,25.0,n/a,n/a,n/a,n/a,n/a,n/a,RTL SIMULATION isolated (EXP-0026) -- fix works but masked by weight-fetch word-rate (co-dominant 4 cyc/tile)
+isolated_trace_new_design_weightfetch_bypassed,1,16,30,1.0,n/a,100.0,n/a,n/a,n/a,n/a,n/a,n/a,RTL SIMULATION isolated scratch (EXP-0027) -- k->infinity endpoint: PROVES 4x ceiling removed once weight-fetch is not the limiter
+nms_stream_real_dstress,1,8,n/a,n/a,n/a,n/a,142.92,1433,206,2250,8,0,POST-P&R MEASURED (EXP-0028)
+nms_stream_real_dstress,2,8,185270,4.0,0.1769,1.11,92.57,2014,371,3459,16,0,POST-P&R MEASURED + RTL SIMULATION bit-exact PASS 256/256 (EXP-0028)
+nms_stream_real_dstress,4,8,n/a,n/a,n/a,n/a,55.22,2937,705,5877,32,0,POST-P&R MEASURED -- FAILS 80MHz target (EXP-0028 N=4 check; same pre-existing nms_activation_fill_ctrl.v priority-scan regression as EXP-0022, unrelated to this STEP's own fix)

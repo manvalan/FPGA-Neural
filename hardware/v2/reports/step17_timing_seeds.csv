@@ -1,0 +1,14 @@
+design,n_slots,seed,fmax_mhz,pass_at_80mhz,classification
+sdram,2,1,102.29,TRUE,POST-P&R
+sdram,2,2,94.32,TRUE,POST-P&R
+sdram,2,3,103.99,TRUE,POST-P&R
+sdram,4,1,80.15,TRUE,POST-P&R
+sdram,4,2,74.88,FALSE,POST-P&R
+sdram,4,3,81.55,TRUE,POST-P&R
+sdram,4,hifreq_target200,68.45_prelim_then_80.15_final,TRUE,POST-P&R
+dual_psram,2,1,100.48,TRUE,POST-P&R
+dual_psram,2,2,103.52,TRUE,POST-P&R
+dual_psram,2,3,101.37,TRUE,POST-P&R
+dual_psram,4,1,84.68,TRUE,POST-P&R
+dual_psram,4,2,77.72,FALSE,POST-P&R
+dual_psram,4,3,87.26,TRUE,POST-P&R

@@ -1,0 +1,6 @@
+config,n_slots,physical_bus_bits,internal_width_bits,burst_len,cache_entries,cycles,fmax_mhz_best,mb_s,mac_per_cycle,bit_exact,classification
+baseline,2,16,64,4,0,52161,103.99,50.26,0.6282,PASS,INTEGRATED BENCHMARK / POST-P&R
+baseline,4,16,64,4,0,49430,81.55,53.04,0.6629,PASS,INTEGRATED BENCHMARK / POST-P&R
+pack128_1entry_REJECTED,4,16,128,8,1,74004,not_synthesized,35.32,0.4428,PASS,INTEGRATED BENCHMARK (real regression, not accepted -- ERR-0022)
+pack128,2,16,128,8,4,47399,86.04,55.30,0.6913,PASS,INTEGRATED BENCHMARK / POST-P&R
+pack128,4,16,128,8,4,44935,81.47,58.34,0.7292,PASS,INTEGRATED BENCHMARK / POST-P&R
