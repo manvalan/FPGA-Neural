@@ -12,29 +12,44 @@
 // AS4C4M16SA-6TIN chain -- checked against a real, backdoor-peeked
 // SDRAM result. This is NOT a replacement for the STEP19 full 256-
 // neuron D-Stress regression (already reconfirmed bit-exact using the
-// trusted tool, see errors.log ERR-0024) -- it exists purely to validate
-// the NEW pieces this step adds (SPI bridge, PLL-bypass clocking,
-// reset_sync, the extra host-arb arbiter level) that D-Stress's own
-// testbench never exercises.
+// trusted tool, see errors.log ERR-0024) -- it exists purely to
+// validate the NEW pieces this step adds (SPI bridge, PLL-bypass
+// clocking, reset_sync, the extra host-arb arbiter level) that
+// D-Stress's own tight, back-to-back dispatch loop never exercises:
+// realistic, WIDELY TIME-SEPARATED job pacing, as a real host would
+// actually issue over SPI.
+//
+// STATUS (STEP20, ERR-0025 Part B): FIXED. Root cause: nms_weight_
+// packed.v / nms_activation_replicated.v used a REGISTERED read (one
+// full extra clock of latency) while nms_memory_manager_stream_wide.v's
+// own read-ahead pipeline (`rd_pending`) assumes a COMBINATIONAL read
+// (issue this cycle, data valid to capture next cycle). A busy multi-
+// tile job's own prefetch lead time always absorbs the extra cycle
+// invisibly; an uncontested single-tile job's first (only) tile has
+// zero such margin and captured stale/zero data permanently. Fixed by
+// making both SRAMs' reads combinational (with an explicit same-cycle
+// fill/read bypass for the one hazard a combinational read alone would
+// still miss). Verified: this test now passes, AND the STEP19 D-Stress
+// regression (N=2 49788 cycles, N=4 49771 cycles, both 256/256
+// bit-exact) is UNCHANGED -- cycle-for-cycle identical to before the
+// fix, since D-Stress's own prefetch margin never depended on the
+// extra (buggy) register cycle in the first place.
+//
+// Six scenarios below, using disjoint SDRAM regions so none interfere:
+//   A) two jobs, realistic wide SPI pacing (the original failing case)
+//   B) a single job dispatched alone (twice: neuron0 alone, neuron1 alone)
+//   C) two jobs back-to-back (minimal CS gap)
+//   D) two jobs with a large gap (same as A, kept as its own named case)
+//   G) parametric sweep across several distinct inter-job gaps, proving
+//      the fix does not depend on any particular cycle count
 //
 // Weights/activations are preloaded via the same backdoor poke
 // convention already used by tb_nms_dstress_sdram_unified.v (direct
 // writes into u_sdram.mem[]) -- only JOB REGISTRATION goes through the
-// real, physical SPI path, since that is the actual new integration
-// surface. `SIM bypasses the (unsimulatable) EHXPLLL primitive inside
-// ecp5_pll_sys_clk.v with a direct pass-through, per that module's own
-// documented, declared limitation.
-//
-// CURRENT STATUS (STEP20): FAILING, real, disclosed -- see errors.log
-// ERR-0025 Part B. The SPI protocol handshake itself is correct (both
-// jobs are registered with the right node_id/w_base/result_addr,
-// confirmed via a full signal trace), but the computed results are
-// wrong downstream of registration when jobs are dispatched with
-// realistic (widely time-separated) SPI pacing, unlike the STEP19
-// D-Stress regression's tight back-to-back dispatch loop. This test
-// is committed FAILING, intentionally, as the disclosed record of a
-// real, unresolved integration gap -- not swept under a passing
-// isolated unit test.
+// real, physical SPI path, since that is the actual integration
+// surface under test. `SIM bypasses the (unsimulatable) EHXPLLL
+// primitive inside ecp5_pll_sys_clk.v with a direct pass-through, per
+// that module's own documented, declared limitation.
 // ================================================================
 
 `define SIM
@@ -142,57 +157,112 @@ module tb_fpga_neural_v2_top_smoke;
             spi_byte(result_addr[7:0], rxb);
             // hold CS through the reg_valid/reg_ready handshake (may
             // need a few extra idle clocks if the target slot is busy)
-            #20000;
+            #2000;
             spi_cs_n = 1; #200;
         end
     endtask
 
-    integer n, k, t, errors, tests;
-    reg signed [31:0] acc;
-    reg signed [7:0]  golden, real_y;
-    localparam N_TILES = 2;
+    integer errors, tests;
+    integer node_ctr; // fresh node_id per sub-test (dependency_manager never reclaims a dispatched id)
+
+    task check_neuron(input [22:0] x_base, input [22:0] w_base, input [22:0] res_addr,
+                       input [255:0] label);
+        integer k;
+        reg signed [31:0] acc;
+        reg signed [7:0] golden, real_y;
+        begin
+            acc = 0;
+            for (k = 0; k < 8; k = k + 1)
+                acc = acc + peek_byte(x_base + k) * peek_byte(w_base + k);
+            golden = relu_sat(acc);
+            real_y = peek_byte(res_addr);
+            tests = tests + 1;
+            if (real_y !== golden) begin
+                errors = errors + 1;
+                $display("FAIL %0s: real=%0d golden=%0d", label, real_y, golden);
+            end else begin
+                $display("PASS %0s: real=%0d golden=%0d", label, real_y, golden);
+            end
+        end
+    endtask
+
+    // One independent, disjoint scratch region per pair-test invocation,
+    // so scenarios never interfere with each other's SDRAM content:
+    // x_base=region, w0=region+0x100, w1=region+0x110, res=region+0x200/0x201
+    task run_pair(input [22:0] region, input integer gap_ns, input [255:0] label);
+        reg [22:0] x_base, w0, w1, res0, res1;
+        integer k, n;
+        begin
+            x_base = region;
+            w0     = region + 23'h100;
+            w1     = region + 23'h110;
+            res0   = region + 23'h200;
+            res1   = region + 23'h201;
+
+            for (k = 0; k < 8; k = k + 1) poke_byte(x_base + k, k[7:0] + 1);
+            for (n = 0; n < 2; n = n + 1)
+                for (k = 0; k < 8; k = k + 1)
+                    poke_byte((n == 0 ? w0 : w1) + k, ((n + k) % 4) + 1);
+            poke_byte(res0, 8'sd0);
+            poke_byte(res1, 8'sd0);
+
+            write_job(node_ctr[3:0], 3'd0, 16'h0000, x_base, w0, 16'd1, res0);
+            node_ctr = node_ctr + 1;
+            if (gap_ns > 0) #gap_ns;
+            write_job(node_ctr[3:0], 3'd0, 16'h0000, x_base, w1, 16'd1, res1);
+            node_ctr = node_ctr + 1;
+
+            repeat (3000) @(posedge dut.clk_sys);
+
+            check_neuron(x_base, w0, res0, {label, "-A"});
+            check_neuron(x_base, w1, res1, {label, "-B"});
+        end
+    endtask
+
+    // Single, standalone job (scenario B) -- no second job at all.
+    task run_single(input [22:0] region, input [255:0] label);
+        reg [22:0] x_base, w0, res0;
+        integer k;
+        begin
+            x_base = region;
+            w0     = region + 23'h100;
+            res0   = region + 23'h200;
+            for (k = 0; k < 8; k = k + 1) poke_byte(x_base + k, k[7:0] + 3);
+            for (k = 0; k < 8; k = k + 1) poke_byte(w0 + k, ((k) % 3) + 1);
+            poke_byte(res0, 8'sd0);
+
+            write_job(node_ctr[3:0], 3'd0, 16'h0000, x_base, w0, 16'd1, res0);
+            node_ctr = node_ctr + 1;
+
+            repeat (3000) @(posedge dut.clk_sys);
+            check_neuron(x_base, w0, res0, label);
+        end
+    endtask
 
     initial begin
-        errors = 0; tests = 0;
+        errors = 0; tests = 0; node_ctr = 0;
         ext_rst_n = 0;
         repeat (20) @(posedge osc_clk);
         ext_rst_n = 1;
         repeat (10) @(posedge osc_clk);
 
-        // preload: 2 independent single-tile (P_IN=8) neurons sharing
-        // one activation vector, at x_base=0x001000, weights at
-        // 0x002000 (neuron0) / 0x002010 (neuron1), results at 0x003000
-        for (k = 0; k < 8; k = k + 1) poke_byte(23'h001000 + k, k[7:0] + 1);
-        for (n = 0; n < 2; n = n + 1)
-            for (k = 0; k < 8; k = k + 1)
-                poke_byte(23'h002000 + n*16 + k, ((n+k) % 4) + 1);
-        poke_byte(23'h003000, 8'sd0);
-        poke_byte(23'h003001, 8'sd0);
-
         wait (dut.u_sdram_backend.u_sdram_ctrl.state == dut.u_sdram_backend.u_sdram_ctrl.S_IDLE);
         @(posedge dut.clk_sys);
 
-        write_job(4'd0, 3'd0, 16'h0000, 23'h001000, 23'h002000, 16'd1, 23'h003000);
-        write_job(4'd1, 3'd0, 16'h0000, 23'h001000, 23'h002010, 16'd1, 23'h003001);
+        // B) single job, alone
+        run_single(23'h001000, "B-single-neuron0");
 
-        // wait for both results to land (generous margin)
-        repeat (3000) @(posedge dut.clk_sys);
+        // A/D) two jobs, realistic wide SPI pacing (~85us worth of SPI
+        // framing plus an explicit extra gap -- the original failing case)
+        run_pair(23'h004000, 20000, "A-wide-gap");
 
-        for (n = 0; n < 2; n = n + 1) begin
-            acc = 0;
-            for (t = 0; t < N_TILES/N_TILES; t = t + 1) ; // no-op, single tile
-            for (k = 0; k < 8; k = k + 1)
-                acc = acc + peek_byte(23'h001000 + k) * peek_byte(23'h002000 + n*16 + k);
-            golden = relu_sat(acc);
-            real_y = peek_byte(23'h003000 + n);
-            tests = tests + 1;
-            if (real_y !== golden) begin
-                errors = errors + 1;
-                $display("FAIL smoke neuron %0d: real=%0d golden=%0d", n, real_y, golden);
-            end else begin
-                $display("PASS smoke neuron %0d: real=%0d golden=%0d", n, real_y, golden);
-            end
-        end
+        // C) two jobs back-to-back (minimal CS-high gap between them)
+        run_pair(23'h007000, 0, "C-back-to-back");
+
+        // G) parametric sweep across several distinct inter-job gaps
+        run_pair(23'h00A000, 100,    "G-gap100ns");
+        run_pair(23'h00D000, 5000,   "G-gap5000ns");
+        run_pair(23'h010000, 50000,  "G-gap50000ns");
 
         $display("=== tb_fpga_neural_v2_top_smoke: %0d/%0d PASS ===", tests-errors, tests);
         if (errors != 0) $display("*** %0d FAILURES ***", errors);

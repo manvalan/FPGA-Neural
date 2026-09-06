@@ -35,17 +35,34 @@ module nms_weight_packed #(
         for (g = 0; g < N_SLOTS; g = g + 1) begin : GEN_SLOT
             for (p = 0; p < P_IN; p = p + 1) begin : GEN_LANE
                 reg [DATA_WIDTH-1:0] mem [0:MAX_TILES-1];
-                reg [DATA_WIDTH-1:0] rd_data_reg;
 
                 always @(posedge clk) begin
                     if (fill_we[g])
                         mem[fill_addr_flat[g*TIW +: TIW]] <=
                             fill_data_flat[g*DATA_WIDTH*P_IN + p*DATA_WIDTH +: DATA_WIDTH];
-                    if (rd_en[g])
-                        rd_data_reg <= mem[rd_addr_flat[g*TIW +: TIW]];
                 end
 
-                assign rd_data_flat[g*DATA_WIDTH*P_IN + p*DATA_WIDTH +: DATA_WIDTH] = rd_data_reg;
+                // ROOT CAUSE (STEP20, ERR-0025 Part B) -- see
+                // nms_activation_replicated.v's own header for the
+                // full writeup: this read must be COMBINATIONAL, not
+                // registered, to match nms_memory_manager_stream_wide.v's
+                // own `rd_pending` pipeline's actual 1-cycle latency
+                // assumption (issue this cycle, capture next cycle). A
+                // registered read added a second, uncounted cycle of
+                // latency that a busy multi-tile job's own prefetch
+                // lead time always absorbed invisibly, but an
+                // uncontested single-tile job's first (only) tile does
+                // not -- permanently latching stale/zero data. The
+                // same-cycle fill/read bypass covers the one case a
+                // combinational read alone would still miss: a fill
+                // and a read to the identical address landing on the
+                // identical edge (mem[] itself only reflects a
+                // same-edge write starting the NEXT cycle).
+                wire rd_bypass = fill_we[g] &&
+                    (fill_addr_flat[g*TIW +: TIW] == rd_addr_flat[g*TIW +: TIW]);
+                assign rd_data_flat[g*DATA_WIDTH*P_IN + p*DATA_WIDTH +: DATA_WIDTH] =
+                    rd_bypass ? fill_data_flat[g*DATA_WIDTH*P_IN + p*DATA_WIDTH +: DATA_WIDTH]
+                              : mem[rd_addr_flat[g*TIW +: TIW]];
             end
         end
     endgenerate

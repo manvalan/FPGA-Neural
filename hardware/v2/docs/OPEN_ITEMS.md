@@ -7,24 +7,36 @@ FUTURE.
 
 ## BLOCKER (impede la realizzazione o il funzionamento del chip)
 
-0. **STEP20 update:** a real SPI host interface (`spi_host_bridge.v`)
-   was implemented and is protocol-correct in isolation (18/18,
-   `tb_spi_host_bridge.v`), but a real, disclosed, UNRESOLVED defect
-   (errors.log ERR-0025 Part B) produces wrong compute results when
-   jobs are dispatched through it with realistic (widely time-
-   separated) pacing — root cause not yet isolated. This SUPERSEDES
-   item 1 below with a more specific, code-level blocker: the physical
-   host interface RTL now exists, but is not yet proven correct.
-1. **No physical host interface exists.** The RTL's own "host" ports
-   are a 110-pin raw parallel job-registration bus
-   (`reg_valid`/`reg_node_id`/`reg_required`/`reg_producer_ids`/
-   `reg_x_base`/`reg_w_base`/`reg_n_tiles`/`reg_result_addr`) — a
-   simulation/testbench convenience, not a real board protocol. No
-   RTL exists to serialize it (e.g. SPI, matching V1's own
-   `spi_neuron_top.v` precedent).
-2. **The 110-pin host/registration bus has no real ball assignment**
-   (deliberately — it is not yet a real physical protocol, see item 1).
-   The SDRAM bus (37 signals) and clk/rst (2 signals) now DO have a
+0. **RESOLVED (STEP20).** A real SPI host interface (`spi_host_bridge.v`)
+   is now implemented, protocol-correct in isolation (18/18,
+   `tb_spi_host_bridge.v`), AND verified correct end-to-end through the
+   full SPI→dependency_manager→compute→SDRAM→result path under both
+   tight and realistic (widely time-separated) job pacing (11/11,
+   `tb_fpga_neural_v2_top_smoke.v`) — see errors.log's own "ERR-0025
+   Part B — RESOLUTION" entry for the full root-cause writeup (a
+   registered- vs combinational-read latency mismatch in the shared
+   weight/activation SRAMs, fixed with zero regression to the STEP19
+   baseline). This item is CLOSED — kept here only for the historical
+   record; item 1 below is likewise no longer a real blocker in the
+   sense of "the RTL doesn't exist" — it remains open only for real
+   pinout/board-connector work (see item 1's own updated text).
+1. **RESOLVED (STEP20).** The RTL's own internal "host" ports (`reg_valid`
+   /`reg_node_id`/`reg_required`/`reg_producer_ids`/`reg_x_base`/
+   `reg_w_base`/`reg_n_tiles`/`reg_result_addr`) remain a simulation/
+   testbench-only bus for `nms_neural_multiprocessor_sdram_unified.v`
+   in isolation, but the board-level top (`fpga_neural_v2_top.v`) now
+   drives these SAME internal ports from `spi_host_bridge.v`, a real,
+   verified SPI protocol engine (WRITE_JOB/WRITE_MEM/READ_MEM/STATUS/
+   RESET), matching V1's own `spi_neuron_top.v` precedent. The 110-pin
+   bus is no longer exposed as a physical top-level port at all in
+   `fpga_neural_v2_top.v` — only 4 real SPI pins (sclk/mosi/miso/cs_n)
+   are.
+2. **The 110-pin host/registration bus has no real ball assignment** —
+   moot now (see item 1): it is an internal signal, not a top-level
+   port, in the board-level top. The 4 real SPI pins likewise have no
+   ball assignment yet, since `fpga_neural_v2_top.v` has not been
+   through P&R this round (see the next open item). The SDRAM bus (37
+   signals) and clk/rst (2 signals) now DO have a
    real, sourced, P&R-verified assignment (`hardware/v2/constraints/
    v2_unified.lpf`, from the real Lattice pinout CSV found at
    `~/Downloads/FPGA-SC-02034-3-0-ECP5U-45-Pinout.csv` during this
@@ -42,9 +54,13 @@ FUTURE.
    `first_ready_idx`/`reg_ready` chain) — the regression is attributed
    to added overall die/routing pressure from consolidation, not a new
    RTL defect, but it is real and unresolved.
-2. **Clock source/oscillator gap.** The RTL requires a direct ≥80MHz
-   clock (no PLL exists anywhere in the hierarchy — confirmed via
-   `EHXPLLL: 0/4` in every real synthesis run). Prior project memory
+2. **Clock source/oscillator gap -- PARTIALLY ADDRESSED (STEP20).** A
+   real EHXPLLL wrapper (`ecp5_pll_sys_clk.v`, real Project Trellis
+   `ecppll`-generated parameters, 16MHz->64MHz) now exists and is
+   instantiated in `fpga_neural_v2_top.v`. NOT YET confirmed by real
+   synthesis/P&R of that board-level top this round (deliberately
+   deferred until ERR-0025 Part B was resolved -- see decisions.log
+   DEC-0037) -- this is the immediate next real step. Prior project memory
    records a 16MHz board oscillator. Neither "source an 80MHz+
    oscillator" nor "add a real PLL to the RTL" has been decided.
 3. **Two physical memories were required through STEP18** — RESOLVED

@@ -2107,3 +2107,36 @@ deliberately NOT attempted this round -- doing so before the
 functional defect is resolved would produce a real bitstream/timing
 report for RTL known to compute wrong answers under realistic host
 timing, which is not a meaningful use of that real toolchain work.
+
+DEC-0037
+
+DATE: 2026-09-06
+
+DECISION:
+ERR-0025 Part B (real, downstream defect blocking the physical SPI
+host interface's own end-to-end correctness) is RESOLVED. The fix
+(combinational reads in nms_weight_packed.v / nms_activation_
+replicated.v, see errors.log's own "ERR-0025 Part B -- RESOLUTION"
+entry for the full root-cause writeup) is verified to introduce ZERO
+regression against the STEP19 baseline (N=2/N=4 D-Stress, identical
+cycle counts, still bit-exact) while making the NEW STEP20 board-level
+integration path (SPI -> dependency_manager -> compute -> SDRAM ->
+result) correct under both tight and realistic-gap job dispatch.
+
+This REVISES DEC-0036's own "V2 HARDWARE RELEASE: FAIL" conclusion:
+the single blocking item DEC-0036 identified is now closed. The
+physical SPI host interface is no longer just "protocol-correct in
+isolation" -- it is now verified correct end-to-end, matching the same
+bit-exact standard already established for the raw reg_* interface.
+
+NEXT STEP (not yet performed this round, per the governing spec's own
+explicit sequencing -- "prepara il repository per il passo successivo:
+synthesis/P&R del vero fpga_neural_v2_top... NON eseguire benchmark
+finche' ERR-0025 Part B non e' completamente chiuso e la V2 non ha
+superato synthesis/P&R"): real synthesis and P&R of fpga_neural_v2_top.v
+against a real, ball-assigned LPF, to determine the real, achievable
+operating frequency for the board-level top (including the SPI bridge
+and the new host-arb arbitration layer) -- this was deliberately not
+attempted before now, since running the real toolchain against RTL
+known to compute wrong answers would not have been a meaningful
+result. That reason no longer applies.

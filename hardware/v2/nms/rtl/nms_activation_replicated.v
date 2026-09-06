@@ -38,16 +38,43 @@ module nms_activation_replicated #(
     generate
         for (g = 0; g < N_SLOTS; g = g + 1) begin : GEN_COPY
             reg [DATA_WIDTH*P_IN-1:0] mem [0:MAX_TILES-1];
-            reg [DATA_WIDTH*P_IN-1:0] rd_data_reg;
 
             always @(posedge clk) begin
                 if (fill_we)
                     mem[fill_addr] <= fill_data;
-                if (rd_en[g])
-                    rd_data_reg <= mem[rd_addr_flat[g*TIW +: TIW]];
             end
 
-            assign rd_data_flat[g*DATA_WIDTH*P_IN +: DATA_WIDTH*P_IN] = rd_data_reg;
+            // ROOT CAUSE (found via STEP20's own board-level SPI
+            // integration smoke test, ERR-0025 Part B): this read used
+            // to be REGISTERED (rd_data_reg <= mem[addr], gated by
+            // rd_en[g]) -- a full extra clock cycle of latency beyond
+            // what nms_memory_manager_stream_wide.v's own read-ahead
+            // pipeline (its `rd_pending` bit) actually assumes. That
+            // pipeline issues a read one cycle and captures the result
+            // the VERY NEXT cycle -- correct only if this memory's own
+            // read is COMBINATIONAL (address in this cycle, data
+            // already valid this same cycle), not registered (address
+            // in this cycle, data valid only the cycle after). A busy,
+            // multi-tile job never exposes the extra cycle because its
+            // own weight/activation prefetch always runs far enough
+            // ahead that, by the time a given tile is actually
+            // consumed, that data has been sitting stable for many
+            // cycles already. An uncontested single-tile job has zero
+            // such margin: its first (only) tile's read fires on the
+            // exact edge the data becomes nominally "ready", and the
+            // consumer captured one real cycle before the registered
+            // output ever updated -- permanently latching stale
+            // (all-zero, reset-value) data. Fixed by making the read
+            // itself combinational, matching the consumer's actual
+            // latency assumption, with NO change to any FSM timing.
+            // The same-cycle fill/read-to-the-same-address case (fill_we
+            // and this slot's own read targeting the identical tile on
+            // the identical edge) is bypassed explicitly, since mem[]
+            // itself will not show a same-edge write until the NEXT
+            // cycle even with a combinational read.
+            wire rd_bypass = fill_we && (fill_addr == rd_addr_flat[g*TIW +: TIW]);
+            assign rd_data_flat[g*DATA_WIDTH*P_IN +: DATA_WIDTH*P_IN] =
+                rd_bypass ? fill_data : mem[rd_addr_flat[g*TIW +: TIW]];
         end
     endgenerate
 

@@ -1182,3 +1182,65 @@ timing is NOT yet established. Does not affect the STEP19 baseline
 remains bit-exact verified. Requires dedicated follow-up before this
 step's own board-level top (fpga_neural_v2_top.v) can be considered
 hardware-release-ready.
+
+ERR-0025 Part B -- RESOLUTION (STEP20, ERR-0025 Part B closed)
+DATE: 2026-09-06
+ROOT CAUSE: nms_weight_packed.v and nms_activation_replicated.v both
+used a REGISTERED read port (`rd_data_reg <= mem[addr]`, gated by
+rd_en -- a full clock cycle of latency from address/enable to valid
+output), but nms_memory_manager_stream_wide.v's own pipelined read-
+ahead consumer (`rd_pending`) is designed around a COMBINATIONAL read
+(issue this cycle -> already-valid data captured next cycle). Traced
+via a full internal signal walk (dependency_manager -> neural_director
+-> per-slot memory_manager -> weight_prefetch_engine_wide/nms_weight_
+packed -> nms_activation_fill_ctrl_v3/nms_activation_replicated):
+job registration, slot dispatch, and per-job context capture (w_base_
+reg/result_addr_reg) were ALL confirmed correct at every stage: the
+corruption traced all the way down to the exact cycle where `buf_
+weight`/`buf_input` are captured, which used the PRE-edge (stale)
+value of the SRAM's own registered output -- one real cycle before
+that register's own update (from the read issued the SAME cycle)
+actually committed. A busy, multi-tile job (e.g. STEP19's D-Stress,
+128 inputs/16 tiles per neuron) never exposes this: its own weight/
+activation prefetch runs far enough ahead (PREFETCH_DISTANCE=8) that
+by the time any given tile is actually consumed, that tile's data has
+already been sitting stable in the SRAM for many cycles, masking the
+extra latency completely. An uncontested single-tile job (STEP20's own
+board-level SPI smoke test, tb_fpga_neural_v2_top_smoke.v) has ZERO
+such margin: its one-and-only tile's read fires on the exact edge the
+data nominally becomes "ready", landing squarely on the missing cycle
+-- permanently latching stale/zero weight and activation data. This
+explains BOTH observed symptoms exactly: neuron 0 (first job, first
+real weight fetch of the whole session) read back 0 (all-zero SRAM
+reset content); neuron 1 (second job, reusing the same physical slot)
+read back 100 -- neuron 0's own TRUE value, one full cycle "behind"
+where it should have been.
+FIX: made both SRAMs' read ports combinational (`assign rd_data = mem
+[addr]`, replacing the registered `always @(posedge clk) rd_data_reg
+<= mem[addr]`), with an explicit same-cycle fill/read address-match
+bypass (forwarding fill_data directly) for the one hazard a plain
+combinational read alone would still miss -- a fill and a read to the
+IDENTICAL address landing on the IDENTICAL edge, where mem[] itself
+would not yet reflect that same-edge write. Files changed: hardware/
+v2/nms/rtl/nms_weight_packed.v, hardware/v2/nms/rtl/nms_activation_
+replicated.v. No change to any FSM, arbiter, SDRAM controller, or
+dependency-tracking logic -- this is a pure, minimal, two-file SRAM
+read-timing fix.
+VERIFICATION (all via Verilator, the trusted tool per DEC-0004):
+  - tb_fpga_neural_v2_top_smoke.v: 11/11 PASS -- single job alone,
+    two jobs back-to-back, two jobs with a ~85us realistic SPI-paced
+    gap, and a parametric sweep of inter-job gaps (100ns/5000ns/
+    50000ns), all bit-exact.
+  - tb_nms_dstress_sdram_unified.v N=2: 49788 cycles, 256/256
+    bit-exact -- IDENTICAL cycle count to before this fix (zero
+    regression).
+  - tb_nms_dstress_sdram_unified.v N=4: 49771 cycles, 256/256
+    bit-exact -- IDENTICAL cycle count to before this fix (zero
+    regression).
+  - tb_sdram_unified_backend.v: 40/40 PASS (unaffected, unrelated file).
+  - tb_spi_host_bridge.v: 18/18 PASS (unaffected, confirms Part A's own
+    fix still holds).
+STATUS: ERR-0025 (Parts A and B) fully RESOLVED. The physical SPI host
+interface is now verified correct end-to-end (SPI -> dependency_
+manager -> compute -> SDRAM -> result) under both tight and realistic-
+gap job pacing, with zero regression to the STEP19 baseline.
