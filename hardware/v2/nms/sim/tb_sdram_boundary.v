@@ -12,9 +12,10 @@
 // (all 4 banks), the real V2 memory-map region boundaries
 // (weights/activations/results), and every DQM byte-mask combination
 // with an explicit read-after-write check. Real Alliance Memory
-// AS4C4M16SA-6TIN geometry (confirmed against sdram_controller.v's
-// own address decode): word address = {bank[1:0], row[11:0],
-// col[7:0]}, 4 banks x 4096 rows x 256 cols x 16 bits = 4M words = 8MB.
+// AS4C32M16SA-7TIN geometry (confirmed against sdram_controller.v's
+// own address decode, post-PRE-PCB-FREEZE memory upgrade): word
+// address = {bank[1:0], row[12:0], col[9:0]}, 4 banks x 8192 rows x
+// 1024 cols x 16 bits = 32M words = 64MB.
 //
 // BURST_LEN=1 is used throughout (not the default 4) so every address
 // in this test names an exact, single physical word -- burst-wrap
@@ -28,7 +29,12 @@ module tb_sdram_boundary #(
     parameter CLK_FREQ_MHZ = 64
 );
     localparam BURST_LEN  = 1;
-    localparam ADDR_WIDTH = 22;
+    // AS4C32M16SA-7TIN (64MB): 13 row bits (A0-A12), 10 col bits
+    // (A0-A9), 2 bank bits (BA0-BA1).
+    localparam ROW_BITS   = 13;
+    localparam COL_BITS   = 10;
+    localparam BANK_BITS  = 2;
+    localparam ADDR_WIDTH = BANK_BITS + ROW_BITS + COL_BITS;
     localparam CLK_PERIOD_NS = 1000.0/CLK_FREQ_MHZ;
 
     reg clk = 0;
@@ -43,12 +49,15 @@ module tb_sdram_boundary #(
     wire ready, busy;
 
     wire sdram_cke, sdram_cs_n, sdram_ras_n, sdram_cas_n, sdram_we_n;
-    wire [1:0] sdram_ba;
-    wire [11:0] sdram_a;
+    wire [BANK_BITS-1:0] sdram_ba;
+    wire [ROW_BITS-1:0] sdram_a;
     wire [15:0] sdram_dq;
     wire [1:0] sdram_dqm;
 
-    sdram_controller #(.CLK_FREQ_MHZ(CLK_FREQ_MHZ), .BURST_LEN(BURST_LEN), .ADDR_WIDTH(ADDR_WIDTH)) dut (
+    sdram_controller #(
+        .CLK_FREQ_MHZ(CLK_FREQ_MHZ), .BURST_LEN(BURST_LEN),
+        .ROW_BITS(ROW_BITS), .COL_BITS(COL_BITS), .BANK_BITS(BANK_BITS)
+    ) dut (
         .clk(clk), .rst(rst),
         .req(req), .wr(wr), .addr(addr), .wdata(wdata), .wmask(wmask), .rdata(rdata), .ready(ready), .busy(busy),
         .sdram_cke(sdram_cke), .sdram_cs_n(sdram_cs_n), .sdram_ras_n(sdram_ras_n),
@@ -56,7 +65,10 @@ module tb_sdram_boundary #(
         .sdram_ba(sdram_ba), .sdram_a(sdram_a), .sdram_dq(sdram_dq), .sdram_dqm(sdram_dqm)
     );
 
-    sdram_model #(.CLK_FREQ_MHZ(CLK_FREQ_MHZ)) mem (
+    sdram_model #(
+        .CLK_FREQ_MHZ(CLK_FREQ_MHZ),
+        .ROW_BITS(ROW_BITS), .COL_BITS(COL_BITS), .BANK_BITS(BANK_BITS)
+    ) mem (
         .clk(clk), .cke(sdram_cke), .cs_n(sdram_cs_n), .ras_n(sdram_ras_n),
         .cas_n(sdram_cas_n), .we_n(sdram_we_n), .ba(sdram_ba), .a(sdram_a),
         .dq(sdram_dq), .dqm(sdram_dqm)
@@ -95,11 +107,11 @@ module tb_sdram_boundary #(
             tests = tests + 1;
             if (got !== expected) begin
                 $display("FAIL %0s addr=0x%06h (bank=%0d row=%0d col=%0d): expected=%h actual=%h",
-                    label, a, a[21:20], a[19:8], a[7:0], expected, got);
+                    label, a, a[24:23], a[22:10], a[9:0], expected, got);
                 errors = errors + 1;
             end else begin
                 $display("PASS %0s addr=0x%06h (bank=%0d row=%0d col=%0d): data=%h",
-                    label, a, a[21:20], a[19:8], a[7:0], got);
+                    label, a, a[24:23], a[22:10], a[9:0], got);
             end
         end
     endtask
@@ -113,11 +125,11 @@ module tb_sdram_boundary #(
 
     // ---- the real V2 memory map (BYTE addresses) converted to this
     // controller's own WORD addresses (word = byte>>1) ----
-    localparam [ADDR_WIDTH-1:0] WEIGHTS_BASE_W = 22'h008000; // byte 0x010000
-    localparam [ADDR_WIDTH-1:0] ACT_BASE_W     = 22'h100000; // byte 0x200000
-    localparam [ADDR_WIDTH-1:0] RESULTS_BASE_W = 22'h180000; // byte 0x300000
-    localparam [ADDR_WIDTH-1:0] WEIGHTS_LAST_W = ACT_BASE_W - 22'd1;      // last word before activations
-    localparam [ADDR_WIDTH-1:0] ACT_LAST_W     = RESULTS_BASE_W - 22'd1; // last word before results
+    localparam [ADDR_WIDTH-1:0] WEIGHTS_BASE_W = 25'h008000; // byte 0x010000
+    localparam [ADDR_WIDTH-1:0] ACT_BASE_W     = 25'h100000; // byte 0x200000
+    localparam [ADDR_WIDTH-1:0] RESULTS_BASE_W = 25'h180000; // byte 0x300000
+    localparam [ADDR_WIDTH-1:0] WEIGHTS_LAST_W = ACT_BASE_W - 25'd1;      // last word before activations
+    localparam [ADDR_WIDTH-1:0] ACT_LAST_W     = RESULTS_BASE_W - 25'd1; // last word before results
 
     // ---- the 17-address boundary/adjacency set. All written first
     // (each a distinct addr_pat value), THEN all read back in a
@@ -133,18 +145,18 @@ module tb_sdram_boundary #(
     integer ai;
 
     initial begin
-        a_set[0]  = 22'h000000;                        a_label[0]  = "addr-0";
-        a_set[1]  = 22'h000001;                        a_label[1]  = "addr-1";
-        a_set[2]  = 22'h3FFFFF;                         a_label[2]  = "addr-last";
-        a_set[3]  = 22'h3FFFFE;                         a_label[3]  = "addr-last-1";
-        a_set[4]  = {2'd0, 12'd10,   8'd255};            a_label[4]  = "row10-lastcol";
-        a_set[5]  = {2'd0, 12'd11,   8'd0};              a_label[5]  = "row11-firstcol";
-        a_set[6]  = {2'd0, 12'd4095, 8'd255};            a_label[6]  = "bank0-last";
-        a_set[7]  = {2'd1, 12'd0,    8'd0};              a_label[7]  = "bank1-first";
-        a_set[8]  = {2'd1, 12'd4095, 8'd255};            a_label[8]  = "bank1-last";
-        a_set[9]  = {2'd2, 12'd0,    8'd0};              a_label[9]  = "bank2-first";
-        a_set[10] = {2'd2, 12'd4095, 8'd255};            a_label[10] = "bank2-last";
-        a_set[11] = {2'd3, 12'd0,    8'd0};              a_label[11] = "bank3-first";
+        a_set[0]  = {ADDR_WIDTH{1'b0}};                  a_label[0]  = "addr-0";
+        a_set[1]  = {{(ADDR_WIDTH-1){1'b0}}, 1'b1};       a_label[1]  = "addr-1";
+        a_set[2]  = {ADDR_WIDTH{1'b1}};                   a_label[2]  = "addr-last";
+        a_set[3]  = {ADDR_WIDTH{1'b1}} - 1'b1;            a_label[3]  = "addr-last-1";
+        a_set[4]  = {2'd0, 13'd10,   10'd1023};           a_label[4]  = "row10-lastcol";
+        a_set[5]  = {2'd0, 13'd11,   10'd0};              a_label[5]  = "row11-firstcol";
+        a_set[6]  = {2'd0, 13'd8191, 10'd1023};           a_label[6]  = "bank0-last";
+        a_set[7]  = {2'd1, 13'd0,    10'd0};              a_label[7]  = "bank1-first";
+        a_set[8]  = {2'd1, 13'd8191, 10'd1023};           a_label[8]  = "bank1-last";
+        a_set[9]  = {2'd2, 13'd0,    10'd0};              a_label[9]  = "bank2-first";
+        a_set[10] = {2'd2, 13'd8191, 10'd1023};           a_label[10] = "bank2-last";
+        a_set[11] = {2'd3, 13'd0,    10'd0};              a_label[11] = "bank3-first";
         a_set[12] = WEIGHTS_BASE_W;                      a_label[12] = "weights-base";
         a_set[13] = WEIGHTS_LAST_W;                      a_label[13] = "weights-last(pre-act)";
         a_set[14] = ACT_BASE_W;                          a_label[14] = "activations-base";
@@ -173,7 +185,7 @@ module tb_sdram_boundary #(
         // using the requested deterministic patterns (0x0000, 0xFFFF,
         // 0xAAAA, 0x5555) ----
         begin : mask_tests
-            localparam [ADDR_WIDTH-1:0] MADDR = 22'h001000;
+            localparam [ADDR_WIDTH-1:0] MADDR = 25'h001000;
 
             // lower-byte-only write (wmask=2'b10: upper masked/
             // retained, lower written)
@@ -196,8 +208,8 @@ module tb_sdram_boundary #(
             // (0x5555 alone, both bytes, at a different address) to
             // exercise all four requested literal patterns at least
             // once each in this test
-            write_word(MADDR + 22'd1, 16'h5555, 2'b00);
-            check(MADDR + 22'd1, 16'h5555, "pattern-5555-plain");
+            write_word(MADDR + 25'd1, 16'h5555, 2'b00);
+            check(MADDR + 25'd1, 16'h5555, "pattern-5555-plain");
         end
 
         $display("=== %0d/%0d tests, %0d errors (tb_sdram_boundary, CLK_FREQ_MHZ=%0d) ===",

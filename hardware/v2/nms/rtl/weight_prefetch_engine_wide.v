@@ -27,7 +27,7 @@
 module weight_prefetch_engine_wide #(
     parameter DATA_WIDTH     = 8,
     parameter P_IN           = 8,
-    parameter ADDR_WIDTH     = 23,
+    parameter ADDR_WIDTH     = 26,
     parameter MAX_TILES      = 16,
     parameter PREFETCH_DISTANCE = 8,
     parameter MEM_DATA_WIDTH = 64,   // 16, 32, 64, 128 -- the STEP14 Part A sweep parameter

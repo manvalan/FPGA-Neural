@@ -70,6 +70,12 @@ LOCATE COMP "sdram_a[8]"   SITE "C2"; IOBUF PORT "sdram_a[8]"   IO_TYPE=LVCMOS33
 LOCATE COMP "sdram_a[9]"   SITE "C1"; IOBUF PORT "sdram_a[9]"   IO_TYPE=LVCMOS33;
 LOCATE COMP "sdram_a[10]"  SITE "D2"; IOBUF PORT "sdram_a[10]"  IO_TYPE=LVCMOS33;
 LOCATE COMP "sdram_a[11]"  SITE "D1"; IOBUF PORT "sdram_a[11]"  IO_TYPE=LVCMOS33;
+// sdram_a[12]: NEW pin, required by the AS4C32M16SA-7TIN memory
+// upgrade (13 row address bits, one more than the previous
+// AS4C4M16SA-6TIN's 12). Real, free, plain-GPIO ball (bank 6,
+// official Lattice pinout CSV rev 3.0, CABGA381 column) -- not
+// previously used by this LPF's own 44-signal set.
+LOCATE COMP "sdram_a[12]"  SITE "F1"; IOBUF PORT "sdram_a[12]"  IO_TYPE=LVCMOS33;
 
 LOCATE COMP "sdram_dq[0]"  SITE "E1"; IOBUF PORT "sdram_dq[0]"  IO_TYPE=LVCMOS33;
 LOCATE COMP "sdram_dq[1]"  SITE "G5"; IOBUF PORT "sdram_dq[1]"  IO_TYPE=LVCMOS33;

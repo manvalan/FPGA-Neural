@@ -63,7 +63,7 @@ module nms_memory_manager_stream_wide #(
     parameter MEM_DATA_WIDTH = 64,
     parameter DATA_WIDTH = 8,
     parameter P_IN       = 8,
-    parameter ADDR_WIDTH = 23,
+    parameter ADDR_WIDTH = 26,
     parameter MAX_TILES  = 16,
     parameter PREFETCH_DISTANCE = 8,
     parameter TIW        = (MAX_TILES <= 1) ? 1 : $clog2(MAX_TILES),

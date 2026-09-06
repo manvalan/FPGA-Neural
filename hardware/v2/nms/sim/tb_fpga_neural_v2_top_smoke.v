@@ -56,13 +56,19 @@
 
 module tb_fpga_neural_v2_top_smoke;
 
-    localparam ADDR_WIDTH = 23;
+    localparam ADDR_WIDTH = 26; // AS4C32M16SA memory upgrade
     localparam N_SLOTS    = 2;
     localparam N_NODES    = 16;
     localparam MAX_DEPS   = 4;
 
     reg osc_clk = 0;
-    always #31.25 osc_clk = ~osc_clk; // 16MHz (bypassed 1:1 to clk_sys under `SIM)
+    // Driven at the REAL 64MHz clk_sys rate (not the board's own 16MHz
+    // osc_clk) -- under the `SIM PLL bypass (clk_sys = osc_clk
+    // directly, see ecp5_pll_sys_clk.v), this reproduces the real
+    // board's actual system-clock rate for this test, matching
+    // CLK_FREQ_MHZ(64) above (a previous draft left both this and the
+    // controller's own CLK_FREQ_MHZ at a stale, pre-freeze value).
+    always #7.8125 osc_clk = ~osc_clk; // 64MHz
 
     reg ext_rst_n = 0;
 
@@ -71,14 +77,14 @@ module tb_fpga_neural_v2_top_smoke;
 
     wire sdram_cke, sdram_cs_n, sdram_ras_n, sdram_cas_n, sdram_we_n;
     wire [1:0]  sdram_ba;
-    wire [11:0] sdram_a;
+    wire [12:0] sdram_a;
     wire [15:0] sdram_dq;
     wire [1:0]  sdram_dqm;
     wire pll_locked;
 
     fpga_neural_v2_top #(
         .ADDR_WIDTH(ADDR_WIDTH), .N_SLOTS(N_SLOTS), .N_NODES(N_NODES), .MAX_DEPS(MAX_DEPS),
-        .CLK_FREQ_MHZ(80)
+        .CLK_FREQ_MHZ(64)
     ) dut (
         .osc_clk(osc_clk), .ext_rst_n(ext_rst_n),
         .spi_sclk(spi_sclk), .spi_mosi(spi_mosi), .spi_miso(spi_miso), .spi_cs_n(spi_cs_n),
@@ -88,7 +94,7 @@ module tb_fpga_neural_v2_top_smoke;
         .pll_locked(pll_locked)
     );
 
-    sdram_model #(.CLK_FREQ_MHZ(80)) u_sdram (
+    sdram_model #(.CLK_FREQ_MHZ(64)) u_sdram (
         .clk(dut.clk_sys), .cke(sdram_cke), .cs_n(sdram_cs_n), .ras_n(sdram_ras_n),
         .cas_n(sdram_cas_n), .we_n(sdram_we_n), .ba(sdram_ba), .a(sdram_a),
         .dq(sdram_dq), .dqm(sdram_dqm)
@@ -103,7 +109,7 @@ module tb_fpga_neural_v2_top_smoke;
     endfunction
 
     task poke_byte(input [ADDR_WIDTH-1:0] byte_addr, input signed [7:0] val);
-        reg [21:0] word_addr;
+        reg [24:0] word_addr;
         begin
             word_addr = byte_addr[ADDR_WIDTH-1:1];
             if (byte_addr[0] == 1'b0) u_sdram.mem[word_addr][7:0]  = val;
@@ -112,7 +118,7 @@ module tb_fpga_neural_v2_top_smoke;
     endtask
 
     function automatic signed [7:0] peek_byte(input [ADDR_WIDTH-1:0] byte_addr);
-        reg [21:0] word_addr;
+        reg [24:0] word_addr;
         begin
             word_addr = byte_addr[ADDR_WIDTH-1:1];
             peek_byte = (byte_addr[0] == 1'b0) ? u_sdram.mem[word_addr][7:0] : u_sdram.mem[word_addr][15:8];
@@ -134,8 +140,8 @@ module tb_fpga_neural_v2_top_smoke;
     endtask
 
     task write_job(input [3:0] node_id, input [2:0] required, input [15:0] producer_ids,
-                    input [22:0] x_base, input [22:0] w_base, input [15:0] n_tiles,
-                    input [22:0] result_addr);
+                    input [ADDR_WIDTH-1:0] x_base, input [ADDR_WIDTH-1:0] w_base, input [15:0] n_tiles,
+                    input [ADDR_WIDTH-1:0] result_addr);
         reg [7:0] rxb;
         begin
             spi_cs_n = 0; #20;
@@ -144,15 +150,18 @@ module tb_fpga_neural_v2_top_smoke;
             spi_byte({5'b0, required}, rxb);
             spi_byte(producer_ids[15:8], rxb);
             spi_byte(producer_ids[7:0], rxb);
-            spi_byte({1'b0, x_base[22:16]}, rxb);
+            spi_byte({6'b0, x_base[25:24]}, rxb);
+            spi_byte(x_base[23:16], rxb);
             spi_byte(x_base[15:8], rxb);
             spi_byte(x_base[7:0], rxb);
-            spi_byte({1'b0, w_base[22:16]}, rxb);
+            spi_byte({6'b0, w_base[25:24]}, rxb);
+            spi_byte(w_base[23:16], rxb);
             spi_byte(w_base[15:8], rxb);
             spi_byte(w_base[7:0], rxb);
             spi_byte(n_tiles[15:8], rxb);
             spi_byte(n_tiles[7:0], rxb);
-            spi_byte({1'b0, result_addr[22:16]}, rxb);
+            spi_byte({6'b0, result_addr[25:24]}, rxb);
+            spi_byte(result_addr[23:16], rxb);
             spi_byte(result_addr[15:8], rxb);
             spi_byte(result_addr[7:0], rxb);
             // hold CS through the reg_valid/reg_ready handshake (may
@@ -194,10 +203,10 @@ module tb_fpga_neural_v2_top_smoke;
         integer k, n;
         begin
             x_base = region;
-            w0     = region + 23'h100;
-            w1     = region + 23'h110;
-            res0   = region + 23'h200;
-            res1   = region + 23'h201;
+            w0     = region + 26'h100;
+            w1     = region + 26'h110;
+            res0   = region + 26'h200;
+            res1   = region + 26'h201;
 
             for (k = 0; k < 8; k = k + 1) poke_byte(x_base + k, k[7:0] + 1);
             for (n = 0; n < 2; n = n + 1)
@@ -225,8 +234,8 @@ module tb_fpga_neural_v2_top_smoke;
         integer k;
         begin
             x_base = region;
-            w0     = region + 23'h100;
-            res0   = region + 23'h200;
+            w0     = region + 26'h100;
+            res0   = region + 26'h200;
             for (k = 0; k < 8; k = k + 1) poke_byte(x_base + k, k[7:0] + 3);
             for (k = 0; k < 8; k = k + 1) poke_byte(w0 + k, ((k) % 3) + 1);
             poke_byte(res0, 8'sd0);
@@ -250,19 +259,19 @@ module tb_fpga_neural_v2_top_smoke;
         @(posedge dut.clk_sys);
 
         // B) single job, alone
-        run_single(23'h001000, "B-single-neuron0");
+        run_single(26'h001000, "B-single-neuron0");
 
         // A/D) two jobs, realistic wide SPI pacing (~85us worth of SPI
         // framing plus an explicit extra gap -- the original failing case)
-        run_pair(23'h004000, 20000, "A-wide-gap");
+        run_pair(26'h004000, 20000, "A-wide-gap");
 
         // C) two jobs back-to-back (minimal CS-high gap between them)
-        run_pair(23'h007000, 0, "C-back-to-back");
+        run_pair(26'h007000, 0, "C-back-to-back");
 
         // G) parametric sweep across several distinct inter-job gaps
-        run_pair(23'h00A000, 100,    "G-gap100ns");
-        run_pair(23'h00D000, 5000,   "G-gap5000ns");
-        run_pair(23'h010000, 50000,  "G-gap50000ns");
+        run_pair(26'h00A000, 100,    "G-gap100ns");
+        run_pair(26'h00D000, 5000,   "G-gap5000ns");
+        run_pair(26'h010000, 50000,  "G-gap50000ns");
 
         $display("=== tb_fpga_neural_v2_top_smoke: %0d/%0d PASS ===", tests-errors, tests);
         if (errors != 0) $display("*** %0d FAILURES ***", errors);

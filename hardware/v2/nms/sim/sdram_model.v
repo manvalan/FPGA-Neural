@@ -1,8 +1,17 @@
 `timescale 1ns/1ps
 
 // ============================================================
-// NMS STEP16 -- behavioral model of Alliance Memory AS4C4M16SA-6TIN
-// (SDR SDRAM, 64Mbit/8MB, x16, 4 banks x 4096 rows x 256 cols).
+// NMS STEP16 -- behavioral model of Alliance Memory SDR SDRAM.
+//
+// MEMORY UPGRADE: retargeted from AS4C4M16SA-6TIN (64Mbit/8MB) to
+// AS4C32M16SA-7TIN (512Mbit/64MB, x16, 4 banks x 8192 rows x 1024
+// cols) -- ROW_BITS/COL_BITS/BANK_BITS are now real parameters
+// (matching sdram_controller.v's own parameterization) so this same
+// model supports either device by parameter alone. Real -7-grade AC
+// timing: tRCD=15ns, tRP=15ns, tRAS(min)=45ns, tRC=65ns, tMRD=2 CLK
+// (fixed, explicit CLK units per this datasheet), tREFI=64ms/8192
+// rows=7.8125us -- see sdram_controller.v's own header for the full
+// datasheet cross-reference.
 //
 // Real JEDEC command decode (CS#/RAS#/CAS#/WE#), real per-bank
 // state tracking (IDLE / ACTIVE with an open row), and REAL timing-
@@ -13,7 +22,7 @@
 // timing violation here is a genuine controller bug, not tolerated
 // silently.
 //
-// Refresh is tracked per-row (a real 4096-row array of "last
+// Refresh is tracked per-row (a real ROWS-row array of "last
 // refreshed at cycle N" timestamps) and checked against tREFI --
 // data itself is not modeled as decaying (unnecessary complexity for
 // this validation), but an insufficiently-refreshed row is flagged
@@ -26,7 +35,10 @@
 // bug in the MRS encoding would be caught here too.
 // ============================================================
 module sdram_model #(
-    parameter CLK_FREQ_MHZ = 166
+    parameter CLK_FREQ_MHZ = 64,
+    parameter ROW_BITS     = 13,  // AS4C32M16SA: row address A0-A12
+    parameter COL_BITS     = 10,  // AS4C32M16SA: column address A0-A9
+    parameter BANK_BITS    = 2    // BA0,BA1 -- fixed across this whole Alliance SDR family
 )(
     input  wire        clk,
     input  wire        cke,
@@ -34,14 +46,14 @@ module sdram_model #(
     input  wire        ras_n,
     input  wire        cas_n,
     input  wire        we_n,
-    input  wire [1:0]  ba,
-    input  wire [11:0] a,
+    input  wire [BANK_BITS-1:0]  ba,
+    input  wire [ROW_BITS-1:0]   a,
     inout  wire [15:0] dq,
     input  wire [1:0]  dqm
 );
-    localparam BANKS = 4;
-    localparam ROWS  = 4096;
-    localparam COLS  = 256;
+    localparam BANKS = 1 << BANK_BITS;
+    localparam ROWS  = 1 << ROW_BITS;
+    localparam COLS  = 1 << COL_BITS;
 
     function integer ns_to_cycles;
         input integer ns;
@@ -49,18 +61,18 @@ module sdram_model #(
             ns_to_cycles = (ns * CLK_FREQ_MHZ + 999) / 1000;
         end
     endfunction
-    localparam T_RCD    = ns_to_cycles(18);
-    localparam T_RP     = ns_to_cycles(18);
-    localparam T_RAS_MIN= ns_to_cycles(42);
-    localparam T_RC     = ns_to_cycles(60);
-    localparam T_MRD    = ns_to_cycles(12);
-    localparam T_REFI   = ns_to_cycles(15625);
+    localparam T_RCD    = ns_to_cycles(15);
+    localparam T_RP     = ns_to_cycles(15);
+    localparam T_RAS_MIN= ns_to_cycles(45);
+    localparam T_RC     = ns_to_cycles(65);
+    localparam T_MRD    = 2; // tMRD = 2 CLK, fixed (see sdram_controller.v's own header)
+    localparam T_REFI   = ns_to_cycles(64000000 / ROWS + 1);
 
     reg [15:0] mem [0:BANKS*ROWS*COLS-1];
 
     // per-bank state
     reg          bank_active   [0:BANKS-1];
-    reg [11:0]   bank_row      [0:BANKS-1];
+    reg [ROW_BITS-1:0] bank_row [0:BANKS-1];
     integer      bank_active_since [0:BANKS-1]; // cycle ACTIVATE was issued
     integer      bank_precharge_since [0:BANKS-1]; // cycle last PRECHARGE completed
 
@@ -103,16 +115,16 @@ module sdram_model #(
 
     // active read-burst tracking (for auto-precharge/address auto-increment)
     reg        rd_burst_active;
-    reg [1:0]  rd_bank;
-    reg [11:0] rd_row;
-    reg [7:0]  rd_col;
+    reg [BANK_BITS-1:0] rd_bank;
+    reg [ROW_BITS-1:0]  rd_row;
+    reg [COL_BITS-1:0]  rd_col;
     integer    rd_remaining;
     reg        rd_autoprecharge;
 
     reg        wr_burst_active;
-    reg [1:0]  wr_bank;
-    reg [11:0] wr_row;
-    reg [7:0]  wr_col;
+    reg [BANK_BITS-1:0] wr_bank;
+    reg [ROW_BITS-1:0]  wr_row;
+    reg [COL_BITS-1:0]  wr_col;
     integer    wr_remaining;
     reg        wr_autoprecharge;
 
@@ -210,7 +222,7 @@ module sdram_model #(
             if (cmd_read || cmd_write) begin
                 if (!bank_active[ba])
                     $display("SDRAM_MODEL VIOLATION @%0t: %s to bank %0d with no active row", $time, cmd_read?"READ":"WRITE", ba);
-                else if (bank_row[ba] !== a[11:0] && 1'b0) begin
+                else if (bank_row[ba] !== a[ROW_BITS-1:0] && 1'b0) begin
                     // column command doesn't carry a row -- nothing to
                     // check here beyond bank-active, real row match is
                     // implicit (the address IS the column within the
@@ -230,7 +242,7 @@ module sdram_model #(
                     // (the same bug class as the write-side fix below,
                     // found by tracing the cycle-exact mismatch against
                     // the controller's own CAS_LATENCY-cycle wait_cnt)
-                    rd_pipe[cas_latency-1]       <= mem[ba*ROWS*COLS + bank_row[ba]*COLS + a[7:0]];
+                    rd_pipe[cas_latency-1]       <= mem[ba*ROWS*COLS + bank_row[ba]*COLS + a[COL_BITS-1:0]];
                     rd_valid_pipe[cas_latency-1] <= 1'b1;
                     if (burst_len == 1) begin
                         rd_burst_active <= 1'b0;
@@ -239,7 +251,7 @@ module sdram_model #(
                             bank_precharge_since[ba] <= cycle;
                         end
                     end else begin
-                        rd_bank <= ba; rd_row <= bank_row[ba]; rd_col <= a[7:0] + 1'b1;
+                        rd_bank <= ba; rd_row <= bank_row[ba]; rd_col <= a[COL_BITS-1:0] + 1'b1;
                         rd_remaining <= burst_len - 1'b1; rd_autoprecharge <= a[10];
                         rd_burst_active <= 1'b1;
                     end
@@ -249,8 +261,8 @@ module sdram_model #(
                     // cycle later -- capture it right here (in the same
                     // cycle the command is decoded) instead of waiting for
                     // wr_burst_active, which would silently drop word0
-                    if (dqm[0] == 1'b0) mem[ba*ROWS*COLS + bank_row[ba]*COLS + a[7:0]][7:0]  <= dq[7:0];
-                    if (dqm[1] == 1'b0) mem[ba*ROWS*COLS + bank_row[ba]*COLS + a[7:0]][15:8] <= dq[15:8];
+                    if (dqm[0] == 1'b0) mem[ba*ROWS*COLS + bank_row[ba]*COLS + a[COL_BITS-1:0]][7:0]  <= dq[7:0];
+                    if (dqm[1] == 1'b0) mem[ba*ROWS*COLS + bank_row[ba]*COLS + a[COL_BITS-1:0]][15:8] <= dq[15:8];
                     if (burst_len == 1) begin
                         wr_burst_active <= 1'b0;
                         if (a[10]) begin
@@ -258,7 +270,7 @@ module sdram_model #(
                             bank_precharge_since[ba] <= cycle;
                         end
                     end else begin
-                        wr_bank <= ba; wr_row <= bank_row[ba]; wr_col <= a[7:0] + 1'b1;
+                        wr_bank <= ba; wr_row <= bank_row[ba]; wr_col <= a[COL_BITS-1:0] + 1'b1;
                         wr_remaining <= burst_len - 1'b1; wr_autoprecharge <= a[10];
                         wr_burst_active <= 1'b1;
                     end
@@ -302,12 +314,12 @@ module sdram_model #(
 
     // testbench-only backdoor access (poke/peek), matching this
     // project's own established convention elsewhere (psram_model.v)
-    task automatic backdoor_write(input [1:0] tb_bank, input [11:0] tb_row, input [7:0] tb_col, input [15:0] val);
+    task automatic backdoor_write(input [BANK_BITS-1:0] tb_bank, input [ROW_BITS-1:0] tb_row, input [COL_BITS-1:0] tb_col, input [15:0] val);
         begin
             mem[tb_bank*ROWS*COLS + tb_row*COLS + tb_col] = val;
         end
     endtask
-    function automatic [15:0] backdoor_read(input [1:0] tb_bank, input [11:0] tb_row, input [7:0] tb_col);
+    function automatic [15:0] backdoor_read(input [BANK_BITS-1:0] tb_bank, input [ROW_BITS-1:0] tb_row, input [COL_BITS-1:0] tb_col);
         begin
             backdoor_read = mem[tb_bank*ROWS*COLS + tb_row*COLS + tb_col];
         end

@@ -37,7 +37,7 @@ module fpga_neural_v2_top #(
     parameter DATA_WIDTH  = 8,
     parameter P_IN        = 8,
     parameter ACC_WIDTH   = 32,
-    parameter ADDR_WIDTH  = 23,
+    parameter ADDR_WIDTH  = 26,
     parameter N_SLOTS     = 4,
     parameter N_NODES     = 16,
     parameter MAX_DEPS    = 4,
@@ -62,7 +62,7 @@ module fpga_neural_v2_top #(
     output wire        sdram_cas_n,
     output wire        sdram_we_n,
     output wire [1:0]  sdram_ba,
-    output wire [11:0] sdram_a,
+    output wire [12:0] sdram_a,
     inout  wire [15:0] sdram_dq,
     output wire [1:0]  sdram_dqm,
 

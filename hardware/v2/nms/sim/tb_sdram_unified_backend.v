@@ -27,7 +27,7 @@
 //      simultaneous traffic, all bit-exact.
 // ============================================================
 module tb;
-    localparam ADDR_WIDTH = 23;
+    localparam ADDR_WIDTH = 26; // AS4C32M16SA memory upgrade
     localparam CLK_FREQ_MHZ = 80;
     localparam CLK_PERIOD_NS = 1000.0/CLK_FREQ_MHZ;
 
@@ -49,7 +49,7 @@ module tb;
 
     wire sdram_cke, sdram_cs_n, sdram_ras_n, sdram_cas_n, sdram_we_n;
     wire [1:0] sdram_ba;
-    wire [11:0] sdram_a;
+    wire [12:0] sdram_a;
     wire [15:0] sdram_dq;
     wire [1:0] sdram_dqm;
 
@@ -74,7 +74,7 @@ module tb;
 
     task automatic poke64(input [ADDR_WIDTH-1:0] byte_addr, input [63:0] val);
         integer w;
-        reg [21:0] word_addr;
+        reg [24:0] word_addr;
         begin
             for (w = 0; w < 4; w = w + 1) begin
                 word_addr = (byte_addr + w*2) >> 1;
@@ -154,14 +154,14 @@ module tb;
         @(posedge clk);
 
         // ---- A: W-port sequential access (weight region) ----
-        wbase = 23'h010000;
+        wbase = 26'h010000;
         for (i = 0; i < 16; i = i + 1)
             poke64(wbase + i*8, {4{16'hA000 + i[15:0]}});
         for (i = 0; i < 16; i = i + 1)
             check64(wbase + i*8, {4{16'hA000 + i[15:0]}}, "A-Wseq");
 
         // ---- B: AR-port read (activation region, disjoint from W) ----
-        arbase = 23'h200000 >> 1; // word address
+        arbase = 26'h200000 >> 1; // word address
         poke64({arbase, 1'b0}, 64'h1111_2222_3333_4444);
         check16(arbase+0, 16'h4444, "B-ARrd-w0");
         check16(arbase+1, 16'h3333, "B-ARrd-w1");
@@ -171,7 +171,7 @@ module tb;
         // ---- C: AR-port byte-masked write (result region) --
         // pre-seed a known 128-bit block, write ONE byte, verify
         // every OTHER byte in the same real SDRAM block is untouched.
-        arbase = 23'h300000 >> 1;
+        arbase = 26'h300000 >> 1;
         poke64({arbase[ADDR_WIDTH-2:3], 4'b0000}, 64'h9999_8888_7777_6666);
         poke64({arbase[ADDR_WIDTH-2:3], 4'b1000}, 64'h5555_4444_3333_2222);
         // write only the LOW byte of word 2 (within the 8-word block) to 8'hAB

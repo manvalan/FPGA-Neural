@@ -18,9 +18,15 @@
 // ============================================================
 module tb #(
     parameter BURST_LEN = 4,
-    parameter CLK_FREQ_MHZ = 166
+    parameter CLK_FREQ_MHZ = 64
 );
-    localparam ADDR_WIDTH = 22;
+    // AS4C32M16SA-7TIN (64MB): 13 row bits (A0-A12), 10 col bits
+    // (A0-A9), 2 bank bits (BA0-BA1) -- see sdram_controller.v's own
+    // header for the full datasheet cross-reference.
+    localparam ROW_BITS  = 13;
+    localparam COL_BITS  = 10;
+    localparam BANK_BITS = 2;
+    localparam ADDR_WIDTH = BANK_BITS + ROW_BITS + COL_BITS;
     localparam CLK_PERIOD_NS = 1000.0/CLK_FREQ_MHZ;
 
     reg clk = 0;
@@ -35,12 +41,15 @@ module tb #(
     wire ready, busy;
 
     wire sdram_cke, sdram_cs_n, sdram_ras_n, sdram_cas_n, sdram_we_n;
-    wire [1:0] sdram_ba;
-    wire [11:0] sdram_a;
+    wire [BANK_BITS-1:0] sdram_ba;
+    wire [ROW_BITS-1:0] sdram_a;
     wire [15:0] sdram_dq;
     wire [1:0] sdram_dqm;
 
-    sdram_controller #(.CLK_FREQ_MHZ(CLK_FREQ_MHZ), .BURST_LEN(BURST_LEN), .ADDR_WIDTH(ADDR_WIDTH)) dut (
+    sdram_controller #(
+        .CLK_FREQ_MHZ(CLK_FREQ_MHZ), .BURST_LEN(BURST_LEN),
+        .ROW_BITS(ROW_BITS), .COL_BITS(COL_BITS), .BANK_BITS(BANK_BITS)
+    ) dut (
         .clk(clk), .rst(rst),
         .req(req), .wr(wr), .addr(addr), .wdata(wdata), .wmask(wmask), .rdata(rdata), .ready(ready), .busy(busy),
         .sdram_cke(sdram_cke), .sdram_cs_n(sdram_cs_n), .sdram_ras_n(sdram_ras_n),
@@ -48,7 +57,10 @@ module tb #(
         .sdram_ba(sdram_ba), .sdram_a(sdram_a), .sdram_dq(sdram_dq), .sdram_dqm(sdram_dqm)
     );
 
-    sdram_model #(.CLK_FREQ_MHZ(CLK_FREQ_MHZ)) mem (
+    sdram_model #(
+        .CLK_FREQ_MHZ(CLK_FREQ_MHZ),
+        .ROW_BITS(ROW_BITS), .COL_BITS(COL_BITS), .BANK_BITS(BANK_BITS)
+    ) mem (
         .clk(clk), .cke(sdram_cke), .cs_n(sdram_cs_n), .ras_n(sdram_ras_n),
         .cas_n(sdram_cas_n), .we_n(sdram_we_n), .ba(sdram_ba), .a(sdram_a),
         .dq(sdram_dq), .dqm(sdram_dqm)
@@ -123,7 +135,7 @@ module tb #(
         while (busy) @(posedge clk); // real power-up/init sequence
 
         // ---- A: write -> read single ----
-        check_word(22'd0, 16'hA5A5);
+        check_word({ADDR_WIDTH{1'b0}}, 16'hA5A5);
 
         // ---- B: sequential addresses ----
         trace_on = 1'b1;
@@ -134,25 +146,25 @@ module tb #(
             check_word(i*BURST_LEN, 16'h1000 + i);
 
         // ---- E: row change (same bank 0, different row) ----
-        check_word({2'b00, 12'd0,   8'd0}, 16'h2000);
-        check_word({2'b00, 12'd1,   8'd0}, 16'h2001);
-        check_word({2'b00, 12'd100, 8'd0}, 16'h2002);
+        check_word({2'b00, 13'd0,   10'd0}, 16'h2000);
+        check_word({2'b00, 13'd1,   10'd0}, 16'h2001);
+        check_word({2'b00, 13'd100, 10'd0}, 16'h2002);
 
         // ---- F: bank change ----
-        check_word({2'b00, 12'd5, 8'd0}, 16'h3000);
-        check_word({2'b01, 12'd5, 8'd0}, 16'h3001);
-        check_word({2'b10, 12'd5, 8'd0}, 16'h3002);
-        check_word({2'b11, 12'd5, 8'd0}, 16'h3003);
+        check_word({2'b00, 13'd5, 10'd0}, 16'h3000);
+        check_word({2'b01, 13'd5, 10'd0}, 16'h3001);
+        check_word({2'b10, 13'd5, 10'd0}, 16'h3002);
+        check_word({2'b11, 13'd5, 10'd0}, 16'h3003);
 
-        // ---- I: address limits ----
-        check_word({2'b00, 12'd0,    8'd0}, 16'h4000);              // row 0, col 0
-        check_word({2'b11, 12'd4095, 8'(256-BURST_LEN)}, 16'h4001); // max bank/row, last valid burst-aligned col
-        check_word({2'b00, 12'd4095, 8'd0}, 16'h4002);
-        check_word({2'b11, 12'd0,    8'd0}, 16'h4003);
+        // ---- I: address limits (AS4C32M16SA: 8192 rows, 1024 cols) ----
+        check_word({2'b00, 13'd0,    10'd0}, 16'h4000);                // row 0, col 0
+        check_word({2'b11, 13'd8191, 10'(1024-BURST_LEN)}, 16'h4001); // max bank/row, last valid burst-aligned col
+        check_word({2'b00, 13'd8191, 10'd0}, 16'h4002);
+        check_word({2'b11, 13'd0,    10'd0}, 16'h4003);
 
         // ---- H: pseudo-random pattern ----
         for (i = 0; i < 32; i = i + 1) begin
-            rnd_addr = ($random(seed) % (4*4096*256/BURST_LEN)) * BURST_LEN;
+            rnd_addr = ($random(seed) % (4*8192*1024/BURST_LEN)) * BURST_LEN;
             check_word(rnd_addr, 16'h5000 + i);
         end
 
@@ -176,7 +188,7 @@ module tb #(
             reg [2*BURST_LEN-1:0]  m;
             integer w, elapsed_j;
             reg [ADDR_WIDTH-1:0] addr_j;
-            addr_j = 22'd50000;
+            addr_j = 25'd50000;
             // seed a known full pattern first (no masking)
             for (w = 0; w < BURST_LEN; w = w + 1) full_pat[w*16 +: 16] = 16'h7000 + w[15:0];
             wmask = {(2*BURST_LEN){1'b0}};

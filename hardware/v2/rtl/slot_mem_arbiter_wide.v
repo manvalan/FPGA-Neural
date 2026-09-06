@@ -53,7 +53,7 @@
 
 module slot_mem_arbiter_wide #(
     parameter DATA_WIDTH = 32,
-    parameter ADDR_WIDTH = 23,
+    parameter ADDR_WIDTH = 26,
     parameter N_PORTS    = 4
 )(
     input  wire clk,

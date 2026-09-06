@@ -43,7 +43,7 @@
 module dependency_manager #(
     parameter N_NODES    = 16,
     parameter MAX_DEPS   = 4,
-    parameter ADDR_WIDTH = 23
+    parameter ADDR_WIDTH = 26
 )(
     input  wire clk,
     input  wire rst,

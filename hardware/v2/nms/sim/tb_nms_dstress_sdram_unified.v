@@ -75,7 +75,7 @@ module tb #(
     parameter PFD_CFG     = 8
 );
 
-    localparam ADDR_WIDTH  = 23;
+    localparam ADDR_WIDTH  = 26; // AS4C32M16SA: 25-bit word address + 1 byte-select bit
     localparam DATA_WIDTH  = 8;
     localparam P_IN        = 8;
     localparam ACC_WIDTH   = 32;
@@ -149,7 +149,7 @@ module tb #(
     // backing array via the same byte_addr>>1 / byte_addr[0] pattern.
     // ============================================================
     task automatic poke_byte(input [ADDR_WIDTH-1:0] byte_addr, input signed [7:0] val);
-        reg [21:0] word_addr;
+        reg [24:0] word_addr;
         begin
             word_addr = byte_addr[ADDR_WIDTH-1:1];
             if (byte_addr[0] == 1'b0) u_sdram.mem[word_addr][7:0]  = val;
@@ -158,24 +158,24 @@ module tb #(
     endtask
 
     function automatic signed [7:0] peek_byte(input [ADDR_WIDTH-1:0] byte_addr);
-        reg [21:0] word_addr;
+        reg [24:0] word_addr;
         begin
             word_addr = byte_addr[ADDR_WIDTH-1:1];
             peek_byte = (byte_addr[0] == 1'b0) ? u_sdram.mem[word_addr][7:0] : u_sdram.mem[word_addr][15:8];
         end
     endfunction
 
-    // sdram_model.v's own `mem` array is flat-indexed by the 22-bit
+    // sdram_model.v's own `mem` array is flat-indexed by the 25-bit
     // word address directly (bank*ROWS*COLS + row*COLS + col, which,
-    // given ROWS=4096/COLS=256 are both powers of 2, is numerically
-    // IDENTICAL to treating the address as one flat 22-bit integer --
+    // given ROWS=8192/COLS=1024 are both powers of 2, is numerically
+    // IDENTICAL to treating the address as one flat 25-bit integer --
     // confirmed against sdram_model.v's own BANKS/ROWS/COLS localparams
     // before writing this, not assumed) -- so this is the exact same
     // byte_addr>>1 / byte_addr[0] pattern as the original single-chip
     // poke_byte/peek_byte above, just against u_sdram.mem instead of
     // u_psram.mem.
     task automatic poke_byte_weight(input [ADDR_WIDTH-1:0] byte_addr, input signed [7:0] val);
-        reg [21:0] word_addr;
+        reg [24:0] word_addr;
         begin
             word_addr = byte_addr[ADDR_WIDTH-1:1];
             if (byte_addr[0] == 1'b0) u_sdram.mem[word_addr][7:0]  = val;
@@ -184,7 +184,7 @@ module tb #(
     endtask
 
     function automatic signed [7:0] peek_byte_weight(input [ADDR_WIDTH-1:0] byte_addr);
-        reg [21:0] word_addr;
+        reg [24:0] word_addr;
         begin
             word_addr = byte_addr[ADDR_WIDTH-1:1];
             peek_byte_weight = (byte_addr[0] == 1'b0) ? u_sdram.mem[word_addr][7:0] : u_sdram.mem[word_addr][15:8];
@@ -853,7 +853,7 @@ module tb #(
         // STEP19 official memory map (hardware/v2/docs/MEMORY_ARCHITECTURE.md):
         // weights @ 0x010000, activations @ 0x200000, results @ 0x300000 --
         // non-overlapping 1MB-aligned regions in the single 8MB SDRAM.
-        run_dense_layer("D-Stress", 256, 16, 16'd400, 23'h200000, 23'h010000, 23'h300000, 1'b0);
+        run_dense_layer("D-Stress", 256, 16, 16'd400, 26'h200000, 26'h010000, 26'h300000, 1'b0);
 
         $display("========================================");
         if (errors == 0)

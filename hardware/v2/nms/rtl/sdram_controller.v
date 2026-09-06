@@ -1,9 +1,29 @@
 `timescale 1ns/1ps
 
 // ============================================================
-// NMS STEP16 -- minimal, CORRECT-FIRST SDR SDRAM controller for
-// Alliance Memory AS4C4M16SA-6TIN (64Mbit/8MB, x16, -6 speed grade:
-// tCK=6ns/166MHz max, CAS latency 3).
+// NMS STEP16 -- minimal, CORRECT-FIRST SDR SDRAM controller.
+//
+// MEMORY UPGRADE (post-PRE-PCB-FREEZE capacity/throughput review):
+// retargeted from Alliance Memory AS4C4M16SA-6TIN (64Mbit/8MB) to
+// Alliance Memory AS4C32M16SA-7TIN (512Mbit/64MB, x16, -7 speed
+// grade: tCK=7ns/143MHz max, CAS latency 2 or 3), the largest
+// same-family, same-package (54-pin TSOP-II, 3.3V) SDR SDRAM
+// Alliance Memory offers. Confirmed via the real manufacturer
+// datasheet (Alliance Memory AS4C32M16SA Rev 2.0): organization is
+// 4 banks x 8192 rows x 1024 columns x16 bits (row address A0-A12,
+// 13 bits; column address A0-A9, 10 bits; bank BA0/BA1, 2 bits) --
+// ROW_BITS/COL_BITS/BANK_BITS below are now real parameters (not
+// hardcoded 12/8/2) so this same RTL supports either device by
+// parameter alone. Real -7-grade AC timing (all well inside this
+// design's 64-100MHz target, itself far below the part's own
+// 143MHz max): tRCD=15ns min, tRP=15ns min, tRAS=45ns min/100000ns
+// max, tRC=65ns min, tMRD=2 CLK (fixed, explicitly stated in CLK
+// units by this datasheet -- no unit ambiguity, unlike the smaller
+// AS4C4M16SA's own datasheet that triggered ERR-0026), tWR=2 CLK
+// (also explicitly CLK units), tREFI=64ms/8192 rows=7.8125us (HALF
+// the previous part's 15.625us, since this part has 2x the rows to
+// refresh in the same 64ms window -- a real, meaningful difference,
+// not a rounding artifact).
 //
 // Design priority explicitly stated by the governing spec:
 // correctness > performance > elegance. This controller therefore:
@@ -18,18 +38,19 @@
 //   - Real JEDEC SDR SDRAM command encoding (CS#/RAS#/CAS#/WE#),
 //     real power-up sequence (200us wait, PRECHARGE ALL, 8x AUTO
 //     REFRESH, LOAD MODE REGISTER), real periodic AUTO REFRESH
-//     insertion between transactions (tREFI = 4096 rows / 64ms).
-//   - Real, standard -6-speed-grade SDR SDRAM timing (datasheet-
-//     standard values, not vendor-specific tuning): tRCD=3cyc,
-//     tRP=3cyc, tRAS(min)=7cyc, tRC=10cyc, tMRD=2cyc @166MHz -- all
-//     re-derived per CLK_FREQ_MHZ so the same RTL is reused across
-//     the Phase 4 100/133/166MHz sweep (STEP16's own explicit
-//     "measure, do not estimate" requirement).
+//     insertion between transactions (tREFI = rows / 64ms, ROW_BITS-
+//     dependent -- see T_REFI below).
+//   - Real, standard SDR SDRAM timing (datasheet-standard values,
+//     not vendor-specific tuning), re-derived per CLK_FREQ_MHZ so the
+//     same RTL is reused across every tested frequency (STEP16's own
+//     explicit "measure, do not estimate" requirement).
 //
 // Address format: word address (16-bit words), decomposed as
-// {bank[1:0], row[11:0], col[7:0]} -- matches the REAL AS4C4M16SA's
-// own 4-bank x 4096-row x 256-column x16 organization (4*4096*256 =
-// 4M words = 8MB, confirmed against the real datasheet capacity).
+// {bank[BANK_BITS-1:0], row[ROW_BITS-1:0], col[COL_BITS-1:0]} --
+// default ROW_BITS=13/COL_BITS=10/BANK_BITS=2 matches the REAL
+// AS4C32M16SA's own 4-bank x 8192-row x 1024-column x16 organization
+// (4*8192*1024 = 32M words = 64MB, confirmed against the real
+// datasheet capacity).
 //
 // External protocol matches this project's own established
 // mem_req/mem_wr/mem_addr/mem_wdata/mem_rdata/mem_ready convention
@@ -41,9 +62,15 @@
 // per tile before any RTL was written).
 // ============================================================
 module sdram_controller #(
-    parameter CLK_FREQ_MHZ = 166,
+    parameter CLK_FREQ_MHZ = 64,
     parameter BURST_LEN    = 4,   // 1, 4, or 8 -- Phase 4 sweep parameter
-    parameter ADDR_WIDTH   = 22   // word address: 2 bank + 12 row + 8 col
+    parameter ROW_BITS     = 13,  // AS4C32M16SA: row address A0-A12
+    parameter COL_BITS     = 10,  // AS4C32M16SA: column address A0-A9
+    parameter BANK_BITS    = 2,   // BA0,BA1 -- fixed across this whole Alliance SDR family
+    // word address width; default derived from ROW_BITS/COL_BITS/
+    // BANK_BITS above -- if overridden independently, must still equal
+    // BANK_BITS+ROW_BITS+COL_BITS (asserted at elaboration below)
+    parameter ADDR_WIDTH   = BANK_BITS + ROW_BITS + COL_BITS
 )(
     input  wire        clk,
     input  wire        rst,
@@ -75,13 +102,23 @@ module sdram_controller #(
     output reg          sdram_ras_n,
     output reg          sdram_cas_n,
     output reg          sdram_we_n,
-    output reg  [1:0]   sdram_ba,
-    output reg  [11:0]  sdram_a,
+    output reg  [1:0]        sdram_ba,
+    output reg  [ROW_BITS-1:0] sdram_a,
     inout  wire [15:0]  sdram_dq,
     output reg  [1:0]   sdram_dqm
 );
 
     localparam BURST_IDXW = (BURST_LEN <= 1) ? 1 : $clog2(BURST_LEN);
+
+    // elaboration-time consistency check: ADDR_WIDTH must always equal
+    // the sum of its own row/col/bank widths, whether left at its
+    // derived default or overridden explicitly -- catches a mismatched
+    // override immediately rather than silently mis-decoding addresses.
+    initial if (ADDR_WIDTH != BANK_BITS + ROW_BITS + COL_BITS) begin
+        $display("FATAL sdram_controller: ADDR_WIDTH=%0d != BANK_BITS(%0d)+ROW_BITS(%0d)+COL_BITS(%0d)=%0d",
+            ADDR_WIDTH, BANK_BITS, ROW_BITS, COL_BITS, BANK_BITS+ROW_BITS+COL_BITS);
+        $finish;
+    end
 
     // ---- real, standard -6-speed-grade timing, re-derived per
     // CLK_FREQ_MHZ (ceiling division: never UNDER-count a real ns
@@ -92,34 +129,43 @@ module sdram_controller #(
             ns_to_cycles = (ns * CLK_FREQ_MHZ + 999) / 1000;
         end
     endfunction
-    localparam T_RCD    = ns_to_cycles(18);   // ACTIVE -> READ/WRITE
-    localparam T_RP     = ns_to_cycles(18);   // PRECHARGE -> ACTIVE
-    // ACTIVE->PRECHARGE minimum (tRAS=42ns=7cyc@166MHz) is not
+    localparam T_RCD    = ns_to_cycles(15);   // ACTIVE -> READ/WRITE (AS4C32M16SA: 15ns min)
+    localparam T_RP     = ns_to_cycles(15);   // PRECHARGE -> ACTIVE (AS4C32M16SA: 15ns min)
+    // ACTIVE->PRECHARGE minimum (tRAS=45ns min, AS4C32M16SA) is not
     // separately waited on: this design's own fixed sequencing
-    // (tRCD + CAS_LATENCY + BURST_LEN data cycles, always >= 3+3+1=7
-    // even at the narrowest BURST_LEN=1) already comfortably exceeds
-    // it by construction before auto-precharge can begin internally.
-    // tMRD is specified by the real AS4C4M16SA-6TIN datasheet (Table 17)
-    // as a FIXED CYCLE COUNT ("2 tCK"), not a nanosecond value -- unlike
-    // tRCD/tRP, which genuinely are ns-based and correctly belong behind
-    // ns_to_cycles(). A previous draft modeled tMRD as ns_to_cycles(12),
-    // an assumed-equivalent ns figure that happened to round up to
-    // exactly 2 cycles at every frequency this design had been tested at
-    // (100/133/166MHz), silently masking the wrong unit model. At the
-    // real V2 board's own 64MHz operating point, ns_to_cycles(12) rounds
-    // to only 1 cycle -- one cycle short of the real, fixed 2-tCK
-    // minimum -- found via this step's own fresh datasheet-level audit
-    // (real Alliance Memory AS4C4M16SA-6TIN datasheet Rev.5.0, Table 17).
-    // Fixed by hardcoding the real, frequency-independent requirement
-    // directly, matching how CAS_LATENCY (also a real fixed-cycle spec)
-    // is already modeled two lines below.
-    localparam T_MRD    = 2;                  // LOAD MODE REGISTER -> any command (tMRD = 2 tCK, fixed)
-    localparam T_INIT_US= 200;                // power-up wait, real datasheet value
+    // (tRCD + CAS_LATENCY + BURST_LEN data cycles) already comfortably
+    // exceeds it by construction before auto-precharge can begin
+    // internally, at every frequency this design actually targets
+    // (64-100MHz) -- re-verified this session for the new part's own
+    // 45ns real minimum (was 42ns for the previous, smaller part):
+    // at CAS_LATENCY=3 and the default BURST_LEN=4, the minimum
+    // possible sequence is T_RCD(>=1 cycle)+3+4=8 cycles, i.e. >=8
+    // cycles*period; even at 100MHz (10ns period) that is 80ns >=
+    // 45ns. This margin narrows at higher frequency and/or smaller
+    // BURST_LEN, and is NOT re-derived symbolically here -- confirmed
+    // instead by this session's own real simulation regression at
+    // every frequency actually used (64/80/100MHz), per this
+    // project's own "measure, do not estimate" standard.
+    //
+    // tMRD and tWR are BOTH specified by the real AS4C32M16SA
+    // datasheet in explicit CLK units (2 CLK each) -- no unit
+    // ambiguity this time (unlike the smaller AS4C4M16SA's own
+    // datasheet, which stated tMRD in ns-at-max-frequency and caused
+    // ERR-0026). Hardcoded directly as fixed cycle counts, matching
+    // how CAS_LATENCY is already modeled.
+    localparam T_MRD    = 2;                  // LOAD MODE REGISTER -> any command (tMRD = 2 CLK, fixed)
+    localparam T_INIT_US= 200;                // power-up wait, real datasheet value (unchanged)
     localparam T_INIT   = T_INIT_US * CLK_FREQ_MHZ;
-    localparam CAS_LATENCY = 3;               // fixed for this part/speed grade
-    // real refresh interval: 4096 rows must each be refreshed within
-    // 64ms -> one AUTO REFRESH at least every 64e6ns/4096 = 15625ns
-    localparam T_REFI    = ns_to_cycles(15625);
+    localparam CAS_LATENCY = 3;               // fixed for this part/speed grade (CL=2 or 3 supported; 3 chosen, matches the previous part)
+    // real refresh interval: AS4C32M16SA has 8192 rows (ROW_BITS=13),
+    // each must be refreshed within 64ms -> one AUTO REFRESH at least
+    // every 64e6ns/8192 = 7812.5ns, rounded UP to 7813ns (never under-
+    // count). HALF the previous, smaller part's own 15625ns interval,
+    // since this part has 2x the rows to refresh in the same 64ms
+    // window -- a real, meaningful difference (not a rounding
+    // artifact), re-derived from ROW_BITS so this stays correct if
+    // ROW_BITS is ever changed again for a different device.
+    localparam T_REFI    = ns_to_cycles(64000000 / (1 << ROW_BITS) + 1);
 
     localparam CNTW = $clog2((T_INIT>T_REFI ? T_INIT : T_REFI) + 1);
 
@@ -129,9 +175,9 @@ module sdram_controller #(
     // command truth table line by line.
 
     // tRC (ACTIVATE-to-ACTIVATE minimum, same bank), used by both the
-    // init-refresh and steady-state refresh wait.
+    // init-refresh and steady-state refresh wait. AS4C32M16SA: 65ns min.
     function [CNTW-1:0] T_RC_MINUS1;
-        localparam integer T_RC = ns_to_cycles(60);
+        localparam integer T_RC = ns_to_cycles(65);
         begin
             T_RC_MINUS1 = T_RC[CNTW-1:0] - 1'b1;
         end
@@ -157,15 +203,15 @@ module sdram_controller #(
     reg [CNTW-1:0] refresh_timer;
     reg [BURST_IDXW-1:0] burst_idx;
     reg req_wr_reg;
-    reg [1:0] req_bank_reg;
-    reg [11:0] req_row_reg;
-    reg [7:0] req_col_reg;
+    reg [BANK_BITS-1:0] req_bank_reg;
+    reg [ROW_BITS-1:0]  req_row_reg;
+    reg [COL_BITS-1:0]  req_col_reg;
     reg [16*BURST_LEN-1:0] wdata_reg;
     reg [2*BURST_LEN-1:0]  wmask_reg;
 
-    wire [1:0] addr_bank = addr[ADDR_WIDTH-1:ADDR_WIDTH-2];
-    wire [11:0] addr_row = addr[ADDR_WIDTH-3:8];
-    wire [7:0]  addr_col = addr[7:0];
+    wire [BANK_BITS-1:0] addr_bank = addr[ADDR_WIDTH-1 -: BANK_BITS];
+    wire [ROW_BITS-1:0]  addr_row  = addr[ADDR_WIDTH-BANK_BITS-1 -: ROW_BITS];
+    wire [COL_BITS-1:0]  addr_col  = addr[COL_BITS-1:0];
 
     // req_pending: latches a req that arrives in S_IDLE on the SAME
     // cycle a periodic AUTO REFRESH is also due. Without this, a
@@ -181,10 +227,10 @@ module sdram_controller #(
     // combination -- it is a matter of which absolute cycle each test
     // vector's req happens to land on).
     reg         req_pending;
-    wire        eff_wr   = req ? wr        : req_wr_reg;
-    wire [1:0]  eff_bank = req ? addr_bank : req_bank_reg;
-    wire [11:0] eff_row  = req ? addr_row  : req_row_reg;
-    wire [7:0]  eff_col  = req ? addr_col  : req_col_reg;
+    wire               eff_wr   = req ? wr        : req_wr_reg;
+    wire [BANK_BITS-1:0] eff_bank = req ? addr_bank : req_bank_reg;
+    wire [ROW_BITS-1:0]  eff_row  = req ? addr_row  : req_row_reg;
+    wire [COL_BITS-1:0]  eff_col  = req ? addr_col  : req_col_reg;
     wire [16*BURST_LEN-1:0] eff_wdata = req ? wdata : wdata_reg;
     wire [2*BURST_LEN-1:0]  eff_wmask = req ? wmask : wmask_reg;
 
@@ -194,16 +240,28 @@ module sdram_controller #(
     assign sdram_dq = dq_out_en ? dq_out : 16'hzzzz;
 
     // Mode register value: burst length code + sequential burst type
-    // (A3=0) + CAS latency 3 (A6:4=011) + standard write burst (A9=0).
-    function [11:0] mrs_value;
+    // (A3=0) + CAS latency 3 (A6:4=011) + standard write burst (A9=0,
+    // "WBL" -- bit position within the reserved/test-mode region above
+    // A6:4 varies slightly by device row-width across this Alliance
+    // family, but is always 0/"burst" for every variant, so this
+    // function's own "everything above bit 6 is 0" construction is
+    // correct regardless of that exact bit-name mapping). Width is
+    // ROW_BITS (matches sdram_a), zero-padded above bit 6 for any
+    // ROW_BITS value.
+    function [ROW_BITS-1:0] mrs_value;
         input integer burst_len;
         reg [2:0] bl_code;
+        reg [ROW_BITS-1:0] v;
         begin
             bl_code = (burst_len==1) ? 3'b000 :
                       (burst_len==2) ? 3'b001 :
                       (burst_len==4) ? 3'b010 :
                       (burst_len==8) ? 3'b011 : 3'b111; // 111 = full page, unused here
-            mrs_value = {3'b000, 1'b0, 3'b011, 1'b0, bl_code};
+            v = {ROW_BITS{1'b0}};
+            v[6:4] = 3'b011;  // CAS Latency = 3 (matches this controller's own fixed CAS_LATENCY)
+            v[3]   = 1'b0;    // Burst Type = sequential
+            v[2:0] = bl_code; // Burst Length
+            mrs_value = v;
         end
     endfunction
 
@@ -219,7 +277,7 @@ module sdram_controller #(
             sdram_cas_n   <= 1'b1;
             sdram_we_n    <= 1'b1;
             sdram_ba      <= 2'b00;
-            sdram_a       <= 12'h000;
+            sdram_a       <= {ROW_BITS{1'b0}};
             sdram_dqm     <= 2'b00; // both byte lanes always enabled (weight/tile fetch always full-word)
             dq_out_en     <= 1'b0;
             ready         <= 1'b0;
@@ -355,11 +413,17 @@ module sdram_controller #(
                     end else begin
                         // READ or WRITE with auto-precharge (A10=1):
                         // CAS#=0, WE#=(0 for write /1 for read), ba=bank,
-                        // a[7:0]=col, a[10]=1
+                        // a[COL_BITS-1:0]=col, a[10]=1 (auto-precharge,
+                        // always at bit 10 across this whole Alliance
+                        // SDR family regardless of ROW_BITS/COL_BITS --
+                        // safe as long as COL_BITS<=10, true for every
+                        // device this controller has ever targeted, so
+                        // the column field [COL_BITS-1:0] never
+                        // overlaps bit 10)
                         sdram_cas_n <= 1'b0;
                         sdram_we_n  <= req_wr_reg ? 1'b0 : 1'b1;
                         sdram_ba    <= req_bank_reg;
-                        sdram_a     <= {4'b0100, req_col_reg}; // a[11]=0,a[10]=1(auto-precharge),a[9:8]=0
+                        sdram_a     <= {{(ROW_BITS-11){1'b0}}, 1'b1, {(10-COL_BITS){1'b0}}, req_col_reg};
                         burst_idx   <= {BURST_IDXW{1'b0}};
                         if (req_wr_reg) begin
                             dq_out_en <= 1'b1;

@@ -38,7 +38,7 @@ module nms_neural_multiprocessor_sdram_unified #(
     parameter DATA_WIDTH  = 8,
     parameter P_IN        = 8,
     parameter ACC_WIDTH   = 32,
-    parameter ADDR_WIDTH  = 23,
+    parameter ADDR_WIDTH  = 26,
     parameter N_SLOTS     = 2,
     parameter N_NODES     = 16,
     parameter MAX_DEPS    = 4,

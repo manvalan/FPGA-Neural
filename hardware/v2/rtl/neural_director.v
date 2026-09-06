@@ -30,7 +30,7 @@
 // ================================================================
 
 module neural_director #(
-    parameter ADDR_WIDTH  = 23,
+    parameter ADDR_WIDTH  = 26,
     parameter N_SLOTS     = 4,
     parameter QUEUE_DEPTH = 8
 )(
@@ -48,11 +48,16 @@ module neural_director #(
     input  wire [15:0]              job_in_node_id,
 
     // ---- per-slot memory_manager job control (arrayed, §9) ----
-    output reg  [N_SLOTS-1:0]              slot_job_start,
-    output reg  [ADDR_WIDTH*N_SLOTS-1:0]   slot_x_base,
-    output reg  [ADDR_WIDTH*N_SLOTS-1:0]   slot_w_base,
-    output reg  [16*N_SLOTS-1:0]           slot_n_tiles,
-    output reg  [ADDR_WIDTH*N_SLOTS-1:0]   slot_result_addr,
+    // Ports are `wire`, driven by the GEN_SLOT_OUT generate block below
+    // from internal unpacked-array registers (see that block's own
+    // comment for why -- a real, measured timing regression found this
+    // session when ADDR_WIDTH grew from 23 to 26 bits, section
+    // "post-PRE-PCB-FREEZE memory upgrade").
+    output wire [N_SLOTS-1:0]              slot_job_start,
+    output wire [ADDR_WIDTH*N_SLOTS-1:0]   slot_x_base,
+    output wire [ADDR_WIDTH*N_SLOTS-1:0]   slot_w_base,
+    output wire [16*N_SLOTS-1:0]           slot_n_tiles,
+    output wire [ADDR_WIDTH*N_SLOTS-1:0]   slot_result_addr,
     // slot_node_id: which node_id is currently occupying each slot --
     // not needed by memory_manager itself (it has no notion of node
     // ids), but needed by a caller (dataflow_core.v, M7) that must
@@ -60,7 +65,7 @@ module neural_director #(
     // to notify the Dependency Manager (M6). Purely additive: existing
     // callers (hardware/v2/sim/tb_neural_director.v, M5) that don't
     // connect it are unaffected.
-    output reg  [16*N_SLOTS-1:0]           slot_node_id,
+    output wire [16*N_SLOTS-1:0]           slot_node_id,
     input  wire [N_SLOTS-1:0]              slot_job_done,
 
     // ---- completion notification (§9 "rilevamento dei completamenti") ----
@@ -121,6 +126,45 @@ module neural_director #(
         end
     end
 
+    // ---- per-slot output storage (unpacked arrays, one real register
+    // set per slot) + constant-indexed generate wiring out to the
+    // packed ports above. Found and fixed this session (post-PRE-PCB-
+    // FREEZE memory upgrade, ADDR_WIDTH 23->26): the PREVIOUS design
+    // used one wide packed `output reg` per field and wrote it with a
+    // RUNTIME-computed part-select (`slot_x_base[free_slot_idx*
+    // ADDR_WIDTH +: ADDR_WIDTH] <= ...`). A variable-indexed write into
+    // a wide packed register is not free logic -- Yosys/synth_ecp5
+    // synthesized the index computation (`free_slot_idx*ADDR_WIDTH`)
+    // as an actual MULT18X18D hard multiplier feeding a wide demux/
+    // crossbar into the destination slot, and this got measurably
+    // worse as ADDR_WIDTH grew (real nextpnr-ecp5 P&R: worst-seed Fmax
+    // collapsed from 68.51MHz at ADDR_WIDTH=23 to ~40-47MHz at
+    // ADDR_WIDTH=26, confirmed across 8 seeds, all failing the 64MHz
+    // target). The fix below replaces the runtime-indexed demux write
+    // with N_SLOTS parallel CONSTANT-indexed comparisons (`fi ==
+    // free_slot_idx`, each a cheap few-bit compare, no multiply) each
+    // gating its own slot's own narrow register -- functionally
+    // IDENTICAL behavior, bit-exact same external port semantics, only
+    // the internal implementation changed.
+    reg                  slot_job_start_r   [0:N_SLOTS-1];
+    reg [ADDR_WIDTH-1:0] slot_x_base_r      [0:N_SLOTS-1];
+    reg [ADDR_WIDTH-1:0] slot_w_base_r      [0:N_SLOTS-1];
+    reg [15:0]           slot_n_tiles_r     [0:N_SLOTS-1];
+    reg [ADDR_WIDTH-1:0] slot_result_addr_r [0:N_SLOTS-1];
+    reg [15:0]           slot_node_id_r     [0:N_SLOTS-1];
+
+    genvar gs;
+    generate
+        for (gs = 0; gs < N_SLOTS; gs = gs + 1) begin : GEN_SLOT_OUT
+            assign slot_job_start[gs]                             = slot_job_start_r[gs];
+            assign slot_x_base[gs*ADDR_WIDTH +: ADDR_WIDTH]        = slot_x_base_r[gs];
+            assign slot_w_base[gs*ADDR_WIDTH +: ADDR_WIDTH]        = slot_w_base_r[gs];
+            assign slot_n_tiles[gs*16 +: 16]                       = slot_n_tiles_r[gs];
+            assign slot_result_addr[gs*ADDR_WIDTH +: ADDR_WIDTH]   = slot_result_addr_r[gs];
+            assign slot_node_id[gs*16 +: 16]                       = slot_node_id_r[gs];
+        end
+    endgenerate
+
     // Priority-encoded lowest-indexed slot reporting job_done this
     // cycle (combinational, so it reflects THIS cycle's slot_job_done
     // bus directly -- a register-based "already reported one" flag
@@ -143,16 +187,18 @@ module neural_director #(
             q_tail           <= {Q_ADDR_WIDTH{1'b0}};
             q_count          <= {(Q_ADDR_WIDTH+1){1'b0}};
             slot_busy        <= {N_SLOTS{1'b0}};
-            slot_job_start   <= {N_SLOTS{1'b0}};
-            slot_x_base      <= {(ADDR_WIDTH*N_SLOTS){1'b0}};
-            slot_w_base      <= {(ADDR_WIDTH*N_SLOTS){1'b0}};
-            slot_n_tiles     <= {(16*N_SLOTS){1'b0}};
-            slot_result_addr <= {(ADDR_WIDTH*N_SLOTS){1'b0}};
-            slot_node_id     <= {(16*N_SLOTS){1'b0}};
+            for (fi = 0; fi < N_SLOTS; fi = fi + 1) begin
+                slot_job_start_r[fi]   <= 1'b0;
+                slot_x_base_r[fi]      <= {ADDR_WIDTH{1'b0}};
+                slot_w_base_r[fi]      <= {ADDR_WIDTH{1'b0}};
+                slot_n_tiles_r[fi]     <= 16'b0;
+                slot_result_addr_r[fi] <= {ADDR_WIDTH{1'b0}};
+                slot_node_id_r[fi]     <= 16'b0;
+            end
             job_out_done     <= 1'b0;
             job_out_slot     <= '0;
         end else begin
-            slot_job_start <= {N_SLOTS{1'b0}};
+            for (fi = 0; fi < N_SLOTS; fi = fi + 1) slot_job_start_r[fi] <= 1'b0;
             job_out_done   <= 1'b0;
 
             // ---- Accept a new job into the ready queue (independent
@@ -201,14 +247,21 @@ module neural_director #(
                 end
 
                 DIR_ALLOCATE: begin
-                    // Dispatch the head of the queue to the first
-                    // free slot found this cycle.
-                    slot_job_start[free_slot_idx]                                <= 1'b1;
-                    slot_x_base[free_slot_idx*ADDR_WIDTH +: ADDR_WIDTH]          <= q_x_base[q_head];
-                    slot_w_base[free_slot_idx*ADDR_WIDTH +: ADDR_WIDTH]          <= q_w_base[q_head];
-                    slot_n_tiles[free_slot_idx*16 +: 16]                        <= q_n_tiles[q_head];
-                    slot_result_addr[free_slot_idx*ADDR_WIDTH +: ADDR_WIDTH]    <= q_result_addr[q_head];
-                    slot_node_id[free_slot_idx*16 +: 16]                        <= q_node_id[q_head];
+                    // Dispatch the head of the queue to the first free
+                    // slot found this cycle -- N_SLOTS parallel
+                    // constant-indexed compares (cheap) instead of one
+                    // runtime-indexed wide demux write (see
+                    // slot_x_base_r's own declaration comment for why).
+                    for (fi = 0; fi < N_SLOTS; fi = fi + 1) begin
+                        if (fi[$clog2(N_SLOTS)-1:0] == free_slot_idx) begin
+                            slot_job_start_r[fi]   <= 1'b1;
+                            slot_x_base_r[fi]      <= q_x_base[q_head];
+                            slot_w_base_r[fi]      <= q_w_base[q_head];
+                            slot_n_tiles_r[fi]     <= q_n_tiles[q_head];
+                            slot_result_addr_r[fi] <= q_result_addr[q_head];
+                            slot_node_id_r[fi]     <= q_node_id[q_head];
+                        end
+                    end
                     slot_busy[free_slot_idx] <= 1'b1;
                     q_head  <= (q_head == QUEUE_DEPTH[Q_ADDR_WIDTH-1:0]-1'b1) ? {Q_ADDR_WIDTH{1'b0}} : q_head + 1'b1;
                     dir_state <= DIR_SCAN_READY;

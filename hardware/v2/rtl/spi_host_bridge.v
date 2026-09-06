@@ -26,15 +26,17 @@
 //   0x00 NOP           -- 0 payload bytes.
 //   0x0F RESET         -- 0 payload bytes. Pulses soft_rst_pulse for
 //                         one clk cycle after CS rises.
-//   0x10 WRITE_JOB     -- 15 payload bytes, registers one dependency-
-//                         manager job (== one reg_valid/reg_* handshake):
+//   0x10 WRITE_JOB     -- 18 payload bytes (widened from 15 -- see
+//                         "ADDRESS WIDTH" note below), registers one
+//                         dependency-manager job (== one reg_valid/
+//                         reg_* handshake):
 //                           byte0    = {4'b0,node_id[3:0]}
 //                           byte1    = {5'b0,required[2:0]}
 //                           byte2:3  = producer_ids[15:0]
-//                           byte4:6  = x_base[22:0]      (byte4 msb={1'b0,x_base[22:16]})
-//                           byte7:9  = w_base[22:0]
-//                           byte10:11= n_tiles[15:0]
-//                           byte12:14= result_addr[22:0]
+//                           byte4:7  = x_base[25:0]      (byte4 msb={6'b0,x_base[25:24]})
+//                           byte8:11 = w_base[25:0]
+//                           byte12:13= n_tiles[15:0]
+//                           byte14:17= result_addr[25:0]
 //                         reg_valid is asserted and HELD until the
 //                         cycle reg_ready also reads 1 (same-cycle
 //                         valid&&ready acceptance, matching
@@ -46,23 +48,34 @@
 //                           bit1 = mem_busy   (WRITE_MEM/READ_MEM waiting on mem_ready)
 //                           bit2 = last_job_accepted (sticky, cleared by next WRITE_JOB)
 //                           bits[7:3] = 0 (reserved)
-//   0x01 WRITE_MEM     -- 5 header bytes + 2*len_words payload bytes:
-//                           byte0:2 = addr[22:0]   (WORD address, matches
+//   0x01 WRITE_MEM     -- 6 header bytes (widened from 5) + 2*len_words
+//                         payload bytes:
+//                           byte0:3 = addr[25:0]   (WORD address, matches
 //                                     sdram_unified_backend's AR port
-//                                     convention -- NOT a byte address)
-//                           byte3:4 = len_words[15:0] (number of 16-bit
+//                                     convention -- NOT a byte address;
+//                                     byte0 msb={6'b0,addr[25:24]})
+//                           byte4:5 = len_words[15:0] (number of 16-bit
 //                                     words to write, len_words>=1)
 //                           then len_words * 2 bytes of data, MSB-first
 //                           per word; each word is written via one
 //                           mem_req/mem_ready handshake (lb_n=ub_n=0,
 //                           full 16-bit write) before the next word's
 //                           bytes are accepted.
-//   0x02 READ_MEM      -- 5 header bytes (addr + len_words, same shape
+//   0x02 READ_MEM      -- 6 header bytes (addr + len_words, same shape
 //                           as WRITE_MEM), 0 further MOSI payload; the
 //                           2*len_words response bytes are clocked out
-//                           on MISO starting at payload byte 6, MSB-
+//                           on MISO starting at payload byte 7, MSB-
 //                           first per word, one mem_req/mem_ready
 //                           read per word.
+//
+// ADDRESS WIDTH (post-PRE-PCB-FREEZE memory upgrade): ADDR_WIDTH grew
+// from 23 to 26 bits (SDRAM capacity upgrade, AS4C4M16SA-6TIN 8MB ->
+// AS4C32M16SA-7TIN 64MB -- see sdram_controller.v's own header). A
+// 26-bit address no longer fits in 3 bytes (24 bits) with a spare
+// reserved bit the way the old 23-bit address did -- every address
+// field below therefore widened from 3 to 4 bytes (6 reserved bits in
+// the new top byte instead of 1), growing WRITE_JOB from 15 to 18
+// payload bytes and the WRITE_MEM/READ_MEM header from 5 to 6 bytes.
 //
 // Any opcode byte not listed above is treated as NOP (0 payload,
 // MISO drives 0x00) -- matches spi_engine.v's own "unknown opcode is
@@ -70,7 +83,7 @@
 // ================================================================
 
 module spi_host_bridge #(
-    parameter ADDR_WIDTH = 23,
+    parameter ADDR_WIDTH = 26,
     parameter N_NODES     = 16,
     parameter MAX_DEPS    = 4
 )(
@@ -226,9 +239,9 @@ module spi_host_bridge #(
     localparam OP_STATUS    = 8'h20;
 
     localparam ST_OPCODE  = 4'd0;
-    localparam ST_JOB     = 4'd1; // collecting 15 WRITE_JOB payload bytes
+    localparam ST_JOB     = 4'd1; // collecting 18 WRITE_JOB payload bytes
     localparam ST_JOB_WAIT= 4'd2; // reg_valid held, waiting reg_ready
-    localparam ST_MEM_ADDR= 4'd3; // collecting 3 addr bytes
+    localparam ST_MEM_ADDR= 4'd3; // collecting 4 addr bytes
     localparam ST_MEM_LEN = 4'd4; // collecting 2 length bytes
     localparam ST_MEM_WD  = 4'd5; // WRITE_MEM: collecting 2 data bytes/word
     localparam ST_MEM_WISS= 4'd6; // WRITE_MEM: issue+wait mem_req
@@ -238,7 +251,7 @@ module spi_host_bridge #(
 
     reg [3:0]  state;
     reg [7:0]  opcode;
-    reg [3:0]  byte_idx;      // generic byte counter within a field
+    reg [4:0]  byte_idx;      // generic byte counter within a field (up to 17, WRITE_JOB)
     reg [15:0] len_words;
     reg [15:0] word_cnt;
     reg [15:0] cur_word;      // WRITE_MEM: assembling MSB,LSB; READ_MEM: holding readback
@@ -252,13 +265,13 @@ module spi_host_bridge #(
         if (opcode == OP_STATUS)
             tx_mux = {5'b0, last_job_accepted_r, mem_busy_r, job_busy_r};
         else if (opcode == OP_READ_MEM && state == ST_MEM_ROUT)
-            tx_mux = (byte_idx == 4'd0) ? cur_word[15:8] : cur_word[7:0];
+            tx_mux = (byte_idx == 5'd0) ? cur_word[15:8] : cur_word[7:0];
     end
     assign tx_byte = tx_mux;
 
     always @(posedge clk) begin
         if (rst) begin
-            state <= ST_OPCODE; opcode <= 8'h00; byte_idx <= 4'd0;
+            state <= ST_OPCODE; opcode <= 8'h00; byte_idx <= 5'd0;
             len_words <= 16'd0; word_cnt <= 16'd0; cur_word <= 16'd0;
             reg_valid <= 1'b0; reg_node_id <= {NODEW{1'b0}}; reg_required <= {REQW{1'b0}};
             reg_producer_ids <= {(MAX_DEPS*NODEW){1'b0}};
@@ -292,12 +305,12 @@ module spi_host_bridge #(
             // to cs_rose below.
             if (cs_fell && state != ST_JOB_WAIT && state != ST_MEM_WISS && state != ST_MEM_RISS) begin
                 state    <= ST_OPCODE;
-                byte_idx <= 4'd0;
+                byte_idx <= 5'd0;
             end else if (!cs_fell && rx_valid) begin
                 case (state)
                     ST_OPCODE: begin
                         opcode <= rx_byte;
-                        byte_idx <= 4'd0;
+                        byte_idx <= 5'd0;
                         case (rx_byte)
                             OP_WRITE_JOB: state <= ST_JOB;
                             OP_WRITE_MEM: state <= ST_MEM_ADDR;
@@ -309,59 +322,63 @@ module spi_host_bridge #(
 
                     ST_JOB: begin
                         case (byte_idx)
-                            4'd0:  reg_node_id                 <= rx_byte[NODEW-1:0];
-                            4'd1:  reg_required                <= rx_byte[REQW-1:0];
-                            4'd2:  reg_producer_ids[15:8]       <= rx_byte;
-                            4'd3:  reg_producer_ids[7:0]        <= rx_byte;
-                            4'd4:  reg_x_base[22:16]            <= rx_byte[6:0];
-                            4'd5:  reg_x_base[15:8]             <= rx_byte;
-                            4'd6:  reg_x_base[7:0]              <= rx_byte;
-                            4'd7:  reg_w_base[22:16]            <= rx_byte[6:0];
-                            4'd8:  reg_w_base[15:8]             <= rx_byte;
-                            4'd9:  reg_w_base[7:0]              <= rx_byte;
-                            4'd10: reg_n_tiles[15:8]            <= rx_byte;
-                            4'd11: reg_n_tiles[7:0]             <= rx_byte;
-                            4'd12: reg_result_addr[22:16]       <= rx_byte[6:0];
-                            4'd13: reg_result_addr[15:8]        <= rx_byte;
-                            4'd14: begin
+                            5'd0:  reg_node_id                 <= rx_byte[NODEW-1:0];
+                            5'd1:  reg_required                <= rx_byte[REQW-1:0];
+                            5'd2:  reg_producer_ids[15:8]       <= rx_byte;
+                            5'd3:  reg_producer_ids[7:0]        <= rx_byte;
+                            5'd4:  reg_x_base[25:24]            <= rx_byte[1:0];
+                            5'd5:  reg_x_base[23:16]            <= rx_byte;
+                            5'd6:  reg_x_base[15:8]             <= rx_byte;
+                            5'd7:  reg_x_base[7:0]              <= rx_byte;
+                            5'd8:  reg_w_base[25:24]            <= rx_byte[1:0];
+                            5'd9:  reg_w_base[23:16]            <= rx_byte;
+                            5'd10: reg_w_base[15:8]             <= rx_byte;
+                            5'd11: reg_w_base[7:0]              <= rx_byte;
+                            5'd12: reg_n_tiles[15:8]            <= rx_byte;
+                            5'd13: reg_n_tiles[7:0]             <= rx_byte;
+                            5'd14: reg_result_addr[25:24]       <= rx_byte[1:0];
+                            5'd15: reg_result_addr[23:16]       <= rx_byte;
+                            5'd16: reg_result_addr[15:8]        <= rx_byte;
+                            5'd17: begin
                                 reg_result_addr[7:0] <= rx_byte;
                                 reg_valid            <= 1'b1;
                                 last_job_accepted_r  <= 1'b0;
                                 state                <= ST_JOB_WAIT;
                             end
                         endcase
-                        if (byte_idx != 4'd14) byte_idx <= byte_idx + 4'd1;
+                        if (byte_idx != 5'd17) byte_idx <= byte_idx + 5'd1;
                     end
 
                     ST_MEM_ADDR: begin
                         case (byte_idx)
-                            4'd0: mem_addr[22:16] <= rx_byte[6:0];
-                            4'd1: mem_addr[15:8]  <= rx_byte;
-                            4'd2: begin
+                            5'd0: mem_addr[25:24] <= rx_byte[1:0];
+                            5'd1: mem_addr[23:16] <= rx_byte;
+                            5'd2: mem_addr[15:8]  <= rx_byte;
+                            5'd3: begin
                                 mem_addr[7:0] <= rx_byte;
                                 state         <= ST_MEM_LEN;
                             end
                         endcase
-                        if (byte_idx != 4'd2) byte_idx <= byte_idx + 4'd1;
-                        else byte_idx <= 4'd0;
+                        if (byte_idx != 5'd3) byte_idx <= byte_idx + 5'd1;
+                        else byte_idx <= 5'd0;
                     end
 
                     ST_MEM_LEN: begin
-                        if (byte_idx == 4'd0) begin
+                        if (byte_idx == 5'd0) begin
                             len_words[15:8] <= rx_byte;
-                            byte_idx        <= 4'd1;
+                            byte_idx        <= 5'd1;
                         end else begin
                             len_words[7:0] <= rx_byte;
                             word_cnt       <= {len_words[15:8], rx_byte};
-                            byte_idx       <= 4'd0;
+                            byte_idx       <= 5'd0;
                             state          <= (opcode == OP_WRITE_MEM) ? ST_MEM_WD : ST_MEM_RISS;
                         end
                     end
 
                     ST_MEM_WD: begin
-                        if (byte_idx == 4'd0) begin
+                        if (byte_idx == 5'd0) begin
                             cur_word[15:8] <= rx_byte;
-                            byte_idx       <= 4'd1;
+                            byte_idx       <= 5'd1;
                         end else begin
                             cur_word[7:0] <= rx_byte;
                             state         <= ST_MEM_WISS;
@@ -390,7 +407,7 @@ module spi_host_bridge #(
                 mem_busy_r <= 1'b0;
                 mem_addr   <= mem_addr + 1'b1;
                 word_cnt   <= word_cnt - 1'b1;
-                byte_idx   <= 4'd0;
+                byte_idx   <= 5'd0;
                 state      <= (word_cnt == 16'd1) ? ST_IGNORE : ST_MEM_WD;
             end
 
@@ -403,7 +420,7 @@ module spi_host_bridge #(
             end else if (state == ST_MEM_RISS && mem_busy_r && mem_ready) begin
                 mem_busy_r <= 1'b0;
                 cur_word   <= mem_rdata;
-                byte_idx   <= 4'd0;
+                byte_idx   <= 5'd0;
                 state      <= ST_MEM_ROUT;
             end
             if (state == ST_MEM_ROUT && rx_valid) begin
@@ -412,12 +429,12 @@ module spi_host_bridge #(
                 // it is also the correct "advance" event for MISO-side
                 // bookkeeping (mirrors spi_slave's own documented
                 // rx_valid-drives-advancement convention).
-                if (byte_idx == 4'd0) begin
-                    byte_idx <= 4'd1;
+                if (byte_idx == 5'd0) begin
+                    byte_idx <= 5'd1;
                 end else begin
                     mem_addr <= mem_addr + 1'b1;
                     word_cnt <= word_cnt - 1'b1;
-                    byte_idx <= 4'd0;
+                    byte_idx <= 5'd0;
                     state    <= (word_cnt == 16'd1) ? ST_IGNORE : ST_MEM_RISS;
                 end
             end

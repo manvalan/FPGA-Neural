@@ -26,7 +26,7 @@ module nms_activation_fill_ctrl_v3 #(
     parameter DATA_WIDTH = 8,
     parameter P_IN       = 8,
     parameter N_SLOTS    = 4,
-    parameter ADDR_WIDTH = 23,
+    parameter ADDR_WIDTH = 26,
     parameter MAX_TILES  = 16,
     // TIW indexes the SRAM fill address (0..MAX_TILES-1); CNTW is for
     // resident_count, which must represent the VALUE MAX_TILES itself
@@ -120,19 +120,79 @@ module nms_activation_fill_ctrl_v3 #(
         end
     endgenerate
 
+    // Balanced binary max-tree (log2(N_SLOTS) comparison levels)
+    // instead of the flat N_SLOTS-wide sequential scan this file's own
+    // header comment above already flagged as "an N_SLOTS-wide
+    // sequential chain". Found and fixed this session: that chain's
+    // own carry-chain critical path became the DOMINANT critical path
+    // at N_SLOTS=8 (real nextpnr-ecp5 P&R: Fmax collapsed to ~40MHz,
+    // failing the 64MHz target across every measured seed). A tree
+    // has the SAME single-cycle combinational timing as the scan it
+    // replaces (max_n_tiles_reg is still registered exactly one cycle
+    // behind n_tiles_masked -- no FSM/latency change, purely a
+    // combinational-depth reduction: log2(N_SLOTS) levels instead of
+    // N_SLOTS).
+    //
+    // Written as explicit, uniquely-named per-level wires (NOT a
+    // multi-dimensional generate-indexed array) -- a first attempt
+    // using a shared 2D `wire max_tree[level][idx]` array triggered a
+    // real simulator UNOPTFLAT "circular combinational logic" warning.
+    // The actual dependency graph IS acyclic (level L+1 only ever
+    // reads level L), but that tool's array-flattening circularity
+    // check could not prove that for a shared 2D array; distinctly-
+    // named per-level wires sidestep the ambiguity entirely for both
+    // simulation and synthesis. N_SLOTS is a power of two for every
+    // real configuration this project uses (1/2/4/8); anything else
+    // falls back, explicitly, to the original flat scan (correct but not
+    // optimized) rather than silently doing the wrong thing.
     reg [15:0] max_n_tiles_reg;
-    integer j;
-    reg [15:0] max_n_tiles_comb;
-    always @* begin
-        max_n_tiles_comb = 16'h0;
-        for (j = 0; j < N_SLOTS; j = j + 1)
-            if (n_tiles_masked[j] > max_n_tiles_comb)
-                max_n_tiles_comb = n_tiles_masked[j];
-    end
-    always @(posedge clk) begin
-        if (rst) max_n_tiles_reg <= 16'h0;
-        else     max_n_tiles_reg <= max_n_tiles_comb;
-    end
+    generate
+        if (N_SLOTS == 1) begin : GEN_MAXTREE_N1
+            always @(posedge clk) begin
+                if (rst) max_n_tiles_reg <= 16'h0;
+                else     max_n_tiles_reg <= n_tiles_masked[0];
+            end
+        end else if (N_SLOTS == 2) begin : GEN_MAXTREE_N2
+            wire [15:0] max_final = (n_tiles_masked[0] > n_tiles_masked[1]) ? n_tiles_masked[0] : n_tiles_masked[1];
+            always @(posedge clk) begin
+                if (rst) max_n_tiles_reg <= 16'h0;
+                else     max_n_tiles_reg <= max_final;
+            end
+        end else if (N_SLOTS == 4) begin : GEN_MAXTREE_N4
+            wire [15:0] m0 = (n_tiles_masked[0] > n_tiles_masked[1]) ? n_tiles_masked[0] : n_tiles_masked[1];
+            wire [15:0] m1 = (n_tiles_masked[2] > n_tiles_masked[3]) ? n_tiles_masked[2] : n_tiles_masked[3];
+            wire [15:0] max_final = (m0 > m1) ? m0 : m1;
+            always @(posedge clk) begin
+                if (rst) max_n_tiles_reg <= 16'h0;
+                else     max_n_tiles_reg <= max_final;
+            end
+        end else if (N_SLOTS == 8) begin : GEN_MAXTREE_N8
+            wire [15:0] m0 = (n_tiles_masked[0] > n_tiles_masked[1]) ? n_tiles_masked[0] : n_tiles_masked[1];
+            wire [15:0] m1 = (n_tiles_masked[2] > n_tiles_masked[3]) ? n_tiles_masked[2] : n_tiles_masked[3];
+            wire [15:0] m2 = (n_tiles_masked[4] > n_tiles_masked[5]) ? n_tiles_masked[4] : n_tiles_masked[5];
+            wire [15:0] m3 = (n_tiles_masked[6] > n_tiles_masked[7]) ? n_tiles_masked[6] : n_tiles_masked[7];
+            wire [15:0] m01 = (m0 > m1) ? m0 : m1;
+            wire [15:0] m23 = (m2 > m3) ? m2 : m3;
+            wire [15:0] max_final = (m01 > m23) ? m01 : m23;
+            always @(posedge clk) begin
+                if (rst) max_n_tiles_reg <= 16'h0;
+                else     max_n_tiles_reg <= max_final;
+            end
+        end else begin : GEN_MAXTREE_FALLBACK
+            reg [15:0] max_n_tiles_comb_fallback;
+            integer j;
+            always @* begin
+                max_n_tiles_comb_fallback = 16'h0;
+                for (j = 0; j < N_SLOTS; j = j + 1)
+                    if (n_tiles_masked[j] > max_n_tiles_comb_fallback)
+                        max_n_tiles_comb_fallback = n_tiles_masked[j];
+            end
+            always @(posedge clk) begin
+                if (rst) max_n_tiles_reg <= 16'h0;
+                else     max_n_tiles_reg <= max_n_tiles_comb_fallback;
+            end
+        end
+    endgenerate
 
     localparam ST_IDLE  = 1'd0;
     localparam ST_FETCH = 1'd1;

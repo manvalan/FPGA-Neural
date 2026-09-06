@@ -20,7 +20,7 @@
 
 module tb_spi_host_bridge;
 
-    localparam ADDR_WIDTH = 23;
+    localparam ADDR_WIDTH = 26; // AS4C32M16SA memory upgrade: 25-bit word address + 1 byte-select bit
     localparam N_NODES    = 16;
     localparam MAX_DEPS   = 4;
     localparam NODEW = $clog2(N_NODES);
@@ -135,15 +135,18 @@ module tb_spi_host_bridge;
         spi_byte(8'h02, rxb);              // required=2
         spi_byte(8'hAB, rxb);              // producer_ids[15:8]
         spi_byte(8'hCD, rxb);              // producer_ids[7:0]
-        spi_byte(8'h00, rxb);              // x_base[22:16]
+        spi_byte(8'h00, rxb);              // x_base[25:24]
+        spi_byte(8'h00, rxb);              // x_base[23:16]
         spi_byte(8'h10, rxb);              // x_base[15:8]
         spi_byte(8'h00, rxb);              // x_base[7:0]  -> x_base=0x001000
-        spi_byte(8'h00, rxb);              // w_base[22:16]
+        spi_byte(8'h00, rxb);              // w_base[25:24]
+        spi_byte(8'h00, rxb);              // w_base[23:16]
         spi_byte(8'h20, rxb);              // w_base[15:8]
         spi_byte(8'h00, rxb);              // w_base[7:0]  -> w_base=0x002000
         spi_byte(8'h00, rxb);              // n_tiles[15:8]
         spi_byte(8'h04, rxb);              // n_tiles[7:0] -> n_tiles=4
-        spi_byte(8'h00, rxb);              // result_addr[22:16]
+        spi_byte(8'h00, rxb);              // result_addr[25:24]
+        spi_byte(8'h00, rxb);              // result_addr[23:16]
         spi_byte(8'h30, rxb);              // result_addr[15:8]
         spi_byte(8'h00, rxb);              // result_addr[7:0] -> result_addr=0x003000
 
@@ -154,10 +157,10 @@ module tb_spi_host_bridge;
         check(reg_node_id == 5, "A: reg_node_id");
         check(reg_required == 2, "A: reg_required");
         check(reg_producer_ids == 16'hABCD, "A: reg_producer_ids");
-        check(reg_x_base == 23'h001000, "A: reg_x_base");
-        check(reg_w_base == 23'h002000, "A: reg_w_base");
+        check(reg_x_base == 26'h001000, "A: reg_x_base");
+        check(reg_w_base == 26'h002000, "A: reg_w_base");
         check(reg_n_tiles == 16'h0004, "A: reg_n_tiles");
-        check(reg_result_addr == 23'h003000, "A: reg_result_addr");
+        check(reg_result_addr == 26'h003000, "A: reg_result_addr");
 
         repeat (3) begin
             @(posedge clk);
@@ -182,7 +185,7 @@ module tb_spi_host_bridge;
         // ================= Test C: WRITE_MEM, single word ===========
         cs_n = 0; #20;
         spi_byte(8'h01, rxb);               // opcode WRITE_MEM
-        spi_byte(8'h00, rxb); spi_byte(8'h00, rxb); spi_byte(8'h55, rxb); // addr=0x000055
+        spi_byte(8'h00, rxb); spi_byte(8'h00, rxb); spi_byte(8'h00, rxb); spi_byte(8'h55, rxb); // addr=0x000055
         spi_byte(8'h00, rxb); spi_byte(8'h01, rxb); // len_words=1
         spi_byte(8'h12, rxb); spi_byte(8'h34, rxb); // data=0x1234
         // hold CS low, idle SCLK, while the memory model latency elapses
@@ -193,7 +196,7 @@ module tb_spi_host_bridge;
         // ================= Test D: READ_MEM, single word =============
         cs_n = 0; #20;
         spi_byte(8'h02, rxb);               // opcode READ_MEM
-        spi_byte(8'h00, rxb); spi_byte(8'h00, rxb); spi_byte(8'h55, rxb); // addr=0x000055
+        spi_byte(8'h00, rxb); spi_byte(8'h00, rxb); spi_byte(8'h00, rxb); spi_byte(8'h55, rxb); // addr=0x000055
         spi_byte(8'h00, rxb); spi_byte(8'h01, rxb); // len_words=1
         #200; // idle SCLK while the read latency elapses
         spi_byte(8'h00, rxb); exp_addr = rxb; // MSB
