@@ -2036,3 +2036,74 @@ STATUS: FASE #1 (hardware freeze scope) CLOSED for the architectural
   physical path. CHIP READINESS remains NO overall (see CHIP_
   READINESS.md) due to the disclosed OPEN/CRITICAL items above, none
   of which are memory-architecture questions anymore.
+
+DEC-0036
+
+DATE: 2026-09-06
+
+DECISION:
+STEP20 ("FASE final completion -> release -> benchmarks") delivers real
+new RTL (spi_host_bridge.v, ecp5_pll_sys_clk.v, reset_sync.v, the
+board-level fpga_neural_v2_top.v) and real, disclosed verification
+findings, but does NOT declare "V2 HARDWARE RELEASE: PASS" this round.
+Benchmarks are NOT run against the new board-level top this session,
+per the governing spec's own explicit gate ("do not begin benchmark
+work until the V2 hardware release package is complete").
+
+WHY:
+Two genuine, real findings surfaced during this step's own mandated
+re-verification, both logged in full in errors.log:
+  - ERR-0024: the CURRENT Icarus Verilog v13.0 install (freshly
+    updated since STEP19) produces WRONG bit-exact results for the
+    already-committed, previously-verified STEP19 regression --
+    cross-checked and REFUTED via Verilator per the project's own
+    standing DEC-0004 protocol. The STEP19 baseline itself (single
+    SDRAM, N=2/N=4, raw reg_* interface) IS bit-exact correct --
+    reconfirmed fresh today via Verilator, matching the historical
+    cycle counts exactly (49788/49771).
+  - ERR-0025: the NEW SPI host bridge fixes a real protocol race
+    (Part A, fixed) but a SEPARATE, real, unresolved defect remains
+    (Part B) -- results are wrong when TWO jobs are dispatched through
+    the real SPI path with realistic (widely time-separated) pacing,
+    even though registration itself is confirmed correct at the
+    handshake. Root cause NOT yet isolated to a specific module.
+
+Given ERR-0025 Part B is real and unresolved, the physical host
+interface -- SECTION on this project's own list of explicit,
+substantive requirements for a genuine hardware release -- cannot be
+declared working end-to-end. Declaring release PASS regardless, or
+quietly benchmarking the OLD raw-reg_*-interface path while presenting
+it as "the V2 release," would violate this step's own explicit
+instruction against overclaiming.
+
+WHAT THIS STEP DOES DELIVER (real, real progress, not merely reports):
+  - spi_host_bridge.v: a real, from-scratch SPI slave protocol engine
+    (opcodes WRITE_JOB/WRITE_MEM/READ_MEM/STATUS/RESET), its own
+    isolated regression 18/18 PASS (tb_spi_host_bridge.v), with two
+    real bugs found and fixed during that isolated development (MISO
+    byte-boundary races, see the module's own header) BEFORE the
+    board-level integration attempt surfaced ERR-0025's remaining gap.
+  - ecp5_pll_sys_clk.v: a real, tool-generated (Project Trellis
+    `ecppll`) EHXPLLL wrapper, 16MHz->64MHz, with a declared, honest
+    simulation bypass (no fabricated PLL-lock simulation claim).
+  - reset_sync.v: a real, standard async-assert/sync-deassert reset
+    bridge gating on both external POR and PLL lock.
+  - fpga_neural_v2_top.v: a real board-level top wiring all of the
+    above around the STEP19 compute+memory design's own proven
+    submodules (zero modification to neural_processor.v,
+    dependency_manager.v, sdram_unified_backend.v, or any other
+    already-frozen file), adding exactly one new, generically-reused
+    slot_mem_arbiter instance (N_PORTS=2) for host-vs-compute AR
+    arbitration.
+  - Two tooling-compatibility fixes (nms_memory_manager_stream_wide.v
+    declaration-order, tb_nms_dstress_sdram_unified.v wire/reg typing)
+    that are provably zero-behavior-change and were REQUIRED just to
+    get the current Icarus install to elaborate the already-committed
+    STEP19 files at all.
+
+STATUS: V2 HARDWARE RELEASE: FAIL (not yet). ERR-0025 Part B is the
+single blocking item. Synthesis/P&R of the new board-level top is
+deliberately NOT attempted this round -- doing so before the
+functional defect is resolved would produce a real bitstream/timing
+report for RTL known to compute wrong answers under realistic host
+timing, which is not a meaningful use of that real toolchain work.

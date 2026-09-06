@@ -235,6 +235,11 @@ module tb #(
     reg measure_en;
     integer total_cycles;
     integer psram_busy_cycles;
+    integer ni; // moved up from its original later declaration point
+               // (STEP20 tooling-compatibility fix, zero behavior
+               // change -- see nms_memory_manager_stream_wide.v's own
+               // header note on icarus 13.0's stricter declared-
+               // before-use rule for procedural blocks)
     genvar gi;
 
     reg [N_SLOTS_CFG-1:0] slot_busy_bit;   // memory_manager.state != MM_IDLE, this cycle
@@ -356,8 +361,8 @@ module tb #(
     // the weight specifically is NOT yet ready (tile_idx>=wgt_ready_count)
     // and the FSM is genuinely stalled on it (not mid-read-pipeline, not
     // already holding a valid operand).
-    wire [N_SLOTS_CFG-1:0] slot_could_present_act;
-    wire [N_SLOTS_CFG-1:0] slot_weight_blocking;
+    reg  [N_SLOTS_CFG-1:0] slot_could_present_act;
+    reg  [N_SLOTS_CFG-1:0] slot_weight_blocking;
     reg  [N_SLOTS_CFG-1:0] slot_stalled_this_tile; // sticky per current tile_idx
     reg  [31:0] prev_tile_idx [0:N_SLOTS_CFG-1];
     integer weight_stall_cycles [0:N_SLOTS_CFG-1];
@@ -419,7 +424,6 @@ module tb #(
     // Director/dependency bookkeeping
     integer jobs_allocated, jobs_completed, wakeups;
     integer waiting_sum, ready_sum, dispatched_sum, sample_count;
-    integer ni;
 
     // Occupancy sampling is EXPENSIVE (a full N_NODES=512 scan) and is
     // only needed for the small/structural workloads (A/B/E/F), not

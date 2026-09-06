@@ -7,6 +7,14 @@ FUTURE.
 
 ## BLOCKER (impede la realizzazione o il funzionamento del chip)
 
+0. **STEP20 update:** a real SPI host interface (`spi_host_bridge.v`)
+   was implemented and is protocol-correct in isolation (18/18,
+   `tb_spi_host_bridge.v`), but a real, disclosed, UNRESOLVED defect
+   (errors.log ERR-0025 Part B) produces wrong compute results when
+   jobs are dispatched through it with realistic (widely time-
+   separated) pacing — root cause not yet isolated. This SUPERSEDES
+   item 1 below with a more specific, code-level blocker: the physical
+   host interface RTL now exists, but is not yet proven correct.
 1. **No physical host interface exists.** The RTL's own "host" ports
    are a 110-pin raw parallel job-registration bus
    (`reg_valid`/`reg_node_id`/`reg_required`/`reg_producer_ids`/

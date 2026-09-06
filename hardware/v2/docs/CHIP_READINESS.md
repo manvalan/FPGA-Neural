@@ -39,6 +39,16 @@ masked.
 
 **7 of 14 items checked. HARDWARE READY = NO.**
 
+**STEP20 update:** a real SPI host interface RTL now exists
+(`spi_host_bridge.v` + `fpga_neural_v2_top.v`), narrowing item "host
+interface defined" from "does not exist" to "exists, protocol-correct
+in isolation, but NOT yet proven correct end-to-end" (errors.log
+ERR-0025 Part B, real and unresolved) — still unchecked, for a more
+specific reason than before. The STEP19 core (raw `reg_*` interface)
+remains bit-exact verified and was reconfirmed fresh this session via
+Verilator after an unrelated Icarus Verilog v13.0 toolchain regression
+was found and ruled out (ERR-0024).
+
 ## Why each unchecked item is unchecked (no vague language)
 
 | Item | Why NOT checked |

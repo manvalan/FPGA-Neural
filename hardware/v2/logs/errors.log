@@ -1098,3 +1098,87 @@ verification: re-ran the isolated unit regression (40/40 PASS,
   multi-hundred-refresh-interval operation and zero deadlock/timeout/
   dropped/duplicated results. See EXP-0048 for the full integration
   results.
+
+ERR-0024 (Icarus Verilog v13.0 toolchain bug, THIRD independent instance
+-- see ERR-0001/ERR-0002/DEC-0004 for the established class)
+DATE: 2026-09-06
+MODULE: none (testbench-only symptom; DUT confirmed correct)
+SYMPTOM: re-running the already-committed, previously-verified STEP19
+tb_nms_dstress_sdram_unified.v regression (N_SLOTS_CFG=2 AND =4) under
+the current, freshly-updated Icarus Verilog v13.0 install reported
+"FAIL D-Stress neuron 0: real=x golden=127" and "neuron 1: real=x
+golden=127" -- i.e. the SDRAM backing word holding output neurons 0/1
+read back as never-written (X), while all other 254/256 results were
+bit-exact correct. Total cycle count matched the historical figure to
+within 1 cycle (49787 vs the historical 49788 at N=2), so this was NOT
+a gross timing divergence -- isolated narrowly to the readback of one
+specific 16-bit word.
+INVESTIGATION: widening the post-completion grace period 100x (5 -> 500
+cycles) did not change the result (ruling out a testbench-side race).
+Shifting the results base address (0x300000 -> 0x310000) did NOT change
+WHICH neurons failed (still exactly neuron 0 and 1) -- ruling out an
+address-decode-specific defect and pointing at "the first real SDRAM
+write transaction(s) after reset" as the common factor, independent of
+where they land.
+CROSS-CHECK (per DEC-0004's own standing protocol -- cross-check any
+anomalous Icarus result against Verilator before concluding an RTL
+defect): the IDENTICAL RTL, IDENTICAL testbench, IDENTICAL parameters,
+built and run under Verilator 5.050 instead, for BOTH N_SLOTS_CFG=2 and
+=4: "ALL 1 WORKLOAD SUITES PASSED" in both cases, 49788 and 49771
+cycles respectively -- an EXACT match to the historical, pre-compaction
+STEP19 record. CONFIRMS this is a fourth-ish real, reproducible Icarus
+Verilog v13.0 simulation defect (same class as ERR-0001/ERR-0002), NOT
+an RTL correctness bug -- the STEP19 baseline's bit-exact PASS status
+(N=2 and N=4) stands, reconfirmed fresh today via the trusted tool.
+STATUS: NOT reported upstream (out of scope). Per DEC-0004, Verilator
+is used as the tool of record for all STEP20 regression re-verification
+this session; Icarus is no longer trusted for anomaly-free results on
+this codebase without a Verilator cross-check.
+
+ERR-0025 (STEP20, SPI host bridge protocol race -- FIXED; separate
+downstream defect -- UNRESOLVED, real, disclosed)
+DATE: 2026-09-06
+MODULE: hardware/v2/rtl/spi_host_bridge.v (fixed); downstream location
+NOT YET root-caused (see below).
+PART A -- FIXED: spi_host_bridge.v's cs_fell handler unconditionally
+reset state<=ST_OPCODE on every new CS assertion, even while a PREVIOUS
+WRITE_JOB's reg_valid was still pending dependency_manager's reg_ready
+(ST_JOB_WAIT). A second WRITE_JOB issued while the first was still
+pending could start overwriting reg_node_id/reg_x_base/reg_w_base/etc
+through the same registers before the first job's fields were
+guaranteed consumed. Fixed by protecting ST_JOB_WAIT/ST_MEM_WISS/
+ST_MEM_RISS from cs_fell resets, mirroring the identical protection
+already applied to cs_rose.
+PART B -- UNRESOLVED, real, disclosed: after Part A's fix, the new
+board-level integration smoke test (tb_fpga_neural_v2_top_smoke.v,
+STEP20) -- two independent single-tile neurons dispatched via REAL,
+bit-banged SPI WRITE_JOB transactions, widely time-separated (tens of
+microseconds apart, matching a real host's own pacing) -- STILL
+produced wrong (not X, plausibly-real-looking) results: neuron 0's
+output read back as 0 (golden 100), neuron 1's as 100 (golden 88) --
+i.e. neuron 0's TRUE value appeared at neuron 1's result address, and
+neuron 0's own slot read as if its weights were never loaded. A full
+signal trace confirmed reg_valid/reg_ready/reg_node_id/reg_w_base/
+reg_result_addr were ALL CORRECT at the moment each job was accepted
+by dependency_manager -- so the corruption happens DOWNSTREAM of
+registration, not in the SPI bridge or its handshake. The already-
+verified STEP19 tb_nms_dstress_sdram_unified.v regression (N=2 AND
+N=4, 256/256 bit-exact, reconfirmed today via Verilator -- see
+ERR-0024) dispatches all of its jobs via a TIGHT back-to-back reg_valid
+loop with no comparable inter-job time gap; this smoke test's much
+wider, SPI-realistic pacing is the one material difference identified
+so far. Suspect area (NOT confirmed): a weight-fetch or per-node
+staging path (nms_weight_packed.v / weight_prefetch_engine_wide.v /
+nms_activation_fill_ctrl_v3.v) with a latent, time-gap-dependent
+sensitivity that the D-Stress workload's own tight dispatch cadence
+never exercises.
+STATUS: UNRESOLVED. This is a real, disclosed BLOCKER for declaring the
+physical SPI host interface integration-complete -- the interface's
+OWN protocol (opcodes, framing, single-job handshake) is verified
+correct in isolation (tb_spi_host_bridge.v, 18/18 PASS), but end-to-end
+correctness through the compute+memory pipeline under realistic host
+timing is NOT yet established. Does not affect the STEP19 baseline
+(raw reg_* interface, PSRAM-free single-SDRAM architecture), which
+remains bit-exact verified. Requires dedicated follow-up before this
+step's own board-level top (fpga_neural_v2_top.v) can be considered
+hardware-release-ready.

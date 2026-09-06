@@ -139,14 +139,26 @@ module nms_memory_manager_stream_wide #(
 
     reg [2:0] state;
     reg job_active_reg;
-    assign job_active  = job_active_reg;
-    assign job_x_base  = x_base_reg;
-    assign job_n_tiles = n_tiles_reg;
-
     reg [ADDR_WIDTH-1:0] x_base_reg, w_base_reg, result_addr_reg;
     reg [15:0]           n_tiles_reg;
     reg [CNTW-1:0]       tile_idx;   // CONSUMPTION pointer (tiles handed to NP so far)
     reg [CNTW-1:0]       rd_ptr;     // READ-ISSUE pointer (tiles whose SRAM read has been issued)
+
+    assign job_active  = job_active_reg;
+    assign job_x_base  = x_base_reg;
+    assign job_n_tiles = n_tiles_reg;
+
+    // Result write-back port regs (moved up from their original,
+    // later position in this file -- STEP20 tooling-compatibility
+    // fix, zero behavior change: module-scope reg declarations are
+    // not order-dependent in real Verilog semantics, but a icarus
+    // Verilog 13.0 elaborates `always` blocks in file order and
+    // requires a reg's declaration to textually precede its first
+    // use inside one; this file predates that stricter check).
+    reg                   wr_mem_req;
+    reg  [ADDR_WIDTH-1:0] wr_mem_addr;
+    reg  [15:0]           wr_mem_wdata;
+    reg                   wr_mem_lb_n, wr_mem_ub_n;
 
     wire [CNTW-1:0] wgt_ready_count;
 
@@ -305,11 +317,7 @@ module nms_memory_manager_stream_wide #(
 
     // Result write-back has the real 16-bit port entirely to itself
     // in this variant (no mux needed -- weight fetch lives on the
-    // separate wide port above).
-    reg                   wr_mem_req;
-    reg  [ADDR_WIDTH-1:0] wr_mem_addr;
-    reg  [15:0]           wr_mem_wdata;
-    reg                   wr_mem_lb_n, wr_mem_ub_n;
+    // separate wide port above). Declarations moved up (see above).
 
     assign mem_req   = wr_mem_req;
     assign mem_wr    = 1'b1;
