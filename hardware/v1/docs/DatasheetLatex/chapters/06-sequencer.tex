@@ -1,0 +1,111 @@
+\chapter[Memory, multi-neuron and multi-layer]{Memory integration, multi-neuron and multi-layer}
+\label{ch:seq}
+
+\section{\texttt{neuron\_memory} --- memory/neuron bridge}
+\code{neuron\_memory} connects the compute datapath to memory and manages the loop over
+the neurons. It reads the $X$ vector only once (shared input), then for each neuron
+re-reads $W$ and bias from RAM and feeds them to a single reused instance of
+\code{neuron\_parallel}: the design is memory-bound, one neuron computed at a time,
+without duplicating the datapath. The output is \code{y\_bus}, packed neuron-major
+(\code{DATA\_WIDTH*N\_NEURONS} bits).
+
+\begin{center}
+\begin{tikzpicture}[font=\scriptsize,node distance=13mm]
+ \node[fnstate](idle){IDLE};
+ \node[fnstate,right=of idle](rx){READ\_X};
+ \node[fnstate,right=of rx](rw){READ\_W};
+ \node[fnstate,below=10mm of rw](rb){READ\_BIAS};
+ \node[fnstate,left=of rb](sn){START\_N};
+ \node[fnstate,left=of sn](wn){WAIT\_N};
+ \draw[fnarrow] (idle)--node[fnlbl,above]{start}(rx);
+ \draw[fnarrow] (rx)--node[fnlbl,above]{X read}(rw);
+ \draw[fnarrow] (rw)--(rb);
+ \draw[fnarrow] (rb)--(sn);
+ \draw[fnarrow] (sn)--(wn);
+ \draw[fnarrow] (wn) to[bend left=18] node[fnlbl,above]{next neuron}(rw);
+ \draw[fnarrow] (wn) to[bend right=28] node[fnlbl,below]{last neuron: done}(idle);
+\end{tikzpicture}
+\end{center}
+
+The states are IDLE, READ\_X, READ\_W, READ\_BIAS, START\_N, WAIT\_N. After the last
+neuron the FSM returns to IDLE and asserts \code{done}. The count of neurons and inputs
+actually processed is given by \code{n\_neurons\_real}/\code{n\_inputs\_real}
+(ch.~\ref{ch:param}).
+
+\section{\texttt{layer\_sequencer} --- multi-layer network}
+\code{layer\_sequencer} chains up to \code{N\_LAYERS} executions of the same
+\code{neuron\_memory} instance, realizing a dense feed-forward network \emph{without}
+touching the validated compute core. It reads a descriptor table written by the host and
+alternates the two output buffers in RAM (ping-pong).
+
+\begin{center}
+\begin{tikzpicture}[font=\scriptsize,node distance=13mm]
+ \node[fnstate](i){IDLE};
+ \node[fnstate,right=of i](rd){READ\\DESC};
+ \node[fnstate,right=of rd](rw){READ\\WAIT};
+ \node[fnstate,below=10mm of rw](sl){START\\LAYER};
+ \node[fnstate,left=of sl](wl){WAIT\\LAYER};
+ \node[fnstate,left=of wl](ci){COPY\\ISSUE};
+ \node[fnstate,below=9mm of ci](cw){COPY\\WAIT};
+ \draw[fnarrow] (i)--node[fnlbl,above]{run\_start}(rd);
+ \draw[fnarrow] (rd)--(rw);
+ \draw[fnarrow] (rw)--(sl);
+ \draw[fnarrow] (sl)--(wl);
+ \draw[fnarrow] (wl)--(ci);
+ \draw[fnarrow] (ci)--(cw);
+ \draw[fnarrow] (cw) to[bend left=15] node[fnlbl,left]{next layer}(rd);
+ \draw[fnarrow] (cw) to[bend right=12] node[fnlbl,below]{last: seq\_done}(i);
+\end{tikzpicture}
+\end{center}
+
+\subsection{Ping-pong buffers}
+Layer~0 reads the external input \code{x\_base}. Layer $k>0$ reads from the buffer
+written by layer $k-1$; the output of each layer is copied into the other buffer,
+alternating A and B. The final output remains both in \code{y\_bus} (readable with
+\op{READ\_OUTPUT}) and in the ping-pong buffer into which it was copied.
+
+\begin{center}
+\begin{tikzpicture}[font=\scriptsize,node distance=7mm]
+ \node[fnblockA,minimum width=18mm](x){X\\\code{x\_base}};
+ \node[fnblockD,right=10mm of x,minimum width=20mm](l0){Layer 0};
+ \node[fnblock,right=10mm of l0,minimum width=18mm](ba){buf A};
+ \node[fnblockD,right=10mm of ba,minimum width=20mm](l1){Layer 1};
+ \node[fnblock,right=10mm of l1,minimum width=18mm](bb){buf B};
+ \node[fnblockD,right=10mm of bb,minimum width=20mm](l2){Layer 2};
+ \draw[fnarrow] (x)--(l0); \draw[fnarrow] (l0)--(ba);
+ \draw[fnarrow] (ba)--(l1); \draw[fnarrow] (l1)--(bb);
+ \draw[fnarrow] (bb)--(l2);
+ \draw[fnarrowT,dashed] (l2.south) to[bend left=25] node[fnlbl,below]{copy into buf A} (ba.south);
+\end{tikzpicture}
+\end{center}
+
+\subsection{Descriptor table}
+Written by the host into RAM at \code{table\_base} with \op{WRITE\_RAM}; \code{N\_LAYERS}
+entries of 11 bytes each, MSB-first:
+
+\begin{tabularx}{\textwidth}{L{3.4cm} C{1.6cm} Y}
+\toprule
+\rowh \thd{Field} & \thd{Bytes} & \thd{Meaning} \\
+\midrule
+\code{w\_base}        & 3 & Weight base of the layer. \\
+\rowa \code{bias\_addr} & 3 & Bias base of the layer. \\
+\code{activation}     & 1 & Layer activation (low 2 bits, cf. \code{ACT\_*}). \\
+\rowa \code{n\_inputs\_real}  & 2 & Actual inputs of the layer (multiple of \code{PARALLEL}). \\
+\code{n\_neurons\_real} & 2 & Actual neurons of the layer. \\
+\midrule
+\rowh \thd{Total} & \thd{11} & per entry/layer \\
+\bottomrule
+\end{tabularx}
+
+\begin{fnnote}[Copy proportional to the actual width]
+The sequencer copies exactly \code{n\_neurons\_real} bytes of \code{y\_bus} into the
+ping-pong buffer (not the full build width): a narrower layer is copied faster, without
+zero-padding in RAM. Each activation is read per-layer from the table, independent of the
+\code{activation} register of the single-layer path.
+\end{fnnote}
+
+\section{Hierarchy of the \texttt{busy}/\texttt{done} signals}
+In the multi-layer path, \code{STATUS.busy} is the OR of the single-layer and sequencer
+busy signals, while \code{STATUS.done} latches only at completion of the \emph{last}
+layer, not at each intermediate layer (ch.~\ref{ch:spi}). The top-level returns control
+of \code{neuron\_memory} to the direct \op{START} path at the end of the sequence.

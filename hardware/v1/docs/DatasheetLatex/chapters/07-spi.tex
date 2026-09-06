@@ -1,0 +1,290 @@
+\chapter{SPI host interface}
+\label{ch:spi}
+
+\section{Physical layer}
+The FPGA is always an SPI \textbf{slave}. The v1 protocol uses SPI \textbf{Mode~0}
+(CPOL=0, CPHA=0), MSB-first, single-SPI. One command per low-CS period; byte~0 of each
+transaction is the opcode. Multi-byte fields are big-endian.
+
+\begin{fnspec}[Mode 0 sampling]
+\code{mosi} is sampled on the \textbf{rising} edge of \code{sclk}; \code{miso} is driven
+on the \textbf{falling} edge (stable before the master's next sampling). \code{spi\_slave}
+synchronizes \code{sclk/mosi/cs\_n} with a double flip-flop (3-stage CDC) before every
+edge detection.
+\end{fnspec}
+
+\begin{center}
+\begin{tikztimingtable}[timing/dslope=0.1,timing/.style={x=3.4ex,y=2.2ex},
+  xscale=1.0,font=\scriptsize]
+  \sig{CS\_N}   & H 1L 16L 1H \\
+  \sig{SCLK}    & L 1L {2C(2)}8{2C(2)} 6L \\
+  \sig{MOSI}    & U 1U 2D{b7} 2D{b6} 2D{b5} 2D{b4} 2D{b3} 2D{b2} 2D{b1} 2D{b0} 2U \\
+  \sig{MISO}    & Z 1Z 16D{data} 1Z \\
+\end{tikztimingtable}
+\end{center}
+\begin{center}\footnotesize\itshape\color{fnGrey}
+Framing of one byte: CS falls, 8 SCLK pulses, MSB first; MISO in tri-state outside a
+transaction.\end{center}
+
+\begin{fnnote}[\texttt{tx\_byte\_req} contract]
+\code{tx\_byte\_req} is a \emph{prefetch hint}, not a ``byte consumed'' event: a consumer
+must advance its pointers (RAM address, response byte index) on \code{rx\_valid}, which
+pulses exactly once per real byte transferred.
+\end{fnnote}
+
+\section{Framing and explicit length}
+The length of RAM transfers is \textbf{explicit}, not delimited by the CS edge:
+\op{WRITE\_RAM}/\op{READ\_RAM} carry a 2-byte length field, so the SPI controller only
+needs a byte counter. Byte addresses are 23-bit, carried in a 3-byte field with the most
+significant bit reserved to 0.
+
+\section{Opcode table}
+\renewcommand{\arraystretch}{1.16}
+\begin{longtable}{C{1.1cm} L{2.4cm} L{3.9cm} L{2.4cm} L{4.0cm}}
+\toprule
+\rowh \thd{Op} & \thd{Name} & \thd{Payload (host$\to$FPGA)} & \thd{Response} & \thd{Function} \\
+\midrule
+\endfirsthead
+\rowh \thd{Op} & \thd{Name} & \thd{Payload} & \thd{Response} & \thd{Function} \\ \midrule
+\endhead
+\bottomrule
+\endfoot
+\op{0x00} & NOP & --- & --- & No operation (idle/dummy clocking). \\
+\rowa \op{0x01} & WRITE\_RAM & addr(3B)+len(2B)+data & --- & Writes a block into PSRAM (X, weights, bias, parameters). \\
+\op{0x02} & READ\_RAM & addr(3B)+len(2B) & \code{len} bytes & Reads a block back from PSRAM. \\
+\rowa \op{0x0F} & RESET & --- & --- & Synchronous reset of the engine and clearing of the STATUS latch; does not erase PSRAM. \\
+\op{0x10} & SET\_BASE & sel(1B)+addr(3B) & --- & Sets the bases/registers (see §\ref{sec:setbase}). \\
+\rowa \op{0x11} & SET\_NET\_TYPE & type(1B) & --- & Network type: \code{0x01}=dense (\#1), \code{0x02}=graph (\#2). Default after RESET=dense. \\
+\rowa \op{0x20} & START & --- & --- & Starts \code{neuron\_memory} (single-layer path); ignored if busy. \\
+\op{0x21} & STATUS & --- & 1 byte & bit0=\code{busy} (live), bit1=\code{done} (sticky, clear-on-read), bit2=\code{err} (graph guard), bit3=\code{flash\_err} (sticky, clear-on-read), bit4=\code{flash\_busy} (live); bit7:5=0. \\
+\rowa \op{0x22} & READ\_OUTPUT & --- & \code{N\_NEURONS} bytes & \code{y\_bus} neuron-major (byte~0 = neuron~0); dense path only (Type \#1). \\
+\op{0x23} & RUN\_NETWORK & num\_layers(1B) & --- & Starts execution: dispatches on \code{net\_type} to \code{layer\_sequencer} (\#1) or \code{graph\_engine} (\#2); ignored if busy. \\
+\rowa \op{0x30} & READ\_CONFIG & --- & 11 bytes & Hardware configuration record (§\ref{sec:readcfg}). \\
+\op{0x40} & FLASH\_READ\_BLOCK & flash\_addr(3B)+psram\_addr(3B)+len(3B) & --- & Raw flash$\to$PSRAM read, bypasses the catalog. \\
+\rowa \op{0x41} & FLASH\_WRITE\_BLOCK & psram\_addr(3B)+flash\_addr(3B)+len(3B) & --- & Raw PSRAM$\to$flash write (internal erase-before-write + $\leq$256B Page Program loop + WIP poll, transparent to the host), bypasses the catalog. \\
+\op{0x42} & FLASH\_ERASE & sector\_addr(3B) & --- & Standalone 4~KB sector erase (must be sector-aligned), bypasses the catalog. \\
+\rowa \op{0x43} & CAT\_READ & --- & --- & Reloads the 16-slot catalog (on-chip registers) from the flash's reserved sector. \\
+\op{0x44} & CAT\_WRITE\_SLOT & slot\_id(1B)+offset(3B)+len(3B)+type(1B) & --- & Registers/updates the slot's (offset, length, type) in the on-chip catalog and persists it to flash; marks the slot \emph{invalid} until \op{SAVE\_SLOT} confirms it. \\
+\rowa \op{0x45} & LOAD\_SLOT & slot\_id(1B)+psram\_addr(3B) & --- & Flash$\to$PSRAM for the slot (offset/length from the catalog), verifies the CRC32 live; \code{STATUS.flash\_err} if the slot is invalid or the CRC does not match. \\
+\op{0x46} & SAVE\_SLOT & slot\_id(1B)+psram\_addr(3B)+len(3B) & --- & PSRAM$\to$flash at the slot's already-registered offset, computes the CRC32 live; on success updates and persists the catalog entry (length, CRC, valid=1). \\
+\rowa \op{0x47} & CAT\_INSPECT & slot\_id(1B) & 16 bytes & Synchronous read of an already-loaded catalog entry: offset[3]+len[3]+type[1]+valid[1]+CRC32[4]+reserved[4], MSB-first. \\
+\end{longtable}
+All flash opcodes are \emph{fire-and-forget}: the host polls \op{STATUS} (bit4=
+\code{flash\_busy}, bit3=\code{flash\_err}) or the \code{irq\_n}/\code{data\_ready\_n} pins
+for the outcome, except \op{CAT\_INSPECT}, which responds synchronously.
+
+The 8 flash opcodes (\op{0x40}--\op{0x47}) are described in full, with design rationale and
+measured real latencies, in §\ref{sec:flashspi} below.
+
+\section{\texttt{SET\_BASE} selectors}
+\label{sec:setbase}
+\begin{tabularx}{\textwidth}{C{1.2cm} L{3.2cm} Y}
+\toprule
+\rowh \thd{sel} & \thd{Register} & \thd{Use} \\
+\midrule
+0 & \code{x\_base} & Input base $X$. \\
+\rowa 1 & \code{w\_base} & Weight base. \\
+2 & \code{bias\_addr} & Bias base. \\
+\rowa 3 & \code{table\_base} & Descriptor table base (multi-layer). \\
+4 & \code{buf\_a\_base} & Ping-pong buffer A. \\
+\rowa 5 & \code{buf\_b\_base} & Ping-pong buffer B. \\
+6 & \code{activation} & Activation (low 2 bits) --- single-layer path only. \\
+\rowa 7 & \code{n\_inputs\_real} & Runtime input width (16-bit BE) --- single-layer. \\
+8 & \code{n\_neurons\_real} & Runtime neuron width (16-bit BE) --- single-layer. \\
+\rowa 9 & \code{num\_neurons\_graph} & Number of graph neurons (16-bit BE) --- Type \#2. \\
+10 & \code{n\_out} & Number of output ids (16-bit BE) --- Type \#2. \\
+\bottomrule
+\end{tabularx}
+Selectors 6--8 concern only the single-layer/manual path; with \op{RUN\_NETWORK} the
+equivalent values are read per-layer from the descriptor table.
+
+\begin{fnwarn}[``real=0'' edge cases fixed (2026-09-04)]
+The re-certification campaign (\code{docs/validation/bugs.md}) found that several
+runtime values equal to zero were unguarded, with outcomes ranging from a silently
+ignored limit to a hang or arbitrary-address PSRAM writes. All five cases below are now
+safe no-ops, independently verified:
+\begin{itemize}
+\item \code{n\_inputs\_real=0} (selector 7): completes in 1 cycle with
+$y=\text{activation}(\text{bias})$ (BUG-003).
+\item \code{n\_neurons\_real=0} (selector 8): completes without performing any
+per-neuron computation, far faster than a full-width run (BUG-004).
+\item \code{num\_neurons\_graph=0} (selector 9): completes immediately after the input
+copy, without ever entering the descriptor loop (BUG-006).
+\item \op{RUN\_NETWORK} with \code{num\_layers=0} (dense path): an immediate no-op ---
+\textbf{before the fix it executed 256 fabricated layers, reading arbitrary PSRAM data as
+descriptors} (BUG-005, CRITICAL, see \S\ref{sec:run-network} below).
+\item \op{SET\_NET\_TYPE} received while a run is in progress: now silently rejected
+(no effect, no SPI error) instead of remapping the arbiter's multiplexer mid-execution
+--- \textbf{before the fix it caused a permanent hang of the in-progress engine}
+(BUG-007, CRITICAL).
+\end{itemize}
+Details, evidence, and per-fix verification are in \code{docs/validation/bugs.md}.
+\end{fnwarn}
+
+\section{\texttt{STATUS.done} sticky / clear-on-read}
+In \code{neuron\_memory} the \code{done} signal is a single-cycle pulse. A host polling
+over SPI (much slower than the FPGA clock) would almost certainly miss a raw one-cycle
+pulse. The SPI register bank therefore latches \code{done} into a sticky bit on the pulse
+and clears it when the host reads \op{STATUS} (or \op{RESET}). The \code{busy} bit is
+instead held at level for the whole computation and is read live.
+
+\begin{fnwarn}[Race corrected (2026-09-02)]
+A real race in the sticky mechanism (present since Phase~4) was corrected by latching a
+\code{status\_snapshot} on acceptance of the \op{STATUS} opcode and conditioning the
+clearing of the sticky bit on \code{status\_snapshot[1]} (it clears only if the byte
+actually transmitted showed \code{done=1}). A \code{done} that arrives too late for a
+snapshot is reported on the next poll instead of being lost.
+\end{fnwarn}
+
+\section{Host attention pins (\texttt{data\_ready\_n}, \texttt{irq\_n})}
+Besides \op{STATUS} polling, the top-level exposes two active-low physical pins (bank 7,
+ch.~\ref{ch:hw}) that mirror the sticky bits without an SPI transaction, handy for driving
+a host GPIO/IRQ:
+\begin{itemize}
+\item \code{data\_ready\_n} = $\sim$\code{STATUS.done} (sticky): low when a result is ready
+to read, returns high on the \op{STATUS} read (clear-on-read).
+\item \code{irq\_n} = $\sim$\code{STATUS.err} (graph guard): low when \code{graph\_engine}'s
+load-time guard has tripped. It is \textbf{not} clear-on-read: it clears only on \op{RESET}
+or a fresh graph start, so an error is not missed between polls.
+\end{itemize}
+These are additive ports: they touch neither the existing opcodes nor the registers.
+
+\begin{fnwarn}[\code{flash\_err} has no dedicated pin]
+\code{STATUS.flash\_err} (bit3) is reported \textbf{only} in the \op{STATUS} byte, by
+design: reusing \code{irq\_n} would have conflated it with graph-guard errors (two
+independent error domains on one pin), while a flash operation is always host-initiated
+with an opcode just issued, so polling \op{STATUS} right after --- already implicit in the
+``fire-and-forget, then poll \op{STATUS}/\code{data\_ready\_n}'' convention --- is already a
+natural fit, no extra async pin needed. \code{data\_ready\_n}, on the other hand,
+\emph{also clears at the end of a flash operation}: it mirrors \code{STATUS.done} (bit1),
+which now latches on a completed flash op too, not only on \op{RUN\_NETWORK}/\op{START}.
+\end{fnwarn}
+
+\section{\texttt{READ\_CONFIG}}
+\label{sec:readcfg}
+Fixed \textbf{11-byte} payload: it lets a single host firmware work with different
+bitstreams without recompiling. The \code{N\_INPUTS}/\code{N\_NEURONS} values report the
+build \emph{maximum} (the ceiling), not necessarily the currently loaded network.
+
+\begin{tabularx}{\textwidth}{C{1.6cm} L{3.6cm} Y}
+\toprule
+\rowh \thd{Byte} & \thd{Field} & \thd{Source} \\
+\midrule
+0 & \code{ADDR\_WIDTH} (bit) & \code{neuron\_memory.ADDR\_WIDTH} \\
+\rowa 1--2 & \code{N\_INPUTS} (16-bit BE) & build maximum \\
+3 & \code{N\_NEURONS} & build maximum \\
+\rowa 4 & \code{PARALLEL} & build parameter \\
+5 & \code{DATA\_WIDTH} (bit) & build parameter \\
+\rowa 6--7 & protocol version (BE) & \code{0x0001} \\
+8--9 & \code{N\_TOTAL} (16-bit BE) & max graph signals (Type \#2) \\
+\rowa 10 & capability flag & bit0=\code{GRAPH\_SUPPORTED}=1 \\
+\bottomrule
+\end{tabularx}
+
+\section{Flash subsystem (opcodes 0x40--0x47, completed 2026-09-04)}
+\label{sec:flashspi}
+The FPGA has \textbf{exclusive} access to the onboard boot/persistence flash (Winbond
+\code{W25Q128JV}, 16~MB SPI NOR, ch.~\ref{ch:hw} §6/§7) through a dedicated, physically
+separate SPI master (\code{rtl/spi\_flash\_master.v}), never through direct host access to
+the flash pins. This is \textbf{not} a filesystem: a fixed-size catalog (16 slots,
+\code{rtl/flash\_slot\_manager.v}) maps \code{slot\_id}~$\to$~(offset, length, type, valid,
+CRC32) in a reserved flash sector (sector 0) --- no dynamic allocation, no garbage
+collection.
+
+\begin{fnnote}[Layering (each level independently testable)]
+\begin{itemize}
+\item \code{rtl/spi\_flash\_master.v} --- raw SPI master toward the flash chip
+      (RDID/READ/WREN/PP/SE/RDSR-1). Fully independent 4-wire bus (\code{sclk}/\code{mosi}/
+      \code{miso}/\code{cs\_n}, all ordinary GPIO --- Phase F7, 2026-09-04): an earlier
+      version reused the boot \code{CCLK} pad via the ECP5 \code{USRMCLK} primitive to save
+      one pin, dropped because it made the ``exclusive flash bus'' claim electrically
+      misleading (SCLK still depended on the same pad as the config engine) and carried an
+      unresolved verification gap (\code{USRMCLKTS} timing never checked against the
+      primary Lattice sysCONFIG Usage Guide).
+\item \code{rtl/flash\_copy\_engine.v} --- block-streaming engine on top: flash$\to$PSRAM
+      (\code{DIR\_LOAD}), PSRAM$\to$flash with internal erase-before-write + $\leq$256B
+      Page Program loop + WIP polling (\code{DIR\_SAVE}), standalone sector erase
+      (\code{DIR\_ERASE}). A low-priority master (Port D) on \code{rtl/mem\_arbiter.v}:
+      flash operations are ms-scale and never block inference.
+\item \code{rtl/flash\_slot\_manager.v} --- the slot catalog on top of that, plus a CRC32
+      (\code{rtl/crc32.v}, IEEE~802.3/zlib) computed live over the real byte stream during
+      \op{LOAD\_SLOT}/\op{SAVE\_SLOT}, so a corrupted or partially-written slot (e.g. power
+      lost mid-erase) is detected even when the underlying flash operation itself reported
+      success.
+\end{itemize}
+\end{fnnote}
+
+\begin{fnwarn}[Sector alignment is mandatory]
+\op{SAVE\_SLOT} (and the raw \op{FLASH\_WRITE\_BLOCK}/\op{FLASH\_ERASE}) require the target
+flash address to be 4~KB-sector-aligned --- rejected as an error otherwise, rather than a
+silent partial-sector read-modify-erase-write (no scratch buffer large enough exists for
+that, and every real \op{SAVE\_SLOT} already writes a whole, sector-aligned slot by
+construction).
+\end{fnwarn}
+
+Full rationale, every datasheet citation, every adversarial test (CRC mismatch, never-saved
+slot, page-boundary crossing, simulated power loss, arbiter contention), and the two real
+bugs found and fixed during bring-up (one pre-existing in \code{psram\_controller.v}, one in
+the new arbiter request handshake) are in \code{WORKLOG.md} (Phases F1-F6 entries) and
+\code{docs/FPGA-Neural-Flash-Subsystem-Verification.md} (per-module coverage summary, not
+repeated here).
+
+\begin{tabularx}{\textwidth}{L{3.4cm}Y}
+\toprule
+\rowh \thd{Operation} & \thd{Measured real latency} \\
+\midrule
+ERASE (4~KB sector) & $\approx$400~ms (dominated by the flash chip's own internal tSE, independent of the host clock) \\
+\rowa SAVE (256~B page, incl. its own erase) & $\approx$403~ms (same, tSE+tPP) \\
+LOAD (4096~B) & 1.74~ms (2.35~MB/s) @80~MHz; 8.71~ms (0.47~MB/s) @16~MHz (purely SPI-clock-bound) \\
+\bottomrule
+\end{tabularx}
+Full measurement methodology in \code{docs/FPGA-Neural-Flash-Subsystem-Verification.md}.
+
+\section{Session sequences}
+\subsection{Single-layer path}
+\begin{lstlisting}[language=,caption={Single-layer session},basicstyle=\ttfamily\scriptsize]
+RESET               -> 0x0F
+READ_CONFIG         -> 0x30      (host learns N_INPUTS/N_NEURONS/...)
+WRITE_RAM (weights) -> 0x01 ...
+WRITE_RAM (bias)    -> 0x01 ...
+SET_BASE (X/W/BIAS) -> 0x10 x3
+WRITE_RAM (input X) -> 0x01 ...
+START               -> 0x20
+poll STATUS         -> 0x21      (until done=1; cleared by this read)
+READ_OUTPUT         -> 0x22
+\end{lstlisting}
+
+\subsection{Multi-layer path (RUN\_NETWORK)}
+\label{sec:run-network}
+\begin{lstlisting}[language=,caption={Multi-layer session},basicstyle=\ttfamily\scriptsize]
+WRITE_RAM (descriptor table)             -> 0x01 ...
+WRITE_RAM (weights/bias per layer, X L0) -> 0x01 ...
+SET_BASE (X/TABLE/BUF_A/BUF_B)           -> 0x10 x4
+RUN_NETWORK(num_layers)                  -> 0x23 <num_layers>
+poll STATUS                              -> 0x21   (until done=1)
+READ_OUTPUT                              -> 0x22   (y_bus of the final layer)
+\end{lstlisting}
+
+\begin{fnnote}[Out of scope for v1]
+Dual~SPI and CRC/checksum on host transfers (SPI assumed reliable on a board trace --- not
+to be confused with the flash catalog's CRC32, §\ref{sec:flashspi}, which protects a
+different domain: flash$\leftrightarrow$PSRAM persistence, not the host SPI link).
+\end{fnnote}
+
+\begin{fnwarn}[\op{WRITE\_RAM}/\op{READ\_RAM} have no backpressure to the host --- a real risk, not a theoretical one]
+Every received/produced byte must be fully processed by \code{spi\_engine} before the next
+SCLK-driven byte boundary arrives --- reasonable for the initial bulk-loading of weights/
+inputs, not a real-time path. The concrete risk: if a host issues \op{WRITE\_RAM}/
+\op{READ\_RAM} before \code{psram\_controller.v}'s power-up sequence has completed
+($\sim$150~\textmu s after reset, \code{STATE\_INIT}+\code{STATE\_CR\_INIT}),
+\code{spi\_engine} stalls waiting for the very first PSRAM access to complete, while the
+host --- not slowed by any handshake --- keeps clocking bytes. Bytes received during that
+stall are \textbf{silently dropped}, with no error and no hang: just wrong data in PSRAM.
+Found during the flash-subsystem work (\code{WORKLOG.md}, Phase~F5) via a minimal
+\op{WRITE\_RAM}-only reproduction with no flash opcodes involved at all: it is a general
+hazard for any host, not specific to the flash opcodes. \textbf{Current mitigation: a host
+must wait for PSRAM power-up (or otherwise ensure the FPGA has been out of reset for
+$>$150~\textmu s) before its first \op{WRITE\_RAM}/\op{READ\_RAM}.} Not fixed at the
+protocol level (would need real backpressure, a larger change) --- declared here as an open
+risk, not silently worked around.
+\end{fnwarn}

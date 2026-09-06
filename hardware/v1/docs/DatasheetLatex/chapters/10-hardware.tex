@@ -1,0 +1,326 @@
+\chapter[Hardware design and pinout]{Hardware design and signal map}
+\label{ch:hw}
+
+\begin{fnnote}[Pinout status --- assigned and verified]
+A real \code{.lpf} now exists (\code{synth/ecp5/spi\_neuron\_top.lpf}) with the top-level's
+\textbf{57 signals} assigned to concrete CABGA381 balls, \textbf{verified by a full
+0-error \code{nextpnr-ecp5} place\&route} (no longer \code{-{}-lpf-allow-unconstrained}). The
+balls come from Project~Trellis's device database (\code{iodb.json}, the same nextpnr uses)
+and were independently validated against §4.3.2 of the official Lattice datasheet (per-bank
+GPIO counts: exact match on 6 of 7 banks, off by 1 ball on bank~3, immaterial since no
+assigned signal uses it). \code{TRELLIS\_IO}: 57/245 (23\%). Current-build Fmax (full system
+incl. flash subsystem with an independent SPI bus, Phase F7, 2026-09-04) \textbf{67.91~MHz},
+critical path confirmed still on \code{neuron\_parallel}'s accumulator chain, unchanged from
+earlier builds (ch.~\ref{ch:impl}). Pin-by-pin summary at the front of the document
+(pp.~2--3). The boot config-SPI and JTAG balls do not appear here: they are dedicated
+fixed-function pins with no corresponding RTL port, nextpnr never requires them (0 errors),
+they matter only for the PCB schematic.
+\end{fnnote}
+
+\section{Target device}
+\begin{tabularx}{\textwidth}{L{4.2cm}Y}
+\toprule
+\rowh \thd{Parameter} & \thd{Value} \\
+\midrule
+Device & Lattice ECP5 \code{LFE5U-45F-8BG381C} \\
+\rowa Package & CABGA381 (381 balls) \\
+Speed grade & $-8$ (the fastest of the ECP5 family) \\
+\rowa Resources & $\approx$44k LUT/FF, 72$\times$\code{MULT18X18D}, \code{DP16KD} block RAM \\
+Usable I/O & $\approx$232 balls out of 381 (rest: power/ground/NC) \\
+\bottomrule
+\end{tabularx}
+
+\section{Pin budget}
+The project requires about 60 signals out of $\approx$232 usable I/Os: ample margin
+($>$170 free pins), so the board is not pin-constrained.
+
+\begin{tabularx}{\textwidth}{Y C{2.2cm}}
+\toprule
+\rowh \thd{Function} & \thd{Pins} \\
+\midrule
+PSRAM (22 address, 16 data, 6 control) & up to 44 \\
+\rowa Application SPI (\code{sclk/mosi/miso/cs\_n}) & 4 \\
+Clock, reset & 2 \\
+\rowa Host attention pins (\code{irq\_n}, \code{data\_ready\_n}) & 2 \\
+Flash runtime SPI bus (\code{flash\_sclk/flash\_mosi/flash\_miso/flash\_cs\_n}, ordinary GPIO, fully independent bus --- Phase F7) & 4 \\
+\rowa JTAG (bring-up / debug, recommended) & 4 \\
+\midrule
+\rowh \thd{Total} & \thd{$\approx$60} \\
+\bottomrule
+\end{tabularx}
+
+\section{Signal map (top-level \texttt{spi\_neuron\_top}) --- real balls}
+Real assignment of the top-level's 57 signals, verified by place\&route, \textbf{an
+individual ball for every bit} (never a bus range). I/O standard: LVCMOS33 (3.3~V I/O
+supply). The balls come from the real place\&route-verified \code{.lpf}. A compact summary
+of the same table also appears at the front of the document (pp.~2--3).
+
+\renewcommand{\arraystretch}{1.1}
+\begin{tabularx}{\textwidth}{L{3.0cm} C{1.0cm} C{1.9cm} C{1.0cm} Y}
+\toprule
+\rowh \thd{Signal} & \thd{Dir} & \thd{Ball} & \thd{Bank} & \thd{Function} \\
+\midrule
+\multicolumn{5}{l}{\textit{\color{fnDark}Clock and reset (bank 7, left edge)}}\\
+\code{clk}  & IN  & H5 & 7 & System clock on pad \code{GR\_PCLK7\_0} (dedicated global clock). \\
+\rowa \code{rst} & IN & B4 & 7 & Global synchronous reset, active high. \\
+\multicolumn{5}{l}{\textit{\color{fnDark}Application SPI (bank 7, opposite the PSRAM bus)}}\\
+\code{sclk} & IN  & B5 & 7 & SPI clock (CPOL=0, CPHA=0). \\
+\rowa \code{mosi} & IN & C5 & 7 & Master-Out Slave-In. \\
+\code{miso} & OUT & A3 & 7 & Master-In Slave-Out (driven on the falling edge). \\
+\rowa \code{cs\_n} & IN & B3 & 7 & Active-low chip-select. \\
+\multicolumn{5}{l}{\textit{\color{fnDark}Host attention pins (bank 7, active-low, level)}}\\
+\code{data\_ready\_n} & OUT & C3 & 7 & Low while a result awaits reading (mirrors \code{STATUS.done}, clear on STATUS read). \\
+\rowa \code{irq\_n} & OUT & C4 & 7 & Low if the graph load-time guard has tripped (mirrors \code{STATUS.err}); clears only on \code{RESET} or a fresh \code{run\_start}, \emph{not} on a STATUS read. \\
+\multicolumn{5}{l}{\textit{\color{fnDark}Flash subsystem --- independent SPI bus toward the onboard W25Q128JV (bank 7, Phases F1-F7)}}\\
+\code{flash\_sclk} & OUT & E3 & 7 & SPI clock toward the flash --- ordinary GPIO, no config primitive involved (Phase F7). \\
+\rowa \code{flash\_mosi} & OUT & D3 & 7 & Master-Out Slave-In toward the flash. \\
+\code{flash\_miso} & IN & D5 & 7 & Master-In Slave-Out from the flash. \\
+\rowa \code{flash\_cs\_n} & OUT & E4 & 7 & Flash chip-select, active low. \\
+\multicolumn{5}{l}{\textit{\color{fnDark}PSRAM address bus \code{psram\_a[21:0]} --- 22 individual balls (bank 2)}}\\
+\code{psram\_a[0]}  & OUT & E16 & 2 & PSRAM A0 \\
+\rowa \code{psram\_a[1]}  & OUT & F16 & 2 & PSRAM A1 \\
+\code{psram\_a[2]}  & OUT & D18 & 2 & PSRAM A2 \\
+\rowa \code{psram\_a[3]}  & OUT & E17 & 2 & PSRAM A3 \\
+\code{psram\_a[4]}  & OUT & E18 & 2 & PSRAM A4 \\
+\rowa \code{psram\_a[5]}  & OUT & F18 & 2 & PSRAM A5 \\
+\code{psram\_a[6]}  & OUT & F17 & 2 & PSRAM A6 \\
+\rowa \code{psram\_a[7]}  & OUT & G16 & 2 & PSRAM A7 \\
+\code{psram\_a[8]}  & OUT & G18 & 2 & PSRAM A8 \\
+\rowa \code{psram\_a[9]}  & OUT & H16 & 2 & PSRAM A9 \\
+\code{psram\_a[10]} & OUT & H17 & 2 & PSRAM A10 \\
+\rowa \code{psram\_a[11]} & OUT & H18 & 2 & PSRAM A11 \\
+\code{psram\_a[12]} & OUT & J16 & 2 & PSRAM A12 \\
+\rowa \code{psram\_a[13]} & OUT & J17 & 2 & PSRAM A13 \\
+\code{psram\_a[14]} & OUT & C20 & 2 & PSRAM A14 \\
+\rowa \code{psram\_a[15]} & OUT & D19 & 2 & PSRAM A15 \\
+\code{psram\_a[16]} & OUT & E19 & 2 & PSRAM A16 \\
+\rowa \code{psram\_a[17]} & OUT & E20 & 2 & PSRAM A17 \\
+\code{psram\_a[18]} & OUT & F19 & 2 & PSRAM A18 \\
+\rowa \code{psram\_a[19]} & OUT & F20 & 2 & PSRAM A19 \\
+\code{psram\_a[20]} & OUT & G20 & 2 & PSRAM A20 \\
+\rowa \code{psram\_a[21]} & OUT & H20 & 2 & PSRAM A21 \\
+\code{psram\_a[22]} & OUT & P18 & 3 & Always 0 (byte$\to$word shift): NC on the board. \\
+\multicolumn{5}{l}{\textit{\color{fnDark}PSRAM data bus \code{psram\_dq[15:0]} --- 16 individual balls (banks 2 and 3)}}\\
+\rowa \code{psram\_dq[0]}  & IO & K18 & 2 & PSRAM DQ0 \\
+\code{psram\_dq[1]}  & IO & C18 & 2 & PSRAM DQ1 (dual-function ball, used as ordinary GPIO). \\
+\rowa \code{psram\_dq[2]}  & IO & D17 & 2 & PSRAM DQ2 \\
+\code{psram\_dq[3]}  & IO & D20 & 2 & PSRAM DQ3 \\
+\rowa \code{psram\_dq[4]}  & IO & G19 & 2 & PSRAM DQ4 \\
+\code{psram\_dq[5]}  & IO & J18 & 2 & PSRAM DQ5 \\
+\rowa \code{psram\_dq[6]}  & IO & J19 & 2 & PSRAM DQ6 \\
+\code{psram\_dq[7]}  & IO & J20 & 2 & PSRAM DQ7 \\
+\rowa \code{psram\_dq[8]}  & IO & K19 & 2 & PSRAM DQ8 \\
+\code{psram\_dq[9]}  & IO & K20 & 2 & PSRAM DQ9 \\
+\rowa \code{psram\_dq[10]} & IO & L17 & 3 & PSRAM DQ10 \\
+\code{psram\_dq[11]} & IO & M18 & 3 & PSRAM DQ11 \\
+\rowa \code{psram\_dq[12]} & IO & M17 & 3 & PSRAM DQ12 \\
+\code{psram\_dq[13]} & IO & N16 & 3 & PSRAM DQ13 \\
+\rowa \code{psram\_dq[14]} & IO & N18 & 3 & PSRAM DQ14 \\
+\code{psram\_dq[15]} & IO & P17 & 3 & PSRAM DQ15 (bidirectional tri-state data bus, \code{dq\_oe} = direction). \\
+\multicolumn{5}{l}{\textit{\color{fnDark}PSRAM control (bank 3)}}\\
+\rowa \code{psram\_ce\_n} & OUT & N17 & 3 & Chip enable, active low. \\
+\code{psram\_oe\_n} & OUT & R16 & 3 & Output enable (read). \\
+\rowa \code{psram\_we\_n} & OUT & R17 & 3 & Write enable (write). \\
+\code{psram\_lb\_n} & OUT & T16 & 3 & Lower-byte enable (DQ[7:0]). \\
+\rowa \code{psram\_ub\_n} & OUT & N19 & 3 & Upper-byte enable (DQ[15:8]). \\
+\code{psram\_zz\_n} & OUT & N20 & 3 & Sleep/snooze (inactive=high in operation). \\
+\bottomrule
+\end{tabularx}
+\renewcommand{\arraystretch}{1.25}
+
+\begin{fnnote}[Board signals not exposed as RTL ports]
+Not ports of \code{spi\_neuron\_top} but required at board level: the \textbf{configuration
+SPI} lines to the onboard NOR flash (\code{PROGRAMN}/\code{INITN}/\code{DONE}/\code{CCLK}\ldots,
+the datasheet's ``Miscellaneous Dedicated Pins'') and the 4 \textbf{JTAG} lines
+(\code{TCK}/\code{TMS}/\code{TDI}/\code{TDO}), the \textbf{oscillator} on the \code{PCLK}
+pad, the \textbf{power supplies}. Their ball numbers are not in the Lattice datasheet
+(separate file) but are not needed here: dedicated pins with no RTL port, nextpnr never
+requires them (0 errors), they matter only for the PCB schematic.
+\end{fnnote}
+
+\begin{fnwarn}[Application SPI separate from configuration SPI]
+The application SPI (\code{sclk/mosi/miso/cs\_n}) must land on ordinary I/Os,
+\textbf{never} on the configuration-SPI pins: the config-SPI clock pin is not reusable as
+a general-purpose input after configuration without a board-level workaround. Keeping them
+physically separate avoids that problem.
+\end{fnwarn}
+
+\section{Per-bank allocation (real die geometry)}
+The placement follows the die-edge geometry (from Trellis's \code{globals.json},
+ball~$\to$~(col,row)~$\to$~bank): banks \textbf{2 and 3} sit contiguously along the chip's
+\textbf{right} edge and together hold the entire PSRAM bus (44+1 signals) --- exactly the
+``one or two adjacent banks'' recommended. Bank \textbf{7} (\textbf{left} edge, physically
+opposite the PSRAM bus) holds the application SPI and clock/reset, deliberately on the far
+side so the two buses do not cross. \code{clk} is on the dedicated pad \code{H5}
+(\code{GR\_PCLK7\_0}). Where a bank ran out of plain balls (part of \code{psram\_dq}), the
+next dual-function ball was used as ordinary GPIO, confirmed usable by the real place\&route.
+
+\begin{tabularx}{\textwidth}{Y C{1.6cm} L{4.4cm}}
+\toprule
+\rowh \thd{Signal group} & \thd{\# pins} & \thd{Bank (real)} \\
+\midrule
+PSRAM addresses \code{psram\_a[21:0]} & 22 & bank 2 (right edge) \\
+\rowa PSRAM data \code{psram\_dq[15:0]} & 16 & banks 2 + 3 (adjacent) \\
+PSRAM control (ce/oe/we/lb/ub/zz) & 6 & bank 3 \\
+\rowa Application SPI & 4 & bank 7 (left edge) \\
+Host attention pins (\code{irq\_n}, \code{data\_ready\_n}) & 2 & bank 7 \\
+\rowa Independent flash SPI bus (\code{flash\_sclk/flash\_mosi/flash\_miso/flash\_cs\_n}) & 4 & bank 7 \\
+Clock / reset & 2 & bank 7, \code{clk} on \code{GR\_PCLK7\_0} \\
+\rowa Boot config SPI / JTAG & --- & dedicated pins (outside RTL, PCB only) \\
+\bottomrule
+\end{tabularx}
+
+\section{PSRAM subsystem}
+The \code{psram\_controller.v} controller implements an \textbf{asynchronous parallel}
+interface (address bus, 16-bit data, \code{ce\_n/oe\_n/we\_n} and byte-lanes
+\code{lb\_n/ub\_n}, plus \code{zz\_n}) with an access latency of \textbf{70~ns} wired as
+$\lceil 70\,\text{ns}\times f_{clk}\rceil$. It is an asynchronous-SRAM-style bus, not QSPI.
+
+\begin{tabularx}{\textwidth}{L{3.0cm}Y}
+\toprule
+\rowh \thd{Role} & \thd{Component} \\
+\midrule
+Working memory & ISSI \code{IS66WVE4M16EBLL-70BLI} --- 64\,Mbit parallel PSRAM (4M$\times$16, 8~MB), async, 70~ns, an exact match to the controller timing. \\
+\rowa Fallback & ISSI \code{IS61WV6416DBLL} / \code{IS61WV102416BLL} (true async SRAM, drop-in on the same signals, \code{zz\_n} inactive, $\sim$10~ns, lower density). \\
+Persistent storage & Winbond \code{W25Q128JV} --- 16~MB SPI NOR flash for bitstream, weights, bias, network metadata. \\
+\bottomrule
+\end{tabularx}
+
+\subsection{PSRAM connection (FPGA-exclusive)}
+The PSRAM is driven \textbf{exclusively by the FPGA} through \code{psram\_controller.v}: no
+external master touches the bus. The external host (RPi/ESP32/MCU) only speaks SPI to the
+FPGA and never touches these lines. Pin-by-pin connection FPGA~$\leftrightarrow$~ISSI
+\code{IS66WVE4M16EBLL-70BLI}:
+
+\begin{tabularx}{\textwidth}{L{3.6cm} L{3.0cm} Y}
+\toprule
+\rowh \thd{FPGA signal} & \thd{PSRAM pin} & \thd{Function} \\
+\midrule
+\code{psram\_a[21:0]} & A0--A21 & Address bus (22 lines, 8~MB word address). \\
+\rowa \code{psram\_dq[15:0]} & DQ0--DQ15 & Bidirectional data bus (tri-state, \code{dq\_oe}=direction). \\
+\code{psram\_ce\_n} & CE\# & Chip enable (active low). \\
+\rowa \code{psram\_oe\_n} & OE\# & Output enable (read). \\
+\code{psram\_we\_n} & WE\# & Write enable (write). \\
+\rowa \code{psram\_lb\_n} & LB\# & Lower-byte enable (DQ[7:0]). \\
+\code{psram\_ub\_n} & UB\# & Upper-byte enable (DQ[15:8]). \\
+\rowa \code{psram\_zz\_n} & ZZ\# & Sleep/snooze (held high in operation). \\
+\bottomrule
+\end{tabularx}
+PSRAM supply: \textbf{3.3~V} (BLL variant), on the same I/O rail as banks 2/3 to which it is
+wired (ch.~\ref{ch:hw}, real balls). Decoupling per supply pin per the ISSI datasheet.
+
+\section{Clock}
+\label{sec:clock}
+There is no PLL in the RTL yet: \code{CLK\_FREQ\_MHZ} is a \emph{timing parameter} (it
+feeds the PSRAM access formulas), not a clock generator. The mounted oscillator drives
+\code{clk} directly. Recommendation: a 16~MHz MEMS oscillator (SiTime SiT2001B family),
+well below the 67.91~MHz Fmax of the full integrated system (incl. flash subsystem,
+ch.~\ref{ch:impl}). \code{CLK\_FREQ\_MHZ} must
+be set to the real value of the mounted oscillator, otherwise the PSRAM timing comes out
+wrong.
+
+\section{Power}
+A \textbf{three-rail} tree (the Lattice eval board's SERDES section is not needed and is
+omitted: no 1.2~V \code{VCCA}/\code{VCCHTX}):
+
+\begin{tabularx}{\textwidth}{L{3.4cm} C{2.0cm} Y}
+\toprule
+\rowh \thd{Rail} & \thd{Voltage} & \thd{Feeds / regulator} \\
+\midrule
+\code{VCC} (core) & 1.1~V & FPGA core logic. Buck \code{TLV62568}, $\geq$600~mA. \\
+\rowa \code{VCCIO0/2/3/6/7} & 3.3~V & I/O of all used banks + PSRAM. Buck \code{TLV62568}, 1~A. \\
+\code{VCCAUX} & 2.5~V & FPGA auxiliary. LDO \code{TLV73325}, 10~mA. \\
+\bottomrule
+\end{tabularx}
+Decoupling: at least one capacitor per supply pin + bulk per rail, per the Lattice ECP5
+hardware checklist. Input: external 12~V (or match the bucks to the source).
+
+\section{Configuration and programming}
+\label{sec:config}
+Writing the FPGA ``map'' (bitstream) happens through dedicated silicon pins, \textbf{not}
+RTL top-level ports. Default mode: \textbf{MSPI} --- automatic boot from the NOR flash at
+power-on (standalone product); JTAG available for development.
+
+\subsection{JTAG (development / debug)}
+\begin{tabularx}{\textwidth}{L{3.0cm} C{2.2cm} Y}
+\toprule
+\rowh \thd{Signal} & \thd{Ball\textsuperscript{$\dagger$}} & \thd{Function} \\
+\midrule
+\code{TCK} & T5 & Test clock. \\
+\rowa \code{TDI} & R5 & Test data in. \\
+\code{TDO} & V4 & Test data out. \\
+\rowa \code{TMS} & U5 & Test mode select. \\
+\bottomrule
+\end{tabularx}
+
+\subsection{Config-SPI to boot flash}
+The FPGA loads the bitstream from the \textbf{Winbond \code{W25Q128JV}} (128~Mbit SPI NOR,
+Quad read) at power-on. The flash subsystem (\code{rtl/flash\_slot\_manager.v}, Phases
+F1-F7, ch.~\ref{ch:impl}) uses the \textbf{same physical flash} for network weights/bias/
+metadata at runtime, FPGA-exclusive access: after configuration, the FPGA regains control
+of the chip through a fully independent 4-wire SPI bus, \code{flash\_sclk/flash\_mosi/
+flash\_miso/flash\_cs\_n} (all ordinary GPIO, pp.~2--3 and §``Signal map'' --- no ECP5
+config primitive involved, Phase F7) --- this still implies a board-level dual connection
+(the flash's DI/DO/CS/CLK pins wired both to the dedicated boot pins below and to these 4
+ordinary balls, since it is the same physical chip serving both roles), not yet captured in
+a schematic (none exists yet, see the checklist below).
+
+\begin{tabularx}{\textwidth}{L{3.4cm} C{2.2cm} Y}
+\toprule
+\rowh \thd{Signal} & \thd{Ball\textsuperscript{$\dagger$}} & \thd{Function} \\
+\midrule
+\code{CCLK/MCLK/SCK} & U3 & Configuration clock. \\
+\rowa \code{DQ0\_MOSI} & W2 & Config data (MOSI). \\
+\code{DQ1\_MISO} & V2 & Config data (MISO). \\
+\rowa \code{BUSY\_CSSPIN} & R2 & Flash chip-select. \\
+\code{DQ2 / DQ3} & Y2 / W1 & Quad-read lines. \\
+\rowa \code{PROGRAMN} & W3 & Start reconfiguration (button, active low). \\
+\code{INITN} & V3 & Init / configuration error (LED). \\
+\rowa \code{DONE} & Y3 & Configuration complete (LED). \\
+\code{CFGMDN[2:0]} & R4/T4/U4 & Mode select (see below). \\
+\bottomrule
+\end{tabularx}
+
+\subsection{Configuration modes (\texttt{CFGMDN})}
+\begin{tabularx}{\textwidth}{L{4.0cm} C{4.0cm} Y}
+\toprule
+\rowh \thd{Mode} & \thd{CFGMDN[2:0]} & \thd{Use} \\
+\midrule
+MSPI (boot from flash) & \code{010} & \textbf{Default} --- standalone. \\
+\rowa SSPI (slave SPI) & \code{001} & Config from external host. \\
+SCM (slave serial) & \code{101} & Serial config. \\
+\rowa SPCM (slave parallel) & \code{111} & 8-bit parallel config. \\
+\bottomrule
+\end{tabularx}
+
+\begin{fnwarn}[Configuration balls to verify on the 45F]
+\textsuperscript{$\dagger$}The JTAG and config-SPI balls listed here are the \emph{reference}
+from the Lattice eval board (85F device). JTAG and config-SPI are dedicated, largely fixed
+pins in the ECP5 family, but the exact positions on the \code{LFE5U-45F-8BG381C} target must
+be confirmed against the Lattice 45F pinout file (Diamond/Radiant or the Trellis database)
+before committing them to the schematic, as already done for the application signals
+(ch.~\ref{ch:hw}).
+\textbf{Distinct from this open item} (do not conflate the two): the flash subsystem's own
+runtime SPI pins (\code{flash\_sclk}, \code{flash\_mosi}, \code{flash\_miso},
+\code{flash\_cs\_n} --- Phases F1-F6, made fully independent in Phase F7) \textbf{are} real,
+pinned, place\&route-verified ordinary GPIO on bank 7 --- \textbf{no pin shared with any
+ECP5 config primitive}: an earlier version reused the boot \code{CCLK} pad for SCLK via
+\code{USRMCLK}, dropped in Phase F7 (\code{USRMCLK} utilisation in the current full-system
+synthesis is 0/1, confirming it is no longer used at all).
+\end{fnwarn}
+
+\section{Open tasks before schematic capture}
+\begin{itemize}
+\item[\OK] \code{ADDR\_WIDTH}=23 (full 8~MB) across all modules and testbenches.
+\item[\OK] Real \code{.lpf} with the CABGA381 ball assignment, place\&route-verified with
+0 errors (\code{synth/ecp5/spi\_neuron\_top.lpf}, 57 signals incl. flash subsystem).
+\item[\OK] Boot/persistence flash subsystem (Phases F1-F7): SPI master, copy engine,
+CRC32 slot catalog, fully independent 4-wire SPI bus, real synthesis at 0 errors, Fmax
+67.91~MHz (\code{WORKLOG.md}).
+\item[$\square$] Confirm PSRAM/SPI signal integrity at the actually mounted clock.
+\item[$\square$] Board-level dual-wiring diagram for the flash's DI/DO/CS/CLK pins (dedicated
+      boot pins + the flash subsystem's 4 ordinary balls) --- not yet captured in a schematic.
+\item[$\square$] Choice of the JTAG connector footprint.
+\item[$\square$] Schematic capture (KiCad or other): no schematic exists yet for this
+device/package combination.
+\end{itemize}

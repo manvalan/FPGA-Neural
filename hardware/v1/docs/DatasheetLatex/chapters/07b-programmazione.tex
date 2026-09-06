@@ -1,0 +1,232 @@
+\chapter[Network programming]{Neural network programming}
+\label{ch:prog}
+
+This chapter is the practical guide to encoding a network for FPGA-Neural: how it is laid
+out in memory, which registers are set and how it is started, for both topologies. It
+assumes the SPI opcodes (ch.~\ref{ch:spi}) and the descriptor formats (ch.~\ref{ch:seq},
+\ref{ch:grafo}).
+
+\section{General flow}
+Whatever the type, the cycle is the same: the host \emph{builds the data structures in
+RAM}, sets the \emph{base registers}, declares the \emph{network type}, \emph{starts} and
+\emph{reads back} the result.
+
+\begin{center}
+\begin{tikzpicture}[font=\scriptsize,node distance=3mm,start chain=going below,
+   every node/.style={on chain,fnblock,minimum width=64mm}]
+  \node[fnblockA]{1. \op{RESET} --- clears the engine and the STATUS latch};
+  \node{2. \op{SET\_NET\_TYPE} --- dense (\#1) or graph (\#2)};
+  \node{3. \op{WRITE\_RAM} --- tables, weights/edges, bias, input X};
+  \node{4. \op{SET\_BASE} --- base registers (x, table, \ldots)};
+  \node[fnblockT]{5. \op{RUN\_NETWORK} --- dispatch on \code{net\_type}};
+  \node{6. \op{STATUS} polling --- waits for \code{done}};
+  \node[fnblockD]{7. \op{READ\_OUTPUT} / \op{READ\_RAM} --- result};
+  \foreach \i [count=\j from 2] in {1,...,6} \draw[fnarrow] (chain-\i)--(chain-\j);
+\end{tikzpicture}
+\end{center}
+
+\section{Registers and opcodes involved}
+All base values are set with \op{SET\_BASE} \code{sel(1B)+addr(3B)}. Selectors:
+
+\begin{tabularx}{\textwidth}{C{1.0cm} L{3.4cm} C{1.4cm} C{1.4cm} Y}
+\toprule
+\rowh \thd{sel} & \thd{Register} & \thd{Type \#1} & \thd{Type \#2} & \thd{Use} \\
+\midrule
+0  & \code{x\_base}          & \checkmark & \checkmark & Input base $X$. \\
+\rowa 3 & \code{table\_base}   & \checkmark & \checkmark & Descriptor table. \\
+4  & \code{buf\_a\_base}      & \checkmark & \checkmark\textsuperscript{$\ast$} & Ping-pong A (\#1) / \code{out\_base} reuse (\#2). \\
+\rowa 5 & \code{buf\_b\_base}  & \checkmark & --- & Ping-pong B (\#1). \\
+9  & \code{num\_neurons\_graph} & --- & \checkmark & Number of graph neurons. \\
+\rowa 10 & \code{n\_out}       & --- & \checkmark & Number of output ids. \\
+\bottomrule
+\end{tabularx}
+\begin{center}\footnotesize\itshape\color{fnGrey}
+$\ast$ In Type \#2 the ping-pong buffers are unused: selector 4 is reused as
+\code{out\_base} (region into which outputs are copied). Selectors 1/2/6/7/8 concern only
+the manual single-layer path (\op{START}), not \op{RUN\_NETWORK}.\end{center}
+
+For Type \#1, the \emph{per-layer} \code{w\_base}/\code{bias\_addr} are \textbf{not} set
+with \op{SET\_BASE}: they are fields of the descriptor table. \op{SET\_NET\_TYPE} defaults
+to \emph{dense} after \op{RESET}, so a \#1 network works even without issuing it.
+
+% ======================================================================
+\section{Type \#1 --- dense network}
+
+\subsection{Memory layout}
+\begin{tabularx}{\textwidth}{L{3.4cm} Y}
+\toprule
+\rowh \thd{Structure} & \thd{Format} \\
+\midrule
+Input $X$ & \code{n\_inputs\_real} INT8 bytes at \code{x\_base}. \\
+\rowa Weights (per layer) & Neuron-major: neuron $k$ at \code{w\_base + k*n\_inputs\_real}, \code{n\_neurons*n\_inputs} bytes. \\
+Bias (per layer) & One INT8 byte per neuron at \code{bias\_addr}. \\
+\rowa Descriptor table & \code{num\_layers} 11-byte entries at \code{table\_base}. \\
+Buffers A/B & Ping-pong intermediate outputs. \\
+\bottomrule
+\end{tabularx}
+Descriptor (11 bytes, MSB-first): \code{w\_base}(3) $|$ \code{bias\_addr}(3) $|$
+\code{activation}(1) $|$ \code{n\_inputs\_real}(2) $|$ \code{n\_neurons\_real}(2).
+
+\subsection{Worked example: a $4\to4\to2$ network}
+Layer~0: 4 inputs, 4 neurons, ReLU. Layer~1: 4 inputs, 2 neurons, linear
+(\code{PARALLEL}=2, so each \code{n\_inputs\_real} is a multiple of 2). Chosen addresses:
+\code{table\_base}=\code{0x000000}, \code{x\_base}=\code{0x001000}, L0 weights/bias at
+\code{0x002000}/\code{0x002100}, L1 at \code{0x002200}/\code{0x002300}, buffers at
+\code{0x003000}/\code{0x003100}.
+
+\begin{lstlisting}[language=,caption={Dense descriptor table (22 bytes)},basicstyle=\ttfamily\scriptsize]
+Layer 0:  00 20 00 | 00 21 00 | 01 | 00 04 | 00 04
+          w_base    bias_addr  ReLU  n_in=4  n_neu=4
+Layer 1:  00 22 00 | 00 23 00 | 00 | 00 04 | 00 02
+          w_base    bias_addr  NONE  n_in=4  n_neu=2
+\end{lstlisting}
+
+\begin{lstlisting}[language=,caption={SPI session (dense)},basicstyle=\ttfamily\scriptsize]
+0x0F                              RESET
+0x11 01                           SET_NET_TYPE = dense
+0x01 000000 0016 <22-byte table>     WRITE_RAM table
+0x01 002000 0010 <16-byte L0 wts>    WRITE_RAM L0 weights (neuron-major)
+0x01 002100 0004 <4-byte L0 bias>
+0x01 002200 0008 <8-byte L1 wts>
+0x01 002300 0002 <2-byte L1 bias>
+0x01 001000 0004 <x0 x1 x2 x3>       WRITE_RAM input X
+0x10 00 001000                    SET_BASE x_base
+0x10 03 000000                    SET_BASE table_base
+0x10 04 003000                    SET_BASE buf_a
+0x10 05 003100                    SET_BASE buf_b
+0x23 02                           RUN_NETWORK num_layers=2
+0x21 ...                          poll STATUS until done=1
+0x22                              READ_OUTPUT -> 2 bytes (final layer)
+\end{lstlisting}
+
+\subsection{Host pseudocode (dense)}
+\begin{lstlisting}[language=,caption={Encoding and loading a dense network},basicstyle=\ttfamily\scriptsize]
+def load_dense(layers, X):          # layers in execution order
+    spi(RESET); spi(SET_NET_TYPE, DENSE)
+    table = b""
+    for L in layers:                # L: weights[n][k], bias[n], act, n_in, n_out
+        assert L.n_in % PARALLEL == 0
+        w = alloc(L.weights_neuron_major)   # k slow, input fast
+        b = alloc(L.bias)
+        table += u24(w)+u24(b)+u8(L.act)+u16(L.n_in)+u16(L.n_out)
+    write_ram(TABLE_BASE, table)
+    write_ram(X_BASE, X)
+    set_base(0, X_BASE); set_base(3, TABLE_BASE)
+    set_base(4, BUF_A);  set_base(5, BUF_B)
+    spi(RUN_NETWORK, len(layers))
+    wait_status_done()
+    return read_output(layers[-1].n_out)
+\end{lstlisting}
+
+% ======================================================================
+\section{Type \#2 --- graph network}
+
+\subsection{Memory layout}
+\begin{tabularx}{\textwidth}{L{3.4cm} Y}
+\toprule
+\rowh \thd{Structure} & \thd{Format} \\
+\midrule
+Input $X$ & \code{N\_in} bytes at \code{x\_base}; copied into \code{act\_buf[0..N\_in-1]} at start. \\
+\rowa Descriptor table & \code{num\_neurons\_graph} 11-byte entries at \code{table\_base}, in ascending \code{out\_id} order. \\
+Edge blocks & Per neuron: \code{n\_conn} 4-byte edges at \code{conn\_ptr}, padded to a multiple of \code{PARALLEL} (zero-weight edges). \\
+\rowa Outputs & \code{n\_out} bytes written to \code{out\_base} (=selector 4). \\
+\bottomrule
+\end{tabularx}
+Graph descriptor (11 bytes): \code{conn\_ptr}(3) $|$ \code{n\_conn}(2) $|$ \code{out\_id}(2)
+$|$ \code{activation}(1) $|$ \code{bias}(1) $|$ \code{reserved}(2). \quad
+Edge (4 bytes): \code{src\_id}(2) $|$ \code{weight}(1) $|$ \code{reserved}(1). \quad
+Rule: \code{src\_id < out\_id} (feed-forward DAG).
+
+\subsection{Worked example}
+4 inputs (ids 0--3). Neuron n4 (\code{out\_id}=4, ReLU, bias=2) connected to ids 0 and 1;
+neuron n5 (\code{out\_id}=5, linear, bias=0) connected to n4 (id~4) and id~2; output = n5
+(\code{n\_out}=1). \code{PARALLEL}=2, both have 2 connections (no padding). Addresses:
+\code{table\_base}=\code{0x000000}, edges at \code{0x000100}, \code{x\_base}=
+\code{0x001000}, \code{out\_base}=\code{0x002000}.
+
+\begin{lstlisting}[language=,caption={Graph descriptors + edges},basicstyle=\ttfamily\scriptsize]
+Descriptors (at 0x000000, 22 bytes):
+ n4: 00 01 00 | 00 02 | 00 04 | 01 | 02 | 00 00
+     conn_ptr  n_conn  out_id  ReLU bias  rsv
+ n5: 00 01 08 | 00 02 | 00 05 | 00 | 00 | 00 00
+     conn_ptr  n_conn  out_id  NONE bias  rsv
+
+Edge blocks (at 0x000100, 4 bytes/edge: src_id, weight, rsv):
+ n4 @0x000100:  00 00 05 00   (src=0, w=+5)
+                00 01 FD 00   (src=1, w=-3)   ; -3 = 0xFD
+ n5 @0x000108:  00 04 02 00   (src=4, w=+2)   ; id4 = n4's output
+                00 02 07 00   (src=2, w=+7)
+\end{lstlisting}
+
+\begin{lstlisting}[language=,caption={SPI session (graph)},basicstyle=\ttfamily\scriptsize]
+0x0F                              RESET
+0x11 02                           SET_NET_TYPE = graph
+0x01 000000 0016 <22-byte table>     WRITE_RAM descriptors
+0x01 000100 0010 <16-byte edges>     WRITE_RAM edge blocks
+0x01 001000 0004 <x0 x1 x2 x3>       WRITE_RAM input X
+0x10 00 001000                    SET_BASE x_base
+0x10 03 000000                    SET_BASE table_base
+0x10 04 002000                    SET_BASE out_base (sel 4 reuse)
+0x10 09 000002                    SET_BASE num_neurons_graph = 2
+0x10 0A 000001                    SET_BASE n_out = 1
+0x23 00                           RUN_NETWORK (dispatch to graph_engine)
+0x21 ...                          poll STATUS (bit2=err if src_id>=out_id)
+0x02 002000 0001                  READ_RAM out_base -> 1 byte (n5 output)
+\end{lstlisting}
+
+\subsection{Host pseudocode (graph)}
+\begin{lstlisting}[language=,caption={Encoding and loading a graph},basicstyle=\ttfamily\scriptsize]
+def load_graph(neurons, X, n_out):  # neurons sorted by ascending out_id
+    spi(RESET); spi(SET_NET_TYPE, GRAPH)
+    edges = b""; table = b""
+    for N in neurons:               # N: out_id, conns=[(src_id,w)...], act, bias
+        for (src,_) in N.conns:
+            assert src < N.out_id and src < N_TOTAL   # DAG rule
+        conn_ptr = EDGE_BASE + len(edges)
+        padded = pad(N.conns, PARALLEL, fill=(0,0))   # zero-weight edges
+        for (src,w) in padded:
+            edges += u16(src)+i8(w)+u8(0)
+        table += u24(conn_ptr)+u16(len(N.conns))+u16(N.out_id) \
+               + u8(N.act)+i8(N.bias)+u16(0)
+    write_ram(TABLE_BASE, table); write_ram(EDGE_BASE, edges)
+    write_ram(X_BASE, X)
+    set_base(0, X_BASE); set_base(3, TABLE_BASE); set_base(4, OUT_BASE)
+    set_base(9, len(neurons)); set_base(10, n_out)
+    spi(RUN_NETWORK, 0)             # payload ignored in graph
+    wait_status_done()
+    return read_ram(OUT_BASE, n_out)
+\end{lstlisting}
+
+\subsection{\texttt{netasm} pseudo-assembly}
+The readable description is compiled by the host assembler (\code{tools/netasm/}) into
+exactly the table and edge bytes above. Example equivalent to the worked graph:
+
+\begin{lstlisting}[language=,caption={netasm: source and generated bytes},basicstyle=\ttfamily\scriptsize]
+; --- source ---
+NET graph
+INPUTS 4                 ; ids 0..3
+NEURON n4 relu bias=2
+  CONN 0 w=5
+  CONN 1 w=-3
+NEURON n5 none bias=0
+  CONN n4 w=2            ; symbolic reference -> id 4
+  CONN 2 w=7
+OUTPUT n5
+END
+
+; --- the assembler emits ---
+;  assigned ids: n4=4, n5=5   (guarantees src_id < out_id)
+;  descriptors:  00 01 00 00 02 00 04 01 02 00 00
+;                00 01 08 00 02 00 05 00 00 00 00
+;  edges:        00 00 05 00 00 01 FD 00   (n4)
+;                00 04 02 00 00 02 07 00   (n5)
+;  registers:    table_base, x_base, out_base, num_neurons=2, n_out=1
+;  compile-time checks: src_id<out_id, N_TOTAL, padding to PARALLEL
+\end{lstlisting}
+
+\begin{fnnote}[Why two encoding levels]
+The host pseudocode and \code{netasm} produce the \emph{same bytes}. The former is useful
+when the network is generated at runtime (e.g. trained weights); the latter when the
+topology is hand-written or version-controlled as source. In both cases the FPGA receives
+only tables and data via \op{WRITE\_RAM}: no on-board interpreter.
+\end{fnnote}

@@ -1,0 +1,166 @@
+\chapter{Compute datapath}
+\label{ch:datapath}
+
+\section{INT8/INT32 arithmetic chain}
+The elementary datapath implements the typical sequence of a quantized neuron:
+\begin{center}
+\begin{tikzpicture}[font=\scriptsize,node distance=3mm,start chain=going right,
+   every node/.style={fnblock,minimum width=15mm,minimum height=8mm,on chain}]
+  \node[fnblockT]{INT8\\$\times$\,INT8};
+  \node{INT16\\product};
+  \node{sign-ext\\INT32};
+  \node[fnblockD]{accumulate\\INT32};
+  \node{$+$ bias};
+  \node[fnblockA]{activation};
+  \node[fnblockT]{sat. INT8};
+  \foreach \i [count=\j from 2] in {1,...,6}
+     \draw[fnarrow] (chain-\i) -- (chain-\j);
+\end{tikzpicture}
+\end{center}
+Each INT8$\times$INT8 product fits in 16~bits; it is sign-extended to 32~bits before
+accumulation, so the accumulator does not overflow on long vectors. Bias and activation
+operate at 32~bits; only the final output is saturated to INT8.
+
+\section{\texttt{mac\_unit} --- multiply-accumulator}
+The \code{mac\_unit} module is purely combinational and parametric on \code{DATA\_WIDTH}
+and \code{ACC\_WIDTH}. It computes:
+\[
+\mathrm{acc\_out} = \mathrm{acc\_in} + \mathrm{signext}_{ACC}(x \cdot w)
+\]
+The product has width $2\times$\code{DATA\_WIDTH} and is sign-extended by replicating
+the most significant bit. On ECP5 the multiplication maps onto a \code{MULT18X18D} DSP
+block.
+
+\begin{lstlisting}[caption={\texttt{rtl/mac\_unit.v} --- arithmetic core},label={lst:macunit}]
+localparam PROD_WIDTH = 2 * DATA_WIDTH;
+wire signed [PROD_WIDTH-1:0] product = x * w;
+wire signed [ACC_WIDTH-1:0]  product_ext =
+    {{(ACC_WIDTH-PROD_WIDTH){product[PROD_WIDTH-1]}}, product};
+assign acc_out = acc_in + product_ext;
+\end{lstlisting}
+
+\section{\texttt{mac8} --- parallel MAC and balanced adder tree}
+\code{mac8} instantiates \code{PARALLEL} \code{mac\_unit} units that generate
+\code{PARALLEL} independent products, then sums them with a \emph{balanced binary
+adder tree}. Compared to the linear reduction
+$((((p_0{+}p_1){+}p_2){+}p_3){+}\dots)$, of depth $O(\text{PARALLEL})$, the tree has
+depth $O(\log_2 \text{PARALLEL})$, drastically reducing the combinational path.
+
+\begin{center}
+\begin{tikzpicture}[font=\scriptsize,level distance=11mm,
+   every node/.style={fnreg,minimum width=8mm},
+   level 1/.style={sibling distance=30mm},
+   level 2/.style={sibling distance=15mm},
+   level 3/.style={sibling distance=8mm},
+   edge from parent/.style={fnarrowT,draw}]
+ \node[fnblockD]{sum}
+   child {node[fnblockT]{$+$}
+     child {node[fnblockT]{$+$}
+       child {node{$p_0$}} child {node{$p_1$}}}
+     child {node[fnblockT]{$+$}
+       child {node{$p_2$}} child {node{$p_3$}}}}
+   child {node[fnblockT]{$+$}
+     child {node[fnblockT]{$+$}
+       child {node{$p_4$}} child {node{$p_5$}}}
+     child {node[fnblockT]{$+$}
+       child {node{$p_6$}} child {node{$p_7$}}}};
+\end{tikzpicture}
+\end{center}
+\begin{center}\footnotesize\itshape\color{fnGrey}
+Example with PARALLEL=8: 3 levels. PARALLEL=16 $\to$ 4 levels; PARALLEL=32 $\to$ 5
+levels.\end{center}
+
+\begin{fnnote}[PARALLEL as a power of two]
+The tree is designed for \code{PARALLEL} as a power of two (8, 16, 32\ldots). This is
+also the value used in all project configurations.
+\end{fnnote}
+
+\section{\texttt{neuron\_parallel} --- neuron FSM}
+\code{neuron\_parallel} processes \code{N\_INPUTS} inputs in groups of \code{PARALLEL},
+maintaining the accumulator from one group to the next. At the end it adds the bias,
+applies the activation and saturates to INT8. The number of groups is
+$\text{GROUPS}=\text{N\_INPUTS}/\text{PARALLEL}$.
+
+\begin{center}
+\begin{tikzpicture}[font=\scriptsize,node distance=4mm,start chain=going below,
+   every node/.style={on chain,fnblock,minimum width=46mm}]
+  \node[fnblockA]{\code{start}};
+  \node{group 0 $\to$ accumulate};
+  \node{group 1 $\to$ accumulate};
+  \node[draw=none,fill=none]{\vdots};
+  \node{group GROUPS$-$1 $\to$ accumulate};
+  \node{$+$ bias};
+  \node[fnblockA]{activation (ACT\_RELU / ACT\_NONE)};
+  \node[fnblockT]{INT8 saturation};
+  \node[fnblockD]{\code{done}, \code{y}};
+  \foreach \i [count=\j from 2] in {1,...,8}
+     \draw[fnarrow] (chain-\i) -- (chain-\j);
+\end{tikzpicture}
+\end{center}
+
+\subsection{Parameter guard (elaboration-time)}
+If \code{PARALLEL} does not exactly divide \code{N\_INPUTS} two failures occur, both
+confirmed empirically in \code{sim/parameter\_sweep\_tb.v}:
+\begin{itemize}
+\item integer division truncates \code{GROUPS} and the excess inputs are never read
+$\to$ \textbf{wrong} result, with no error and no warning;
+\item if \code{PARALLEL > N\_INPUTS}, \code{GROUPS=0} and the terminal condition is
+never satisfied $\to$ the neuron \textbf{hangs} (busy high, done never asserted).
+\end{itemize}
+The solution does not modify the validated datapath: a \code{generate} block
+instantiates a deliberately undefined module when
+$\text{N\_INPUTS} \bmod \text{PARALLEL}\neq0$, forcing an error at \emph{elaboration}
+both in simulation and in synthesis. For valid configurations the branch is never
+elaborated.
+
+\begin{lstlisting}[caption={\texttt{rtl/neuron\_parallel.v} --- parameter guard}]
+generate
+  if (N_INPUTS == 0 || N_INPUTS % PARALLEL != 0) begin : PARAMETER_ERROR
+     neuron_parallel_requires_N_INPUTS_multiple_of_PARALLEL
+        invalid_parameter_combination();
+  end
+endgenerate
+\end{lstlisting}
+
+\begin{fnnote}[Edge case \texttt{N\_INPUTS=0} (fixed 2026-09-04)]
+The original condition (\code{N\_INPUTS \% PARALLEL != 0}) does not catch
+\code{N\_INPUTS=0}, since $0 \bmod \text{PARALLEL}=0$ for any \code{PARALLEL}: the module
+elaborated successfully (both in simulation and in real Yosys synthesis) while leaving
+\code{x\_bus}/\code{w\_bus} undriven and \code{start} silently ineffective. Found during
+the re-certification campaign (\code{docs/validation/bugs.md}, BUG-002) and fixed by
+extending the guard as above --- \code{N\_INPUTS=0} now fails elaboration exactly like the
+other degenerate cases.
+\end{fnnote}
+
+\section{Activation functions}
+\code{neuron\_parallel} accepts a 2-bit \code{activation} port. The default is
+\code{ACT\_RELU}, the only behavior that existed before the port was introduced, so
+every pre-existing caller remains unchanged.
+
+\begin{tabularx}{\textwidth}{L{2.6cm} C{1.4cm} Y}
+\toprule
+\rowh \thd{Encoding} & \thd{Value} & \thd{Behavior} \\
+\midrule
+\code{ACT\_NONE} & \code{2'd0} & Linear: no clamp to zero, bilateral saturation to the INT8 range $[-128,+127]$. \\
+\rowa \code{ACT\_RELU} & \code{2'd1} & $\max(0,x)$, then positive saturation to $+127$ (default; also the fallback for reserved encodings). \\
+\bottomrule
+\end{tabularx}
+
+\section{INT8 saturation}
+After bias and activation, the 32-bit accumulator is reduced to INT8:
+\[
+y=\begin{cases}
++127 & \text{if } \mathrm{final\_acc} > 127\\
+-128 & \text{if } \mathrm{final\_acc} < -128 \ \text{(ACT\_NONE only)}\\
+0 & \text{if } \mathrm{final\_acc}\le 0 \ \text{(ACT\_RELU only)}\\
+\mathrm{final\_acc}[7:0] & \text{otherwise}
+\end{cases}
+\]
+
+\section{\texttt{layer} --- neurons in parallel}
+\code{layer} instantiates \code{N\_NEURONS} neurons that share the input vector
+\code{x\_bus} but have distinct weights and bias; \code{busy} is the OR and \code{done}
+the AND of the neurons' signals. It is the module used in the datapath benchmarks
+(ch.~\ref{ch:impl}), where all neurons work simultaneously. The addressing convention
+is neuron-major: the weights of neuron $n$ occupy
+\code{weights\_bus[n*N\_INPUTS*DATA\_WIDTH +: N\_INPUTS*DATA\_WIDTH]}.

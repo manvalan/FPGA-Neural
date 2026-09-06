@@ -1,0 +1,78 @@
+\chapter[Arbitration and top-level]{Arbitration and top-level integration}
+\label{ch:top}
+
+\section{\texttt{mem\_arbiter} --- three-port arbiter}
+A single byte-level memory master (which feeds the shared chain
+\code{int8\_memory\_access} $\to$ \code{memory\_interface} $\to$ \code{psram\_controller})
+is arbitrated among three requesters:
+
+\begin{tabularx}{\textwidth}{C{1.3cm} L{3.4cm} Y}
+\toprule
+\rowh \thd{Port} & \thd{Master} & \thd{Accesses} \\
+\midrule
+A & \code{spi\_engine} & \op{WRITE\_RAM} / \op{READ\_RAM}. \\
+\rowa B & \code{neuron\_memory} & X/W/bias reads during an execution. \\
+C & \code{layer\_sequencer} & Descriptor reads + buffer writes between layers. \\
+\bottomrule
+\end{tabularx}
+
+Fixed priority \textbf{B $>$ C $>$ A}: an inference in progress is more critical than the
+sequencer's bookkeeping, which in turn is more critical than a manual SPI access that has
+just arrived. In normal operation B and C are anyway temporally disjoint
+(\code{neuron\_memory} requests only during an execution, \code{layer\_sequencer} only in
+the pauses between layers), so the priority matters mostly for the corner case of a
+manual \op{WRITE\_RAM}/\op{READ\_RAM} arriving during a multi-layer execution.
+
+\begin{center}
+\begin{tikzpicture}[font=\scriptsize,node distance=6mm]
+ \node[fnblock,minimum width=30mm](a){Port A --- \code{spi\_engine}};
+ \node[fnblock,below=4mm of a,minimum width=30mm](b){Port B --- \code{neuron\_memory}};
+ \node[fnblock,below=4mm of b,minimum width=30mm](c){Port C --- \code{layer\_sequencer}};
+ \node[fnblockD,right=16mm of b,minimum width=26mm,minimum height=16mm](arb){\code{mem\_arbiter}\\{\scriptsize B$>$C$>$A}};
+ \node[fnblockT,right=14mm of arb,minimum width=26mm](m){shared memory\\{\scriptsize chain}};
+ \draw[fnarrow] (a)-|(arb.west|-a); \draw[fnarrow] (b)--(arb.west);
+ \draw[fnarrow] (c)-|(arb.west|-c);
+ \draw[fnbus] (arb)--(m);
+\end{tikzpicture}
+\end{center}
+
+Once access is granted, the arbiter retains ownership until the single transaction's
+\code{m\_ready} pulse, then releases: all three masters emit \code{req} as a clean
+one-cycle pulse, so a queue-less grant-and-forward design suffices.
+
+\section{\texttt{spi\_neuron\_top} --- full integration}
+The top-level connects SPI (\code{spi\_slave}+\code{spi\_engine}), the arbiter, the
+sequencer, \code{neuron\_memory} and the PSRAM chain. The reset of \code{neuron\_memory}
+is the OR of the global reset with the soft-reset pulse of the \op{RESET} opcode, so the
+host can recover the engine over SPI without a physical reset (the RAM stays intact).
+
+\begin{center}
+\begin{tikzpicture}[font=\scriptsize,node distance=7mm]
+ \node[fnblockA,minimum width=22mm](ss){\code{spi\_slave}};
+ \node[fnblockA,right=8mm of ss,minimum width=22mm](se){\code{spi\_engine}};
+ \node[fnblockT,below=8mm of se,minimum width=26mm](sq){\code{layer\_sequencer}};
+ \node[fnblockD,right=10mm of se,minimum width=24mm](mux){ctrl MUX\\{\scriptsize on \code{seq\_busy}}};
+ \node[fnblock,below=8mm of mux,minimum width=26mm](nm){\code{neuron\_memory}};
+ \node[fnblockD,right=10mm of mux,minimum width=22mm](arb){\code{mem\_arbiter}};
+ \node[fnblockA,right=8mm of arb,minimum width=26mm](mem){PSRAM chain};
+ \draw[fnarrow] (ss)--(se);
+ \draw[fnarrow] (se)--(mux);
+ \draw[fnarrow] (sq)--(mux);
+ \draw[fnarrow] (mux)--(nm);
+ \draw[fnarrow] (se.south) to[bend right=10] (arb.north west);
+ \draw[fnarrow] (nm)--(arb);
+ \draw[fnarrow] (sq.east) to[bend right=20] (arb.south west);
+ \draw[fnbus] (arb)--(mem);
+\end{tikzpicture}
+\end{center}
+
+The multiplexer switches the control lines of \code{neuron\_memory} between the sequencer
+(while \code{seq\_busy} is high) and the direct path of \code{spi\_engine} (legacy
+single-layer mode), returning the engine to the direct path at the end of the sequence.
+
+\begin{fnnote}[End-to-end verification]
+\code{spi\_neuron\_top} is verified in simulation with real PSRAM
+(\code{psram\_model.v}, no mock): RESET/READ\_CONFIG/WRITE\_RAM/READ\_RAM/SET\_BASE/
+START/STATUS/READ\_OUTPUT and \op{RUN\_NETWORK} are exercised purely over simulated SPI
+(ch.~\ref{ch:impl}).
+\end{fnnote}

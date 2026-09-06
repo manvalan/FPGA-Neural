@@ -1,0 +1,169 @@
+\chapter[ECP5 implementation]{ECP5 implementation and characterization}
+\label{ch:impl}
+
+\section{Flow and verification}
+The project is verified on two complementary planes: functional \textbf{simulation} with
+Icarus Verilog (signed algebra, products, accumulation, groups, bias, ReLU, saturation,
+busy/done signals) and real \textbf{implementation} with Yosys (synthesis) $+$
+nextpnr-ecp5 (place\&route, timing) $+$ Project~Trellis (\code{ecppack}).
+
+\begin{tabularx}{\textwidth}{L{5.0cm} C{3.0cm} Y}
+\toprule
+\rowh \thd{Verification stage} & \thd{Outcome} & \thd{Covers} \\
+\midrule
+Functional RTL & \PASS & datapath correctness \\
+\rowa Parametric simulation & \PASS & configuration sweep \\
+ECP5 synthesis & \PASS & synthesizability, mapping \\
+\rowa Placement / Routing & \PASS & LUT/FF/DSP, timing \\
+Bitstream (\code{ecppack}) & \PASS & full flow, 0 errors (P2 and P8) \\
+\bottomrule
+\end{tabularx}
+
+\begin{fnnote}[End-to-end toolchain through the bitstream]
+The full flow RTL $\to$ Yosys $\to$ nextpnr-ecp5 $\to$ \code{ecppack} produces a valid
+bitstream for P2 and P8, \textbf{0 errors at every stage}. Header verified byte-by-byte:
+\code{Part: LFE5U-45F-8CABGA381}, the target's real part number, not a placeholder. Only
+\emph{generation} is verified: no physical-hardware test in this session.
+\end{fnnote}
+
+\section{Datapath benchmark (256$\times$4)}
+Configuration: INT8/INT32, \code{N\_INPUTS}=256, \code{N\_NEURONS}=4, variable
+\code{PARALLEL}, 80~MHz target, device \code{LFE5U-45F-8BG381C} ($-8$). The test buses
+are generated \emph{inside} the benchmark wrapper so as not to expose thousands of I/Os;
+the top-level exposes only \code{clk/rst/start/y\_bus/busy/done}.
+
+\begin{tabularx}{\textwidth}{C{1.4cm} C{1.8cm} C{1.4cm} C{1.6cm} C{1.6cm} C{1.5cm} C{1.4cm}}
+\toprule
+\rowh \thd{PAR} & \thd{tot MAC} & \thd{DSP} & \thd{Fmax} & \thd{Tcrit} & \thd{80\,MHz} & \thd{LUT4} \\
+\midrule
+16 & 64 & 64/72 & 52.13 & 19.18 & \FAIL & $\approx$2531 \\
+\rowa 8 & 32 & 32/72 & 61.71 & 16.20 & \FAIL & --- \\
+4 & 16 & 16/72 & 75.01 & 13.33 & \FAIL & 804 \\
+\rowa 2 & 8 & 8/72 & 87.88 & 11.38 & \PASS & 481 \\
+\bottomrule
+\end{tabularx}
+\begin{center}\footnotesize\itshape\color{fnGrey}
+Fmax and Tcrit in MHz and ns. Total MACs $=$ PARALLEL$\times$4 neurons.\end{center}
+
+\subsection{Fmax and throughput versus parallelism}
+\begin{center}
+\begin{tikzpicture}
+\begin{axis}[
+  width=0.62\textwidth,height=6.0cm,
+  axis y line*=left, axis x line=bottom,
+  xlabel={\footnotesize PARALLEL}, ylabel={\footnotesize Fmax [MHz]},
+  xtick={2,4,8,16}, xmode=log, log basis x=2,
+  ymin=40,ymax=95, ytick={40,55,70,85},
+  tick label style={font=\scriptsize}, label style={font=\footnotesize},
+  grid=major, grid style={fnRule!40},
+  legend style={font=\scriptsize,at={(0.5,-0.28)},anchor=north,legend columns=2}]
+ \addplot[fnTeal,mark=*,thick,mark options={fill=fnTeal}]
+   coordinates {(2,87.88)(4,75.01)(8,61.71)(16,52.13)};
+ \addlegendentry{Fmax}
+ \draw[fnAmber,dashed,thick] (axis cs:2,80)--(axis cs:16,80);
+ \node[font=\scriptsize,text=fnAmber] at (axis cs:11,82.5){80 MHz target};
+\end{axis}
+\begin{axis}[
+  width=0.62\textwidth,height=6.0cm,
+  axis y line*=right, axis x line=none,
+  xmode=log, log basis x=2, xmin=2,xmax=16,
+  ylabel={\footnotesize throughput [G\,MAC/s]},
+  ymin=0,ymax=3.6, ytick={0,1,2,3},
+  tick label style={font=\scriptsize}, label style={font=\footnotesize}]
+ \addplot[fnBlue,mark=square*,thick,mark options={fill=fnBlue}]
+   coordinates {(2,0.703)(4,1.20)(8,1.97)(16,3.34)};
+ \label{plt:tp}
+\end{axis}
+\end{tikzpicture}
+\end{center}
+\begin{center}\footnotesize\itshape\color{fnGrey}
+Fundamental trade-off: as PARALLEL grows, Fmax drops (deeper routing/tree) but the
+theoretical throughput rises. The blue line (squares) is the throughput
+$\approx$MAC/cycle$\times$Fmax.\end{center}
+
+\subsection{Interpretation}
+Reducing \code{PARALLEL} lowers simultaneous MACs, DSPs, adder-tree depth and routing
+congestion, so Fmax rises; but the number of groups increases and hence the latency.
+Frequency alone is not enough to choose: what matters is the overall throughput
+$\approx$MAC/cycle$\times$frequency.
+
+\begin{fnnote}[Architectural choices]
+\code{PARALLEL=8} is the candidate for the throughput-oriented V1: exactly 32~simultaneous
+MACs with 4 neurons, DSP at $\approx$44\%, leaving resources for controller, buffers, SPI
+and future pipelines. \code{PARALLEL=2} is the frequency-oriented reference: 87.88~MHz,
+the only one to exceed the 80~MHz target, but it requires 128 groups for a 256-input
+neuron.
+\end{fnnote}
+
+\subsection{Critical path and the 100~MHz limit}
+The 100~MHz target is not met (best result 87.88~MHz with P2). The limit is
+\emph{temporal}, not one of occupancy: with P2 the FPGA is barely used (DSP $\approx$11\%,
+LUT $\approx$1\%). The critical path runs through weight FF $\to$ \code{MULT18X18D} $\to$
+products $\to$ adder/carry $\to$ \code{acc\_next} $\to$ ReLU/saturation $\to$ output FF.
+Exceeding 100~MHz will require one or more internal pipelines, not yet necessary to
+proceed.
+
+\section{Full integrated system}
+Real synthesis of \code{spi\_neuron\_top} (SPI + arbiter + \code{neuron\_memory} +
+\code{graph\_engine} + PSRAM chain), speed grade $-8$. Before timing closure the integrated
+system missed the 80~MHz target (P2 $\approx$55~MHz, P8 $\approx$45~MHz), with a critical
+path entirely inside \code{neuron\_parallel}.
+
+\subsection{Cause: the saturation/ReLU carry chain}
+Resource usage is not the cause (device below 10\% everywhere). The integrated system's
+critical path is the \textbf{\code{CCU2C} carry chain of the saturation/ReLU comparator} in
+\code{neuron\_parallel.v} --- \emph{not} SPI, arbiter, PSRAM, nor the Type~\#2 modules. The
+saturation was written as an arithmetic comparison (\code{acc > 127}, \code{acc < -128}),
+mapped by the synthesizer onto a 32-bit subtractor with a long carry chain.
+
+\subsection{Timing closure (2026-09-03)}
+An explicit waiver of the ``datapath untouchable'' rule for a separate timing-closure task,
+with the single constraint of \textbf{bit-exact equivalence} across the whole regression.
+Two steps:
+\begin{itemize}
+\item \textbf{Step 1 --- saturation/ReLU as bit-test.} A signed 32-bit value fits INT8 iff
+\code{acc[31:7]} are all equal: an AND/OR reduction over a bit slice instead of a 32-bit
+carry chain. A correct, bit-exact-verified simplification; real logic gain, but on its own
+submerged by placement noise.
+\item \textbf{Step 2 --- pipeline register} between accumulate and activation (\code{+1}
+cycle of latency per neuron, absorbed by the \code{start}/\code{done} handshake, transparent
+to callers). This is the decisive step.
+\end{itemize}
+
+\begin{tabularx}{\textwidth}{L{4.6cm} C{2.6cm} C{2.4cm} Y}
+\toprule
+\rowh \thd{Config} & \thd{Before} & \thd{After} & \thd{$\Delta$} \\
+\midrule
+P2, real \code{.lpf} & 54.58 & \textbf{75.30} & $+38\%$ \\
+\rowa P2, 5-seed sweep & 55.59 & 73.38--75.55 & robust \\
+P8, unconstrained & 45.47 & \textbf{60.26} & $+33\%$ \\
+\rowa P8, 5-seed sweep & 43.15--50.48 & 60.26--68.87 & non-overlapping \\
+\bottomrule
+\end{tabularx}
+\begin{center}\footnotesize\itshape\color{fnGrey}
+Fmax in MHz, real place\&route (\code{nextpnr-ecp5}). Robust across 5 seeds, not attributable
+to placement luck.\end{center}
+
+\begin{fnnote}[Stop criterion and real margin]
+80~MHz is not reached (75.30~MHz at P2, 94\% of target) but the gain is large and real
+($+38\%$/$+33\%$). The next step (the \code{MULT18X18D} output register, which would touch
+\code{mac\_unit.v}) was left out: 80~MHz is \emph{headroom} toward the real \code{.lpf}, not
+an operating requirement. With the planned 16~MHz oscillator, even the worst measured number
+($\approx$45~MHz at P8) has $2.8\times$ of margin.
+\textbf{Superseded 2026-09-04}: after adding the flash subsystem (ch.~\ref{ch:spi}
+§\ref{sec:flashspi}, ch.~\ref{ch:roadmap}), Fmax for the full system (P2, same real pinout +
+3 new flash signals) was 66.68~MHz, critical path still on the same
+\code{neuron\_parallel} accumulator chain identified above --- not a new bottleneck, the
+difference from 75.30~MHz was placement/routing noise from the added pins/logic.
+\textbf{Updated again the same day (Phase F7)}: made the flash SPI bus genuinely
+independent (dropped the \code{CCLK}/\code{USRMCLK} reuse, added a 4th ordinary
+\code{flash\_sclk} pin), Fmax re-measured \textbf{67.91~MHz} (slight improvement, critical
+path confirmed still identical). Margin on the 16~MHz oscillator: $4.2\times$.
+\end{fnnote}
+
+\begin{fnnote}[Separate future optimization]
+Independent of timing closure: the \code{x\_mem}/\code{w\_mem} arrays of \code{neuron\_memory}
+are still inferred as distributed RAM on LUTs instead of \code{DP16KD}. Moving them to block
+RAM would free LUTs and is a Phase~7 candidate --- but it was not on the critical path
+resolved here.
+\end{fnnote}
