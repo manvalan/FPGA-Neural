@@ -1244,3 +1244,47 @@ STATUS: ERR-0025 (Parts A and B) fully RESOLVED. The physical SPI host
 interface is now verified correct end-to-end (SPI -> dependency_
 manager -> compute -> SDRAM -> result) under both tight and realistic-
 gap job pacing, with zero regression to the STEP19 baseline.
+
+ERR-0026 -- T_MRD datasheet-unit mismatch (SDRAM init sequence, 64MHz)
+
+DATE: 2026-09-06
+FOUND DURING: PRE-PCB VERIFICATION FREEZE, section-8 SDRAM datasheet-
+level audit (real Alliance Memory AS4C4M16SA-6TIN datasheet, Rev 5.0,
+Oct 2018, Table 17 "Electrical Characteristics/AC Operating
+Conditions", -6 speed grade).
+ROOT CAUSE: hardware/v2/nms/rtl/sdram_controller.v modeled tMRD (LOAD
+MODE REGISTER -> any command spacing) as `ns_to_cycles(12)`, i.e. as
+if it were a nanosecond-based timing spec like tRCD/tRP. The real
+datasheet specifies tMRD as a FIXED CYCLE COUNT, "2 tCK", independent
+of clock frequency -- the same category of spec as CAS_LATENCY, which
+this same file already correctly models as a fixed value two lines
+below. `ns_to_cycles(12)` rounds to exactly 2 cycles at every
+frequency this design had previously been tested at (100/133/166MHz),
+so the wrong unit model was silently masked by coincidence. At the
+real V2 board's own 64MHz operating point it rounds to only 1 cycle --
+one cycle short of the real, fixed 2-tCK minimum -- a genuine,
+datasheet-violating under-provisioning of the one-time SDRAM power-up/
+mode-register-set sequence. Confirmed NOT a bug in tRCD/tRP (correctly
+ns-based, correctly use ns_to_cycles()), tRAS (satisfied by construction:
+the fixed tRCD+CAS_LATENCY+BURST_LEN dispatch sequence is always >=6
+cycles, 93.75ns >= the real 42ns minimum at 64MHz), or tWR (folded in
+conservatively via T_RP+1, giving 3 cycles >= the real 2-tCK minimum).
+FIX: hardcoded `localparam T_MRD = 2;` (matching how CAS_LATENCY is
+already modeled), replacing `localparam T_MRD = ns_to_cycles(12);`.
+Only affects the one-time SDRAM init sequence, not per-transaction
+timing.
+VERIFICATION (all via Verilator, the trusted tool per DEC-0004):
+  - tb_sdram_controller.v: full 9-config legacy sweep (100/133/166MHz
+    x BURST_LEN 1/4/8), 461/461 PASS each config, zero regression.
+  - tb_sdram_controller.v: NEW dedicated 64MHz/BURST_LEN=4 config (the
+    real board target, not covered by the legacy sweep) -- 461/461
+    PASS, confirming the fix is correct at the frequency where the
+    bug actually manifested.
+  - tb_nms_dstress_sdram_unified.v N=2: 49788 cycles, 256/256
+    bit-exact -- IDENTICAL to pre-fix (expected: T_MRD only affects
+    one-time init, not steady-state per-transaction timing).
+  - tb_nms_dstress_sdram_unified.v N=4: 49771 cycles, 256/256
+    bit-exact -- IDENTICAL to pre-fix.
+  - tb_fpga_neural_v2_top_smoke.v: 11/11 PASS, unaffected.
+STATUS: RESOLVED. Files changed: hardware/v2/nms/rtl/sdram_
+controller.v (single localparam, plus explanatory comment).

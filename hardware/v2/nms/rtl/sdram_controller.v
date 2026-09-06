@@ -99,7 +99,21 @@ module sdram_controller #(
     // (tRCD + CAS_LATENCY + BURST_LEN data cycles, always >= 3+3+1=7
     // even at the narrowest BURST_LEN=1) already comfortably exceeds
     // it by construction before auto-precharge can begin internally.
-    localparam T_MRD    = ns_to_cycles(12);   // LOAD MODE REGISTER -> any command
+    // tMRD is specified by the real AS4C4M16SA-6TIN datasheet (Table 17)
+    // as a FIXED CYCLE COUNT ("2 tCK"), not a nanosecond value -- unlike
+    // tRCD/tRP, which genuinely are ns-based and correctly belong behind
+    // ns_to_cycles(). A previous draft modeled tMRD as ns_to_cycles(12),
+    // an assumed-equivalent ns figure that happened to round up to
+    // exactly 2 cycles at every frequency this design had been tested at
+    // (100/133/166MHz), silently masking the wrong unit model. At the
+    // real V2 board's own 64MHz operating point, ns_to_cycles(12) rounds
+    // to only 1 cycle -- one cycle short of the real, fixed 2-tCK
+    // minimum -- found via this step's own fresh datasheet-level audit
+    // (real Alliance Memory AS4C4M16SA-6TIN datasheet Rev.5.0, Table 17).
+    // Fixed by hardcoding the real, frequency-independent requirement
+    // directly, matching how CAS_LATENCY (also a real fixed-cycle spec)
+    // is already modeled two lines below.
+    localparam T_MRD    = 2;                  // LOAD MODE REGISTER -> any command (tMRD = 2 tCK, fixed)
     localparam T_INIT_US= 200;                // power-up wait, real datasheet value
     localparam T_INIT   = T_INIT_US * CLK_FREQ_MHZ;
     localparam CAS_LATENCY = 3;               // fixed for this part/speed grade

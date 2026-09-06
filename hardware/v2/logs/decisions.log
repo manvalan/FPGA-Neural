@@ -2140,3 +2140,24 @@ and the new host-arb arbitration layer) -- this was deliberately not
 attempted before now, since running the real toolchain against RTL
 known to compute wrong answers would not have been a meaningful
 result. That reason no longer applies.
+
+DEC-0038
+
+DATE: 2026-09-06
+
+DECISION:
+The SDRAM datasheet-parameter audit (PRE-PCB VERIFICATION FREEZE,
+section 8) is CLOSED. Every timing parameter in hardware/v2/nms/rtl/
+sdram_controller.v was cross-checked against the real Alliance Memory
+AS4C4M16SA-6TIN datasheet (Rev 5.0, Table 17) at the real 64MHz target
+frequency, not merely re-cited from a previous, uncross-checked
+baseline. This found and closed ERR-0026 (T_MRD unit mismatch -- see
+errors.log), the only genuine discrepancy found. tRCD, tRP, tRAS,
+tWR, tMRD, tREFI are all now confirmed correct at 64MHz with zero
+regression to the existing bit-exact regression suite. See
+hardware/v2/docs/PRE_PCB_VERIFICATION.md for the full parameter-by-
+parameter table (DATASHEET PARAMETER -> REQUIRED VALUE -> RTL VALUE ->
+STATUS).
+This REVISES CHIP_READINESS.md/OPEN_ITEMS.md's own prior "SDRAM
+datasheet-parameter cross-check: OPEN (sim-level only)" status to
+CLOSED.
