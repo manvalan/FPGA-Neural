@@ -1,6 +1,11 @@
 # FPGA-Neural V2 — SCHEMATIC READINESS
 
-## Status: NOT READY
+**SUPERSEDED.** This document predates the SPI host bridge, the real
+PLL, and the final pinout. See `PRE_PCB_VERIFICATION.md` for the
+current pre-schematic verification state. Left in place as a
+historical record of the earlier block-diagram planning.
+
+## Status (HISTORICAL): NOT READY
 
 ## Block diagram (what a hardware designer needs to know)
 

@@ -1,5 +1,11 @@
 # FPGA-Neural V2 — OPEN ITEMS
 
+**SUPERSEDED.** See `PRE_PCB_VERIFICATION.md`'s own final release-gate
+table for the current, consolidated OPEN/PASS status of every item
+below — most of the BLOCKER/CRITICAL items here (host interface,
+clock/PLL, pinout) are now CLOSED. Left in place as a historical
+record.
+
 Consolidated from HARDWARE_FREEZE.md, PINOUT.md, CLOCK_ARCHITECTURE.md,
 POWER_ARCHITECTURE.md, SCHEMATIC_READINESS.md. Classified per the
 governing spec's own rule: BLOCKER / CRITICAL / WARNING / OPEN /

@@ -1,6 +1,12 @@
 # FPGA-Neural V2 — CLOCK ARCHITECTURE
 
-## Status: CRITICAL — real, unresolved oscillator/clock-input mismatch
+**SUPERSEDED.** This document predates the real EHXPLLL PLL
+(`ecp5_pll_sys_clk.v`) that resolves the mismatch described below. See
+`PRE_PCB_VERIFICATION.md` \S3 for the current, verified clock/reset
+status (PASS). Left in place as a historical record of the
+architectural decision that led to adding the PLL.
+
+## Status (HISTORICAL): CRITICAL — real, unresolved oscillator/clock-input mismatch
 
 ## What the RTL actually assumes
 

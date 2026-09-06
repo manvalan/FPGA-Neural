@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2025) (preloaded format=pdflatex 2025.11.21)  6 SEP 2026 17:49
+This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2025) (preloaded format=pdflatex 2025.11.21)  6 SEP 2026 18:31
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1641,11 +1641,11 @@ nged.
 (rerunfilecheck)             Checksum: C546A17AC16DE7B451E6B0F33D250D8E;5316.
  ) 
 Here is how much of TeX's memory you used:
- 46566 strings out of 473190
- 1075126 string characters out of 5715799
+ 46569 strings out of 473190
+ 1075150 string characters out of 5715799
  1692356 words of memory out of 5000000
  68618 multiletter control sequences out of 15000+600000
- 626093 words of font info for 305 fonts, out of 8000000 for 9000
+ 626190 words of font info for 307 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  107i,12n,109p,1024b,797s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/local/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb
@@ -1658,7 +1658,7 @@ l/texlive/2025/texmf-dist/fonts/type1/urw/courier/ucrr8a.pfb></usr/local/texliv
 e/2025/texmf-dist/fonts/type1/urw/helvetic/uhvb8a.pfb></usr/local/texlive/2025/
 texmf-dist/fonts/type1/urw/helvetic/uhvr8a.pfb></usr/local/texlive/2025/texmf-d
 ist/fonts/type1/urw/helvetic/uhvro8a.pfb>
-Output written on FPGA-Neural-V2-Datasheet-EN.pdf (16 pages, 158407 bytes).
+Output written on FPGA-Neural-V2-Datasheet-EN.pdf (16 pages, 158503 bytes).
 PDF statistics:
  342 PDF objects out of 1000 (max. 8388607)
  277 compressed objects within 3 object streams

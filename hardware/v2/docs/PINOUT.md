@@ -1,5 +1,11 @@
 # FPGA-Neural V2 — PINOUT
 
+**SUPERSEDED.** This document predates the SPI host bridge and the
+final board-level `fpga_neural_v2_top`/`v2_board_top.lpf` pinout. See
+`PRE_PCB_VERIFICATION.md` \S13 for the current, real, P&R-confirmed
+16-signal pinout (host bus is no longer BLOCKED). Left in place as a
+historical record.
+
 FPGA: **LFE5U-45F-8BG381** (ECP5U, speed grade -8)
 Package: **CABGA381**
 Frozen top-level: `nms_neural_multiprocessor_sdram_unified` (N_SLOTS=4)

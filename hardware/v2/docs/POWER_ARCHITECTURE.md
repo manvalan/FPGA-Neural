@@ -1,6 +1,11 @@
 # FPGA-Neural V2 — POWER ARCHITECTURE
 
-## Status: OPEN — component/regulator selection not made this round
+**SUPERSEDED.** See `PRE_PCB_VERIFICATION.md` \S11-\S12 for the
+current per-bank voltage table (PASS) and current/power budget
+status (still OPEN, same real reasons as below). Left in place for
+its own detailed real-value derivation.
+
+## Status (HISTORICAL framing, current status is in PRE_PCB_VERIFICATION.md): OPEN — component/regulator selection not made this round
 
 Per the governing spec's own "NON inventare valori" rule, this
 document states what is REALLY known (device-level voltage

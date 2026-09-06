@@ -17,11 +17,11 @@ Synthesis (final top, real Yosys run) & \OK\ (0 CHECK-pass problems) \\
 \rowa Place\&route (8 real seeds) & \OK\ (8/8 fit, routed, zero errors) \\
 Timing closure @ 64\,MHz & \OK\ (8/8 seeds PASS, worst 68.51\,MHz) \\
 \rowa Final pinout (44/44 top-level signals) & \OK\ (real balls, P\&R-confirmed) \\
-Hold-time analysis & OPEN (not reported by this toolchain's summary) \\
+Hold-time analysis & OPEN (tool limitation, see PRE\_PCB\_VERIFICATION.md \S6) \\
 \rowa Power: rail voltages & OK (real datasheet values) \\
 Power: regulator selection / current budget & OPEN \\
-\rowa SDRAM datasheet-parameter cross-check & OPEN (sim-level only) \\
-Configuration flash selection & OPEN \\
+\rowa SDRAM datasheet-parameter cross-check & \OK\ (real AS4C4M16SA-6TIN Table 17 audit; found and fixed ERR-0026, tMRD unit mismatch) \\
+Configuration flash selection & \OK\ (Winbond \code{W25Q32JVSSIQ}, SOIC-8, frozen) \\
 \rowa Real KiCad schematic + ERC & NOT STARTED \\
 PCB layout & NOT STARTED \\
 \rowa BOM (sourced, purchasable parts) & NOT STARTED \\
@@ -49,8 +49,6 @@ complete in this revision.
   connectors).
 \item Real power current-budget estimate against the actual
   synthesized netlist.
-\item Real SDRAM-datasheet-parameter cross-check of controller timing
-  constants.
 \item First physical board fabrication and the 15-step bring-up
   procedure already documented in \code{FIRST\_POWER\_ON.md}.
 \item A real embedded-target (ESP32-class) software baseline, once

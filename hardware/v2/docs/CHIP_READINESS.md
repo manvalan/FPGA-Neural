@@ -1,5 +1,10 @@
 # FPGA-Neural V2 — CHIP READINESS
 
+**SUPERSEDED.** See `PRE_PCB_VERIFICATION.md` for the current,
+consolidated PRE-PCB VERIFIED release gate (this document's own
+checklist predates the SPI host bridge, PLL, and SDRAM datasheet
+audit). Left in place as a historical record.
+
 Precise, non-vague criteria per the governing spec's own definition:
 V2 hardware is READY only when EVERY box below is checked. If even one
 fundamental item is missing, **HARDWARE READY = NO** — no OPEN ITEM is
