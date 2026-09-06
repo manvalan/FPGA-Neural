@@ -1288,3 +1288,90 @@ VERIFICATION (all via Verilator, the trusted tool per DEC-0004):
   - tb_fpga_neural_v2_top_smoke.v: 11/11 PASS, unaffected.
 STATUS: RESOLVED. Files changed: hardware/v2/nms/rtl/sdram_
 controller.v (single localparam, plus explanatory comment).
+
+ERR-0027 -- neural_director.v: runtime-indexed demux write regressed
+timing after the ADDR_WIDTH memory-upgrade widening
+
+DATE: 2026-09-07
+FOUND DURING: memory-capacity upgrade investigation (AS4C4M16SA-6TIN
+8MB -> AS4C32M16SA/SB-7TIN 64MB), real nextpnr-ecp5 P&R re-verification
+after ADDR_WIDTH grew from 23 to 26 bits.
+ROOT CAUSE: neural_director.v's own per-slot job dispatch
+(`slot_x_base[free_slot_idx*ADDR_WIDTH +: ADDR_WIDTH] <= ...`, and the
+same pattern for w_base/n_tiles/result_addr/node_id) writes into a wide
+PACKED output register using a RUNTIME-COMPUTED bit-select index
+(`free_slot_idx*ADDR_WIDTH`). Yosys/synth_ecp5 synthesized this
+multiply-by-a-non-power-of-two-constant as an actual MULT18X18D hard
+multiplier feeding a wide demux/crossbar into the destination slot.
+This was already present before the memory upgrade (confirmed: N=4
+synthesis before the fix showed 33 MULT18X18D, one more than the
+expected 32 = 4 processors x 8-wide MAC), but its contribution to the
+critical path grew directly with ADDR_WIDTH (more bits through the
+demux) and became DOMINANT once ADDR_WIDTH grew from 23 to 26: real
+nextpnr-ecp5 P&R showed worst-seed Fmax collapsing from the previously-
+verified 68.51MHz (ADDR_WIDTH=23, PRE_PCB_VERIFICATION.md section 5)
+to 40.27MHz (ADDR_WIDTH=26), FAILING the 64MHz target across all 8
+seeds tested.
+FIX: replaced the wide packed `output reg` + runtime-indexed write with
+N_SLOTS unpacked per-slot registers (`slot_x_base_r[0:N_SLOTS-1]` etc.)
+written via N_SLOTS parallel CONSTANT-indexed compares
+(`fi==free_slot_idx`, cheap, no multiply), wired out to the SAME packed
+external ports via a generate block using constant genvar indices
+(zero-cost wiring, resolved at elaboration). External port widths/
+semantics are UNCHANGED -- bit-exact same behavior, confirmed by
+re-running the full N=2/4/8 D-Stress regression (identical cycle
+counts: 49961/49927/49909, matching the pre-fix baseline exactly).
+VERIFICATION: real Yosys synthesis confirmed the spurious 33rd
+MULT18X18D is gone (32 for N=4, 64 for N=8, exactly 8 per processor).
+Real nextpnr-ecp5 P&R, N=4, 8 seeds: ALL PASS at 64MHz (65.02-72.01MHz,
+mean ~68.8MHz) -- back to approximately the pre-upgrade baseline range.
+STATUS: RESOLVED for N=4. File changed: hardware/v2/rtl/neural_director.v.
+
+ERR-0028 -- nms_activation_fill_ctrl_v3.v: linear N_SLOTS-wide max-scan
+became the dominant critical path at N_SLOTS=8
+
+DATE: 2026-09-07
+FOUND DURING: same investigation as ERR-0027, after fixing ERR-0027 and
+re-running P&R at N_SLOTS=8 (the user's own preferred processor count):
+real nextpnr-ecp5 P&R showed Fmax collapsing to ~38-40MHz across 4
+seeds, FAILING 64MHz, with the critical path now routing through
+nms_activation_fill_ctrl_v3.v's own `max_n_tiles_comb` computation --
+a flat, sequential N_SLOTS-wide scan (`for (j=0;j<N_SLOTS;j=j+1) if
+(n_tiles_masked[j] > max_n_tiles_comb) max_n_tiles_comb =
+n_tiles_masked[j];`), already flagged as "an N_SLOTS-wide sequential
+chain" by this file's OWN prior header comment -- a pre-existing,
+known characteristic (not newly introduced), but one whose carry-chain
+critical path scales linearly with N_SLOTS and became dominant at
+N_SLOTS=8 (twice the comparison depth of N_SLOTS=4, where it was not
+the bottleneck).
+FIX: replaced the flat scan with an explicit, hand-written balanced
+binary max-tree (log2(N_SLOTS) comparison levels instead of N_SLOTS),
+using distinctly-named per-level wires (NOT a multi-dimensional
+generate-indexed array -- a first attempt using a shared 2D array
+triggered a real simulator UNOPTFLAT "circular combinational logic"
+false-positive, since that tool's array-flattening circularity check
+could not prove the (acyclic) per-level dependency safe for a shared
+array). Explicit cases for N_SLOTS=1/2/4/8 (the only real
+configurations this project uses), with a safe (unoptimized) fallback
+for any other value. SAME single-cycle latency as the scan it replaces
+(max_n_tiles_reg is still registered exactly one cycle behind
+n_tiles_masked) -- no FSM timing change, purely a combinational-depth
+reduction. Confirmed bit-exact via the same N=2/4/8 D-Stress regression
+re-run (identical cycle counts, zero regression).
+VERIFICATION: real nextpnr-ecp5 P&R, N=8, 8 seeds: 5/8 PASS at 64MHz
+(65.27-70.78MHz), 3/8 FAIL narrowly (55.84/61.00/63.42MHz) -- a large
+improvement over the pre-fix ~38-40MHz, but NOT yet fully reliable
+across every placement seed at N_SLOTS=8 (unlike N_SLOTS=4, which
+passes all 8 tested seeds). The remaining bottleneck (confirmed via a
+fresh critical-path trace on a failing seed) is sdram_unified_backend.
+v's own weight-cache hit-index scan -- the SAME pre-existing critical-
+path class already documented in PRE_PCB_VERIFICATION.md section 5
+("alternates... between dependency_manager.v's own priority-encoder
+scan and sdram_unified_backend.v's own weight-cache hit-index logic"),
+not a new defect, but not further optimized this session (time/scope
+boundary -- a similar tree-based fix is the clear next step, not
+attempted here to avoid rushing an unverified third change).
+STATUS: PARTIALLY RESOLVED. N_SLOTS=4 fully reliable at 64MHz (8/8
+seeds). N_SLOTS=8 significantly improved but OPEN -- 5/8 seeds close
+timing at 64MHz, 3/8 do not. File changed: hardware/v2/nms/rtl/
+nms_activation_fill_ctrl_v3.v.

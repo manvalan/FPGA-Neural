@@ -1,5 +1,14 @@
 # FPGA-Neural V2 — HARDWARE FREEZE (FASE #1, single external SDRAM)
 
+**PARTIALLY SUPERSEDED (DEC-0039).** The SDRAM part number below
+(AS4C4M16SA-6TIN, 8MB) was upgraded to **AS4C32M16SB-7BIN (64MB)**,
+and N_PROCESSORS=8 is no longer merely a "future evolution" — it is
+now real, synthesized, P&R-verified (functionally correct, with a
+disclosed, real 64MHz timing-closure gap at 5/8 tested seeds). See
+`MEMORY_UPGRADE_64MB_N8.md` for the current, authoritative state. The
+rest of this document (Neural Processor, dataflow architecture) is
+still accurate.
+
 ## Frozen reference configuration
 
 ```

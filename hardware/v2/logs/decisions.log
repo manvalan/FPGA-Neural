@@ -2161,3 +2161,72 @@ STATUS).
 This REVISES CHIP_READINESS.md/OPEN_ITEMS.md's own prior "SDRAM
 datasheet-parameter cross-check: OPEN (sim-level only)" status to
 CLOSED.
+
+DEC-0039
+
+DATE: 2026-09-07
+
+DECISION:
+The single external SDRAM is UPGRADED from Alliance Memory
+AS4C4M16SA-6TIN (64Mbit/8MB, 4 banks x 4096 rows x 256 cols, 12 address
+pins A0-A11) to Alliance Memory AS4C32M16SB-7BIN (54-ball TFBGA
+package, per the user's own explicit package choice -- the TSOP-II
+sibling AS4C32M16SB-7TIN is the same die/organization/timing and was
+also confirmed real/in-stock, should package choice be reconsidered
+during layout) (512Mbit/64MB, 4 banks
+x 8192 rows x 1024 cols, 13 address pins A0-A12 -- one new pin,
+sdram_a[12], real ball F1/bank6, added to v2_board_top.lpf). This
+followed a real, from-datasheet investigation of the whole Alliance
+Memory SDR SDRAM family (AS4C4M16SA/AS4C8M16SA/AS4C16M16SA/
+AS4C32M16SA, all confirmed same package/pinout family via their own
+real datasheets) at the user's own explicit request, after establishing
+that 8MB was not a hard capacity ceiling for this accelerator's actual
+compute throughput (D-Stress: 32,768 weights takes 49,771 cycles/
+777us at 64MHz -- a 24MB weight budget at the same rate would take
+~580ms/inference, already compute-bound long before memory-bound).
+"SA" vs "SB" in the part number is a die-shrink revision (Alliance's
+own standard practice, confirmed via their own datasheet revision
+history), NOT a functional/pinout difference -- "SB" is the currently
+orderable die at real distributors (DigiKey: 568 units in stock,
+$31.12/unit for the frozen BGA package as of this session; "SA" did
+not surface as a current distributor listing for this exact
+package/temp-grade combination).
+Real -7-grade AC timing (144MHz max, `far above our 64MHz target):
+tRCD=15ns, tRP=15ns (both BETTER than the previous part's 18ns), tRAS=
+45ns/100000ns, tRC=65ns, tMRD=2 CLK (fixed, explicit units, no
+ambiguity), tREFI=7.8125us (HALF the previous part's 15.625us, since
+8192 rows must refresh in the same 64ms window).
+
+This REQUIRED a real SPI protocol change (spi_host_bridge.v): the
+26-bit byte address (up from 23 bits) no longer fits in 3 bytes (24
+bits) with a spare reserved bit -- every address field (x_base/w_base/
+result_addr in WRITE_JOB, addr in WRITE_MEM/READ_MEM) widened from 3
+to 4 bytes. WRITE_JOB grew from 15 to 18 payload bytes; the WRITE_MEM/
+READ_MEM header grew from 5 to 6 bytes.
+
+This ALSO exposed two real, pre-existing timing-scaling issues, found
+via real nextpnr-ecp5 P&R re-verification (not assumed): see errors.log
+ERR-0027 (neural_director.v's own runtime-indexed demux write, fixed,
+N_SLOTS=4 now fully reliable at 64MHz across all 8 tested seeds) and
+ERR-0028 (nms_activation_fill_ctrl_v3.v's own linear N_SLOTS-wide max
+scan, fixed, N_SLOTS=8 significantly improved but not yet fully
+reliable -- 5/8 seeds close timing at 64MHz).
+
+Full regression re-verified against BOTH the memory upgrade and both
+RTL fixes with zero functional regression: sdram_controller (461/461,
+18 configs), tb_sdram_boundary (21/21, real+cross-checked 64/166MHz),
+D-Stress N=2/N=4/N=8 (bit-exact, identical cycle counts to the
+pre-upgrade baseline), tb_spi_host_bridge (18/18), board-level SPI
+smoke test (11/11, real 64MHz clk_sys), tb_sdram_unified_backend
+(40/40).
+
+STATUS: Memory upgrade CLOSED and verified. N_SLOTS=4 clock closure
+CLOSED (64MHz, all seeds). N_SLOTS=8 clock closure OPEN (64MHz, 5/8
+seeds) -- a real, disclosed, not-yet-fully-resolved finding, not
+silently claimed complete. 80MHz (the user's own stretch preference)
+is NOT achievable with the current architecture at either N_SLOTS
+value -- confirmed via a real 80MHz-targeted PLL regeneration and
+P&R re-run, all seeds failing -- consistent with this project's own
+prior documented conclusion (ecp5_pll_sys_clk.v's own header: "64MHz
+was chosen... the highest frequency at which ALL measured seeds close
+timing with real margin").

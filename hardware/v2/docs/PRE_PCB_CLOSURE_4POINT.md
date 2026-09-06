@@ -8,6 +8,14 @@ was modified as a result of this pass (see Point 2 for the one bug
 found and fixed, which was in a NEW test harness, not in
 `spi_host_bridge.v` itself).
 
+**SDRAM-SPECIFIC CONTENT SUPERSEDED (DEC-0039, a later session).**
+Point 1's own SDRAM geometry (row/col bit counts, address examples)
+described the since-upgraded 8MB AS4C4M16SA-6TIN part; the SPI
+frequency findings in Point 2 and the oscillator/power/JTAG decisions
+in Points 3-4 are unaffected and remain accurate. See
+`MEMORY_UPGRADE_64MB_N8.md` for the current SDRAM state (64MB,
+AS4C32M16SB-7BIN) and its own directed-boundary re-verification.
+
 ---
 
 ## POINT 1 — Directed SDRAM boundary verification

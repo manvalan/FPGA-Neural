@@ -13,6 +13,17 @@ individually rewritten.
 Baseline commit: `d6376e8` (user-designated engineering reference).
 This session's own fix on top of it: `8890b0a` (ERR-0026, SDRAM tMRD).
 
+**SDRAM-SPECIFIC CONTENT SUPERSEDED (DEC-0039, a later session).** The
+SDRAM was upgraded from AS4C4M16SA-6TIN (8MB) to AS4C32M16SB-7BIN
+(64MB), and N_SLOTS=8 was added as a real, verified configuration
+alongside N_SLOTS=4. Every SDRAM organization table, pin count, and
+memory-map worked example below describing the 8MB part is stale —
+see `MEMORY_UPGRADE_64MB_N8.md` for the current, authoritative state.
+Sections unrelated to SDRAM specifics (RTL freeze, synthesis warning
+classification methodology, SPI protocol *structure* though not its
+exact byte counts, config flash, power/pinout for non-SDRAM signals)
+remain accurate.
+
 ---
 
 ## 1. RTL functional freeze — audit result

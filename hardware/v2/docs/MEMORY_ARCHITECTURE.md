@@ -1,5 +1,14 @@
 # FPGA-Neural V2 — MEMORY ARCHITECTURE (single SDRAM)
 
+**PART NUMBER SUPERSEDED (DEC-0039).** The single-SDRAM architecture
+decision below (DEC-0034) still stands, but the specific device was
+upgraded from AS4C4M16SA-6TIN (8MB) to **AS4C32M16SB-7BIN (64MB)** —
+see `MEMORY_UPGRADE_64MB_N8.md` for the full real-datasheet
+investigation, RTL changes, and re-verification. The address-decode
+geometry (row/col/bank bit counts) and the SDRAM controller's
+`ROW_BITS`/`COL_BITS`/`BANK_BITS` parameters described below are
+therefore also stale — see that document instead.
+
 ## Decision (DEC-0034)
 
 **ONE external memory device: Alliance Memory AS4C4M16SA-6TIN SDR
