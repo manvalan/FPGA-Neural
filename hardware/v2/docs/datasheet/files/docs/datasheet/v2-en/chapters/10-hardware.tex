@@ -433,13 +433,16 @@ U9 & 1 & \code{W25Q128JVPIM} & WSON-8, 6$\times$5\,mm (real Winbond DTR datashee
 \bottomrule
 \end{tabularx}
 
-\subsection{Discrepancy: FPGA grade}
-\textbf{U2 is captured as \code{LFE5U-45F-8BG381I}} (industrial,
-$-40$ to $+85^{\circ}$C) --- every other reference in this project
-(LPF, this chapter, decisions.log) uses \textbf{\code{LFE5U-45F-8BG381C}}
-(commercial). Could be a deliberate upgrade (consistent with the
-SDRAM's own industrial rating), but needs an explicit confirmation ---
-otherwise a real part-number error in the KiCad library.
+\subsection{Discrepancy: FPGA grade --- resolved}
+U2 was captured as \code{LFE5U-45F-8BG381I} (industrial grade, real
+$T_J$ range $-40$ to $+100^{\circ}$C) --- every other reference in
+this project (LPF, this chapter, decisions.log) uses
+\textbf{\code{LFE5U-45F-8BG381C}} (commercial grade, real $T_J$ range
+$0$ to $+85^{\circ}$C; same ``$-8$'' speed grade in both --- the
+letter suffix changes only the characterized temperature range, not
+logic speed). \textbf{User confirmed C (commercial)} is the intended
+part, consistent with every other reference --- the KiCad library
+entry needs correcting from \code{...381I} to \code{...381C}.
 
 \subsection{Open items resolved by this BOM}
 R3=499\,k$\Omega$ confirms TLV62568's EN is populated (matches TI's
