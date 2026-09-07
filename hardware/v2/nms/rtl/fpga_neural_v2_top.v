@@ -56,6 +56,12 @@ module fpga_neural_v2_top #(
     input  wire spi_cs_n,
 
     // ---- single physical SDRAM (weights + activations + results) ----
+    // sdram_clk: the real SDRAM chip's own CLK pin -- an external
+    // chip, it needs this driven from a real output ball, NOT just
+    // internal routing. Found missing entirely during this session's
+    // schematic review (clk_sys was purely internal, never reached a
+    // pad) -- added here, real free clock-capable ball (bank 6).
+    output wire        sdram_clk,
     output wire        sdram_cke,
     output wire        sdram_cs_n,
     output wire        sdram_ras_n,
@@ -81,6 +87,8 @@ module fpga_neural_v2_top #(
     ecp5_pll_sys_clk u_pll (
         .clk_16mhz(osc_clk), .clk_sys(clk_sys), .locked(pll_locked)
     );
+
+    assign sdram_clk = clk_sys;
 
     wire clk = clk_sys;
     wire rst;

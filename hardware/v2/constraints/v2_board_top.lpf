@@ -49,6 +49,9 @@ LOCATE COMP "pll_locked" SITE "L1"; IOBUF PORT "pll_locked" IO_TYPE=LVCMOS33;
 
 // ---- SDRAM interface (37 signals), unchanged from v2_unified.lpf,
 // real balls, banks 6/7 ----
+// sdram_clk: real clock-capable ball (GR_PCLK6_0, bank 6), found
+// missing entirely during schematic review -- see fpga_neural_v2_top.v.
+LOCATE COMP "sdram_clk"    SITE "J4"; IOBUF PORT "sdram_clk"    IO_TYPE=LVCMOS33;
 LOCATE COMP "sdram_cke"    SITE "B5"; IOBUF PORT "sdram_cke"    IO_TYPE=LVCMOS33;
 LOCATE COMP "sdram_cs_n"   SITE "C5"; IOBUF PORT "sdram_cs_n"   IO_TYPE=LVCMOS33;
 LOCATE COMP "sdram_ras_n"  SITE "C4"; IOBUF PORT "sdram_ras_n"  IO_TYPE=LVCMOS33;
