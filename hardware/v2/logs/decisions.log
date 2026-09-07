@@ -2230,3 +2230,48 @@ P&R re-run, all seeds failing -- consistent with this project's own
 prior documented conclusion (ecp5_pll_sys_clk.v's own header: "64MHz
 was chosen... the highest frequency at which ALL measured seeds close
 timing with real margin").
+
+DEC-0040 -- N_SLOTS=8 @ 64MHz weight-cache hit-index optimization
+(ERR-0029): accepted a measured, disclosed N_SLOTS=4 margin reduction
+in exchange for a measured N_SLOTS=8 pass-rate improvement
+
+DATE: 2026-09-07
+CONTEXT: user-mandated root-cause investigation and optimization of
+DEC-0039's own remaining open item (N_SLOTS=8 @ 64MHz not fully
+timing-closed), under an explicit constraint set: N_SLOTS=4 must stay
+8/8 PASS and not "regress into a hardware concern," N_SLOTS=8 must
+measurably improve (by the real routed critical path, not synthesis
+LUT counts), full regression must stay bit-exact, and the complete
+8-seed matrix must be re-run and reported honestly either way.
+DECISION: applied ERR-0029's fix (sdram_unified_backend.v's weight-
+cache hit-index: serial priority-scan -> flat one-hot compare + single-
+level priority encode). Re-ran the full real nextpnr-ecp5 32-run matrix
+(4 configs x 8 seeds) post-fix:
+  N_SLOTS=4 @ 64MHz: 8/8 PASS (unchanged pass count), worst-case WNS
+    fell from +2.143ns to +0.605ns (worst seed Fmax 74.17->66.58MHz).
+    Real cause: the critical path relocated off the (shortened) hit-
+    index chain onto a different, previously-second-worst path in the
+    same module, which this seed set happens to route less favorably.
+  N_SLOTS=8 @ 64MHz: pass count improved 4/8 -> 5/8, worst-case Fmax
+    55.84->60.12MHz, worst WNS -2.284ns->-1.009ns.
+  N_SLOTS=4/8 @ 80MHz: unchanged, still 0/8 both -- NO-GO confirmed
+    again on the fixed RTL.
+ACCEPTED, not rejected: N_SLOTS=4 @ 64MHz remains a real 8/8 PASS
+(all seeds have positive WNS -- no seed fails), which is this project's
+own stated acceptance bar; the margin reduction is disclosed here and
+in errors.log ERR-0029, not hidden. N_SLOTS=8 is a genuine, measured
+improvement toward closure but is explicitly NOT declared fully closed
+(3/8 seeds still fail, now via a still-different critical path -- a
+further iteration, e.g. constraining nextpnr's placement region for
+u_sdram_backend or exploring more seeds, remains a real OPEN item, not
+attempted here).
+Full regression re-verified after this fix: isolated
+tb_sdram_unified_backend.v (40/40, bit-exact), full D-Stress N_SLOTS=4
+(49927 cycles, 256/256 neurons bit-exact vs golden) and N_SLOTS=8
+(49909 cycles, 256/256 neurons bit-exact vs golden) -- zero functional
+regression at either processor count.
+STATUS: N_SLOTS=4 @ 64MHz remains the frozen production baseline (8/8
+PASS, real positive margin on every seed). N_SLOTS=8 @ 64MHz OPEN,
+improved but not closed (5/8 PASS). 80MHz NO-GO at either N_SLOTS,
+reconfirmed on the fixed RTL. File changed: hardware/v2/nms/rtl/
+sdram_unified_backend.v.

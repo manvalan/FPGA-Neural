@@ -123,19 +123,64 @@ module sdram_unified_backend #(
     reg [63:0]           w_cache_data  [0:W_ENTRIES-1];
     reg [WEIDXW-1:0]     w_alloc_ptr;
 
+    // ERR-0029 fix (N=8 @64MHz critical-path, measured via real P&R:
+    // worst seed1 total delay 17.909ns, 84% routing, dominant hop
+    // 2.5-2.8ns): the original RTL used a sequential for-loop that
+    // overwrites w_hit_idx_c on every match ("last valid+matching entry
+    // wins"), which Yosys/nextpnr synthesized as a serially-dependent
+    // cascade of PFUMX/OFX fast-mux primitives -- each entry's result
+    // depends on the previous one, forcing nextpnr to place the whole
+    // chain along one physical path with no freedom to shorten it. This
+    // is the same architectural fix class as ERR-0028 (activation_fill_
+    // ctrl's max-tree): replace the serial dependency chain with a flat
+    // one-hot compare (fully parallel, W_ENTRIES=4 comparators, no
+    // inter-entry dependency) followed by a single-level priority-encode
+    // casez, preserving the EXACT original "highest index wins" semantics
+    // bit-for-bit (verified: original loop always ends on the highest ei
+    // that matched, since ei counts up without break).
+    wire [W_ENTRIES-1:0] w_match_oh;
+    genvar wgi;
+    generate
+        for (wgi = 0; wgi < W_ENTRIES; wgi = wgi + 1) begin : GEN_WMATCH
+            assign w_match_oh[wgi] = w_cache_valid[wgi] && (w_cache_addr[wgi] == w_addr);
+        end
+    endgenerate
+
     reg               w_hit_found_c;
     reg [WEIDXW-1:0]  w_hit_idx_c;
     integer ei;
-    always @(*) begin
-        w_hit_found_c = 1'b0;
-        w_hit_idx_c   = {WEIDXW{1'b0}};
-        for (ei = 0; ei < W_ENTRIES; ei = ei + 1) begin
-            if (w_cache_valid[ei] && w_cache_addr[ei] == w_addr) begin
-                w_hit_found_c = 1'b1;
-                w_hit_idx_c   = ei[WEIDXW-1:0];
+    generate
+        if (W_ENTRIES == 4) begin : GEN_WHIT_FLAT
+            // real, measured configuration (see ERR-0029) -- flat,
+            // single-level priority encode over the parallel one-hot
+            // compare above, no serial inter-entry dependency.
+            always @(*) begin
+                w_hit_found_c = |w_match_oh;
+                casez (w_match_oh)
+                    4'b1???: w_hit_idx_c = 2'd3;
+                    4'b01??: w_hit_idx_c = 2'd2;
+                    4'b001?: w_hit_idx_c = 2'd1;
+                    4'b0001: w_hit_idx_c = 2'd0;
+                    default: w_hit_idx_c = {WEIDXW{1'b0}};
+                endcase
+            end
+        end else begin : GEN_WHIT_FALLBACK
+            // any other W_ENTRIES value: fall back to the original,
+            // functionally-equivalent (but serially-dependent) scan --
+            // not the measured/optimized configuration this project
+            // actually builds, kept only for parametric safety.
+            always @(*) begin
+                w_hit_found_c = 1'b0;
+                w_hit_idx_c   = {WEIDXW{1'b0}};
+                for (ei = 0; ei < W_ENTRIES; ei = ei + 1) begin
+                    if (w_cache_valid[ei] && w_cache_addr[ei] == w_addr) begin
+                        w_hit_found_c = 1'b1;
+                        w_hit_idx_c   = ei[WEIDXW-1:0];
+                    end
+                end
             end
         end
-    end
+    endgenerate
     wire w_cache_hit = w_hit_found_c && w_req;
 
     // ============================================================

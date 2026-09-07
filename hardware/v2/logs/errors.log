@@ -1375,3 +1375,91 @@ STATUS: PARTIALLY RESOLVED. N_SLOTS=4 fully reliable at 64MHz (8/8
 seeds). N_SLOTS=8 significantly improved but OPEN -- 5/8 seeds close
 timing at 64MHz, 3/8 do not. File changed: hardware/v2/nms/rtl/
 nms_activation_fill_ctrl_v3.v.
+
+NOTE (2026-09-07, re-measurement): a fresh, full 8-seed P&R matrix run
+under ERR-0029's own investigation (below) found N_SLOTS=8 @ 64MHz
+PRE-FIX pass count to actually be 4/8 (seeds 2,3,5,6 PASS; 0,1,4,7
+FAIL; worst seed1 55.84MHz/WNS=-2.284ns), not the 5/8 recorded above --
+the "5/8" figure came from an earlier, less exhaustive P&R pass and is
+SUPERSEDED by this note and by MEMORY_UPGRADE_64MB_N8.md's own tables.
+This does not change ERR-0028's fix or its STATUS, only the precise
+pass-count evidence.
+
+ERR-0029 -- sdram_unified_backend.v: serial "last-match-wins" weight-
+cache hit-index scan was the N_SLOTS=8 @ 64MHz critical path
+
+DATE: 2026-09-07
+FOUND DURING: the user's own mandated exhaustive final-verification
+pass (all 8 seeds, 4 configs: N=4/N=8 x 64/80MHz) plus an explicit,
+user-directed root-cause investigation into the N_SLOTS=8 @ 64MHz
+worst-case critical path (real nextpnr-ecp5 P&R report.json, seed1:
+Fmax=55.84MHz, WNS=-2.284ns, total delay 17.909ns, 84% routing).
+ROOT CAUSE: `sdram_unified_backend.v`'s W-port cache (W_ENTRIES=4,
+NOT parameterized by N_SLOTS -- confirmed by inspecting its only
+instantiation, in nms_neural_multiprocessor_sdram_unified.v, which
+overrides neither W_ENTRIES nor ADDR_WIDTH's dependents) computed its
+hit index with a sequential `for (ei=0;ei<W_ENTRIES;ei=ei+1) if
+(w_cache_valid[ei] && w_cache_addr[ei]==w_addr) ... w_hit_idx_c=ei;`
+loop -- "last valid+matching entry wins" by unconditional overwrite,
+with each iteration's result depending on the previous one. Yosys/
+nextpnr-ecp5 synthesized this as a serially-dependent cascade of
+PFUMX/OFX ECP5 fast-mux primitives (confirmed via the real critical-
+path segment dump: w_cache_valid[2] -> nested PFUMX/OFX chain ->
+w_hit_idx_c -> further LUT cascade -> control logic gating w_rdata's
+own clock enable). Because W_ENTRIES stays fixed at 4 regardless of
+N_SLOTS, this logic's OWN complexity does not grow with N_SLOTS -- the
+real cause of the N=8-specific slowdown is that N=8's larger overall
+design (double the slot_mem_arbiter_wide/weight_prefetch_engine_wide
+instances of N=4) forces nextpnr to spread placement further across
+the die, stretching the SAME serially-dependent logic chain over
+longer physical routes: 3 of 5 major hops measured at 2.5-2.8ns each
+(typical local ECP5 routing is 0.3-0.9ns), confirming routing
+distance, not logic complexity or LUT/FF utilization (25.2%/25.4% at
+N=8, far from the device ceiling), as the dominant cost -- exactly as
+diagnosed from the real segment data before any fix was attempted.
+FIX: replaced the serial priority-scan with a flat, fully parallel
+one-hot compare (`w_match_oh[ei] = w_cache_valid[ei] && w_cache_addr
+[ei]==w_addr`, W_ENTRIES independent comparators, no inter-entry
+dependency, via a `generate`/`genvar` block) followed by a single-
+level `casez` priority encode reproducing the EXACT original "highest
+index wins" semantics bit-for-bit. Guarded behind `if (W_ENTRIES==4)`
+(the only real, instantiated configuration in this project) with a
+fallback branch preserving the original scan for any other W_ENTRIES
+value, matching this project's own established fix pattern (ERR-0028).
+Purely combinational, same-cycle, zero latency change -- w_ready/
+w_rdata timing behavior is externally unchanged.
+VERIFICATION (bit-exact): isolated `tb_sdram_unified_backend.v`, real
+Verilator 5.050, 40/40 PASS, identical to pre-fix. Full D-Stress
+regression (real Verilator, golden-model comparison), both N_SLOTS=4
+(49927 cycles, 256/256 neurons bit-exact) and N_SLOTS=8 (49909 cycles,
+256/256 neurons bit-exact) -- PASS, zero functional regression.
+VERIFICATION (timing, real nextpnr-ecp5, fresh 32-seed matrix: N=4/N=8
+x 64/80MHz, 8 seeds each, POST-FIX):
+  N=4 @ 64MHz: 8/8 seeds PASS (unchanged pass count), but worst-case
+    margin DROPPED: Fmax 70.68/66.58/74.74/71.98/74.48/75.65/67.41/
+    68.47 MHz (worst seed1 66.58MHz, WNS=+0.605ns -- down from the
+    PRE-FIX worst of 74.17MHz/WNS=+2.143ns). Real cause: the FIX moved
+    the N=4 critical path OFF the (now-shortened) hit-index chain and
+    onto a DIFFERENT, previously-second-worst path inside the same
+    module (mostly u_arbiter_wide.m_addr -> u_sdram_backend.state/
+    ctrl_wdata), which this specific placement seed happens to route
+    less favorably than the original hit-index path did. Still a real,
+    honest 8/8 PASS -- not a hardware concern by the mandate's own
+    numeric acceptance criteria -- but a disclosed, measured trade-off,
+    not hidden.
+  N=8 @ 64MHz: PASS COUNT IMPROVED, 4/8 -> 5/8 (seeds 0,1,3,4,5 PASS;
+    2,6,7 FAIL). Worst-case improved: Fmax 66.45/65.28/61.21/66.96/
+    66.66/65.71/60.12/62.70 MHz (worst seed6: 60.12MHz, WNS=-1.009ns --
+    up from the PRE-FIX worst of 55.84MHz/WNS=-2.284ns). Real,
+    measured improvement, not yet full closure.
+  N=4/N=8 @ 80MHz: unchanged conclusion, still 0/8 PASS both configs
+    (identical achieved-Fmax values to the 64MHz-labeled netlists,
+    confirming the fabric's achievable ceiling, not the PLL target, is
+    the limit) -- NO-GO, as before.
+STATUS: N_SLOTS=8 measurably improved (not fully closed: 3/8 seeds
+still fail at 64MHz, now failing through a DIFFERENT critical path than
+before -- see MEMORY_UPGRADE_64MB_N8.md for the updated worst-case
+trace). N_SLOTS=4 remains 8/8 PASS at 64MHz but with reduced margin,
+disclosed above -- flagged, not hidden, per this project's own real-
+data-only reporting standard. File changed: hardware/v2/nms/rtl/
+sdram_unified_backend.v.
