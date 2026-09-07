@@ -60,6 +60,9 @@ module nms_neural_multiprocessor_sdram_unified #(
     input  wire [15:0]                          reg_n_tiles,
     input  wire [ADDR_WIDTH-1:0]                reg_result_addr,
 
+    // FPGA_DATA_READY: system-idle sticky flag, see nms_dataflow_core_sdram.v
+    output wire                                 data_ready,
+
     // ---- STEP19: ONE physical SDRAM interface, ALL traffic
     // (weights + activations + results) ----
     output wire        sdram_cke,
@@ -68,7 +71,7 @@ module nms_neural_multiprocessor_sdram_unified #(
     output wire        sdram_cas_n,
     output wire        sdram_we_n,
     output wire [1:0]  sdram_ba,
-    output wire [11:0] sdram_a,
+    output wire [12:0] sdram_a,
     inout  wire [15:0] sdram_dq,
     output wire [1:0]  sdram_dqm
 );
@@ -94,6 +97,7 @@ module nms_neural_multiprocessor_sdram_unified #(
         .reg_required(reg_required), .reg_producer_ids(reg_producer_ids),
         .reg_x_base(reg_x_base), .reg_w_base(reg_w_base), .reg_n_tiles(reg_n_tiles),
         .reg_result_addr(reg_result_addr),
+        .data_ready(data_ready),
         .slot_mem_req(slot_mem_req), .slot_mem_wr(slot_mem_wr), .slot_mem_addr(slot_mem_addr),
         .slot_mem_wdata(slot_mem_wdata), .slot_mem_lb_n(slot_mem_lb_n), .slot_mem_ub_n(slot_mem_ub_n),
         .slot_mem_rdata(slot_mem_rdata), .slot_mem_ready(slot_mem_ready),

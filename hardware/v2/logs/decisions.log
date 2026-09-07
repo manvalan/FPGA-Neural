@@ -2275,3 +2275,130 @@ PASS, real positive margin on every seed). N_SLOTS=8 @ 64MHz OPEN,
 improved but not closed (5/8 PASS). 80MHz NO-GO at either N_SLOTS,
 reconfirmed on the fixed RTL. File changed: hardware/v2/nms/rtl/
 sdram_unified_backend.v.
+
+DEC-0041 -- Two-flash programming architecture (boot vs. neural-network
+data), real JTAG/config pin assignment, and FPGA_DATA_READY
+
+DATE: 2026-09-07
+CONTEXT: user-driven design session covering how an external ESP32
+controller programs and interacts with the ECP5. Converged, after
+several false starts (see chat history for the discarded single-
+shared-flash / SSPI-every-boot alternatives), on a clean architecture:
+
+ARCHITECTURE:
+- Flash #1 (neural-network weights/graph data): unchanged from V1's
+  own real subsystem (`flash_copy_engine.v`/`flash_slot_manager.v`,
+  not yet ported into V2's top-level RTL -- a real, separate, still-
+  open task, not attempted here). Uses 4 ordinary GPIO balls. V1's own
+  real balls (flash_sclk=E3, flash_mosi=D3, flash_miso=D5,
+  flash_cs_n=E4) are NOT reusable in V2 -- confirmed conflict, all 4
+  are already occupied by V2's own SDRAM bus (E3=sdram_a[4],
+  D3=sdram_a[1], D5=sdram_a[0], E4=sdram_ba[0]). New free balls found
+  and reserved (bank 7, same 3.3V domain): flash_sclk=B2,
+  flash_mosi=E2, flash_miso=F2, flash_cs_n=F3 -- NOT yet in the LPF,
+  since no corresponding RTL port exists yet in `fpga_neural_v2_top.v`
+  (adding a LOCATE COMP for a non-existent port would break synthesis).
+- Flash #2 (boot bitstream): connects ONLY to the ECP5's dedicated
+  sysCONFIG pins, MSPI mode, CFG[2:0]=[0,1,0] (real ball assignment
+  and correct per-bit resistor population below). Auto-boots on every
+  power-up, no ESP32 involvement in normal operation.
+- ESP32 connects to the ECP5 via JTAG only (bit-banged over ordinary
+  GPIO -- confirmed neither ESP32-S3 nor ESP32-C6 has a hardware JTAG
+  MASTER peripheral; their native "USB Serial/JTAG Controller" is for
+  debugging the ESP32 itself, wrong direction for this use). ESP32
+  updates flash #2's content by commanding the ECP5's own internal
+  sysCONFIG engine to bridge JTAG writes through to the external flash
+  (real Lattice mechanism, FPGA-TN-02038-2.0 Figure 6.3, "Programming
+  external Flash via JTAG") -- ESP32 never drives flash #2's SPI pins
+  directly, zero bus contention.
+- Confirmed real and safe (Lattice FPGA-TN-02039-2.3 sysCONFIG User
+  Guide, §6.1.2): after User Mode is reached, the MSPI dedicated pins
+  tristate with a weak pull-up, so a separate ordinary-GPIO consumer
+  on the same physical net (flash #1's own bus, if it were ever
+  shared -- not the case here, since flash #1/#2 are physically
+  separate chips) would not contend. Documented for completeness; not
+  load-bearing for this specific two-chip architecture.
+
+REAL BALL ASSIGNMENTS (CABGA381, from the official Lattice CSV
+FPGA-SC-02034-3-0-ECP5U-45-Pinout.csv rev 3.0 and cross-checked
+against Project Trellis's iodb.json -- both already used elsewhere in
+this project's own pinout work):
+
+  JTAG (bank 40/TAP, to ESP32): TCK=T5, TMS=U5, TDI=R5, TDO=V4
+  Dedicated config (bank 8, to ESP32): PROGRAMN=W3, INITN=V3, DONE=Y3
+  CFG[2:0] (bank 8, board jumpers/0R, NOT to ESP32): CFG_0=U4,
+    CFG_1=T4, CFG_2=R4 -- for MSPI, CFG[2:0]=[0,1,0] read MSB-first
+    means CFG_2=GND, CFG_1=pull-up 1-10k to VCCIO8, CFG_0=GND (an
+    earlier draft of this entry in docs/pinouts.md had CFG_0/CFG_1
+    swapped -- corrected there and here).
+  MSPI dedicated/dual-function pins to flash #2 (bank 8, NOT to
+    ESP32): MCLK/CCLK=U3, CSSPIN=R2 (dual w/ HOLDN/DI/BUSY/CEN),
+    D0/MOSI=W2, D1/MISO=V2.
+
+All written into `hardware/v2/docs/pinouts.md`.
+
+FPGA_DATA_READY (real RTL, not just a pin reservation): the user
+wants a signal meaning "the whole registered graph finished, the
+answer is ready" -- NOT per-neuron `job_done` (already existed,
+wrong granularity) and NOT achievable without new logic (confirmed:
+zero existing "graph complete" signal anywhere in the RTL, and the
+host protocol never tells the FPGA how many nodes to expect, so a
+"last node" flag approach -- first proposed, then rejected by the
+user in favor of a hardware idle-detection approach -- was not used).
+Implemented as a system-idle detector, built entirely from real,
+already-existing internal signals, no protocol change:
+  sys_busy = (|job_active) || !neural_director's queue_empty ||
+             dependency_manager's any_pending (new: OR-reduce over
+             node_state[N_NODES] == ST_WAITING or ST_READY --
+             ST_DISPATCHED nodes are tracked downstream, not here)
+  data_ready: sticky register, set on the sys_busy 1->0 falling edge,
+  cleared the instant sys_busy goes high again (new work started) --
+  self-clearing, no host ACK needed.
+ASSUMPTION, disclosed not hidden: correct only if the host finishes
+registering every node of a graph before the first one completes.
+Realistic for this architecture (SPI registration: microseconds;
+per-neuron compute: ~195 real measured cycles) but not proven for
+every conceivable host timing pattern.
+Files changed: `hardware/v2/rtl/dependency_manager.v` (new
+`any_pending` output), `hardware/v2/rtl/neural_director.v` (new
+`queue_empty` output, wired from the existing internal `q_empty`),
+`hardware/v2/nms/rtl/nms_dataflow_core_sdram.v` (aggregation logic,
+new `data_ready` output), `hardware/v2/nms/rtl/
+nms_neural_multiprocessor_sdram_unified.v` and `hardware/v2/nms/rtl/
+fpga_neural_v2_top.v` (port passthrough). New real ball: `data_ready`
+= G3 (bank 7, free, confirmed via Trellis iodb.json).
+
+REAL BUG FOUND AND FIXED (unrelated to the above, found while editing
+an adjacent file): `nms_neural_multiprocessor_sdram_unified.v`'s own
+`sdram_a` port was still declared `[11:0]` (12 bits) -- a stale width
+from before the 64MB memory upgrade (which needs 13 bits, A0-A12).
+This wrapper is NOT instantiated by the real board-level top
+(`fpga_neural_v2_top.v` instantiates `nms_dataflow_core_sdram` and
+`sdram_unified_backend` directly, confirmed by inspection -- see that
+file's own header comment), so real hardware was never affected. It
+IS instantiated by `tb_nms_dstress_sdram_unified.v` (this session's
+own primary bit-exact regression oracle for the whole 64MB/ERR-0029
+verification work), whose own `sdram_a` wire was ALSO stuck at 12
+bits -- meaning A12 was silently truncated in every D-Stress
+simulation run this session, including the ERR-0029 verification
+runs reported earlier today. Real, honest assessment of the impact:
+all D-Stress test addresses used this session (0x010000, 0x200000,
+0x300000) decode to row addresses well under 4096 (row bit 12 never
+actually needed), so the truncation is assessed as NOT having
+produced any false-positive PASS result -- but the full 64MB address
+space was never actually exercised through this specific wrapper
+path. Fixed both widths to `[12:0]`; re-ran the full D-Stress
+regression (N_SLOTS=4: 49927 cycles, N_SLOTS=8: 49909 cycles, both
+256/256 bit-exact vs golden, IDENTICAL cycle counts to before the
+fix, confirming zero behavioral change for the address range actually
+exercised) plus the real board-level smoke test
+(`tb_fpga_neural_v2_top_smoke.v`, 11/11 PASS) and a fresh Yosys+
+nextpnr-ecp5 placement check (0 errors, `data_ready` placed cleanly
+at G3). Files changed: `hardware/v2/nms/rtl/
+nms_neural_multiprocessor_sdram_unified.v`, `hardware/v2/nms/sim/
+tb_nms_dstress_sdram_unified.v`.
+
+STATUS: two-flash architecture and FPGA_DATA_READY CLOSED and
+verified (bit-exact + real placement). Flash #1's RTL port
+(`flash_copy_engine.v` integration into V2's top-level) remains a
+real, separate, OPEN task -- ball positions reserved, not wired.

@@ -66,6 +66,11 @@ module fpga_neural_v2_top #(
     inout  wire [15:0] sdram_dq,
     output wire [1:0]  sdram_dqm,
 
+    // FPGA_DATA_READY: high once the whole registered graph has
+    // finished (system-idle sticky flag, self-clearing on new work) --
+    // see nms_dataflow_core_sdram.v for the full design comment.
+    output wire data_ready,
+
     output wire pll_locked
 );
 
@@ -141,6 +146,7 @@ module fpga_neural_v2_top #(
         .reg_required(reg_required), .reg_producer_ids(reg_producer_ids),
         .reg_x_base(reg_x_base), .reg_w_base(reg_w_base), .reg_n_tiles(reg_n_tiles),
         .reg_result_addr(reg_result_addr),
+        .data_ready(data_ready),
         .slot_mem_req(slot_mem_req), .slot_mem_wr(slot_mem_wr), .slot_mem_addr(slot_mem_addr),
         .slot_mem_wdata(slot_mem_wdata), .slot_mem_lb_n(slot_mem_lb_n), .slot_mem_ub_n(slot_mem_ub_n),
         .slot_mem_rdata(slot_mem_rdata), .slot_mem_ready(slot_mem_ready),

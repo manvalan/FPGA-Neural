@@ -97,8 +97,16 @@ LOCATE COMP "sdram_dq[15]" SITE "N5"; IOBUF PORT "sdram_dq[15]" IO_TYPE=LVCMOS33
 LOCATE COMP "sdram_dqm[0]" SITE "P5"; IOBUF PORT "sdram_dqm[0]" IO_TYPE=LVCMOS33;
 LOCATE COMP "sdram_dqm[1]" SITE "N3"; IOBUF PORT "sdram_dqm[1]" IO_TYPE=LVCMOS33;
 
-// All 16 top-level ports of fpga_neural_v2_top are now real-ball
+// data_ready (FPGA_DATA_READY, to ESP32): free bank-7 ball, dual-
+// function PCLKT7_1 not needed as a PLL input here, reused as plain
+// GPIO output -- real ball, verified free (not in any other LOCATE
+// COMP in this file) via the Trellis iodb.json + official CSV.
+LOCATE COMP "data_ready" SITE "G3"; IOBUF PORT "data_ready" IO_TYPE=LVCMOS33;
+
+// All 17 top-level ports of fpga_neural_v2_top are now real-ball
 // assigned: osc_clk, ext_rst_n, spi_sclk, spi_mosi, spi_miso,
 // spi_cs_n, sdram_cke, sdram_cs_n, sdram_ras_n, sdram_cas_n,
-// sdram_we_n, sdram_ba[1:0], sdram_a[11:0], sdram_dq[15:0],
-// sdram_dqm[1:0], pll_locked -- no placeholders remain in THIS LPF.
+// sdram_we_n, sdram_ba[1:0], sdram_a[12:0], sdram_dq[15:0],
+// sdram_dqm[1:0], data_ready, pll_locked -- no placeholders remain in
+// THIS LPF. (sdram_a corrected from a stale [11:0] comment -- the
+// real port has been [12:0] since the 64MB memory upgrade.)

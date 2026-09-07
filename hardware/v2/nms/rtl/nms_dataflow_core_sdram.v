@@ -79,6 +79,10 @@ module nms_dataflow_core_sdram #(
     input  wire [15:0]                          reg_n_tiles,
     input  wire [ADDR_WIDTH-1:0]                reg_result_addr,
 
+    // FPGA_DATA_READY: see the assignment site (below u_director) for
+    // the full design comment.
+    output wire                                 data_ready,
+
     output wire [N_SLOTS:0]                     slot_mem_req,
     output wire [N_SLOTS:0]                      slot_mem_wr,
     output wire [ADDR_WIDTH*(N_SLOTS+1)-1:0]     slot_mem_addr,
@@ -110,6 +114,7 @@ module nms_dataflow_core_sdram #(
 
     wire                    dm_producer_done_valid;
     wire [NODE_IDW-1:0]     dm_producer_done_node_id;
+    wire                    dm_any_pending;
 
     dependency_manager #(
         .N_NODES(N_NODES), .MAX_DEPS(MAX_DEPS), .ADDR_WIDTH(ADDR_WIDTH)
@@ -122,7 +127,8 @@ module nms_dataflow_core_sdram #(
         .producer_done_valid(dm_producer_done_valid), .producer_done_node_id(dm_producer_done_node_id),
         .ready_valid(dm_ready_valid), .ready_ready(dm_ready_ready), .ready_node_id(dm_ready_node_id),
         .ready_x_base(dm_ready_x_base), .ready_w_base(dm_ready_w_base),
-        .ready_n_tiles(dm_ready_n_tiles), .ready_result_addr(dm_ready_result_addr)
+        .ready_n_tiles(dm_ready_n_tiles), .ready_result_addr(dm_ready_result_addr),
+        .any_pending(dm_any_pending)
     );
 
     wire [15:0] dm_ready_node_id_ext = {{(16-NODE_IDW){1'b0}}, dm_ready_node_id};
@@ -135,6 +141,7 @@ module nms_dataflow_core_sdram #(
     wire [$clog2(N_SLOTS)-1:0]      dir_job_out_slot;
     wire [3:0]                      dir_state;
     wire                            dir_error;
+    wire                            dir_queue_empty;
 
     neural_director #(
         .ADDR_WIDTH(ADDR_WIDTH), .N_SLOTS(N_SLOTS), .QUEUE_DEPTH(QUEUE_DEPTH)
@@ -148,8 +155,36 @@ module nms_dataflow_core_sdram #(
         .slot_n_tiles(dir_slot_n_tiles), .slot_result_addr(dir_slot_result_addr),
         .slot_node_id(dir_slot_node_id), .slot_job_done(dir_slot_job_done),
         .job_out_done(dir_job_out_done), .job_out_slot(dir_job_out_slot),
-        .dir_state(dir_state), .dir_error(dir_error)
+        .dir_state(dir_state), .dir_error(dir_error), .queue_empty(dir_queue_empty)
     );
+
+    // ---- FPGA_DATA_READY: system-idle detection (see decisions.log
+    // for the full design rationale) ----
+    // sys_busy: true while ANY of {a slot is active, the director's
+    // dispatch queue is non-empty, dependency_manager has a node not
+    // yet dispatched} holds. data_ready is a sticky level that goes
+    // HIGH on the busy->idle falling edge (a graph just finished) and
+    // LOW again the instant any new work starts (registration or
+    // dispatch) -- self-clearing, no explicit host ACK needed. Correct
+    // ONLY if the host finishes registering every node of a graph
+    // before the first one completes (documented assumption, see
+    // decisions.log) -- registration (microseconds over SPI) is far
+    // faster than per-neuron compute (~195 real measured cycles) for
+    // every workload this project has characterized.
+    wire sys_busy = (|job_active) || (!dir_queue_empty) || dm_any_pending;
+    reg  sys_busy_prev;
+    reg  data_ready_reg;
+    always @(posedge clk) begin
+        if (rst) begin
+            sys_busy_prev  <= 1'b0;
+            data_ready_reg <= 1'b0;
+        end else begin
+            sys_busy_prev <= sys_busy;
+            if (sys_busy) data_ready_reg <= 1'b0;
+            else if (sys_busy_prev) data_ready_reg <= 1'b1;
+        end
+    end
+    assign data_ready = data_ready_reg;
 
     wire [15:0] completed_node_id_16 = dir_slot_node_id[dir_job_out_slot*16 +: 16];
     assign dm_producer_done_valid    = dir_job_out_done;

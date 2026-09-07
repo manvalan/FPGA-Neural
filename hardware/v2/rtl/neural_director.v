@@ -73,7 +73,13 @@ module neural_director #(
     output reg  [$clog2(N_SLOTS)-1:0] job_out_slot,
 
     output reg [3:0] dir_state,
-    output reg       dir_error
+    output reg       dir_error,
+
+    // FPGA_DATA_READY support: high when the dispatch queue is empty
+    // (no job waiting for a free slot) -- combined upstream with
+    // dependency_manager's any_pending and this module's own slot
+    // activity to detect true system-idle.
+    output wire      queue_empty
 );
 
     localparam DIR_IDLE       = 4'd0;
@@ -97,6 +103,7 @@ module neural_director #(
     reg [Q_ADDR_WIDTH:0]   q_count; // one extra bit: 0..QUEUE_DEPTH inclusive
 
     wire q_empty = (q_count == 0);
+    assign queue_empty = q_empty;
     wire q_full  = (q_count == QUEUE_DEPTH[Q_ADDR_WIDTH:0]);
 
     assign job_in_ready = !q_full;

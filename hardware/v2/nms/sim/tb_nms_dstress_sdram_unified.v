@@ -111,7 +111,7 @@ module tb #(
     // results ALL share this single bus/chip now -- no PSRAM anywhere.
     wire        sdram_cke, sdram_cs_n, sdram_ras_n, sdram_cas_n, sdram_we_n;
     wire [1:0]  sdram_ba;
-    wire [11:0] sdram_a;
+    wire [12:0] sdram_a;
     wire [15:0] sdram_dq;
     wire [1:0]  sdram_dqm;
 
@@ -854,6 +854,19 @@ module tb #(
         // weights @ 0x010000, activations @ 0x200000, results @ 0x300000 --
         // non-overlapping 1MB-aligned regions in the single 8MB SDRAM.
         run_dense_layer("D-Stress", 256, 16, 16'd400, 26'h200000, 26'h010000, 26'h300000, 1'b0);
+
+        // FPGA_DATA_READY check: the whole graph (256 nodes) just
+        // finished and no new work has been registered -- data_ready
+        // must be asserted (system-idle sticky flag, see
+        // nms_dataflow_core_sdram.v). A few idle cycles for the
+        // busy->idle edge to settle before sampling.
+        repeat (4) @(posedge clk);
+        if (u_nmp.data_ready !== 1'b1) begin
+            $display("FAIL data_ready: expected 1 after graph completion, got %b", u_nmp.data_ready);
+            errors = errors + 1;
+        end else begin
+            $display("PASS data_ready: correctly asserted after graph completion");
+        end
 
         $display("========================================");
         if (errors == 0)

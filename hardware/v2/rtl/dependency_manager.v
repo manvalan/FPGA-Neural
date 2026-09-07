@@ -70,7 +70,14 @@ module dependency_manager #(
     output reg  [ADDR_WIDTH-1:0]      ready_x_base,
     output reg  [ADDR_WIDTH-1:0]      ready_w_base,
     output reg  [15:0]                ready_n_tiles,
-    output reg  [ADDR_WIDTH-1:0]      ready_result_addr
+    output reg  [ADDR_WIDTH-1:0]      ready_result_addr,
+
+    // FPGA_DATA_READY support: high while at least one registered node
+    // has not yet been handed to the Director (ST_WAITING or ST_READY --
+    // ST_DISPATCHED is deliberately excluded, since dispatched work is
+    // tracked downstream by neural_director.v's own queue/slot state,
+    // not here -- see this file's own ST_DISPATCHED comment).
+    output wire                       any_pending
 );
 
     localparam ST_EMPTY      = 2'd0;
@@ -110,6 +117,17 @@ module dependency_manager #(
             end
         end
     end
+
+    // ---- FPGA_DATA_READY support (see any_pending port comment above) ----
+    reg any_pending_r;
+    integer pi;
+    always @(*) begin
+        any_pending_r = 1'b0;
+        for (pi = 0; pi < N_NODES; pi = pi + 1)
+            if (node_state[pi] == ST_WAITING || node_state[pi] == ST_READY)
+                any_pending_r = 1'b1;
+    end
+    assign any_pending = any_pending_r;
 
     integer ni, di;
 

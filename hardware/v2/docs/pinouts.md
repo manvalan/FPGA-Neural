@@ -62,6 +62,41 @@ U3	CCLK	8
 
 Attenzione però: CCLK non è automaticamente il clock di sistema della nostra rete neurale. È il clock associato alla configurazione; il clock operativo della FPGA va identificato separatamente nel percorso dell'oscillatore/PLL.
 
+CFG[2:0] (selezione modalità di boot)
+
+Dal CSV, tutti banco 8:
+
+Ball	Pin	Note
+U4	CFG_0	CFGMDN0
+T4	CFG_1	CFGMDN1
+R4	CFG_2	CFGMDN2
+
+Per boot automatico da flash #2 (MSPI): CFG[2:0]=[0,1,0] (letto CFG2,CFG1,CFG0) → CFG_2 a GND, CFG_1 a pull-up 1–10kΩ verso VCCIO8, CFG_0 a GND (dato reale, Lattice FPGA-TN-02039-2.3 §6.1.1, Tabella 6.3). Pin resi modificabili via jumper/resistori 0Ω, non hardwired fissi.
+
+Pin dual-function MSPI verso flash #2 (boot)
+
+Dal CSV, ball dual-function del banco 8, NON pin JTAG/dedicati separati — sono ball PIO ordinari con funzione secondaria sysCONFIG:
+
+Ball	Pin CSV	Funzione MSPI
+R2	PB15A: HOLDN/DI/BUSY/CSSPIN/CEN	CSSPIN (chip select verso flash #2), + 4.7kΩ pull-up a VCCIO8
+W2	PB11B: D0/MOSI/IO0	D0/MOSI verso flash #2
+V2	PB11A: D1/MISO/IO1	D1/MISO verso flash #2
+U3	CCLK (vedi sopra)	MCLK verso flash #2, pull-up debole interna
+
+Questi 4 ball (insieme a PROGRAMN/INITN/DONE sopra) collegano l'FPGA esclusivamente alla flash #2 (boot) — MAI alla flash #1 (dati rete neurale), che resta su un bus GPIO ordinario separato (sotto).
+
+Flash #1 (dati rete neurale) — ball riservati, RTL non ancora presente in V2
+
+**Importante**: i ball reali usati da V1 per questo stesso bus (`flash_sclk`=E3, `flash_mosi`=D3, `flash_miso`=D5, `flash_cs_n`=E4) sono **già occupati in V2** dal bus SDRAM (E3=sdram_a[4], D3=sdram_a[1], D5=sdram_a[0], E4=sdram_ba[0]) — non riutilizzabili, V2 ha una geometria pin diversa da V1. Individuati 4 ball liberi alternativi, stesso banco 7 (stessa tensione 3.3V del resto del bus SDRAM):
+
+Ball	Funzione dual (libera, riusabile come GPIO ordinario)
+B2	VREF1_7 (non serve, nessuno standard I/O riferito a VREF in uso)
+E2	PCLKC7_0 (ingresso PLL non usato, riusabile come GPIO)
+F2	PCLKT7_0 (ingresso PLL non usato, riusabile come GPIO)
+F3	PCLKC7_1 (ingresso PLL non usato, riusabile come GPIO)
+
+Assegnazione proposta: `flash_sclk`=B2, `flash_mosi`=E2, `flash_miso`=F2, `flash_cs_n`=F3. **Non ancora nel LPF**: `flash_copy_engine.v`/`flash_slot_manager.v` (RTL V1 reale) non sono stati portati nel top-level di V2 — aggiungere un `LOCATE COMP` per questi segnali ora romperebbe la sintesi, dato che non esiste ancora una porta corrispondente in `fpga_neural_v2_top.v`. Riservati qui solo come ball, in attesa dell'integrazione RTL.
+
 Decoupling
 
 Qui preferisco essere molto preciso: non voglio inventare una quantità di condensatori per “ogni VCC”.
