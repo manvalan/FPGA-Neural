@@ -1,0 +1,87 @@
+\chapter{Parametri e configurabilità}
+\label{ch:param}
+
+\section{Parametri di build (synthesis-time)}
+L'architettura hardware è fissata alla sintesi tramite i parametri Verilog seguenti.
+Determinano il datapath contenuto nel bitstream e il suo \emph{soffitto} di capacità.
+
+\begin{tabularx}{\textwidth}{L{3.0cm} C{1.8cm} Y}
+\toprule
+\rowh \thd{Parametro} & \thd{Default} & \thd{Significato} \\
+\midrule
+\code{DATA\_WIDTH}   & 8   & Larghezza dei dati (INT8). \\
+\rowa \code{ACC\_WIDTH} & 32 & Larghezza dell'accumulatore (INT32). \\
+\code{N\_INPUTS}     & 32 / 256 & Numero massimo di ingressi per neurone (baseline benchmark: 256). \\
+\rowa \code{N\_NEURONS} & 1 / 4 & Numero massimo di neuroni per layer. \\
+\code{PARALLEL}      & 8   & MAC hardware simultanei per neurone; deve dividere \code{N\_INPUTS} e conviene sia potenza di due. \\
+\rowa \code{N\_LAYERS} & 4 & Numero massimo di layer concatenabili da \code{layer\_sequencer}. \\
+\code{ADDR\_WIDTH}   & 23  & Larghezza dell'indirizzo di byte (8~MB). \\
+\rowa \code{MEM\_DATA\_WIDTH} & 16 & Larghezza del bus dati fisico PSRAM. \\
+\code{CLK\_FREQ\_MHZ} & 80 & Frequenza usata per le formule di temporizzazione PSRAM (va allineata all'oscillatore reale). \\
+\bottomrule
+\end{tabularx}
+
+\begin{fnwarn}[Vincolo \texttt{N\_INPUTS} \% \texttt{PARALLEL}]
+\code{PARALLEL} deve dividere esattamente \code{N\_INPUTS}, altrimenti scatta il guard
+di elaborazione (§\ref{ch:datapath}). Lo stesso vincolo vale a runtime su
+\code{n\_inputs\_real}.
+\end{fnwarn}
+
+\section{Larghezza di rete a runtime}
+Un singolo bitstream serve qualunque topologia \emph{fino} al massimo di build. La
+larghezza reale di ciascuna esecuzione è un valore separato, impostato dall'host:
+\begin{itemize}
+\item \code{n\_inputs\_real} --- ingressi realmente usati in questa esecuzione (deve
+essere multiplo di \code{PARALLEL});
+\item \code{n\_neurons\_real} --- neuroni realmente calcolati in questa esecuzione.
+\end{itemize}
+Entrambi hanno default pari al massimo di build, così ogni chiamante che li lascia
+scollegati elabora l'intera larghezza come prima dell'introduzione delle porte.
+
+\begin{fnnote}[Terminazione anticipata reale]
+Non si tratta di semplice contabilità di indirizzi: i due valori limitano
+direttamente i loop hardware (letture X/W di \code{neuron\_memory}, conteggio gruppi
+MAC di \code{neuron\_parallel} e lunghezza della copia ping-pong per \code{RUN\_NETWORK}).
+Un layer più stretto \emph{calcola} e \emph{copia} davvero più in fretta e non richiede
+zero-padding della RAM per la coda non usata: i dati oltre
+\code{n\_inputs\_real}/\code{n\_neurons\_real} non vengono mai letti.
+\end{fnnote}
+
+Questo permette a una rete di rastremarsi dentro una sola esecuzione concatenata, ad
+esempio $256\to64\to16\to4$, con ogni layer che dichiara la propria larghezza reale
+nella tabella descrittori (cap.~\ref{ch:seq}).
+
+\subsection{Risparmio misurato}
+La terminazione anticipata è stata misurata end-to-end:
+\begin{tabularx}{\textwidth}{L{5.5cm} C{3.0cm} Y}
+\toprule
+\rowh \thd{Test} & \thd{Cicli} & \thd{Confronto} \\
+\midrule
+\code{neuron\_parallel\_tb.v} (T7) & 3 vs 6 & ridotto vs pieno, con dati ``spazzatura'' nelle corsie saltate (prova che non vengono lette). \\
+\rowa \code{neuron\_memory\_tb.v} (T5) & 209 vs 788 & 8-di-32 vs 32 pieni, attraverso lo stack PSRAM reale. \\
+\bottomrule
+\end{tabularx}
+
+\section{Configurazioni caratterizzate}
+Alcune combinazioni convalidate in simulazione e/o sintesi:
+\begin{tabularx}{\textwidth}{C{2.0cm} C{2.0cm} C{2.0cm} Y}
+\toprule
+\rowh \thd{N\_INPUTS} & \thd{N\_NEURONS} & \thd{PARALLEL} & \thd{Note} \\
+\midrule
+32 & 4 & 8 & Primo test parametrico funzionale (Fase~1). \\
+\rowa 256 & 4 & 2/4/8/16 & Sweep di benchmark del datapath (Fase~7). \\
+32 & 1..3 & 8 & Integrazione memoria mono/multi-neurone (Fase~3). \\
+\rowa 4 & 4 & 2 & Test end-to-end \code{RUN\_NETWORK} a 2 layer su SPI reale. \\
+\bottomrule
+\end{tabularx}
+
+\section{Riepilogo build contro runtime}
+\begin{center}
+\begin{tikzpicture}[font=\footnotesize,node distance=6mm]
+ \node[fnblockD,minimum width=54mm,minimum height=15mm](b){\textbf{BUILD (sintesi)}\\[2pt]
+   {\scriptsize N\_INPUTS, N\_NEURONS, N\_LAYERS,}\\{\scriptsize PARALLEL, DATA\_WIDTH, ACC\_WIDTH}\\{\scriptsize $\Rightarrow$ soffitto della macchina}};
+ \node[fnblockT,right=16mm of b,minimum width=54mm,minimum height=15mm](r){\textbf{RUNTIME (host, SPI)}\\[2pt]
+   {\scriptsize n\_inputs\_real, n\_neurons\_real,}\\{\scriptsize attivazione, num\_layers, pesi/bias}\\{\scriptsize $\Rightarrow$ rete effettiva}};
+ \draw[fnbus] (b) -- node[fnlbl,above]{$\le$} (r);
+\end{tikzpicture}
+\end{center}

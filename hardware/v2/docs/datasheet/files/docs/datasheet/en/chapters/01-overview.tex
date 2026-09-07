@@ -1,0 +1,93 @@
+\chapter{System overview}
+\label{ch:overview}
+
+\section{Project goal}
+FPGA-Neural implements a \textbf{reusable Neural Network Engine in FPGA hardware}.
+The whole is made of three elements: the FPGA, which is the actual accelerator; a
+dedicated RAM physically associated with the FPGA and not shared with the host; and a
+host interface independent of the operating system, initially SPI (with possible
+future extension to Dual~SPI).
+
+The founding principle is the separation between who \emph{executes} the computation
+and who \emph{uses} it: the neural network computation happens entirely inside the
+FPGA, while the host system only provides configuration, network parameters, input
+data, control and result readback. The host is not part of the computational datapath.
+Possible host systems include Linux SoCs, Raspberry~Pi-like systems, ESP32,
+microcontrollers and development PCs: the same engine architecture must be usable in
+completely different systems.
+
+\begin{center}
+\begin{tikzpicture}[font=\footnotesize,node distance=8mm]
+  \node[fnblockD,minimum width=42mm,minimum height=20mm] (host){\textbf{HOST}\\[2pt]
+        {\scriptsize Configuration}\\{\scriptsize Training}\\{\scriptsize Control}};
+  \node[fnblockT,below=14mm of host,minimum width=42mm,minimum height=20mm] (fpga)
+        {\textbf{FPGA}\\[2pt]{\scriptsize Neural Network Engine}\\{\scriptsize Compute / Control}};
+  \node[fnblock,below=14mm of fpga,minimum width=42mm,minimum height=13mm] (ram)
+        {\textbf{Dedicated RAM}\\{\scriptsize weights / bias / buffers}};
+  \draw[fnbus] (host) -- node[fnlbl,right]{SPI / Dual SPI} (fpga);
+  \draw[fnbus] (fpga) -- node[fnlbl,right]{parallel bus} (ram);
+\end{tikzpicture}
+\end{center}
+
+\section{Hardware configuration versus network configuration}
+The project draws a precise distinction between the accelerator's \textbf{hardware
+architecture} and the \textbf{neural network parameters}.
+
+The physical architecture of the engine is defined at FPGA synthesis and
+implementation time. Typical hardware parameters are \code{N\_INPUTS},
+\code{N\_NEURONS}, \code{N\_LAYERS}, \code{PARALLEL}, \code{DATA\_WIDTH},
+\code{ACC\_WIDTH}: they are Verilog parameters resolved at synthesis and they
+determine the datapath contained in the bitstream. The network parameters --- weights,
+bias, activation and quantization parameters, specific constants --- are instead loaded
+at runtime through the host interface and stored in the RAM associated with the FPGA.
+
+\begin{fnnote}[Central architectural principle]
+A build fixes the \emph{ceiling} of the machine (maximum number of layers, maximum
+width, \code{PARALLEL}); the host configures the \emph{actual} network --- number of
+layers, per-layer input/output width, per-layer activation and trained parameters ---
+entirely at runtime, over SPI, into the FPGA's local memory. A single bitstream serves
+any topology up to that ceiling.
+\end{fnnote}
+
+\section{Boot and initialization}
+The FPGA is configured at power-on through the usual configuration mechanism (bitstream
+loading from SPI flash). The bitstream defines the hardware architecture of the engine;
+the host does not dynamically build the datapath during normal operation, but rather
+configures the network data on which the already existing datapath operates.
+
+\begin{center}
+\begin{tikzpicture}[font=\scriptsize,node distance=4.5mm,start chain=going below,
+                    every node/.style={on chain}]
+  \node[fnblockA,minimum width=60mm](p){Power-on};
+  \node[fnblock,minimum width=60mm]{FPGA configuration (bitstream from flash)};
+  \node[fnblockT,minimum width=60mm]{Neural Network Engine available};
+  \node[fnblock,minimum width=60mm]{Host initialization (SPI)};
+  \node[fnblock,minimum width=60mm]{Loading network parameters / weights / bias};
+  \node[fnblockD,minimum width=60mm]{Engine ready};
+  \begin{scope}[every path/.style={fnarrow}]
+   \foreach \a/\b in {1/2,2/3,3/4,4/5,5/6}{}
+  \end{scope}
+  \foreach \i [count=\j from 2] in {1,...,5}{
+     \draw[fnarrow] (chain-\i) -- (chain-\j);}
+\end{tikzpicture}
+\end{center}
+
+\section{Training and inference}
+Training and inference are conceptually separate. The first implementation does not
+require the FPGA to perform training: weights can be computed externally
+(PC/Linux/other host) and transferred over SPI into the FPGA's RAM, which then performs
+inference. This drastically reduces the complexity of the initial hardware, without
+precluding a future implementation of assisted or fully hardware training (roadmap
+Phase~8, ch.~\ref{ch:roadmap}). During inference the host only provides the input data
+and retrieves the result, obtaining deterministic computation, reduced host load,
+hardware parallelism, predictable latency and independence from the host CPU
+architecture.
+
+\section{Design philosophy and reuse}
+The project should be understood as a \emph{reusable FPGA neural acceleration platform}
+rather than a single network. The application determines input size, topology, number
+of layers and neurons, parallelism, numeric precision, activation functions, memory and
+performance requirements; the hardware generation process produces the corresponding
+FPGA implementation. The same HDL architecture remains conceptually unchanged while the
+synthesis parameters generate implementations appropriate to the different application
+targets.

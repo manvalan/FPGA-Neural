@@ -1,0 +1,54 @@
+\thispagestyle{plain}
+\noindent
+\begin{tikzpicture}
+\node[fill=fnDark,text=white,rounded corners=2pt,inner sep=6pt,
+      minimum width=\textwidth,anchor=west]
+  {\large\bfseries Pinout summary --- scope and honesty note};
+\end{tikzpicture}
+
+\vspace{6pt}
+\noindent
+{\footnotesize
+V2's top-level module, \code{neural\_multiprocessor.v}, has been
+synthesized and placed\&routed \textbf{unconstrained}
+(\code{nextpnr-ecp5 --lpf-allow-unconstrained}) throughout this project's
+own real-toolchain characterization: every Fmax/resource number in this
+datasheet is real and measured, but \textbf{no ball-by-ball pin
+assignment (\code{.lpf}) has been generated for V2's top level in this
+revision}. Unlike V1's own pinout chapter (which reports a real,
+\code{iodb.json}-verified ball map from a constrained place\&route run),
+this chapter reports what is \textbf{honestly known} and nothing
+invented.
+}
+
+\vspace{6pt}
+\begin{fnnote}[What is real and reusable]
+V2's PSRAM-facing pins (\code{psram\_a}, \code{psram\_dq},
+\code{psram\_ce\_n/oe\_n/we\_n/lb\_n/ub\_n/zz\_n}) drive the exact same,
+real, unmodified V1 backend chain (\code{memory\_interface.v} $\to$
+\code{psram\_controller.v}) as V1's own \code{spi\_neuron\_top}. If V2 is
+deployed on the same board, \textbf{V1's own real, verified ball
+assignment for these signals (ch.~10 of the V1 datasheet) applies
+unchanged} --- the controller was never touched, so its pin requirements
+did not change either.
+\end{fnnote}
+
+\begin{fnwarn}[What is NOT yet real]
+The node-registration bus (\code{reg\_valid}, \code{reg\_node\_id},
+\code{reg\_required}, \code{reg\_producer\_ids}, \code{reg\_x\_base},
+\code{reg\_w\_base}, \code{reg\_n\_tiles}, \code{reg\_result\_addr},
+\code{reg\_ready}) has no assigned physical pins in this revision: every
+V2 measurement to date drove this bus directly from a Verilator
+testbench or an unconstrained synthesis top-level, never through a real
+host-facing SPI (or other) interface with its own placed pinout. Framing
+this bus as a real, deployable host interface (analogous to V1's SPI
+Mode~0 slave) is explicitly \textbf{future work} --- see
+ch.~\ref{ch:roadmap}.
+\end{fnwarn}
+
+\vspace{4pt}
+\noindent
+{\footnotesize\color{fnGrey}
+Logical (not physical) port list and field widths: ch.~\ref{ch:regs}
+(``Register-level interface''). Real PSRAM signal reuse and board
+wiring: ch.~\ref{ch:hw}.\par}

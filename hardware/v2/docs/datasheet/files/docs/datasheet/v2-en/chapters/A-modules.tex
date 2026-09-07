@@ -1,0 +1,65 @@
+\chapter{Module and file map}
+\label{ap:modules}
+
+\section{V2 RTL (\texttt{hardware/v2/rtl/})}
+\begin{tabularx}{\textwidth}{L{4.2cm} Y}
+\toprule
+\rowh \thd{File} & \thd{Role} \\
+\midrule
+\code{neural\_processor.v} & 8-stage INT8 pipeline (M1); bit-exact vs.\ V1. \\
+\rowa \code{neural\_processor\_array.v} & N-processor array used for the M2 concurrency sweep. \\
+\code{activation\_buffer.v}, \code{weight\_buffer.v}, \code{result\_buffer.v} & M3 BRAM-backed buffers; superseded in the real datapath by \code{activation\_cache.v}. \\
+\rowa \code{prefetch\_engine.v} & Weight-only, word-level burst fetch engine (M4, rewritten DEC-0015/DEC-0016). \\
+\code{memory\_manager.v} & Double-buffered per-slot tile manager; coordinates the Activation Cache (X) and \code{prefetch\_engine.v} (W). \\
+\rowa \code{neural\_director.v} & First-free job dispatch (M5). \\
+\code{dependency\_manager.v} & Node table, dependency counting, wake-up (M6). \\
+\rowa \code{dataflow\_core.v} & Full M1--M6 integration $+$ Activation Cache (M7, extended DEC-0016). \\
+\code{slot\_mem\_arbiter.v} & Generic N-port arbiter to the real PSRAM chain (M8). \\
+\rowa \code{activation\_cache.v} & Shared, single-tag activation cache (post-M10, DEC-0016). \\
+\code{neural\_multiprocessor.v} & Real hardware-facing top level (M8). \\
+\bottomrule
+\end{tabularx}
+
+\section{NMS RTL (\texttt{hardware/v2/nms/rtl/}, ch.~\ref{ch:nms})}
+\begin{tabularx}{\textwidth}{L{4.6cm} Y}
+\toprule
+\rowh \thd{File} & \thd{Role} \\
+\midrule
+\code{nms\_activation\_replicated.v} & Selected Activation SRAM: \code{N\_SLOTS} private full-vector copies, broadcast-write fill (DEC-0019). \\
+\rowa \code{nms\_activation\_fill\_ctrl.v} & Shared dedup/fetch controller backing it -- the real \code{N\_SLOTS}=4/8 Fmax bottleneck identified in ch.~\ref{ch:nms}. \\
+\code{nms\_weight\_packed.v} & Selected Weight SRAM: per-MAC-lane packed private copies (DEC-0020). \\
+\rowa \code{nms\_memory\_manager.v} & Per-slot job FSM, drop-in replacement for \code{memory\_manager.v}'s own external interface. \\
+\code{nms\_dataflow\_core.v} & Full NMS integration, mirrors \code{dataflow\_core.v}'s own scope (STEP8). \\
+\rowa \code{nms\_neural\_multiprocessor.v} & Real hardware-facing top level, mirrors \code{neural\_multiprocessor.v}'s own scope (STEP9). \\
+\bottomrule
+\end{tabularx}
+Also reused verbatim, unmodified, in the NMS datapath:
+\code{neural\_processor.v}, \code{prefetch\_engine.v} (as a generic
+P\_IN-byte-tile fetch engine, not weight-specific despite its name),
+\code{dependency\_manager.v}, \code{neural\_director.v},
+\code{slot\_mem\_arbiter.v}.
+
+\section{Reused, unmodified V1 (\texttt{hardware/v1/rtl/})}
+\begin{tabularx}{\textwidth}{L{4.2cm} Y}
+\toprule
+\rowh \thd{File} & \thd{Role in V2} \\
+\midrule
+\code{memory\_interface.v} & Word-level (16-bit) PSRAM backend port, now the direct target of both \code{prefetch\_engine.v} and \code{activation\_cache.v}. \\
+\rowa \code{psram\_controller.v} & Real PSRAM controller, page-mode support exploited more effectively by the word-burst rewrite. \\
+\code{int8\_memory\_access.v} & \textbf{No longer instantiated} in V2's datapath post-DEC-0015 --- file itself untouched. \\
+\bottomrule
+\end{tabularx}
+
+\section{Simulation (\texttt{hardware/v2/sim/})}
+\code{tb\_neural\_processor.v}, \code{tb\_dataflow\_core.v},
+\code{tb\_memory\_manager.v}, \code{tb\_neural\_director.v},
+\code{tb\_dependency\_manager.v}, \code{tb\_neural\_multiprocessor.v},
+\code{tb\_benchmark\_suite.v} (the final campaign's own testbench,
+parametric in \code{N\_SLOTS\_CFG} via Verilator's own \code{-G} override).
+
+\section{Documentation and logs (\texttt{hardware/v2/docs/}, \texttt{hardware/v2/logs/})}
+\code{ROADMAP.md}; \code{docs/benchmarks/final-benchmark.md} (the
+21-section pre-optimization campaign report); append-only logs
+(\code{development}, \code{simulation}, \code{synthesis}, \code{timing},
+\code{benchmark}, \code{decisions}, \code{experiments}, \code{errors})
+--- the primary source of every number in this datasheet.

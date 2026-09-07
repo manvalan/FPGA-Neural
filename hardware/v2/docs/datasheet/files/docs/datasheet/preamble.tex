@@ -1,0 +1,184 @@
+% ======================================================================
+%  FPGA-Neural Datasheet -- preamble / stile
+% ======================================================================
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[italian,provide=*]{babel}
+\usepackage{helvet}
+\renewcommand{\familydefault}{\sfdefault}
+\usepackage{courier}
+\usepackage{microtype}
+
+\usepackage[a4paper,top=2.4cm,bottom=2.3cm,left=2.2cm,right=2.2cm,headheight=15pt]{geometry}
+\usepackage[table]{xcolor}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{ltablex}
+\keepXColumns
+\usepackage{multirow}
+\usepackage{multicol}
+\usepackage{enumitem}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{ragged2e}
+
+% ---------- Palette ----------------------------------------------------
+\definecolor{fnDark}{HTML}{0B2E4F}   % blu profondo (primario)
+\definecolor{fnBlue}{HTML}{15629B}   % blu medio
+\definecolor{fnTeal}{HTML}{0E8F8A}   % accento teal
+\definecolor{fnAmber}{HTML}{C9761B}  % accento ambra
+\definecolor{fnRed}{HTML}{B22C34}    % fail / warning
+\definecolor{fnGreen}{HTML}{2E7D32}  % pass / ok
+\definecolor{fnGrey}{HTML}{5B6B78}
+\definecolor{fnLight}{HTML}{EEF3F7}  % sfondo chiaro
+\definecolor{fnLight2}{HTML}{E2ECF3}
+\definecolor{fnRule}{HTML}{9FB4C4}
+\definecolor{codebg}{HTML}{F5F7F9}
+\definecolor{codekw}{HTML}{15629B}
+\definecolor{codecom}{HTML}{5B6B78}
+\definecolor{codestr}{HTML}{0E8F8A}
+
+% ---------- Titoli -----------------------------------------------------
+\usepackage{titlesec}
+\titleformat{\chapter}[display]
+  {\normalfont\bfseries\color{fnDark}}
+  {\filright\Large\color{fnTeal}CAPITOLO \thechapter}
+  {6pt}
+  {\Huge\filright}
+  [\vspace{2pt}{\color{fnRule}\titlerule[1.3pt]}]
+\titlespacing*{\chapter}{0pt}{6pt}{18pt}
+
+\titleformat{\section}
+  {\normalfont\large\bfseries\color{fnDark}}{\thesection}{0.6em}{}
+\titleformat{\subsection}
+  {\normalfont\bfseries\color{fnBlue}}{\thesubsection}{0.6em}{}
+\titleformat{\subsubsection}
+  {\normalfont\bfseries\color{fnGrey}}{\thesubsubsection}{0.6em}{}
+\titlespacing*{\section}{0pt}{12pt}{4pt}
+
+% ---------- Header / footer -------------------------------------------
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0.6pt}
+\renewcommand{\footrulewidth}{0.4pt}
+\renewcommand{\headrule}{\hbox to\headwidth{\color{fnRule}\leaders\hrule height \headrulewidth\hfill}}
+\renewcommand{\footrule}{\hbox to\headwidth{\color{fnRule}\leaders\hrule height \footrulewidth\hfill}}
+\renewcommand{\chaptermark}[1]{\markboth{#1}{}}
+\fancyhead[L]{\small\color{fnDark}\textbf{FPGA-Neural}}
+\fancyhead[R]{\footnotesize\color{fnGrey}\nouppercase{\leftmark}}
+\fancyfoot[L]{\small\color{fnGrey}Datasheet~\textbf{Rev.\,\datasheetrev}}
+\fancyfoot[C]{\small\color{fnGrey}manvalan/FPGA-Neural}
+\fancyfoot[R]{\small\color{fnGrey}\thepage}
+\fancypagestyle{plain}{\fancyhf{}%
+  \fancyfoot[L]{\small\color{fnGrey}Datasheet~\textbf{Rev.\,\datasheetrev}}%
+  \fancyfoot[C]{\small\color{fnGrey}manvalan/FPGA-Neural}%
+  \fancyfoot[R]{\small\color{fnGrey}\thepage}%
+  \renewcommand{\headrulewidth}{0pt}}
+
+% ---------- tcolorbox --------------------------------------------------
+\usepackage[most]{tcolorbox}
+\tcbuselibrary{skins,breakable}
+
+% Box "nota"
+\newtcolorbox{fnnote}[1][Nota]{
+  enhanced, breakable, colback=fnLight, colframe=fnTeal,
+  boxrule=0.4pt, left=8pt, right=8pt, top=5pt, bottom=5pt,
+  fonttitle=\bfseries\color{white}, coltitle=white,
+  attach boxed title to top left={xshift=6pt,yshift=-3pt},
+  boxed title style={colback=fnTeal,boxrule=0pt,arc=1pt}, title={#1}}
+
+% Box "attenzione"
+\newtcolorbox{fnwarn}[1][Attenzione]{
+  enhanced, breakable, colback=fnLight, colframe=fnAmber,
+  boxrule=0.4pt, left=8pt, right=8pt, top=5pt, bottom=5pt,
+  fonttitle=\bfseries\color{white}, coltitle=white,
+  attach boxed title to top left={xshift=6pt,yshift=-3pt},
+  boxed title style={colback=fnAmber,boxrule=0pt,arc=1pt}, title={#1}}
+
+% Box "registro/parametro"
+\newtcolorbox{fnspec}[1][Specifica]{
+  enhanced, breakable, colback=white, colframe=fnBlue,
+  boxrule=0.7pt, left=8pt, right=8pt, top=5pt, bottom=5pt, arc=1.5pt,
+  fonttitle=\bfseries\color{white}, coltitle=white,
+  attach boxed title to top left={xshift=6pt,yshift=-3pt},
+  boxed title style={colback=fnBlue,boxrule=0pt,arc=1pt}, title={#1}}
+
+% ---------- listings (Verilog) ----------------------------------------
+\usepackage{listings}
+\lstdefinestyle{verilog}{
+  language=Verilog,
+  backgroundcolor=\color{codebg},
+  basicstyle=\ttfamily\scriptsize,
+  keywordstyle=\color{codekw}\bfseries,
+  commentstyle=\color{codecom}\itshape,
+  stringstyle=\color{codestr},
+  numbers=left, numberstyle=\tiny\color{fnGrey}, numbersep=7pt,
+  showstringspaces=false, breaklines=true, frame=leftline,
+  framerule=1.2pt, rulecolor=\color{fnTeal},
+  xleftmargin=12pt, framexleftmargin=10pt, tabsize=2,
+  morekeywords={logic,always_ff,always_comb,localparam,signed,genvar,generate,endgenerate}
+}
+\lstset{style=verilog}
+
+% ---------- Tabelle ----------------------------------------------------
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcolumntype{C}[1]{>{\centering\arraybackslash}p{#1}}
+\newcolumntype{R}[1]{>{\raggedleft\arraybackslash}p{#1}}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+\renewcommand{\arraystretch}{1.25}
+\arrayrulecolor{fnRule}
+
+% intestazione tabella colorata
+\newcommand{\thd}[1]{\textbf{\color{white}#1}}
+\newcommand{\rowh}{\rowcolor{fnDark}}
+\newcommand{\rowa}{\rowcolor{fnLight}}
+
+% ---------- Caption ----------------------------------------------------
+\usepackage{caption}
+\captionsetup{font=small,labelfont={bf,color=fnTeal},labelsep=period}
+
+% ---------- TikZ / pgfplots -------------------------------------------
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,calc,shapes.geometric,shapes.misc,
+  fit,backgrounds,chains,decorations.pathreplacing,decorations.markings,
+  matrix,shadows.blur}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.17}
+\usepackage{tikz-timing}
+
+% stili di blocco riusabili
+\tikzset{
+  fnblock/.style={draw=fnBlue,fill=fnLight,rounded corners=2pt,
+    minimum height=9mm,minimum width=24mm,align=center,font=\small,
+    inner sep=4pt,line width=0.7pt},
+  fnblockT/.style={fnblock,draw=fnTeal,fill=fnLight2},
+  fnblockD/.style={fnblock,draw=fnDark,fill=fnDark,text=white},
+  fnblockA/.style={fnblock,draw=fnAmber,fill=white},
+  fnreg/.style={draw=fnGrey,fill=white,minimum height=8mm,align=center,
+    font=\footnotesize,inner sep=3pt},
+  fnstate/.style={draw=fnBlue,fill=fnLight,circle,minimum size=13mm,
+    align=center,font=\scriptsize,line width=0.7pt},
+  fnarrow/.style={-{Stealth[length=2.6mm]},line width=0.8pt,draw=fnDark},
+  fnarrowT/.style={-{Stealth[length=2.6mm]},line width=0.8pt,draw=fnTeal},
+  fnbus/.style={-{Stealth[length=3mm]},line width=1.6pt,draw=fnBlue},
+  fnlbl/.style={font=\scriptsize\itshape,fill=white,inner sep=1pt,text=fnGrey}
+}
+
+% ---------- varie ------------------------------------------------------
+\newcommand{\reg}[1]{\texttt{\textbf{#1}}}
+\newcommand{\sig}[1]{\texttt{#1}}
+\newcommand{\op}[1]{\texttt{\color{fnBlue}#1}}
+\newcommand{\PASS}{\textcolor{fnGreen}{\textbf{PASS}}}
+\newcommand{\FAIL}{\textcolor{fnRed}{\textbf{FAIL}}}
+\newcommand{\OK}{\textcolor{fnGreen}{\textbf{OK}}}
+\newcommand{\code}[1]{\texttt{#1}}
+
+\usepackage{enumitem}
+\setlist{noitemsep,topsep=2pt,leftmargin=1.4em}
+
+\usepackage[hidelinks,colorlinks=true,linkcolor=fnBlue,urlcolor=fnTeal,
+  citecolor=fnBlue]{hyperref}

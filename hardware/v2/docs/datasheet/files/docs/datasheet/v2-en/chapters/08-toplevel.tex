@@ -1,0 +1,55 @@
+\chapter{Top-level module}
+\label{ch:toplevel}
+
+\section{\texttt{neural\_multiprocessor.v}}
+The real, hardware-facing top level: \code{dataflow\_core.v} (Dependency
+Manager $+$ Neural Director $+$ \code{N\_SLOTS}$\times$(Memory Manager $+$
+Neural Processor) $+$ Activation Cache) with its \code{N\_SLOTS}$+$1
+Memory Backend Interface ports funneled through \code{slot\_mem\_arbiter.v}
+down to the real, unmodified V1 PSRAM chain
+(\code{memory\_interface.v} $\to$ \code{psram\_controller.v}).
+
+\begin{tabularx}{\textwidth}{L{3.4cm} C{1.2cm} C{1.6cm} Y}
+\toprule
+\rowh \thd{Port} & \thd{Dir} & \thd{Width} & \thd{Function} \\
+\midrule
+\code{clk}, \code{rst} & IN & 1 & System clock, synchronous reset. \\
+\rowa \code{reg\_valid} & IN & 1 & Node registration request (ch.~\ref{ch:host}). \\
+\code{reg\_ready} & OUT & 1 & This node id's table slot is \code{EMPTY}. \\
+\rowa \code{reg\_node\_id} & IN & $\lceil\log_2\text{N\_NODES}\rceil$ & Node id. \\
+\code{reg\_required} & IN & $\lceil\log_2(\text{MAX\_DEPS}{+}1)\rceil$ & Producer count. \\
+\rowa \code{reg\_producer\_ids} & IN & \code{MAX\_DEPS}$\times\lceil\log_2\text{N\_NODES}\rceil$ & Packed producer id list. \\
+\code{reg\_x\_base}, \code{reg\_w\_base}, \code{reg\_result\_addr} & IN & \code{ADDR\_WIDTH} each & Job descriptor addresses. \\
+\rowa \code{reg\_n\_tiles} & IN & 16 & Tile count. \\
+\code{psram\_a} & OUT & \code{ADDR\_WIDTH} & PSRAM address bus (real V1 controller, unmodified). \\
+\rowa \code{psram\_dq} & INOUT & \code{PSRAM\_DATA\_WIDTH} & PSRAM bidirectional data bus. \\
+\code{psram\_ce\_n}, \code{psram\_oe\_n}, \code{psram\_we\_n}, \code{psram\_lb\_n}, \code{psram\_ub\_n}, \code{psram\_zz\_n} & OUT & 1 each & PSRAM control, identical to V1's own real, verified signal set. \\
+\bottomrule
+\end{tabularx}
+
+\begin{fnnote}[No \texttt{int8\_memory\_access.v} in this datapath]
+Earlier milestones instantiated V1's \code{int8\_memory\_access.v}
+between the arbiter and \code{memory\_interface.v}. Post word-burst
+rewrite (ch.~\ref{ch:mem}), it is no longer instantiated here --- the
+file itself is untouched (still frozen V1); V2 simply reuses one layer
+lower in the same frozen stack.
+\end{fnnote}
+
+\section{Internal hierarchy}
+\noindent\code{neural\_multiprocessor.v}
+\begin{itemize}[leftmargin=2.4em]
+\footnotesize
+\item \code{u\_dataflow\_core} : \code{dataflow\_core.v}
+  \begin{itemize}
+    \item \code{u\_dep\_mgr} : \code{dependency\_manager.v}
+    \item \code{u\_director} : \code{neural\_director.v}
+    \item \code{GEN\_SLOT[0..N\_SLOTS-1]}: \code{memory\_manager.v} $+$ \code{neural\_processor.v}
+      \begin{itemize}
+        \item[--] \code{u\_prefetch} : \code{prefetch\_engine.v} (weights only, word-level)
+      \end{itemize}
+    \item \code{u\_activation\_cache} : \code{activation\_cache.v}
+  \end{itemize}
+\item \code{u\_arbiter} : \code{slot\_mem\_arbiter.v} (\code{N\_SLOTS}$+$1 ports)
+\item \code{u\_memif} : \code{memory\_interface.v} (frozen V1)
+\item \code{u\_psram\_ctrl} : \code{psram\_controller.v} (frozen V1)
+\end{itemize}

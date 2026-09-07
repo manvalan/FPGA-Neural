@@ -1,0 +1,127 @@
+\chapter{Architecture}
+\label{ch:arch}
+
+\section{Module map}
+\begin{center}
+\begin{tikzpicture}[node distance=7mm and 11mm,font=\footnotesize]
+  \node[fnblockD,minimum width=34mm,minimum height=13mm] (dm){\textbf{Dependency Manager}\\{\scriptsize node table, wake-up}};
+  \node[fnblockT,right=13mm of dm,minimum width=32mm,minimum height=13mm] (dir){\textbf{Neural Director}\\{\scriptsize first-free dispatch}};
+  \node[fnreg,fill=white,right=13mm of dir,minimum width=34mm,minimum height=20mm] (mm0){
+    \begin{tabular}{c}\textbf{Memory Manager} 0\\ $+$ \textbf{Neural Processor} 0\end{tabular}};
+  \node[fnreg,fill=white,below=3mm of mm0,minimum width=34mm,minimum height=20mm] (mm1){
+    \begin{tabular}{c}\textbf{Memory Manager} 1\\ $+$ \textbf{Neural Processor} 1\end{tabular}};
+  \node[fnblockA,below=9mm of dir,minimum width=32mm,minimum height=13mm] (cache){\textbf{Activation Cache}\\{\scriptsize shared, single-tag}};
+  \node[fnblock,right=13mm of mm0,minimum width=26mm,minimum height=13mm] (arb){\textbf{Slot Memory}\\\textbf{Arbiter}};
+  \node[fnblockD,below right=9mm and 13mm of arb,minimum width=30mm,minimum height=13mm] (psram){\textbf{Real V1 PSRAM chain}\\{\scriptsize memory\_interface $\to$ psram\_controller}};
+  \draw[fnbus] (dm) -- node[fnlbl,above]{ready\_valid/ready} (dir);
+  \draw[fnbus] (dir) -- (mm0);
+  \draw[fnbus] (dir) -- (mm1);
+  \draw[fnarrowT] (mm0.south) |- (cache.east);
+  \draw[fnarrowT] (mm1.west) -- (cache.east);
+  \draw[fnarrowT] (cache.north) |- node[fnlbl,above,pos=0.3]{producer\_done} (dm.south);
+  \draw[fnbus] (mm0) -- (arb);
+  \draw[fnbus] (mm1) -- (arb);
+  \draw[fnbus] (cache.south) |- (arb.west);
+  \draw[fnbus] (arb) -- (psram);
+\end{tikzpicture}
+\end{center}
+\begin{center}\footnotesize\itshape\color{fnGrey}
+N\_SLOTS=2 shown (the recommended configuration); the architecture is
+parametric in N\_SLOTS. Every arrow is a real signal path verified in
+Verilator simulation and real Yosys/nextpnr-ecp5 synthesis.\end{center}
+
+\section{Dependency Manager}
+Holds a table of \code{N\_NODES} job descriptors, each tracking: node
+id, state (\code{EMPTY}/\code{WAITING}/\code{READY}/\code{DISPATCHED}),
+required-dependency count, resolved-dependency count, up to
+\code{MAX\_DEPS} producer node ids, and the job descriptor fields
+(\code{x\_base}, \code{w\_base}, \code{n\_tiles}, \code{result\_addr}). A
+node with zero required dependencies is immediately \code{READY} on
+registration. When a producer completes, \emph{every} \code{WAITING}
+node listing it among its own producers gets its resolved-dependency
+count incremented --- a single producer can satisfy several waiting
+consumers (shared-producer/multi-consumer), and a node depending on
+several producers accumulates resolution across separate events
+(multiple dependencies). Verified for both 1-hop and 2-hop transitive
+(diamond) graphs. Ready nodes are handed to the Neural Director one at a
+time over a backpressure-safe valid/ready interface.
+
+\begin{fnwarn}[No slot reclamation]
+\code{ST\_DISPATCHED} is terminal: node table slots are never reused
+once dispatched. A long-running system that keeps registering new
+nodes without limit will eventually exhaust \code{N\_NODES} --- this is
+a real, measured consequence (a benchmark testbench hit exactly this
+deadlock via node-id wraparound before \code{N\_NODES} was sized
+generously enough). Slot reclamation is explicitly deferred, not
+forgotten.
+\end{fnwarn}
+
+\section{Neural Director}
+Dispatches ready job descriptors to whichever of \code{N\_SLOTS} Memory
+Manager instances is currently free --- \textbf{first-free} scheduling: a
+fixed, lowest-index-wins priority scan, not load-balanced. Slot-busy
+tracking and completion detection are always-active, independent of
+whatever the allocate/scan control state happens to be that cycle (the
+same ``don't gate a per-unit event behind one shared FSM state''
+principle applied throughout this design). A completed slot's node id
+is tracked (\code{slot\_node\_id}) so its completion can be resolved back
+to a \code{producer\_done} event for the Dependency Manager, closing the
+wake-up loop without any external glue logic.
+
+\begin{fnnote}[Measured scheduling imbalance]
+Real per-slot data (\code{N\_SLOTS}=4, a 128-neuron workload) shows
+slots 0/1 delivering 1008 real tiles each while slots 2/3 deliver only
+16 each, despite all four slots reporting near-100\% ``busy''
+utilization --- direct, measured evidence that fixed lowest-index
+priority does not distribute load evenly once the shared PSRAM port is
+the real constraint. See ch.~\ref{ch:impl2}.
+\end{fnnote}
+
+\section{Memory Manager + Neural Processor (per slot)}
+Each slot pairs one \code{memory\_manager.v} instance with one
+\code{neural\_processor.v} instance. The Memory Manager double-buffers
+tile fetches (compute tile $N$ while prefetching tile $N{+}1$) and
+presents the Neural Processor with a simple ``data available''
+interface (\code{operand\_valid/ready}, \code{tile\_last}) --- the
+processor never sees PSRAM request/wait cycles directly. A tile's
+activation half is requested from the shared Activation Cache; its
+weight half is fetched directly (weights are per-neuron, never shared,
+so caching them would not help). A bank is presentable to the processor
+only once \emph{both} halves have arrived
+(\code{bank\_ready = bank\_x\_ready \& bank\_w\_ready}).
+
+\section{Activation Cache}
+\label{sec:archcache}
+A single shared instance (not one per slot) serving every Memory
+Manager's activation-fetch requests. Single-tag design: one cached
+\code{x\_base} at a time, filled tile-by-tile on first use, served
+directly from an on-chip buffer on every subsequent request for the same
+vector --- no PSRAM access on a hit. A request for a different
+\code{x\_base} invalidates the cache and restarts filling from tile~0;
+this is always \emph{correct} (never serves stale data) but can thrash
+under interleaved, genuinely-different-\code{x\_base} concurrent
+traffic --- an honestly documented limitation, not exercised by this
+project's own realistic dense-layer workloads (where many neurons of one
+layer share one input vector, dispatched together). Full detail,
+including the real Fmax cost this module introduces, in
+ch.~\ref{ch:mem}.
+
+\section{Slot Memory Arbiter}
+Funnels \code{N\_SLOTS}$+$1 independent backend ports (one per Memory
+Manager's weight/write-back traffic, plus one for the Activation
+Cache's own traffic) down to the one real physical PSRAM port. Fixed
+lowest-index priority, same convention as the Director. Every incoming
+request is latched into a per-port pending register regardless of
+arbiter state --- a byte-level backend protocol quirk discovered by real
+simulation (a fire-and-forget single-cycle request pulse can arrive
+while the shared bus is owned by another port; a naive ``grant only
+while live'' arbiter would silently drop it) made this latch a
+correctness requirement, not an optimization.
+
+\section{Real, unmodified V1 PSRAM backend}
+\code{memory\_interface.v} and \code{psram\_controller.v} are reused
+byte-for-byte from the frozen \code{hardware/v1/} tree. The controller's
+own real page-mode support (fast same-page continuation vs.\ a slower
+cold access) was already implemented in V1 and is exploited more
+effectively by V2's word-level burst rewrite (ch.~\ref{ch:mem}) --- no
+change to the controller itself was needed or made.

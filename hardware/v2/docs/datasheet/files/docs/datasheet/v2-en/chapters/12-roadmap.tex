@@ -1,0 +1,62 @@
+\chapter{Roadmap and development status}
+\label{ch:roadmap}
+
+\section{Milestones M1--M10}
+\begin{tabularx}{\textwidth}{C{1.0cm} L{3.6cm} C{1.3cm} Y}
+\toprule
+\rowh \thd{M} & \thd{Title} & \thd{Status} & \thd{Content} \\
+\midrule
+1 & Neural Processor & \OK & Bit-exact 8-stage pipeline vs.\ V1, 7/7 tests; 183.12~MHz isolated. \\
+\rowa 2 & Processor Array & \OK & 1/2/4/8 processors, real concurrent-slot simulation; DSP (not LUT/FF) found to saturate first. \\
+3 & Buffers & \OK & \code{activation\_buffer}/\code{weight\_buffer}/\code{result\_buffer}, real \code{DP16KD} inference --- superseded in the real datapath by the Activation Cache (\S\ref{sec:roadmapcache}). \\
+\rowa 4 & Memory Manager & \OK & Double-buffered prefetch, real V1 PSRAM chain, 3 real RTL bugs found/fixed. \\
+5 & Neural Director & \OK & First-free dispatch, real backpressure, 4/4 tests. \\
+\rowa 6 & Dependency Manager & \OK & Multi-dependency/shared-producer wake-up, 4/4 tests. \\
+7 & Dataflow Core & \OK & Full M1--M6 integration, wake-up loop closed end-to-end. \\
+\rowa 8 & PSRAM integration & \OK & Real, shared PSRAM across concurrent slots; 1 real arbiter bug found/fixed (dropped request under contention). \\
+9 & Full benchmark & \OK & V1 vs.\ V2 comparison, every number classified. \\
+\rowa 10 & Optimization & \OK & N\_SLOTS ceiling (DSP), ACC\_WIDTH 6-seed sweep, real stall/utilization instrumentation. \\
+\bottomrule
+\end{tabularx}
+
+\section{Post-campaign: user-requested optimizations}
+\label{sec:roadmapcache}
+Following M9/M10's own final benchmark campaign
+(\code{hardware/v2/docs/benchmarks/final-benchmark.md}), two concrete
+optimizations were implemented and measured against the real toolchain:
+\begin{enumerate}
+\item \textbf{Word-level burst reads} (ch.~\ref{ch:mem}, \S\ref{sec:burst}):
+      real 2.24--2.37$\times$ wall-clock speedup, negligible Fmax cost.
+\item \textbf{Shared activation cache} (ch.~\ref{ch:mem},
+      \S\ref{sec:cache}): a further real 1.66--2.00$\times$ cycle
+      reduction, at a real, steep Fmax cost that makes
+      \code{N\_SLOTS}=4 fail 80\,MHz outright.
+\end{enumerate}
+Combined: \textbf{2.45$\times$} real wall-clock speedup at
+\code{N\_SLOTS}=2 (recommended) over the pre-optimization baseline, which
+was itself already 2.6$\times$ faster than V1.
+
+\section{Open work items (real, not hidden)}
+\begin{tabularx}{\textwidth}{L{3.6cm} Y}
+\toprule
+\rowh \thd{Item} & \thd{Why it is open} \\
+\midrule
+Activation cache pipelining & The concrete fix for \code{N\_SLOTS}=4's Fmax failure: register the hit-detection/broadcast logic to break its single-cycle combinational path. Not attempted this round --- \code{N\_SLOTS}=4 delivers no real throughput benefit anyway (memory-bound), so this protects \code{N\_SLOTS}=2's own margin rather than making 4 useful. \\
+\rowa Dependency Manager node-slot reclamation & \code{ST\_DISPATCHED} is terminal; a real long-running system will eventually exhaust \code{N\_NODES}. \\
+Scheduler fairness & Fixed lowest-index priority shows real, measured per-slot imbalance under sustained contention (ch.~\ref{ch:sched}); no fairness-aware alternative has been measured yet. \\
+\rowa Second physical PSRAM bank & The only real way to raise the memory-bandwidth ceiling itself, rather than use existing bandwidth more efficiently --- a board-level change, not attempted this round. \\
+Real host driver \& pinout & No physical transport or placed pin assignment exists for the node-registration bus (ch.~\ref{ch:host}, ch.~\ref{ch:hw}). \\
+\rowa Per-node bias/activation & Every job currently hardcodes \code{bias=0}/\code{ACT\_RELU}; not yet exposed by the Dependency Manager's own job descriptor. \\
+Power/energy characterization & No ECP5 power estimator available in this toolchain; honestly reported as \textsc{Not measured}, not invented. \\
+\bottomrule
+\end{tabularx}
+
+\begin{fnnote}[Every claim in this datasheet traces to a log entry]
+\code{hardware/v2/logs/}: \code{development.log}, \code{simulation.log},
+\code{synthesis.log}, \code{timing.log}, \code{benchmark.log},
+\code{decisions.log} (\code{DEC-\textit{NNNN}}), \code{experiments.log}
+(\code{EXP-\textit{NNNN}}), \code{errors.log} (\code{ERR-\textit{NNNN}}).
+IDs are never reused, past results are never overwritten, even failed
+ones --- the same discipline V1's own \code{docs/validation/} campaign
+followed.
+\end{fnnote}

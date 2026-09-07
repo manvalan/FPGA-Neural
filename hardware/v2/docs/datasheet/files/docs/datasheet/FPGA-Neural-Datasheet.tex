@@ -1,0 +1,119 @@
+% ======================================================================
+%  FPGA-Neural -- INT8 Neural Network Engine
+%  Datasheet / Manuale di riferimento tecnico
+%  Repository: github.com/manvalan/FPGA-Neural
+% ======================================================================
+\documentclass[11pt,a4paper,openany]{report}
+
+\newcommand{\datasheetrev}{A1}
+\newcommand{\datasheetdate}{Settembre 2026}
+
+\input{preamble}
+
+\begin{document}
+\sloppy
+
+% ======================================================================
+%  FRONTESPIZIO
+% ======================================================================
+\begin{titlepage}
+\thispagestyle{empty}
+\begin{tikzpicture}[remember picture,overlay]
+  \fill[fnDark] (current page.north west) rectangle
+       ([yshift=-4.3cm]current page.north east);
+  \fill[fnTeal] ([yshift=-4.3cm]current page.north west) rectangle
+       ([yshift=-4.55cm]current page.north east);
+  \node[anchor=north west,text=white,font=\Huge\bfseries]
+       at ([xshift=2.2cm,yshift=-1.15cm]current page.north west)
+       {FPGA\,--\,Neural};
+  \node[anchor=north west,text=fnLight,font=\large]
+       at ([xshift=2.25cm,yshift=-2.15cm]current page.north west)
+       {INT8 Neural Network Engine per FPGA};
+  \node[anchor=north west,text=fnLight2,font=\normalsize]
+       at ([xshift=2.25cm,yshift=-2.85cm]current page.north west)
+       {Acceleratore hardware parametrico -- Datasheet e manuale di riferimento};
+  \node[anchor=north east,text=white,font=\ttfamily\small]
+       at ([xshift=-2.2cm,yshift=-3.55cm]current page.north east)
+       {Rev.~\datasheetrev~~\textbullet~~\datasheetdate};
+\end{tikzpicture}
+
+\vspace*{5.0cm}
+
+% --- diagramma a blocchi sintetico sul frontespizio ---
+\begin{center}
+\begin{tikzpicture}[node distance=7mm and 12mm]
+  \node[fnblockD,minimum width=30mm] (host) {HOST\\{\scriptsize Linux / ESP32 / MCU / PC}};
+  \node[fnblockT,right=18mm of host,minimum width=34mm] (fpga)
+       {FPGA\\{\scriptsize Neural Network Engine}};
+  \node[fnblock,right=18mm of fpga,minimum width=26mm] (ram)
+       {PSRAM\\{\scriptsize 8\,MB dedicata}};
+  \draw[fnbus] (host) -- node[fnlbl,above]{SPI Mode 0} (fpga);
+  \draw[fnbus] (fpga) -- node[fnlbl,above]{async 16-bit} (ram);
+  \node[below=1mm of fpga,font=\scriptsize\itshape,text=fnGrey]
+       {calcolo interamente on-chip};
+\end{tikzpicture}
+\end{center}
+
+\vfill
+\begin{center}
+\begin{tikzpicture}
+\node[draw=fnRule,rounded corners=3pt,inner sep=10pt,fill=fnLight,text width=15.5cm]{
+\footnotesize
+\textbf{\color{fnDark}Dispositivo target di riferimento:} Lattice ECP5 \code{LFE5U-45F-8BG381C}
+(speed grade $-8$, CABGA381, 72$\times$MULT18X18D, $\approx$44k LUT).\\[2pt]
+\textbf{\color{fnDark}Configurazione baseline:} INT8/INT32, \code{N\_INPUTS}=256, \code{N\_NEURONS}=4,
+\code{PARALLEL} parametrico, memoria di lavoro PSRAM ISSI \code{IS66WVE4M16EBLL-70BLI}.\\[2pt]
+\textbf{\color{fnDark}Stato:} RTL verificato in simulazione (Icarus) e sintesi reale
+(Yosys + nextpnr-ecp5). Documento descrittivo del progetto allo stato del \datasheetdate.
+};
+\end{tikzpicture}
+\end{center}
+\vspace{0.6cm}
+{\footnotesize\color{fnGrey}\raggedright
+Autore del progetto: Michele Bigi \textbullet{} MIKILAB / manvalan.\\
+Questo datasheet documenta il codice RTL, la documentazione e i benchmark
+presenti nella repository \texttt{github.com/manvalan/FPGA-Neural}.\par}
+\end{titlepage}
+
+% ======================================================================
+%  PAGINA "FEATURES" (stile datasheet)
+% ======================================================================
+\input{chapters/00-features}
+
+% ======================================================================
+%  SUNTO PINOUT (pagine 2-3, pin per pin -- non a bus)
+% ======================================================================
+\newpage
+\input{chapters/00b-pinout}
+
+% ======================================================================
+%  INDICE
+% ======================================================================
+\newpage
+\pagenumbering{roman}
+{\color{fnDark}\tableofcontents}
+\newpage
+\pagenumbering{arabic}
+
+% ======================================================================
+%  CAPITOLI
+% ======================================================================
+\include{chapters/01-overview}
+\include{chapters/02-architettura}
+\include{chapters/03-datapath}
+\include{chapters/04-parametri}
+\include{chapters/05-memoria}
+\include{chapters/06-sequencer}
+\include{chapters/06b-grafo}
+\include{chapters/07-spi}
+\include{chapters/07b-programmazione}
+\include{chapters/08-toplevel}
+\include{chapters/09-implementazione}
+\include{chapters/10-hardware}
+\include{chapters/11-registri}
+\include{chapters/12-roadmap}
+
+\appendix
+\include{chapters/A-moduli}
+
+\end{document}

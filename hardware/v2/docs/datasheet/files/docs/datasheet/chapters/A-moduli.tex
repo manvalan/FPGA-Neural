@@ -1,0 +1,97 @@
+\chapter[Moduli e toolchain]{Moduli, porte e toolchain}
+\label{ch:appmod}
+
+\section{Elenco dei moduli RTL}
+\begin{tabularx}{\textwidth}{L{3.4cm} C{2.0cm} Y}
+\toprule
+\rowh \thd{File} & \thd{Tipo} & \thd{Ruolo} \\
+\midrule
+\code{rtl/mac\_unit.v} & combinatorio & prodotto-accumulatore singolo \\
+\rowa \code{rtl/mac8.v} & combinatorio & MAC parallelo + adder tree bilanciato \\
+\code{rtl/neuron\_parallel.v} & FSM & neurone: gruppi, bias, attivazione, saturazione \\
+\rowa \code{rtl/layer.v} & strutturale & N\_NEURONS neuroni in parallelo \\
+\code{rtl/neuron\_memory.v} & FSM & ponte memoria/neurone, loop neuroni \\
+\rowa \code{rtl/layer\_sequencer.v} & FSM & sequenza multi-layer, ping-pong \\
+\code{rtl/int8\_memory\_access.v} & FSM & conversione byte $\leftrightarrow$ word \\
+\rowa \code{rtl/memory\_interface.v} & FSM & handshake req/ready \\
+\code{rtl/psram\_controller.v} & FSM & bus fisico PSRAM async, page mode 70/20~ns \\
+\rowa \code{rtl/mem\_arbiter.v} & arbitro & 3 porte, priorità B$>$C$>$A \\
+\code{rtl/spi\_slave.v} & FSM & layer fisico SPI Mode 0 + CDC \\
+\rowa \code{rtl/spi\_engine.v} & FSM & opcode + banco registri \\
+\code{rtl/act\_buffer.v} & block RAM & buffer di attivazione DP16KD (Tipo \#2) \\
+\rowa \code{rtl/graph\_engine.v} & FSM & motore rete a grafo (Tipo \#2) \\
+\code{rtl/spi\_neuron\_top.v} & top & integrazione completa \\
+\rowa \code{rtl/memory\_model.v} & modello & RAM comportamentale (sim) \\
+\bottomrule
+\end{tabularx}
+
+\section{Porte del top-level \texttt{spi\_neuron\_top}}
+Vedere la tabella segnale-per-segnale completa nel cap.~\ref{ch:hw}. In sintesi: clock
+e reset (\code{clk}, \code{rst}); SPI applicativo (\code{sclk}, \code{mosi},
+\code{miso}, \code{cs\_n}); bus PSRAM (\code{psram\_a[22:0]}, \code{psram\_dq[15:0]},
+\code{psram\_ce\_n/oe\_n/we\_n/lb\_n/ub\_n/zz\_n}).
+
+\section{Toolchain}
+\begin{tabularx}{\textwidth}{L{3.6cm} L{3.4cm} Y}
+\toprule
+\rowh \thd{Strumento} & \thd{Versione} & \thd{Uso} \\
+\midrule
+Yosys & 0.68+post & sintesi RTL $\to$ netlist JSON, mapping ECP5 \\
+\rowa nextpnr-ecp5 & 0.11.1-19-g8dbcee5 & placement, routing, timing \\
+Project Trellis & install & \code{ecppack}/\code{ecppll}/\code{ecpbram} \\
+\rowa Icarus Verilog & \code{-g2012} & simulazione funzionale \\
+\bottomrule
+\end{tabularx}
+
+\subsection{Parametri nextpnr principali}
+\begin{lstlisting}[language=,basicstyle=\ttfamily\scriptsize]
+--45k                        seleziona LFE5U-45F
+--package CABGA381           package
+--speed 8                    speed grade -8
+--json <netlist>            netlist da Yosys
+--lpf <vincoli>             vincoli di pin (attualmente vuoti)
+--lpf-allow-unconstrained    permette I/O non vincolate (benchmark)
+--freq 80                    timing target 80 MHz
+\end{lstlisting}
+
+\subsection{Esempio di simulazione}
+\begin{lstlisting}[language=,basicstyle=\ttfamily\scriptsize]
+iverilog -g2012 -Ptb.PARALLEL=16 -o sim/parametric_256x4_p16 \
+  sim/parametric_tb.v rtl/mac_unit.v rtl/mac8.v \
+  rtl/neuron_parallel.v rtl/layer.v
+vvp sim/parametric_256x4_p16
+\end{lstlisting}
+
+\section{Testbench principali}
+\begin{tabularx}{\textwidth}{L{5.4cm} Y}
+\toprule
+\rowh \thd{Testbench} & \thd{Copertura} \\
+\midrule
+\code{parametric\_tb.v} & datapath 256$\times$4, casi accumulo/bias/ReLU/saturazione \\
+\rowa \code{parameter\_sweep\_tb.v} & sweep configurazioni valide \\
+\code{neuron\_parallel\_tb.v} & attivazioni, larghezza runtime (T7) \\
+\rowa \code{neuron\_memory\_tb.v} / \code{\_multi\_tb.v} & integrazione memoria mono/multi-neurone, PSRAM reale (T5) \\
+\code{psram\_controller\_tb.v} & controller PSRAM \\
+\rowa \code{psram\_page\_mode\_tb.v} & burst di pagina, attraversamento pagina, chiusura su WRITE/timeout $t_{CEM}$, cambi di byte-enable (§~5.5) \\
+\code{spi\_slave\_tb.v} & layer fisico SPI (4 test) \\
+\rowa \code{spi\_engine\_tb.v} & opcode, registri (10+ test) \\
+\code{spi\_neuron\_top\_tb.v} & end-to-end, PSRAM reale su SPI simulato \\
+\rowa \code{spi\_neuron\_top\_runnetwork\_tb.v} & RUN\_NETWORK 2 layer end-to-end \\
+\code{layer\_sequencer\_tb.v} & sequenza 2 layer, ping-pong, copia byte-exact \\
+\bottomrule
+\end{tabularx}
+
+\vfill
+\begin{center}
+\begin{tikzpicture}
+\node[draw=fnRule,rounded corners=3pt,inner sep=8pt,fill=fnLight,text width=15.5cm]{
+\footnotesize\color{fnGrey}
+Questo datasheet è generato a partire dal codice RTL, dalla documentazione e dai
+benchmark presenti nella repository \texttt{github.com/manvalan/FPGA-Neural} allo stato
+del \datasheetdate. I valori di Fmax, utilizzo risorse e throughput sono quelli
+riportati nelle misure della repository (\texttt{.lpf} reale già assegnato e
+verificato da place\&route, cap.~\ref{ch:hw}) e vanno riverificati ad ogni
+variazione sostanziale dell'RTL o della chiusura del timing di Fase~7, tuttora in
+corso (cap.~\ref{ch:roadmap}).};
+\end{tikzpicture}
+\end{center}

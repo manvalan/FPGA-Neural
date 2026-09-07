@@ -1,0 +1,95 @@
+\chapter{Compute datapath}
+\label{ch:datapath}
+
+\section{Bit-exact reuse of V1's arithmetic}
+\code{neural\_processor.v} implements the identical INT8/INT32 arithmetic
+chain as V1's own \code{neuron\_parallel.v}/\code{mac8.v}/\code{mac\_unit.v}
+--- verified bit-exact against V1's own modules, instantiated side-by-side
+in the same testbench, across 7 test cases including extreme INT8 values,
+back-to-back zero-gap tiles, and multi-tile jobs. What changed is the
+\emph{pipelining}, not the math.
+
+\begin{center}
+\begin{tikzpicture}[font=\scriptsize,node distance=3mm,start chain=going right,
+   every node/.style={fnblock,minimum width=15mm,minimum height=8mm,on chain}]
+  \node[fnblockT]{INT8\\$\times$\,INT8};
+  \node{INT16\\product};
+  \node{sign-ext\\INT32};
+  \node[fnblockD]{accumulate\\INT32};
+  \node{$+$ bias};
+  \node[fnblockA]{activation};
+  \node[fnblockT]{sat. INT8};
+  \foreach \i [count=\j from 2] in {1,...,6}
+     \draw[fnarrow] (chain-\i) -- (chain-\j);
+\end{tikzpicture}
+\end{center}
+
+\section{8-stage pipeline}
+\code{neural\_processor.v} is fully pipelined, throughput-oriented (one
+new tile accepted per cycle in steady state, given a continuous operand
+stream):
+\begin{center}
+\begin{tikzpicture}[font=\scriptsize,node distance=2.5mm,start chain=going below,
+   every node/.style={on chain,fnblock,minimum width=64mm}]
+  \node[fnblockA]{Stage 0 --- input alignment / register (\code{x0}, \code{w0})};
+  \node{Stage 1 --- per-lane multiply (\code{P\_IN}$\times$\code{MULT18X18D})};
+  \node{Stages 2..$(1{+}\log_2\text{P\_IN})$ --- balanced adder tree};
+  \node[fnblockD]{accumulate (gated by job state, cleared at job start)};
+  \node{$+$bias, activation select};
+  \node[fnblockT]{INT8 saturation / output register};
+  \foreach \i [count=\j from 2] in {1,...,5}
+     \draw[fnarrow] (chain-\i) -- (chain-\j);
+\end{tikzpicture}
+\end{center}
+With \code{P\_IN}=8 the adder tree has 3 levels, giving an 8-stage pipeline
+overall. \code{tile\_last} is gated identically to \code{valid} at every
+stage (\code{last0 <= (operand\_valid \&\& operand\_ready) ? tile\_last :
+1'b0;}) --- an early draft left it ungated, letting a ``last'' tag
+propagate one cycle ahead of its own valid/data pair on jobs where
+\code{tile\_last} was asserted before \code{operand\_ready} rose (legal
+valid-before-ready producer behavior); found and fixed via a
+cycle-by-cycle dump of the pipeline's own internal valid/last signals,
+re-verified against the full 7-test regression.
+
+\section{Accumulator width: 24 vs.\ 32 bits}
+A real, 6-seed placement sweep (reusing already-synthesized netlists,
+real \code{nextpnr-ecp5} place\&route only) resolved an earlier
+single-seed measurement that had suggested \code{ACC\_WIDTH}=32 was
+marginally faster:
+
+\begin{tabularx}{\textwidth}{L{2.6cm} C{2.0cm} C{2.0cm} C{2.0cm} C{1.6cm}}
+\toprule
+\rowh \thd{ACC\_WIDTH} & \thd{mean Fmax} & \thd{min} & \thd{max} & \thd{stdev} \\
+\midrule
+32 & 170.12~MHz & 145.73 & 183.96 & 14.16 \\
+\rowa 24 & \textbf{180.71~MHz} & 175.16 & 185.49 & \textbf{4.21} \\
+\bottomrule
+\end{tabularx}
+\begin{center}\footnotesize\itshape\color{fnGrey}
+Real place\&route, P\_IN=8, 6 seeds each (default plus 5 explicit).\end{center}
+
+\begin{fnnote}[Why a single seed misled]
+Over 6 real placement seeds, \code{ACC\_WIDTH}=24 has both a higher mean
+Fmax ($+$6.2\%) and a much tighter seed-to-seed spread ($\approx$3.4$\times$
+tighter) than \code{ACC\_WIDTH}=32 --- combined with fewer LUT/FF/CCU2C at
+24 bits and identical bit-exact correctness, \code{ACC\_WIDTH}=24 is
+recommended for any new P\_IN=8 INT8 configuration, where product
+magnitudes never need more than 24 bits of accumulator headroom.
+\end{fnnote}
+
+\section{Activation and saturation}
+Identical encoding and bit-test logic to V1 (bilateral saturation for
+\code{ACT\_NONE}, positive-only for \code{ACT\_RELU}, both INT8-range).
+Every job dispatched by \code{dataflow\_core.v} currently hardcodes
+\code{job\_bias=0}, \code{job\_activation=ACT\_RELU} --- a documented
+simplification carried through every milestone since M4/M5, not yet
+exposed per-node by the Dependency Manager's own job descriptor.
+
+\begin{tabularx}{\textwidth}{L{2.6cm} C{1.4cm} Y}
+\toprule
+\rowh \thd{Encoding} & \thd{Value} & \thd{Behavior} \\
+\midrule
+\code{ACT\_NONE} & \code{2'd0} & Linear: bilateral saturation to $[-128,+127]$. \\
+\rowa \code{ACT\_RELU} & \code{2'd1} & $\max(0,x)$, positive saturation to $+127$ (used by every V2 job today). \\
+\bottomrule
+\end{tabularx}

@@ -1,0 +1,65 @@
+\chapter{Host / graph-loader interface}
+\label{ch:host}
+
+\begin{fnwarn}[Scope of this chapter]
+V1's own host interface is a real, placed, physically-verified SPI Mode~0
+slave (ch.~7 of the V1 datasheet). V2's equivalent --- a node-registration
+bus into \code{neural\_multiprocessor.v} --- has, in this revision, been
+exercised exclusively from Verilator testbenches and unconstrained
+synthesis top-levels. This chapter describes the \textbf{logical}
+protocol only; no real host-side driver (SPI or otherwise) has been
+built or placed yet. See ch.~\ref{ch:roadmap}.
+\end{fnwarn}
+
+\section{Node registration protocol}
+A simple valid/ready producer interface, backpressure-safe: the loader
+holds \code{reg\_valid} and the node's own fields until \code{reg\_ready}
+is observed high on the same cycle, exactly like registering into any
+FIFO. \code{reg\_ready} for a given \code{reg\_node\_id} is asserted
+whenever that node's own table slot is \code{EMPTY} (\S\ref{ch:sched}).
+
+\begin{tabularx}{\textwidth}{L{3.2cm} C{1.6cm} Y}
+\toprule
+\rowh \thd{Field} & \thd{Width} & \thd{Meaning} \\
+\midrule
+\code{reg\_node\_id}      & $\lceil\log_2\text{N\_NODES}\rceil$ & This node's own id --- doubles as its table slot index. \\
+\rowa \code{reg\_required} & $\lceil\log_2(\text{MAX\_DEPS}{+}1)\rceil$ & How many of \code{reg\_producer\_ids} are meaningful (0 $\Rightarrow$ immediately \code{READY}). \\
+\code{reg\_producer\_ids}  & \code{MAX\_DEPS}$\times\lceil\log_2\text{N\_NODES}\rceil$ & Packed array of producer node ids this node depends on. \\
+\rowa \code{reg\_x\_base}   & \code{ADDR\_WIDTH} & Base byte address of this node's activation vector. \\
+\code{reg\_w\_base}   & \code{ADDR\_WIDTH} & Base byte address of this node's weight vector. \\
+\rowa \code{reg\_n\_tiles}  & 16 & Number of P\_IN-wide tiles to accumulate. \\
+\code{reg\_result\_addr} & \code{ADDR\_WIDTH} & Byte address the computed INT8 result is written to. \\
+\bottomrule
+\end{tabularx}
+
+\begin{fnnote}[A node id is a real, finite resource]
+Because dispatched node table slots are never reclaimed
+(\S\ref{ch:sched}), a loader driving many independent jobs over a long
+session must use a fresh \code{reg\_node\_id} for each one, within
+\code{N\_NODES}. Reusing a value before the system has been reset will
+simply be refused (\code{reg\_ready} stays low for an occupied,
+non-\code{EMPTY} node id) --- it will not corrupt anything, but it will
+also not register.
+\end{fnnote}
+
+\section{Result readback}
+The computed INT8 result is written to \code{reg\_result\_addr} through
+the same real PSRAM chain every other memory access uses --- there is no
+separate result-readback port; the host/loader reads the result byte
+back from PSRAM directly, the same convention every V2 testbench in this
+project uses for verification.
+
+\section{What a real host driver would still need to add}
+\begin{itemize}
+\item A physical transport (SPI, parallel bus, or otherwise) carrying
+      the fields of \S\ref{ch:host}'s own table across a real pin
+      interface --- not designed in this revision.
+\item A completion-notification path back to the host (V1's own
+      \code{data\_ready\_n}/\code{STATUS.done} has no V2 analogue yet);
+      today, completion is only observable internally
+      (\code{dir\_job\_out\_done}) or by polling the expected result
+      address.
+\item Per-job \code{bias}/\code{activation} selection, currently
+      hardcoded to \code{bias=0}/\code{ACT\_RELU} for every job
+      (\S\ref{ch:datapath}).
+\end{itemize}

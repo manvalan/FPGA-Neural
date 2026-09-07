@@ -1,0 +1,139 @@
+\thispagestyle{plain}
+\noindent
+\begin{tikzpicture}
+\node[fill=fnDark,text=white,rounded corners=2pt,inner sep=6pt,
+      minimum width=\textwidth,anchor=west]
+  {\large\bfseries FPGA-Neural V2 --- General description and features};
+\end{tikzpicture}
+
+\vspace{6pt}
+\noindent
+{\small FPGA-Neural V2 is a \textbf{neural multiprocessor / dataflow machine},
+the evolution of the V1 sequential accelerator (documented separately, frozen
+and unmodified as the project's golden reference). Where V1 executes one
+neuron at a time under host-driven SPI control, V2 registers a
+\textbf{dependency graph of neurons} and keeps \code{N\_SLOTS} independent
+Neural Processor $+$ Memory Manager pairs busy concurrently, resolving data
+dependencies and hiding PSRAM latency in hardware, without host
+intervention once a graph is loaded. Computation (INT8 MAC, ReLU,
+saturation) is bit-exact identical to V1's own datapath; what changed is
+everything \emph{around} it.}
+
+\vspace{8pt}
+\begin{multicols}{2}
+{\color{fnDark}\large\bfseries Features}\\[2pt]
+{\footnotesize
+\begin{itemize}[leftmargin=1.1em]
+\item \textbf{Dependency-graph scheduling}: nodes are registered with an
+      explicit producer list; a node becomes eligible for execution only
+      once every producer it depends on has genuinely completed --- verified
+      for 1-hop shared-producer/multi-consumer graphs and 2-hop transitive
+      (diamond) graphs.
+\item \code{N\_SLOTS} independent \textbf{Neural Processor + Memory Manager}
+      pairs (default recommended: \textbf{2}), each running the identical
+      8-stage INT8 pipeline inherited from V1.
+\item \textbf{Word-level burst memory backend}: fetches move a full 16-bit
+      PSRAM word per transaction instead of one byte, reusing
+      \code{memory\_interface.v}/\code{psram\_controller.v} directly and its
+      already-implemented page-mode support --- \textbf{2.24--2.37$\times$}
+      real wall-clock speedup, measured.
+\item \textbf{Shared on-chip activation cache}: a vector of activations
+      shared by many neurons of the same layer is fetched from PSRAM
+      \emph{once}, not once per neuron --- a further real
+      \textbf{1.66--2.00$\times$} cycle reduction on shared-input workloads.
+\item Same \textbf{real, unmodified V1 PSRAM backend} throughout
+      (\code{memory\_interface.v}, \code{psram\_controller.v}) --- V1 remains
+      the frozen golden reference and was never altered to make V2 look
+      faster.
+\item \textbf{Real, measured} characterization at every step: Verilator
+      RTL simulation, Yosys synthesis, real \code{nextpnr-ecp5}
+      place\&route --- no theoretical number reported without a matching
+      real measurement.
+\end{itemize}}
+
+\columnbreak
+
+{\color{fnDark}\large\bfseries Honest, measured limitations}\\[2pt]
+{\footnotesize
+\begin{itemize}[leftmargin=1.1em]
+\item The system is \textbf{memory-bound}, not compute-bound: real compute-
+      to-memory-wait ratio on the order of 1:170--1:220. A single shared
+      PSRAM port saturates at $\approx$90\% utilization regardless of
+      \code{N\_SLOTS}$\ge$2 --- real parallel scaling beyond 2 slots is
+      essentially flat for large workloads.
+\item \code{N\_SLOTS=4} is \textbf{not recommended}: it delivers no
+      additional real throughput once the shared PSRAM port saturates,
+      and with the activation cache active it \textbf{fails the 80\,MHz
+      timing target outright} (65.01\,MHz measured).
+\item Fixed, lowest-index-priority arbitration (Director and memory
+      arbiter alike) is not fairness-balanced --- a real, measured
+      per-slot workload imbalance exists under sustained contention.
+\end{itemize}}
+
+\vspace{4pt}
+{\color{fnDark}\large\bfseries Target \& toolchain}\\[2pt]
+{\footnotesize
+\begin{itemize}[leftmargin=1.1em]
+\item FPGA: Lattice ECP5 \code{LFE5U-45F-8BG381C} ($-8$, CABGA381) --- same
+      target device as V1.
+\item Synthesis: Yosys; place\&route: real \code{nextpnr-ecp5}.
+\item Simulation: Verilator 5.050 (\code{--binary --timing}) --- adopted
+      for V2 after two independent Icarus Verilog v13.0 scheduling
+      defects were found and reproduced on minimal repros (V1's own
+      certification, performed separately, was unaffected).
+\item PSRAM: ISSI \code{IS66WVE4M16EBLL-70BLI} (64\,Mb, 4M$\times$16),
+      real chain reused byte-for-byte from V1.
+\end{itemize}}
+\end{multicols}
+
+\vspace{2pt}
+% --- key parameter table ---
+\noindent
+{\small\color{fnDark}\bfseries Key parameters (recommended configuration, real measured data)}
+\vspace{2pt}
+
+\noindent
+\begin{tabularx}{\textwidth}{L{3.6cm}L{3.6cm}Y}
+\toprule
+\rowh \thd{Quantity} & \thd{Value} & \thd{Notes} \\
+\midrule
+Data precision & INT8 (signed) & \code{DATA\_WIDTH}=8, identical to V1 \\
+\rowa Accumulator & INT32 (signed) & \code{ACC\_WIDTH}=32 \\
+Dot-product width & 8 & \code{P\_IN}=8 parallel MAC lanes per neuron \\
+\rowa Recommended concurrency & \code{N\_SLOTS}=2 & real, measured net win; see ch.~\ref{ch:impl2} \\
+Fmax, full system (\code{N\_SLOTS}=2) & 87.72~MHz & real place\&route, word-burst + activation cache active \\
+\rowa cycles/neuron (1 neuron, 8 inputs, real PSRAM) & 166 (V1: 209) & \textbf{2.6$\times$} real wall-clock speedup vs V1 \\
+Combined real speedup vs baseline (\code{N\_SLOTS}=2) & \textbf{2.45$\times$} & word-burst $+$ activation cache, D-Stress workload \\
+\rowa Address space & 23~bit (byte) & \code{ADDR\_WIDTH}=23, unchanged from V1 \\
+\bottomrule
+\end{tabularx}
+
+\vspace{8pt}
+\noindent
+{\small\color{fnDark}\bfseries System block diagram}
+\begin{center}
+\begin{tikzpicture}[node distance=6mm and 9mm,font=\footnotesize]
+  \node[fnblockD,minimum width=24mm,minimum height=15mm] (host){HOST\\{\scriptsize registers a node graph}};
+  \node[fnblockT,right=14mm of host,minimum width=30mm,minimum height=13mm] (dm){Dependency\\Manager};
+  \node[fnblockT,right=14mm of dm,minimum width=28mm,minimum height=13mm] (dir){Neural\\Director};
+  \node[fnreg,fill=white,right=14mm of dir,minimum width=30mm,minimum height=20mm] (slots){
+    \begin{tabular}{c}
+      N\_SLOTS $\times$ \\
+      Memory Manager \\
+      $+$ Neural Processor
+    \end{tabular}};
+  \node[fnblockA,below=9mm of dir,minimum width=28mm,minimum height=11mm] (cache){Activation\\Cache};
+  \node[fnblock,right=14mm of slots,minimum width=22mm,minimum height=15mm] (ram){PSRAM 8\,MB\\{\scriptsize real V1 backend}};
+  \draw[fnbus] (host) -- (dm);
+  \draw[fnbus] (dm) -- node[fnlbl,above]{ready node} (dir);
+  \draw[fnbus] (dir) -- (slots);
+  \draw[fnarrowT] (slots.south) |- (cache.east);
+  \draw[fnarrowT] (cache.north) |- node[fnlbl,above]{producer done} (dm.south);
+  \draw[fnbus] (slots) -- node[fnlbl,above]{16-bit word} (ram);
+  \draw[fnbus] (cache.east) -- ++(6mm,0) |- ([yshift=-2mm]ram.south);
+\end{tikzpicture}
+\end{center}
+\begin{center}\footnotesize\itshape\color{fnGrey}
+A slot's completion feeds back to the Director (frees the slot) and to the
+Dependency Manager (wakes up any node waiting on it) --- closing the
+dataflow loop entirely on-chip.\end{center}

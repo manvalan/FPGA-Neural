@@ -1,0 +1,185 @@
+\chapter{Memory subsystem}
+\label{ch:mem}
+
+\section{Baseline: reused byte-level V1 backend}
+V2's first working milestones connected each Memory Manager's own
+\code{prefetch\_engine.v} to the real, unmodified V1 chain
+\code{int8\_memory\_access.v} $\to$ \code{memory\_interface.v} $\to$
+\code{psram\_controller.v}, fetching one INT8 byte per transaction ---
+exactly the contract V1's own \code{neuron\_memory.v} already used
+against the same backend. This was correct and fully verified (bit-exact
+end-to-end through the real PSRAM chain), but it was not the fastest
+possible use of that chain.
+
+\section{Optimization \#1 --- word-level burst reads}
+\label{sec:burst}
+Direct inspection of \code{int8\_memory\_access.v} shows it already
+converts every 8-bit logical request into a \textbf{full 16-bit PSRAM
+word access} internally (\code{mem\_addr <= addr >> 1}, one byte lane
+selected via \code{lb\_n}/\code{ub\_n}) --- so a byte-at-a-time fetch was
+already paying for two bytes of real PSRAM bandwidth per transaction
+while using only one, and paying \code{int8\_memory\_access.v}'s own
+request/wait round-trip twice for every real word instead of once.
+
+\code{prefetch\_engine.v} (weights) and \code{activation\_cache.v}
+(activations, \S\ref{sec:cache}) now talk directly to
+\code{memory\_interface.v}'s own 16-bit word interface, \textbf{skipping
+\code{int8\_memory\_access.v} entirely}. Both files remain frozen,
+byte-for-byte unmodified V1 --- V2 simply chooses to reuse the lower
+(word-level) layer of the same frozen stack instead of the byte-splitting
+layer on top of it, the same precedent already set by
+\code{slot\_mem\_arbiter.v} not reusing V1's own \code{mem\_arbiter.v}
+verbatim.
+
+\begin{fnnote}[Real, measured result --- single job, real PSRAM]
+\begin{tabularx}{\textwidth}{C{2.2cm} C{2.4cm} C{2.4cm} C{1.6cm}}
+\toprule
+\rowh \thd{n\_tiles} & \thd{cycles, before} & \thd{cycles, after} & \thd{$\Delta$} \\
+\midrule
+1 & 166 & 84  & $-49\%$ \\
+\rowa 3 & 446 & 204 & $-54\%$ \\
+5 & 728 & 322 & $-56\%$ \\
+\bottomrule
+\end{tabularx}
+Real Verilator simulation, real V1 PSRAM chain, all results still
+bit-exact.
+\end{fnnote}
+
+Combined real wall-clock effect (256-neuron sustained workload, cycles
+$\div$ real POST-P\&R Fmax): a \textbf{2.24--2.37$\times$} speedup across
+every \code{N\_SLOTS} tested, at a negligible real Fmax cost
+(unchanged at \code{N\_SLOTS}=1; $-6.2\%$ at \code{N\_SLOTS}=2; $-1.2\%$
+at \code{N\_SLOTS}=4).
+
+\begin{fnwarn}[Why not just pipeline more requests instead?]
+\code{int8\_memory\_access.v}'s own \code{STATE\_IDLE} only samples a
+new \code{req} once back in \code{STATE\_IDLE} after the previous
+transaction's \code{mem\_ready} --- it fundamentally does not support
+request pipelining. No wrapper built \emph{on top of} it can avoid
+paying its round-trip cost twice per word; only bypassing it (talking to
+\code{memory\_interface.v} directly) actually removes the redundancy.
+This is why the fix reaches one layer lower in the stack rather than
+adding queuing logic in front of the existing byte-level port.
+\end{fnwarn}
+
+\section{Optimization \#2 --- shared activation cache}
+\label{sec:cache}
+In the realistic dense-layer workloads this project benchmarks, many
+neurons of the same layer share the \emph{exact same} activation vector.
+Before this optimization, each of \code{N\_SLOTS} Memory Manager
+instances re-fetched that identical vector from PSRAM independently ---
+real, measured, redundant traffic on the one shared PSRAM port.
+\code{activation\_cache.v} (a new, single shared instance per
+\code{dataflow\_core}, not one per slot) fetches a given \code{x\_base}
+vector once, tile by tile on first use, and serves every subsequent
+request for the same vector directly from an on-chip buffer.
+
+\begin{fnnote}[Real, measured result --- 256-neuron sustained workload, D-Stress]
+\begin{tabularx}{\textwidth}{C{1.4cm} C{2.4cm} C{2.4cm} C{2.0cm} C{2.0cm}}
+\toprule
+\rowh \thd{N\_SLOTS} & \thd{cycles, burst only} & \thd{cycles, $+$cache} & \thd{Fmax, burst} & \thd{Fmax, $+$cache} \\
+\midrule
+1 & 348682 & 174610 & 152.44 & 131.79 \\
+\rowa 2 & 307602 & 185428 & 133.58 & \textbf{87.72} \\
+4 & 307346 & 184795 & 112.07 & 65.01 (\FAIL) \\
+\bottomrule
+\end{tabularx}
+A further real 1.66--2.00$\times$ cycle reduction on top of optimization~\#1,
+$\approx$4$\times$ combined vs.\ the original byte-level baseline.
+\end{fnnote}
+
+\begin{fnwarn}[Real, measured Fmax cost --- read this before raising N\_SLOTS]
+The shared cache's real Fmax cost is \textbf{much steeper} than
+optimization~\#1's: a single central resource with \code{N\_SLOTS}
+request ports, a broadcast-capable hit-check evaluated combinationally
+every cycle for every port, and a shared \code{tile\_store} array create
+a genuine fan-in/routing hot spot that grows with \code{N\_SLOTS}.
+\code{N\_SLOTS}=2 (recommended) still passes 80\,MHz (87.72\,MHz, margin
+down from $+$67\% to $+$9.7\%); \code{N\_SLOTS}=4 \textbf{fails outright}
+(65.01\,MHz). This is the central input to ch.~\ref{ch:roadmap}'s own
+open work item on cache pipelining.
+\end{fnwarn}
+
+Combined real wall-clock speedup vs.\ the original byte-level baseline
+(both optimizations together): \code{N\_SLOTS}=1 \textbf{3.86$\times$};
+\code{N\_SLOTS}=2 \textbf{2.45$\times$} (the recommended configuration);
+\code{N\_SLOTS}=4 2.29$\times$ but a real \emph{regression} versus
+optimization~\#1 alone, since its own Fmax now fails 80\,MHz.
+
+\subsection{Design notes}
+Single-tag, tile-granular: a request tag mismatch invalidates the cache
+and restarts filling from tile~0 for the new \code{x\_base} --- always
+correct, never serves stale data, but can thrash under interleaved,
+genuinely-different-\code{x\_base} concurrent traffic (not exercised by
+this project's own dense-layer workloads, where sharing is real and
+sustained). Requests are latched per-slot on arrival (the same
+``queue, don't drop'' idiom used by the arbiter, \S\ref{sec:archcache}
+of ch.~\ref{ch:arch}) and served with a broadcast ack the cycle a
+matching tile becomes valid, so multiple slots pending on the same,
+about-to-arrive tile are all served the same cycle.
+
+\begin{fnnote}[Two real bugs found and fixed during implementation]
+(1)~A target-bank/pending-bank race: a later handoff could queue a new
+cache request (targeting a different double-buffer bank) in the same
+cycle an earlier request was still awaiting its own ack, and
+non-blocking-assignment ``last write wins'' semantics silently
+misattributed which bank the earlier request's data landed in --- the
+same bug class already found once for the weight-side
+\code{pf\_target\_bank} register, fixed with the identical two-register
+(pending/target) staging pattern. (2)~A zero-width Verilog replication
+at \code{N\_SLOTS}=1 (\code{\{\$clog2(1)\{1'b0\}\}} $=$ \code{\{0\{...\}\}},
+illegal outside a concatenation), the same class already found once in
+\code{neural\_director.v} and fixed with the same width-agnostic
+\code{'0} literal. Both found via real simulation, not by inspection.
+\end{fnnote}
+
+\section{Real PSRAM chain (unmodified V1)}
+\code{memory\_interface.v} and \code{psram\_controller.v} are byte-for-byte
+identical to V1's own copies throughout this chapter --- the real
+page-mode support they already implement (fast same-page continuation,
+slower cold access) is exploited more effectively by the word-level
+rewrite, not changed. The real ISSI \code{IS66WVE4M16EBLL-70BLI} chip and
+its board wiring are unchanged from V1 (ch.~\ref{ch:hw}).
+
+\section{SDRAM upgrade addendum (2026-09-07) --- current, authoritative
+memory architecture}
+\label{sec:sdram-mem-addendum}
+\begin{fnwarn}[Superseded architecture]
+The PSRAM-based chain described above (\S\S\ref{sec:burst}--\ref{sec:cache})
+belongs to an earlier V2 milestone. The project has since closed on a
+single-external-memory architecture (real \code{decisions.log} DEC-0034):
+\textbf{one SDR SDRAM device, one \code{sdram\_controller.v} instance},
+serving weights, activations, AND results through
+\code{sdram\_unified\_backend.v}'s two logical ports (W: 64-bit weight
+read; AR: 16-bit, byte-maskable activation-read/result-write), arbitrated
+2-way priority (W wins when both pending). No PSRAM, no second physical
+memory device, in the current, frozen hardware path.
+\end{fnwarn}
+
+The device itself was upgraded mid-project from an 8\,MB part
+(\code{AS4C4M16SA-6TIN}) to the current \textbf{AS4C32M16SB-7BIN,
+64\,MB (512\,Mbit), 54-ball FBGA} --- both the row/column/bank geometry
+(\code{sdram\_controller.v}'s \code{ROW\_BITS}/\code{COL\_BITS}/
+\code{BANK\_BITS} parameters, now 13/10/2) and the SPI host protocol's
+own address-field width (23$\to$26-bit byte address; WRITE\_JOB payload
+grew 15$\to$18 bytes) changed accordingly. Full electrical/pinout data
+and the complete FPGA$\leftrightarrow$SDRAM ball mapping are in
+ch.~\ref{ch:hw}, \S\ref{sec:sdram-addendum} (kept in one place to avoid
+two copies of the same real data).
+
+\subsection{Real, measured clock closure}
+\textbf{N\_SLOTS=4 @ 64\,MHz is the frozen production configuration}:
+real \code{nextpnr-ecp5} P\&R, 8/8 tested seeds PASS (worst 66.58\,MHz,
+worst WNS $+0.605$\,ns). \textbf{N\_SLOTS=8 @ 64\,MHz remains an open
+item}: 5/8 seeds PASS (worst 60.12\,MHz, worst WNS $-1.009$\,ns) after
+a real critical-path optimization (\code{sdram\_unified\_backend.v}'s
+weight-cache hit-index encoder, rewritten from a serially-dependent
+priority scan to a flat, parallel one-hot compare --- real errors.log
+ERR-0029/decisions.log DEC-0040). 80\,MHz was tested with a genuinely
+regenerated PLL (not merely a \code{--freq} flag) and is \textbf{not
+achievable} at either processor count (0/8 seeds pass, both before and
+after the ERR-0029 optimization) --- the achievable Fmax is a property
+of the routed fabric, confirmed identical between the 64\,MHz- and
+80\,MHz-targeted netlists. Bit-exact functional correctness (D-Stress,
+256/256 neurons vs.\ golden model) is unaffected at every configuration
+tested, including through this optimization.

@@ -1,0 +1,66 @@
+\chapter{Parameters and configurability}
+\label{ch:param}
+
+\section{Build parameters (synthesis-time)}
+\begin{tabularx}{\textwidth}{L{3.0cm} C{1.8cm} Y}
+\toprule
+\rowh \thd{Parameter} & \thd{Default} & \thd{Meaning} \\
+\midrule
+\code{DATA\_WIDTH}   & 8   & Data width (INT8), unchanged from V1. \\
+\rowa \code{ACC\_WIDTH} & 32 & Accumulator width; \textbf{24 recommended} for new P\_IN=8 configurations (ch.~\ref{ch:datapath}). \\
+\code{P\_IN}         & 8   & Parallel MAC lanes per neuron per tile; must be even (word-level burst constraint, ch.~\ref{ch:mem}). \\
+\rowa \code{ADDR\_WIDTH} & 23 & Byte-address width (8~MB), unchanged from V1. \\
+\code{N\_SLOTS}      & 4 (RTL default) & Concurrent Memory Manager$+$Neural Processor pairs. \textbf{2 recommended} --- see the honesty note below. \\
+\rowa \code{N\_NODES}   & 16  & Dependency Manager node-table depth. Sized to the largest node-id range a graph will ever use; never reclaimed (ch.~\ref{ch:arch}). \\
+\code{MAX\_DEPS}     & 4   & Maximum producers a single node can list. \\
+\rowa \code{QUEUE\_DEPTH} & 8 & Neural Director's own ready-job FIFO depth. \\
+\code{MAX\_TILES}    & 16 (internal, activation\_cache.v) & Longest activation vector the shared cache can hold; not yet exposed as a top-level parameter. \\
+\rowa \code{PSRAM\_DATA\_WIDTH} & 16 & Physical PSRAM data bus width, unchanged from V1. \\
+\code{CLK\_FREQ\_MHZ} & 80 & Frequency used in \code{psram\_controller.v}'s own timing formulas (unmodified V1 module). \\
+\bottomrule
+\end{tabularx}
+
+\begin{fnwarn}[\texttt{N\_SLOTS} is a real, measured trade-off, not a free parameter]
+Unlike V1's \code{PARALLEL} (a pure resource/frequency trade-off),
+\code{N\_SLOTS} interacts with a real, measured system bottleneck (the
+one physical PSRAM port). \code{N\_SLOTS}=1 and \code{N\_SLOTS}=2 both
+show a real net wall-clock win over the pre-optimization baseline;
+\code{N\_SLOTS}=4 shows \emph{no} additional real throughput and, with
+the activation cache active, \textbf{fails the 80\,MHz timing target
+outright} (ch.~\ref{ch:impl2}). Do not simply raise \code{N\_SLOTS} for
+more perceived parallelism without re-running the real benchmark suite.
+\end{fnwarn}
+
+\section{Word-alignment constraint (post word-burst rewrite)}
+Since the memory backend now moves 16-bit words rather than bytes
+(ch.~\ref{ch:mem}), every tile base address the system computes
+(\code{x\_base + tile\_idx*P\_IN}, and equivalently for weights) must
+land on an even byte address. \code{P\_IN} even and \code{x\_base}/
+\code{w\_base} themselves even together guarantee this for every tile of
+every job --- true of every address this project's own testbenches use,
+and a trivial constraint for any real loader/host to satisfy.
+
+\section{Characterized configurations}
+\begin{tabularx}{\textwidth}{C{1.6cm} C{2.6cm} C{2.6cm} Y}
+\toprule
+\rowh \thd{N\_SLOTS} & \thd{Fmax, word-burst only} & \thd{Fmax, $+$activation cache} & \thd{Notes} \\
+\midrule
+1 & 152.44~MHz & 131.79~MHz & Best real wall-clock speedup (3.86$\times$ vs baseline); no arbitration contention possible. \\
+\rowa 2 & 133.58~MHz & \textbf{87.72~MHz} & \textbf{Recommended default} --- real 2.45$\times$ speedup vs baseline, still comfortably above 80\,MHz. \\
+4 & 112.07~MHz & 65.01~MHz (\FAIL) & No additional real throughput; fails 80\,MHz with the cache active. Not recommended. \\
+\rowa 8 & 92.63~MHz (dataflow\_core only, no real PSRAM chain) & not re-measured & Real DSP ceiling for P\_IN=8 (64/72 MULT18X18D); a resource ceiling, not a useful operating point. \\
+\bottomrule
+\end{tabularx}
+
+\section{Build versus runtime}
+\begin{center}
+\begin{tikzpicture}[font=\footnotesize,node distance=6mm]
+ \node[fnblockD,minimum width=54mm,minimum height=17mm](b){\textbf{BUILD (synthesis)}\\[2pt]
+   {\scriptsize N\_SLOTS, N\_NODES, MAX\_DEPS,}\\{\scriptsize QUEUE\_DEPTH, P\_IN, DATA\_WIDTH, ACC\_WIDTH}\\{\scriptsize $\Rightarrow$ machine ceiling}};
+ \node[fnblockT,right=16mm of b,minimum width=54mm,minimum height=17mm](r){\textbf{RUNTIME (node registration)}\\[2pt]
+   {\scriptsize reg\_node\_id, reg\_required, reg\_producer\_ids,}\\{\scriptsize reg\_x\_base/w\_base/n\_tiles/result\_addr}\\{\scriptsize $\Rightarrow$ the actual dependency graph}};
+ \draw[fnbus] (b) -- node[fnlbl,above]{$\le$} (r);
+\end{tikzpicture}
+\end{center}
+Full field-level description of the runtime (node registration)
+interface: ch.~\ref{ch:regs}.

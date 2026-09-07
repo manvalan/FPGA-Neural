@@ -1,0 +1,119 @@
+\chapter{Hardware and board}
+\label{ch:hw}
+
+\section{Unchanged from V1}
+V2 targets the identical board and component set as V1: Lattice ECP5
+\code{LFE5U-45F-8BG381C} ($-8$, CABGA381), ISSI
+\code{IS66WVE4M16EBLL-70BLI} PSRAM (64\,Mb, 4M$\times$16), same 16\,MHz
+reference oscillator. The real PSRAM controller
+(\code{psram\_controller.v}) and its byte$\leftrightarrow$word adapter
+(\code{memory\_interface.v}) are reused byte-for-byte, unmodified, from
+\code{hardware/v1/} throughout every V2 milestone --- their real,
+already-verified electrical/timing requirements and page-mode behavior
+are unchanged, because the controller itself was never touched.
+
+\begin{fnnote}[Real ball assignment: defer to V1's own chapter]
+V1's own hardware chapter documents a real, \code{iodb.json}-verified,
+place\&route-confirmed ball assignment for every PSRAM signal
+(\code{psram\_a}, \code{psram\_dq}, \code{psram\_ce\_n/oe\_n/we\_n/
+lb\_n/ub\_n/zz\_n}). Since V2's own \code{neural\_multiprocessor.v}
+drives these signals through the identical, unmodified controller, that
+same real ball assignment applies unchanged if V2 is deployed on the
+same physical board --- it is not repeated here to avoid maintaining two
+copies of the same real data; see the V1 datasheet directly.
+\end{fnnote}
+
+\section{What V2 has not yet placed on real hardware}
+As stated in ch.~\ref{ch:host}, V2's own node-registration bus has no
+physical pin assignment in this revision --- every V2 characterization
+to date used either a Verilator testbench or an unconstrained
+(\code{--lpf-allow-unconstrained}) synthesis top-level. A real deployment
+would need:
+\begin{itemize}
+\item A physical host transport for the registration bus (ch.~\ref{ch:host}).
+\item A real, constrained \code{nextpnr-ecp5} place\&route run
+      producing a genuine \code{.lpf}/ball assignment for
+      \code{neural\_multiprocessor.v}'s own top-level pins, analogous to
+      V1's own \code{tools/pinout/gen\_lpf.py} flow.
+\item Re-verification that the real Fmax numbers in ch.~\ref{ch:impl2}
+      (obtained unconstrained) hold once real pin locations are fixed ---
+      pin placement can itself affect routing and therefore Fmax.
+\end{itemize}
+
+\section{Power supply, oscillator, configuration}
+Unchanged from V1: same board-level power sequencing, same oscillator,
+same JTAG/config-SPI boot path (fixed-function dedicated pins, outside
+RTL scope). No V2-specific hardware change was made or is required
+beyond the (not yet placed) registration-bus transport above.
+
+\section{SDRAM upgrade addendum (2026-09-07) --- current, authoritative
+board state}
+\label{sec:sdram-addendum}
+\begin{fnwarn}[This section supersedes the PSRAM description above for
+the current hardware baseline]
+The sections above describe an earlier V2 milestone that still reused
+V1's own PSRAM chain unconstrained. The project has since made a
+closed architectural decision (real \code{decisions.log} DEC-0034) to
+replace external memory with a single SDR SDRAM device, and has since
+upgraded that device's capacity and re-verified real, constrained
+place\&route timing. This section is the current, real, measured state
+--- see \code{hardware/v2/docs/MEMORY\_UPGRADE\_64MB\_N8.md} in the
+repository for the full investigation.
+\end{fnwarn}
+
+\subsection{Memory device}
+\textbf{Alliance Memory AS4C32M16SB-7BIN} --- 512\,Mbit (64\,MByte) SDR
+SDRAM, organized 4 banks $\times$ 8M words $\times$ 16 bits, 54-ball
+FBGA package (8$\times$8$\times$1.2\,mm max), $-40$ to $85^{\circ}$C
+industrial, $-7$ speed grade (143\,MHz max). VDD/VDDQ 3.3\,V $\pm$0.3\,V.
+Single-ended \code{CLK} --- \textbf{no \code{CLK\_N}}, this is SDR, not
+DDR, SDRAM. Real distributor availability confirmed: DigiKey product
+11613071, 568 units in stock, \$31.12/unit (qty 1), 16-week
+manufacturer lead time.
+
+\subsection{Complete AS4C32M16SB-7BIN ball assignment}
+From the manufacturer's own \code{-7BIN}-specific datasheet (Alliance
+Memory, Rev.\,1.4, June 2024, Figure~1.1 --- the real TFBGA ball
+diagram, not inferred from the TSOP-II \code{-7TIN} pinout).
+
+\begin{fnnote}[Address / Bank]
+A0=H7, A1=H8, A2=J8, A3=J7, A4=J3, A5=J2, A6=H3, A7=H2, A8=H1, A9=G3,
+A10/AP=H9, A11=G2, A12=G1, BA0=G7, BA1=G8.
+\end{fnnote}
+\begin{fnnote}[Data / Masks]
+DQ0=A8, DQ1=B9, DQ2=B8, DQ3=C9, DQ4=C8, DQ5=D9, DQ6=D8, DQ7=E9, DQ8=E1,
+DQ9=D2, DQ10=D1, DQ11=C2, DQ12=C1, DQ13=B2, DQ14=B1, DQ15=A2, LDQM=E8,
+UDQM=F1.
+\end{fnnote}
+\begin{fnnote}[Control / Power]
+CLK=F2, CKE=F3, CS\#=G9, RAS\#=F8, CAS\#=F7, WE\#=F9. VDD=\{A9,E7,J9\},
+VSS=\{A1,E3,J1\}, VDDQ=\{A7,B3,C7,D3\}, VSSQ=\{A3,B7,C3,D7\}, NC=E2.
+\end{fnnote}
+
+\subsection{FPGA $\leftrightarrow$ SDRAM mapping (real, LPF-verified)}
+From \code{hardware/v2/constraints/v2\_board\_top.lpf} (45/45 unique
+FPGA balls, no duplicates, LFE5U-45F-8BG381 rev.\,3.0 CSV-verified).
+
+\begin{fnnote}[FPGA ball $\to$ SDRAM ball, by signal group]
+\code{sdram\_a[0..12]}: D5,D3,F4,E5,E3,F5,A2,B1,C2,C1,D2,D1,F1 $\to$
+A0..A12 (H7,H8,J8,J7,J3,J2,H3,H2,H1,G3,H9,G2,G1). \code{sdram\_ba[0:1]}:
+E4,C3 $\to$ BA0,BA1 (G7,G8). \code{sdram\_dq[0..15]}:
+E1,G5,H3,J5,K3,K2,H1,J1,K1,K4,L4,L5,M5,M4,N4,N5 $\to$ DQ0..DQ15.
+\code{sdram\_dqm[0:1]}: P5,N3 $\to$ LDQM,UDQM. Control:
+\code{sdram\_cke/cs\_n/ras\_n/cas\_n/we\_n}: B5,C5,C4,A3,B3 $\to$
+CKE,CS\#,RAS\#,CAS\#,WE\#.
+\end{fnnote}
+
+\subsection{Real, measured clock closure (nextpnr-ecp5, 8 seeds/config)}
+\begin{tabularx}{\textwidth}{L{4.0cm} C{1.6cm} C{2.2cm} X}
+\toprule
+\rowh \thd{Configuration} & \thd{Pass} & \thd{Worst Fmax} & \thd{Notes} \\
+\midrule
+N\_SLOTS=4 @ 64\,MHz & 8/8 & 66.58\,MHz & Production baseline, GO \\
+\rowa N\_SLOTS=8 @ 64\,MHz & 5/8 & 60.12\,MHz & Open, not production-frozen \\
+N\_SLOTS=4/8 @ 80\,MHz & 0/8 & --- & NO-GO, genuine \code{ecppll}-regenerated PLL \\
+\bottomrule
+\end{tabularx}
+Real, measured after the ERR-0029 weight-cache hit-index optimization
+(serial priority scan $\to$ flat one-hot compare); see
+\code{hardware/v2/logs/errors.log} and \code{decisions.log} DEC-0040.

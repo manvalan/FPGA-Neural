@@ -1,0 +1,64 @@
+\chapter{Roadmap and development status}
+\label{ch:roadmap}
+
+\section{Development phases}
+\begin{tabularx}{\textwidth}{C{1.2cm} L{4.6cm} C{1.8cm} Y}
+\toprule
+\rowh \thd{Phase} & \thd{Title} & \thd{Status} & \thd{Content} \\
+\midrule
+1 & Parametric layer & \OK & inputs/neurons/parallelism, accumulation, bias, ReLU; test 32$\times$4/P=8. \\
+\rowa 2 & Parameter sweep & \OK & multiple configurations incl. non-multiple and degenerate; elaboration guard added. \\
+3 & Memory architecture & \OK & \code{neuron\_memory} single/multi-neuron, real PSRAM tested; multi-layer buffers $\to$ Phase~5. \\
+\rowa 4 & SPI interface & \OK & \code{spi\_slave}+\code{spi\_engine}, 17 opcodes incl. flash subsystem, Fmax checked at full-system level. \\
+5 & Multi-layer network & \OK$^\dagger$ & \code{layer\_sequencer}, configurable activations, runtime width; real toolchain checked. \\
+\rowa 6 & Host software & planned & Linux and ESP32 drivers on the same protocol. \\
+7 & Optimization & in progress & timing closure done (55$\to$75~MHz); PSRAM page-mode done (gather bandwidth +42\%); $x$/$w$ block RAM remains. \\
+\rowa 8 & Hardware training (opt.) & future & backprop, gradients, weight update. \\
+9 & Flash subsystem (F1-F7) & \OK & dedicated SPI master, flash$\leftrightarrow$PSRAM copy engine, 16-slot catalog with CRC32, fully independent 4-wire SPI bus (F7), 8 opcodes (\op{0x40}--\op{0x47}, ch.~\ref{ch:spi} §\ref{sec:flashspi}); real synthesis 0 errors. \\
+\bottomrule
+\end{tabularx}
+\begin{center}\footnotesize\itshape\color{fnGrey}
+$\dagger$ RTL, unit tests and end-to-end over simulated SPI complete; timing closure done:
+75.30~MHz (P2) / 60.26~MHz (P8) at the time of Phase~5, bit-exact across the whole
+regression; Fmax of the full system after Phase~9 (incl. independent flash subsystem):
+\textbf{67.91~MHz} (ch.~\ref{ch:impl}).\end{center}
+
+\section{Component status}
+\begin{tabularx}{\textwidth}{Y C{4.2cm}}
+\toprule
+\rowh \thd{Component} & \thd{Status} \\
+\midrule
+Parametric neural layer & \OK{} working \\
+\rowa Parametric inputs/neurons/parallelism & \OK \\
+Accumulation, bias, ReLU & \OK \\
+\rowa 32$\times$4 / P=8 validation & \OK \\
+Dedicated RAM (interface + controller + INT8 access) & \OK{} tested on real PSRAM \\
+\rowa SPI interface (17 opcodes incl. RUN\_NETWORK + flash) & \OK{} Fmax at full-system level \\
+Dual SPI & future \\
+\rowa Multi-layer engine & \OK{} timing closure 75.30~MHz (P2) at the time of Phase~5 \\
+Configurable activations (ACT\_NONE/ACT\_RELU) & \OK \\
+\rowa Runtime network width (one bitstream, any topology) & \OK{} measured savings \\
+Type \#2 graph network (act\_buffer, graph\_engine, netasm) & \OK{} RTL + tests + synthesis \\
+\rowa CABGA381 pinout (real \code{.lpf}, 57 signals incl. flash) & \OK{} place\&route-verified, 0 errors \\
+PSRAM page-mode (G7) & \OK{} done (37.53 cycles/edge, bandwidth +42\%) \\
+\rowa Flash subsystem (SPI master, copy engine, CRC32 catalog, independent bus F7) & \OK{} real synthesis 0 errors, Fmax 67.91~MHz \\
+Real bitstream (\code{ecppack}, P2/P8) & \OK{} 0 errors, part LFE5U-45F-8CABGA381 \\
+\rowa Linux / ESP32 host driver & planned \\
+Hardware training & future \\
+\bottomrule
+\end{tabularx}
+
+\section{Architectural principle (summary)}
+\begin{fnspec}[Foundation of the project]
+The FPGA implements the neural machine and owns its own RAM; the host configures and uses
+the machine. A build fixes the \emph{ceiling} (max layers, max width, PARALLEL); the host
+configures the \emph{actual} network --- number of layers, per-layer width, per-layer
+activation, trained parameters --- entirely at runtime, over SPI, into the FPGA's local
+memory. A single bitstream serves any topology up to that ceiling.
+\end{fnspec}
+
+\section{Long-term vision}
+The final goal is a reusable hardware block integrable into different future projects:
+the host platform can change (Linux, ESP32, MCU, PC) without changing the fundamental
+architecture of the engine. The FPGA becomes a dedicated neural computation peripheral,
+optimized for the topology required by each application.

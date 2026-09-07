@@ -1,0 +1,66 @@
+\chapter{Dataflow scheduling}
+\label{ch:sched}
+
+\section{Node lifecycle}
+\begin{center}
+\begin{tikzpicture}[font=\scriptsize,node distance=16mm,>=Stealth]
+ \node[fnstate](e){EMPTY};
+ \node[fnstate,right=of e](w){WAITING};
+ \node[fnstate,right=of w](r){READY};
+ \node[fnstate,right=of r](d){DISPATCHED};
+ \draw[fnarrow] (e) -- node[fnlbl,above]{register, deps$>$0} (w);
+ \draw[fnarrow] (e) to[bend left=25] node[fnlbl,above]{register, deps$=$0} (r);
+ \draw[fnarrow] (w) -- node[fnlbl,above]{all producers done} (r);
+ \draw[fnarrow] (r) -- node[fnlbl,above]{Director accepts} (d);
+\end{tikzpicture}
+\end{center}
+\code{DISPATCHED} is terminal (\S\ref{ch:arch}): a real, honest
+consequence, not an oversight --- see the roadmap (ch.~\ref{ch:roadmap})
+for the deferred slot-reclamation work item.
+
+\section{Verified graph topologies}
+\begin{tabularx}{\textwidth}{L{3.4cm} Y}
+\toprule
+\rowh \thd{Topology} & \thd{What it proves} \\
+\midrule
+Shared producer, 2 consumers & One node's completion resolves the dependency count of \emph{two} different waiting nodes independently. \\
+\rowa Multiple producers, 1 consumer & A node with \code{required}$>$1 only becomes \code{READY} once \emph{every} listed producer has completed, tracked across separate wake-up events. \\
+2-hop transitive diamond ($A,B$ independent; $C$ dep-$A$; $D$ dep-$B$; $E$ dep-$C,D$) & Correct cascading wake-up two hops deep --- $E$ does not fire until $C$ and $D$ have \emph{themselves} genuinely completed, not merely been marked ready. \\
+\rowa Mixed-depth fan-in (node depending on both a root and a 1-hop descendant) & Dependency resolution does not assume a uniform graph depth. \\
+Multilayer (8 layer-1 neurons, random INT8 data, feeding 2 layer-2 neurons reading their real shared result bytes) & Real cross-node \emph{data} forwarding through real PSRAM --- layer-2's golden values are computed from the real bytes layer-1 actually wrote, not from an independent expectation. \\
+\bottomrule
+\end{tabularx}
+All topologies above were exercised with the real, full
+\code{neural\_multiprocessor.v} (real V1 PSRAM chain, real
+\code{slot\_mem\_arbiter.v}) and verified bit-exact against a software
+golden model.
+
+\section{First-free dispatch}
+The Neural Director's own scheduling policy is deliberately the simplest
+one that is provably correct: a fixed, lowest-index priority scan over
+currently-free slots. Round-robin, least-loaded, or any fairness-aware
+alternative was explicitly deferred until real measured data showed
+whether it mattered (\S\ref{sec:fairness}).
+
+\section{Measured scheduling behavior}
+\label{sec:fairness}
+Real per-slot data (\code{N\_SLOTS}=4, a 128-neuron dense-layer
+workload) shows a striking imbalance: slots~0 and~1 each deliver 1008
+real tiles, while slots~2 and~3 deliver only 16 each --- despite all four
+slots reporting near-100\% ``busy'' utilization. The cause is not
+unfairness in isolation: once the shared PSRAM port is saturated
+(ch.~\ref{ch:mem}), there is rarely a moment where the low-index slots
+are simultaneously busy \emph{and} the high-index slots have nothing to
+do, so the fixed low-index-first scan keeps re-selecting the same two
+slots. This is a real, measured limitation of the current scheduler,
+carried into ch.~\ref{ch:roadmap} as an open item rather than patched
+without first measuring whether it is worth the added complexity for
+real workloads.
+
+\section{Correctness guarantees (measured, not assumed)}
+Across the full final benchmark campaign (6 workloads $\times$ 4
+\code{N\_SLOTS} configurations, re-verified after both memory
+optimizations): \textbf{zero} lost jobs, \textbf{zero} duplicated jobs
+(\code{jobs\_allocated == jobs\_completed == neurons\_completed} exactly,
+every run), \textbf{zero} deadlocks, \textbf{zero} timeouts, correct
+multi-hop dependency wake-up in every topology tested.

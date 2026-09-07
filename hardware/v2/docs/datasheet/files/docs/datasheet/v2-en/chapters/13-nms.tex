@@ -1,0 +1,261 @@
+\chapter{The Neural Memory System (NMS)}
+\label{ch:nms}
+
+\begin{fnnote}[Scope of this chapter]
+Chapters~\ref{ch:arch}--\ref{ch:impl2} document \textbf{Current V2}
+(\code{memory\_manager.v} + \code{activation\_cache.v}, DEC-0015/
+DEC-0016) as a complete, frozen, real-measured system in its own
+right. This chapter documents a \textbf{parallel, later evolution} ---
+the Neural Memory System (NMS) --- built to directly address Current
+V2's own central finding (\S\ref{sec:cache}'s own honest warning:
+real parallel scaling flat beyond \code{N\_SLOTS}=2, a single shared
+PSRAM port saturating regardless of on-chip organization). Both
+systems are real, both are independently synthesizable and
+simulatable, and both remain available: \textbf{Current V2 is not
+being retired by this chapter} --- \S\ref{sec:nmscompare}'s own real
+data shows the choice between them is configuration-dependent, not a
+strict win for either.
+\end{fnnote}
+
+\section{Design goal}
+Current V2's own memory path is fundamentally an on-demand,
+per-request architecture: every tile fetch is a fresh transaction,
+arbitrated one at a time onto the shared PSRAM port, with the
+activation cache's own single shared instance introducing exactly the
+kind of centralized combinational hit-check that \S\ref{sec:cache}
+already flagged as a real Fmax risk at higher \code{N\_SLOTS}. The
+NMS instead asks: \emph{what is the minimum on-chip organization that
+lets the Neural Processor array run at close to its own compute rate,
+treating PSRAM purely as backing storage?} Following the project's own
+established discipline, this was answered with real, measured data at
+every step (a real bandwidth-requirement study, a real bank-contention
+sweep, real candidate synthesis) rather than assumed.
+
+\section{STEP1 --- real bandwidth requirement study}
+\label{sec:nmsstep1}
+An idealized backing-store model (runtime-configurable latency and
+bandwidth, simulation-only, never synthesized) drove the real,
+unmodified \code{neural\_processor.v} directly, sweeping \code{N\_SLOTS}
+$\times$ \code{PREFETCH\_DEPTH} $\times$ latency $\times$ bandwidth (768
+real Verilator data points). Three real bugs in the study harness
+itself were found and fixed first (a registered-grant race, a
+single-transfer-at-a-time serialization cap, and a stale-value
+issuance throttle) before any result was trusted.
+
+\begin{fnnote}[Real result: a hard, linear bandwidth floor]
+Minimum aggregate bandwidth for $\ge$90/95/99\% of compute-only
+throughput scales \textbf{exactly linearly} with \code{N\_SLOTS} at
+\textbf{16~bytes/cycle/slot} ($=2\times$\code{P\_IN}, the raw
+activation+weight demand of one \code{neural\_processor.v} at its own
+maximum pipelined rate) --- a hard floor, not a design margin.
+\code{PREFETCH\_DEPTH} (tiles of lookahead) needed to actually reach
+that floor scales with round-trip latency, independent of bandwidth:
+$\approx$4 tiles hides 0--1~cycle latency; $\approx$16 tiles is
+\emph{not yet enough} to hide 16~cycles (83.4\% measured, not 90\%+).
+\end{fnnote}
+
+\section{STEP2 --- closed-form traffic model}
+Per slot at steady state: \textbf{weight} traffic is always
+\code{P\_IN}=8~B/cycle (never shared, no amortization possible ever);
+\textbf{activation} traffic is 8~B/cycle worst case (no sharing) down
+to $\approx$0 amortized (full sharing across a layer); \textbf{result}
+traffic is negligible ($1/n\_tiles$~B/cycle/slot). The 16~B/cycle/slot
+worst-case floor measured in STEP1 is exactly $8+8$ --- a clean
+cross-validation of the simulated result against the analytical model,
+not a coincidence.
+
+\section{STEP3 --- real bank-contention sweep}
+\label{sec:nmsstep3}
+A second simulation harness measured whether banking the shared
+Activation SRAM (broadcast-on-same-address, round-robin arbitration on
+conflict) actually lets \code{N\_SLOTS} scale under a \emph{realistic}
+dispatch stagger (the Neural Director dispatches one job at a time,
+never simultaneously) --- the exact mechanism behind Current V2's own
+flat-scaling finding. Two real bugs (fixed-priority starvation causing
+an actual simulation hang; a testbench/DUT handshake mismatch) were
+found and fixed first.
+
+\begin{fnnote}[Real result: banking recovers real parallel scaling]
+With \code{N\_BANKS}=\code{N\_SLOTS}, aggregate throughput scales
+\textbf{near-linearly} regardless of dispatch stagger (0--8 cycles
+tested): \code{N\_SLOTS}=1\,$\to$\,0.990, 2\,$\to$\,1.979 (1.999$\times$),
+4\,$\to$\,3.950 (3.990$\times$), 8\,$\to$\,7.869 (7.949$\times$)
+tiles/cycle. With \code{N\_BANKS}=1 (matching Current V2's own single
+shared port), utilization collapses under any nonzero stagger exactly
+as Current V2's own real benchmark showed (e.g.\ \code{N\_SLOTS}=2,
+stagger=1: 49.8\%) --- the first real, simulated confirmation in this
+project that \code{N=2>N=1} and \code{N=4>N=2} are achievable without
+the shared memory nullifying parallelism.
+\end{fnnote}
+
+\section{STEP4--7 --- real candidate synthesis and selection}
+Two real, synthesizable candidates were built and bit-exact verified
+for \emph{each} SRAM, then compared on real Yosys+nextpnr-ecp5 data
+(never chosen a priori):
+
+\textbf{Activation SRAM.} Candidate~A (\code{N\_SLOTS} private
+replicated copies, broadcast-write fill) vs.\ Candidate~B (banked +
+round-robin arbiter + 2-stage registered crossbar, deliberately
+pipelined per \S\ref{sec:cache}'s own Fmax lesson). Candidate~A won
+decisively: 2--4$\times$ higher real Fmax and $\approx$24$\times$
+fewer LUTs than Candidate~B at \code{N\_SLOTS}=8 (\code{MAX\_TILES}=16),
+for a real BRAM cost that stays cheap even at a much deeper, more
+realistic vector length (8~DP16KD, 7\% of the chip, at
+\code{MAX\_TILES}=256/\code{N\_SLOTS}=8) --- confirming the M3-era
+warning against assuming ``shallower depth $=$ less BRAM'': at
+\code{MAX\_TILES}=16 \emph{neither} candidate used any real BRAM at
+all (Yosys chose distributed LUT-RAM for both).
+
+\textbf{Weight SRAM.} Candidate~W1 (one native-width memory per slot,
+mirroring \code{weight\_buffer.v}'s own M3-era structure) vs.\
+Candidate~W2 (per-MAC-lane packed narrow memories). At
+\code{MAX\_TILES}=256 both use \emph{identical} real DP16KD count
+(one full block's own native 16\,Kbit capacity per slot, either way),
+but packed uses $\approx$2$\times$ fewer LUTs/FFs at \code{N\_SLOTS}=8
+for the same BRAM cost --- the wide single memory's own byte-lane
+write-enable decode logic is exactly what per-lane packing avoids by
+construction.
+
+\textbf{Selected}: replicated Activation SRAM + packed Weight SRAM.
+Combined real cost at \code{N\_SLOTS}=8/\code{MAX\_TILES}=256: 16
+DP16KD (14.8\% of the LFE5U-45F's 108 total) --- an honestly affordable
+real price for this project's own realistic workload sizes.
+
+\section{STEP8 --- full integration}
+\code{nms\_dataflow\_core.v} mirrors \code{dataflow\_core.v}'s own
+scope exactly: the Dependency Manager and Neural Director are
+\textbf{reused verbatim}, unmodified --- only the memory cluster
+changed. Each slot's own \code{nms\_memory\_manager.v} is structurally
+simpler than \code{memory\_manager.v}: since the on-chip SRAMs now hold
+the \emph{entire} vector (not just 2 double-buffered banks), there is
+no more bank-swap logic --- a slot simply reads sequentially once its
+own weight-fetch progress and the shared activation controller's own
+resident count both exceed the tile index it needs.
+
+\begin{fnwarn}[Four real bugs found at full integration scale]
+All four are the same root cause: a counter that must represent the
+\emph{value} \code{MAX\_TILES} itself (e.g.\ a 16-tile job with
+\code{MAX\_TILES}=16) needs one more bit than an address field
+indexing \code{0..MAX\_TILES$-$1} --- easy to miss because every test
+smaller than \code{MAX\_TILES} passes regardless. Found only once a
+real \code{n\_tiles}=\code{MAX\_TILES} job (this project's own
+realistic 16-tile neurons) was actually run: a truncated 16-bit
+compare that read 16 as 0 (hanging weight fetch entirely); an
+undersized counter wrapping 15$\to$0 instead of reaching 16 (an
+infinite re-fetch loop); a logic error comparing the wrong two signals
+introduced while fixing the first bug (deadlocking exactly the last
+tile of every job); and a top-level connecting wire left at the
+narrower width after both endpoint modules were widened (silently
+truncating the real value 16 back to 0 one wire short of the fix).
+Each was isolated via real cycle-by-cycle signal tracing, the same
+discipline used throughout this project.
+\end{fnwarn}
+
+7/7 bit-exact tests pass at \code{N\_SLOTS}=2, including the exact
+scenario STEP3 modeled (two slots dispatched together on the identical
+\code{x\_base}, different never-shared weights) and a new
+multi-tile test that specifically catches bug class 2 above.
+
+\section{STEP9--10 --- real end-to-end benchmark vs.\ Current V2}
+\label{sec:nmscompare}
+\code{nms\_neural\_multiprocessor.v} mirrors
+\code{neural\_multiprocessor.v}'s own real hardware-facing scope
+exactly (same real \code{slot\_mem\_arbiter.v}, same real,
+unmodified V1 PSRAM chain). The \textbf{identical} D-Stress workload
+(256 neurons, 16~inputs$\times$8 tiles, one shared input vector) used
+for every Current-V2 number in this datasheet was run through it,
+bit-exact against the same golden model.
+
+\begin{fnnote}[Real, direct comparison --- same workload, same toolchain]
+\begin{tabularx}{\textwidth}{L{3.6cm} C{2.8cm} C{2.8cm} C{1.6cm}}
+\toprule
+\rowh \thd{Metric (\code{N\_SLOTS}=2)} & \thd{Current V2} & \thd{NMS} & \thd{$\Delta$} \\
+\midrule
+Fmax (real P\&R)     & 87.72~MHz & \textbf{93.10~MHz} & $+$6.1\% \\
+\rowa LUT4            & 4359      & \textbf{1948}      & $-$55.3\% \\
+CCU2C                & 366       & 266                & $-$27.3\% \\
+\rowa TRELLIS\_FF      & 3924      & 3522               & $-$10.2\% \\
+DSP / BRAM            & 16 / 0    & 16 / 0             & $=$ \\
+\rowa D-Stress cycles  & 185428    & 185645             & $+$0.1\% \\
+D-Stress wall-clock   & 2113.9~$\mu$s & \textbf{1994.0~$\mu$s} & \textbf{$+$6.0\% faster} \\
+\rowa Effective MAC/s  & 15.50~M   & \textbf{16.43~M}   & $+$6.0\% \\
+\bottomrule
+\end{tabularx}
+\begin{tabularx}{\textwidth}{L{3.6cm} C{2.8cm} C{2.8cm} C{1.6cm}}
+\toprule
+\rowh \thd{Metric (\code{N\_SLOTS}=4)} & \thd{Current V2} & \thd{NMS} & \thd{$\Delta$} \\
+\midrule
+Fmax (real P\&R)     & 65.01~MHz (\FAIL) & 56.62~MHz (\FAIL) & $-$12.9pp \\
+\rowa D-Stress cycles  & 184795    & 184764             & $-$0.02\% \\
+D-Stress wall-clock   & 2842.6~$\mu$s & \textbf{3263.2~$\mu$s} & $-$12.9\% (NMS slower) \\
+\bottomrule
+\end{tabularx}
+\end{fnnote}
+
+Cycles are essentially flat between \code{N\_SLOTS}=2 and 4 for
+\emph{both} systems (185645$\to$184764 for NMS, $-$0.5\%) ---
+confirming STEP1's own analytical floor: a single real PSRAM port caps
+\emph{aggregate} throughput regardless of on-chip organization; NMS's
+banking work makes the on-chip side efficient, it cannot and does not
+remove the external bandwidth ceiling.
+
+\begin{fnwarn}[Real critical path found at N\_SLOTS=4/8 --- not hidden]
+Real nextpnr-ecp5 critical-path tracing at \code{N\_SLOTS}=4 shows the
+worst path running through
+\code{nms\_activation\_fill\_ctrl.v}'s own combinational
+priority-scan/address logic (6.26\,ns logic $+$ 11.40\,ns routing) ---
+the \emph{same class} of unpipelined, \code{N\_SLOTS}-scaling
+combinational cost \S\ref{sec:cache} already documented for
+\code{activation\_cache.v}, reintroduced here in the module that
+decides \emph{which} shared tag to chase (a genuinely different piece
+from the replicated SRAM itself, which has no such problem in
+isolation). \code{N\_SLOTS}$\le$2 is unaffected and real, measured
+faster; \code{N\_SLOTS}$\ge$4 is a real, open regression, not
+recommended, until this scan is pipelined (\S\ref{sec:nmsfuture}).
+\end{fnwarn}
+
+\section{Real per-metric detail, N\_SLOTS=2 (D-Stress)}
+\begin{tabularx}{\textwidth}{L{4.4cm} C{2.4cm} Y}
+\toprule
+\rowh \thd{Metric} & \thd{Value} & \thd{Note} \\
+\midrule
+Processor utilization       & 1.10\%   & tiles(4096)/(2$\times$185645 cycles) --- consistent with the project's own 1:170--1:220 compute-to-memory-wait finding \\
+\rowa Memory (PSRAM port) utilization & 90.4\%   & 167830/185645 busy cycles \\
+Memory stall (per slot)     & 93.6\%   & 92.5\% waiting on weight $+$ 1.1\% waiting on activation, measured directly \\
+\rowa Compute stall          & $\equiv$ memory stall & the Neural Processor stalls \emph{only} on a missing operand in this design --- no separate compute-only stall source exists \\
+Weight-buffer hit rate      & 0\%      & confirmed empirically (2048 real fetches $=$ 2048 tiles/slot, zero reuse) --- weights are never shared, by design \\
+\rowa Activation-buffer hit rate & 99.61\%  & only 16 real PSRAM fetches for 4096 tile-consumptions (256 neurons share one vector) \\
+Prefetch effectiveness      & low ($\approx$0\%) & a real, honest gap: this revision fetches weight ``as fast as possible'' but with no bounded lookahead buffer (\code{PREFETCH\_DISTANCE}), so weight-fetch latency dominates stall almost entirely --- see \S\ref{sec:nmsfuture} \\
+\rowa Parallel efficiency (N=2 vs.\ N=1) & 48.1\%   & real speedup $=$ cycles(1)/cycles(2) $=$ 178432/185645 $=$ 0.961$\times$ (N=2 needs \emph{more} cycles than N=1) --- the shared PSRAM port is still the bottleneck \\
+\bottomrule
+\end{tabularx}
+
+\section{Recommendation}
+Adopt NMS at \code{N\_SLOTS}$\le$2 as a real, measured upgrade over
+Current V2 at its own already-recommended default: faster, smaller,
+higher Fmax margin, bit-exact, same workload. Do \textbf{not} adopt
+NMS at \code{N\_SLOTS}=4/8 yet --- Current V2 is really faster there
+until the fill-controller pipelining fix below is implemented and
+re-measured. Both systems remain in the repository; selecting between
+them is a real, configuration-dependent decision, not a blanket
+replacement.
+
+\section{Open work (real, not hidden)}
+\label{sec:nmsfuture}
+\begin{itemize}
+\item \textbf{Pipeline \code{nms\_activation\_fill\_ctrl.v}'s own
+      priority-scan/address logic} --- the concrete, identified fix
+      for the \code{N\_SLOTS}=4/8 Fmax regression above.
+\item \textbf{Implement real bounded-lookahead weight prefetch}
+      (\code{PREFETCH\_DISTANCE}, per STEP1's own findings) --- the
+      current single-shot ``fetch as fast as possible'' weight path is
+      why prefetch effectiveness measures low; STEP1's own data shows
+      a real, achievable fix (depth scaled to real round-trip latency).
+\item Re-measure \code{N\_SLOTS}=1 and 8 D-Stress cycle counts for
+      full parity with Current V2's own 4-point table (only 2 and 4
+      measured this round, time-bounded).
+\item A fixed, smaller-\code{N\_BANKS} Activation SRAM variant was
+      never revisited after full replication was selected --- BRAM
+      cost was cheap enough at this project's real workload sizes that
+      it was never worth reconsidering.
+\end{itemize}

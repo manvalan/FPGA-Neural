@@ -1,0 +1,78 @@
+\chapter[Arbitraggio e top-level]{Arbitraggio e integrazione top-level}
+\label{ch:top}
+
+\section{\texttt{mem\_arbiter} --- arbitro a tre porte}
+Un unico master di memoria byte-level (che alimenta la catena condivisa
+\code{int8\_memory\_access} $\to$ \code{memory\_interface} $\to$ \code{psram\_controller})
+è arbitrato tra tre richiedenti:
+
+\begin{tabularx}{\textwidth}{C{1.3cm} L{3.4cm} Y}
+\toprule
+\rowh \thd{Porta} & \thd{Master} & \thd{Accessi} \\
+\midrule
+A & \code{spi\_engine} & \op{WRITE\_RAM} / \op{READ\_RAM}. \\
+\rowa B & \code{neuron\_memory} & Letture X/W/bias durante un'esecuzione. \\
+C & \code{layer\_sequencer} & Letture descrittori + scritture buffer tra layer. \\
+\bottomrule
+\end{tabularx}
+
+Priorità fissa \textbf{B $>$ C $>$ A}: un'inferenza in corso è più critica della
+contabilità del sequencer, che a sua volta è più critica di un accesso SPI manuale
+appena arrivato. In funzionamento normale B e C sono comunque temporalmente disgiunti
+(\code{neuron\_memory} richiede solo durante un'esecuzione, \code{layer\_sequencer} solo
+nelle pause tra layer), quindi la priorità conta soprattutto per il caso limite di un
+\op{WRITE\_RAM}/\op{READ\_RAM} manuale che arriva durante un'esecuzione multi-layer.
+
+\begin{center}
+\begin{tikzpicture}[font=\scriptsize,node distance=6mm]
+ \node[fnblock,minimum width=30mm](a){Port A --- \code{spi\_engine}};
+ \node[fnblock,below=4mm of a,minimum width=30mm](b){Port B --- \code{neuron\_memory}};
+ \node[fnblock,below=4mm of b,minimum width=30mm](c){Port C --- \code{layer\_sequencer}};
+ \node[fnblockD,right=16mm of b,minimum width=26mm,minimum height=16mm](arb){\code{mem\_arbiter}\\{\scriptsize B$>$C$>$A}};
+ \node[fnblockT,right=14mm of arb,minimum width=26mm](m){catena memoria\\{\scriptsize condivisa}};
+ \draw[fnarrow] (a)-|(arb.west|-a); \draw[fnarrow] (b)--(arb.west);
+ \draw[fnarrow] (c)-|(arb.west|-c);
+ \draw[fnbus] (arb)--(m);
+\end{tikzpicture}
+\end{center}
+
+Concesso l'accesso, l'arbitro mantiene la proprietà fino all'impulso \code{m\_ready}
+della singola transazione, poi rilascia: tutti e tre i master emettono \code{req} come
+impulso pulito di un ciclo, quindi è sufficiente un design grant-and-forward senza code.
+
+\section{\texttt{spi\_neuron\_top} --- integrazione completa}
+Il top-level collega SPI (\code{spi\_slave}+\code{spi\_engine}), l'arbitro, il sequencer,
+\code{neuron\_memory} e la catena PSRAM. Il reset di \code{neuron\_memory} è l'OR del
+reset globale con l'impulso di soft-reset dell'opcode \op{RESET}, così l'host può
+recuperare il motore via SPI senza reset fisico (la RAM resta intatta).
+
+\begin{center}
+\begin{tikzpicture}[font=\scriptsize,node distance=7mm]
+ \node[fnblockA,minimum width=22mm](ss){\code{spi\_slave}};
+ \node[fnblockA,right=8mm of ss,minimum width=22mm](se){\code{spi\_engine}};
+ \node[fnblockT,below=8mm of se,minimum width=26mm](sq){\code{layer\_sequencer}};
+ \node[fnblockD,right=10mm of se,minimum width=24mm](mux){MUX ctrl\\{\scriptsize su \code{seq\_busy}}};
+ \node[fnblock,below=8mm of mux,minimum width=26mm](nm){\code{neuron\_memory}};
+ \node[fnblockD,right=10mm of mux,minimum width=22mm](arb){\code{mem\_arbiter}};
+ \node[fnblockA,right=8mm of arb,minimum width=26mm](mem){catena PSRAM};
+ \draw[fnarrow] (ss)--(se);
+ \draw[fnarrow] (se)--(mux);
+ \draw[fnarrow] (sq)--(mux);
+ \draw[fnarrow] (mux)--(nm);
+ \draw[fnarrow] (se.south) to[bend right=10] (arb.north west);
+ \draw[fnarrow] (nm)--(arb);
+ \draw[fnarrow] (sq.east) to[bend right=20] (arb.south west);
+ \draw[fnbus] (arb)--(mem);
+\end{tikzpicture}
+\end{center}
+
+Il multiplexer commuta le linee di controllo di \code{neuron\_memory} tra il sequencer
+(mentre \code{seq\_busy} è alto) e il percorso diretto di \code{spi\_engine} (modalità
+single-layer legacy), restituendo il motore al percorso diretto a fine sequenza.
+
+\begin{fnnote}[Verifica end-to-end]
+\code{spi\_neuron\_top} è verificato in simulazione con PSRAM reale
+(\code{psram\_model.v}, nessun mock): RESET/READ\_CONFIG/WRITE\_RAM/READ\_RAM/SET\_BASE/
+START/STATUS/READ\_OUTPUT e \op{RUN\_NETWORK} sono esercitati puramente su SPI simulato
+(cap.~\ref{ch:impl}).
+\end{fnnote}

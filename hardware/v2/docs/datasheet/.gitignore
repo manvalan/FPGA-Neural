@@ -1,0 +1,21 @@
+# LaTeX build artifacts (latexmk et al.) -- sources and rendered PDFs
+# are versioned, intermediate build byproducts are not.
+*.aux
+*.log
+*.out
+*.toc
+*.lof
+*.lot
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.bbl
+*.bcf
+*.blg
+*.run.xml
+*.nav
+*.snm
+*.vrb
+
+# macOS
+.DS_Store
