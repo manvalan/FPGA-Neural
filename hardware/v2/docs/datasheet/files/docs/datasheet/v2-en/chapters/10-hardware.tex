@@ -105,18 +105,41 @@ CKE,CS\#,RAS\#,CAS\#,WE\#.
 \end{fnnote}
 
 \subsection{Real, measured clock closure (nextpnr-ecp5, 8 seeds/config)}
+\label{sec:clock-closure-current}
+\begin{fnwarn}[Updated 2026-09-07 --- supersedes the ERR-0029-era numbers below]
+Flash \#1 (\S\ref{sec:prog-addendum}, since removed) briefly regressed
+N\_SLOTS=4 from 8/8 to 3/8 while it was integrated; that integration
+was reverted (user priority: clock frequency over on-board flash
+persistence). A further real fix (DEC-0042, replacing a combinational
+fan-out with a synchronous counter, credited to the user's own
+diagnosis) closed N\_SLOTS=4 back to 8/8 on the flash-free design ---
+the numbers below are the CURRENT, real, final state.
+\end{fnwarn}
 \begin{tabularx}{\textwidth}{L{4.0cm} C{1.6cm} C{2.2cm} X}
 \toprule
-\rowh \thd{Configuration} & \thd{Pass} & \thd{Worst Fmax} & \thd{Notes} \\
+\rowh \thd{Configuration} & \thd{Pass} & \thd{Worst / Best Fmax} & \thd{Notes} \\
 \midrule
-N\_SLOTS=4 @ 64\,MHz & 8/8 & 66.58\,MHz & Production baseline, GO \\
-\rowa N\_SLOTS=8 @ 64\,MHz & 5/8 & 60.12\,MHz & Open, not production-frozen \\
-N\_SLOTS=4/8 @ 80\,MHz & 0/8 & --- & NO-GO, genuine \code{ecppll}-regenerated PLL \\
+N\_SLOTS=4 @ 64\,MHz & \textbf{8/8} & 64.55 / 72.37\,MHz & \textbf{Production baseline, GO} \\
+\rowa N\_SLOTS=8 @ 64\,MHz & 3/8 & --- & Deferred by explicit user request, not pursued further \\
+N\_SLOTS=4/8 @ 80\,MHz & 0/8 & --- & NO-GO, genuine \code{ecppll}-regenerated PLL (re-confirmed pre-revert; not re-tested post-revert, expected unchanged) \\
 \bottomrule
 \end{tabularx}
-Real, measured after the ERR-0029 weight-cache hit-index optimization
-(serial priority scan $\to$ flat one-hot compare); see
-\code{hardware/v2/logs/errors.log} and \code{decisions.log} DEC-0040.
+Root cause of the last N\_SLOTS=4 failure (seed1, real critical-path
+trace): \code{neural\_director.job\_out\_slot} $\to$
+\code{dependency\_manager.node\_resolved}/\code{node\_state}, a
+producer-completion broadcast crossing physically distant regions of
+the die (75--84\% routing, not a serial logic chain --- already a
+flat, parallel 64-way compare, so the ERR-0027/0028/0029 restructuring
+fix class does not apply here). The real contributor found: this
+chapter's own \code{FPGA\_DATA\_READY} support (\S\ref{sec:host-addendum})
+read \code{node\_state[0:N\_NODES-1]} combinationally every cycle,
+adding real fan-out onto that same congested signal. Fixed by
+replacing the OR-reduce with a synchronous up/down counter (see
+\S\ref{sec:host-addendum} for the exact formula) --- worst seed
+improved 62.47\,MHz $\to$ 64.55\,MHz, closing the last failing seed.
+See \code{decisions.log} DEC-0042 for full detail. A further
+pipelining fix on the same broadcast path is a real, identified,
+not-yet-attempted option if more margin is ever needed.
 
 \section{Power supply design (2026-09-07) --- verified against the real
 Lattice hardware checklist}
@@ -246,34 +269,34 @@ FPGA-TN-02038-2.0 \S3--4. Full schematic capture (BOM, connectors,
 FPGA--RAM/FLASH and PROG sections) pending separately.}
 \end{center}
 
-\section{Programming architecture (2026-09-07) --- two independent
-flash devices, ESP32 over JTAG only}
+\section{Programming architecture (updated 2026-09-07) --- single
+boot flash, ESP32 over JTAG only}
 \label{sec:prog-addendum}
-\begin{fnwarn}[Real, closed design -- not a placeholder]
-Converged after evaluating and rejecting a single-shared-flash and an
-SSPI-every-boot alternative (see \code{decisions.log} DEC-0041 for the
-full comparison). This is the current, real architecture.
+\begin{fnwarn}[Real, closed design -- superseded once, now final]
+Originally converged on a two-flash design (\S below described flash
+\#1 for neural-network data and flash \#2 for boot). Flash \#1 was
+fully implemented (real V1 subsystem instantiated, a new byte$\leftrightarrow$word
+adapter, a new SPI opcode, a dedicated testbench, 64/64 bytes verified
+bit-exact) and then \textbf{removed again}, on the user's own explicit
+priority call: it measurably regressed N\_SLOTS=4's own real timing
+closure (8/8 $\to$ 3/8 PASS at 64\,MHz), and clock frequency was
+judged more valuable than on-board persistent weight storage --- the
+ESP32 can push weights fresh each session instead. Reverted cleanly
+via \code{git revert} (commit \code{59901a4}, fully recoverable from
+history if ever needed again). This section now describes the
+current, real, single-flash architecture. See \code{decisions.log}
+DEC-0041 (original two-flash design) and DEC-0042 (removal + the
+timing recovery that followed) for the complete history.
 \end{fnwarn}
 
-\subsection{Two physically separate flash chips}
-\begin{itemize}
-\item \textbf{Flash \#1} --- neural-network weights/graph data.
-      V1's own real subsystem (\code{flash\_copy\_engine.v}/
-      \code{flash\_slot\_manager.v}), 4 ordinary GPIO balls. V1's own
-      real balls (\code{flash\_sclk}=E3, \code{flash\_mosi}=D3,
-      \code{flash\_miso}=D5, \code{flash\_cs\_n}=E4) are \textbf{not}
-      reusable in V2 --- confirmed conflict, all four already carry
-      V2's own SDRAM bus. New balls reserved (bank~7, 3.3\,V):
-      \code{flash\_sclk}=B2, \code{flash\_mosi}=E2,
-      \code{flash\_miso}=F2, \code{flash\_cs\_n}=F3. \textbf{Not yet
-      in the LPF} --- the RTL port does not exist in
-      \code{fpga\_neural\_v2\_top.v} yet (a real, separate, open
-      integration task).
-\item \textbf{Flash \#2} --- boot bitstream only. Connects
-      exclusively to the ECP5's own dedicated sysCONFIG pins, Master
-      SPI mode, auto-boots every power-up, zero ESP32 involvement in
-      normal operation.
-\end{itemize}
+\subsection{One physical flash chip: boot bitstream only}
+Connects exclusively to the ECP5's own dedicated sysCONFIG pins,
+Master SPI mode, auto-boots every power-up, zero ESP32 involvement in
+normal operation. No second flash device, no on-board neural-network
+weight persistence in the current design --- the host (ESP32) is
+responsible for pushing weight/activation data into SDRAM fresh each
+session via the real SPI application protocol
+(\S\ref{sec:host-addendum}).
 
 \subsection{ESP32 $\leftrightarrow$ ECP5: JTAG only}
 Neither ESP32-S3 nor ESP32-C6 has a hardware JTAG \emph{master}
@@ -311,7 +334,7 @@ D1/MISO=V2.
 Confirmed real and safe (Lattice FPGA-TN-02039-2.3 sysCONFIG User
 Guide, \S6.1.2): once User Mode is reached, the MSPI dedicated pins
 tristate with a weak pull-up, so they never contend with another
-driver on the same net --- not load-bearing for this specific
-two-chip architecture (flash \#1/\#2 are physically separate), but
-confirms the mechanism is real should a future revision ever share a
-single chip.
+driver on the same net --- not load-bearing for the current
+single-flash architecture (nothing else shares these pins), but
+confirms the mechanism is real should a future revision ever add a
+second flash device sharing this same chip.

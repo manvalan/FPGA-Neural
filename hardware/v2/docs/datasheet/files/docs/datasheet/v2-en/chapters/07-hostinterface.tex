@@ -85,11 +85,35 @@ useful to a host waiting on a result:
 \]
 where \code{job\_active} is per-slot (already real, \S\ref{ch:sched}),
 \code{queue\_empty} is \code{neural\_director.v}'s own dispatch-queue
-occupancy, and \code{any\_pending} (new) is an OR-reduce over
-dependency\_manager's own node table for any node still
-\code{WAITING} or \code{READY} (i.e. registered but not yet
-dispatched --- \code{DISPATCHED} nodes are tracked by the two signals
-above instead, not here). \code{FPGA\_DATA\_READY} is a sticky
+occupancy, and \code{any\_pending} tracks whether any node is
+currently registered but not yet dispatched (\code{WAITING} or
+\code{READY} --- \code{DISPATCHED} nodes are tracked by the two
+signals above instead, not here).
+
+\begin{fnwarn}[Updated 2026-09-07 --- \code{any\_pending} implementation changed]
+The first real implementation computed \code{any\_pending} as a
+combinational OR-reduce over \code{dependency\_manager}'s own
+\code{node\_state[0:N\_NODES-1]} array every cycle. A real 8-seed
+\code{nextpnr-ecp5} P\&R sweep later showed this adding genuine
+fan-out onto \code{node\_state} --- a signal that also sits on this
+project's own worst real critical path
+(\code{neural\_director.job\_out\_slot} $\to$
+\code{dependency\_manager.node\_resolved}/\code{node\_state}), costing
+real Fmax margin (traced to a real 62.47\,MHz failing seed at
+N\_SLOTS=4 \S64\,MHz --- see ch.~\ref{ch:hw} \S\ref{sec:clock-closure-current}).
+Replaced (the user's own suggestion) with a synchronous up/down
+counter: \code{pending\_count} increments on a node's own registration
+acceptance (\code{reg\_valid\&\&reg\_ready}) and decrements on its own
+dispatch acceptance (\code{ready\_valid\&\&ready\_ready}); \code{any\_pending
+= (pending\_count != 0)}. Mathematically identical to the original
+OR-reduce (nodes are never reclaimed mid-run, ch.~\ref{ch:sched}), but
+reads one small registered counter instead of scanning a 16-wide array
+every cycle --- zero added fan-out on the congested signal. Recovered
+the last failing N\_SLOTS=4 seed (62.47 $\to$ 64.55\,MHz), closing
+8/8. See \code{decisions.log} DEC-0042.
+\end{fnwarn}
+
+\code{FPGA\_DATA\_READY} is a sticky
 register: set on the \code{sys\_busy} $1\to0$ edge, cleared the
 instant \code{sys\_busy} goes high again --- self-clearing, no host
 acknowledgement command needed.

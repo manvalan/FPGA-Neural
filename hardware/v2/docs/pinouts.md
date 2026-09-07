@@ -83,19 +83,9 @@ W2	PB11B: D0/MOSI/IO0	D0/MOSI verso flash #2
 V2	PB11A: D1/MISO/IO1	D1/MISO verso flash #2
 U3	CCLK (vedi sopra)	MCLK verso flash #2, pull-up debole interna
 
-Questi 4 ball (insieme a PROGRAMN/INITN/DONE sopra) collegano l'FPGA esclusivamente alla flash #2 (boot) — MAI alla flash #1 (dati rete neurale), che resta su un bus GPIO ordinario separato (sotto).
+Questi 4 ball (insieme a PROGRAMN/INITN/DONE sopra) collegano l'FPGA esclusivamente alla flash di boot — unico chip flash presente nel design attuale.
 
-Flash #1 (dati rete neurale) — ball riservati, RTL non ancora presente in V2
-
-**Importante**: i ball reali usati da V1 per questo stesso bus (`flash_sclk`=E3, `flash_mosi`=D3, `flash_miso`=D5, `flash_cs_n`=E4) sono **già occupati in V2** dal bus SDRAM (E3=sdram_a[4], D3=sdram_a[1], D5=sdram_a[0], E4=sdram_ba[0]) — non riutilizzabili, V2 ha una geometria pin diversa da V1. Individuati 4 ball liberi alternativi, stesso banco 7 (stessa tensione 3.3V del resto del bus SDRAM):
-
-Ball	Funzione dual (libera, riusabile come GPIO ordinario)
-B2	VREF1_7 (non serve, nessuno standard I/O riferito a VREF in uso)
-E2	PCLKC7_0 (ingresso PLL non usato, riusabile come GPIO)
-F2	PCLKT7_0 (ingresso PLL non usato, riusabile come GPIO)
-F3	PCLKC7_1 (ingresso PLL non usato, riusabile come GPIO)
-
-Assegnazione proposta: `flash_sclk`=B2, `flash_mosi`=E2, `flash_miso`=F2, `flash_cs_n`=F3. **Non ancora nel LPF**: `flash_copy_engine.v`/`flash_slot_manager.v` (RTL V1 reale) non sono stati portati nel top-level di V2 — aggiungere un `LOCATE COMP` per questi segnali ora romperebbe la sintesi, dato che non esiste ancora una porta corrispondente in `fpga_neural_v2_top.v`. Riservati qui solo come ball, in attesa dell'integrazione RTL.
+**Aggiornamento 2026-09-07 — Flash #1 (dati rete neurale) rimossa**: era stata realmente integrata (RTL V1 `flash_copy_engine.v`/`flash_slot_manager.v` istanziato, adapter nuovo, opcode SPI dedicato, testbench dedicato, verificata bit-exact) sui ball B2/E2/F2/F3 (banco 7). **Rimossa di nuovo** su scelta esplicita dell'utente: degradava il timing reale di N_SLOTS=4 (8/8→3/8 PASS a 64MHz) e la frequenza di clock è stata giudicata più importante della persistenza locale dei pesi — l'ESP32 può ricaricarli ad ogni sessione via il protocollo SPI applicativo. Revert pulito (`git revert`, commit `59901a4`, recuperabile in futuro). I ball B2/E2/F2/F3 sono di nuovo liberi (nessuna funzione riservata). Vedi `decisions.log` DEC-0041 (design originale) e DEC-0042 (rimozione + recupero del timing).
 
 Decoupling
 
