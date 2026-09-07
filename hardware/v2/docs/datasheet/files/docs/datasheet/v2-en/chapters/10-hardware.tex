@@ -338,3 +338,65 @@ driver on the same net --- not load-bearing for the current
 single-flash architecture (nothing else shares these pins), but
 confirms the mechanism is real should a future revision ever add a
 second flash device sharing this same chip.
+
+\section{Real KiCad schematic review (2026-09-07)}
+\label{sec:schematic-review}
+\begin{fnwarn}[User-authored schematic, reviewed against every real ball
+assignment established in this chapter]
+This section records an actual review pass of the user's own KiCad
+capture (sheet \code{FPGA-Neural/FPGA.kicad\_sch}) against the real
+ball tables above --- confirmed items and real, disclosed findings,
+not a generic checklist.
+\end{fnwarn}
+
+\subsection{Confirmed correct}
+JTAG (TCK=T5, TDI=R5, TDO=V4, TMS=U5); the complete real SDRAM bus
+(A0--A12, all 16 DQ, BA0/BA1, LDQM/UDQM, CLK=F2, CKE=F3, CS\#=G9,
+RAS\#=F8); \code{TLV62568}'s real component values (L1=2.2\,\textmu H,
+R1=100\,k$\Omega$/R2=120\,k$\Omega$ feedback divider, C6=4.7\,\textmu F);
+\code{TLV73325}'s 2.5\,V output; the VCCAUX ferrite (180\,$\Omega$,
+matching the approved \code{CBG160808U181T}); \code{FPGA\_DATA\_READY}=G3,
+\code{FPGA\_RESET}=B4, \code{osc\_clk}=H5; CFG\_1's 10\,k$\Omega$
+pull-up (inside the required 1--10\,k$\Omega$ range).
+
+\subsection{Real findings (confirmed, to be corrected)}
+\begin{enumerate}
+\item \textbf{Boot-flash net-name mismatch}: the flash chip's own pins
+      are labeled \code{FPGA\_SPI\_CS/SCLK/MOSI/MISO}; the ECP5's
+      dedicated MSPI pins (CSSPIN/MCLK/D0/D1, ball R2/U3/W2/V2) are
+      labeled \code{FGPA\_SPI\_CLK/MISO/MOSI/CS} --- a transposed
+      \code{FGPA}/\code{FPGA} typo, and \code{SCLK} vs.\ \code{CLK}
+      are two different label strings. KiCad nets are formed by exact
+      label-text match; as captured, the boot flash is electrically
+      disconnected from the FPGA's own configuration engine ---
+      auto-boot from flash would silently fail. \textbf{Fix}: make all
+      eight labels identical text.
+\item \textbf{SDRAM CAS\#/WE\# appear swapped}: schematic shows
+      CAS\#=F9, WE\#=F7; the real, independently-verified assignment
+      (this chapter, Alliance Memory datasheet-derived) is
+      \textbf{CAS\#=F7, WE\#=F9}.
+\end{enumerate}
+
+\subsection{Open items (not resolvable from the schematic image alone)}
+\begin{itemize}
+\item \code{TLV62568}'s EN pin: is \code{R3}=499\,k$\Omega$ actually on
+      EN, and to which rail?
+\item \code{TLV73325}'s EN pin: connected to anything?
+\item A \code{+1V1} label appears near the VCCAUX ferrite (L2)/its
+      decoupling (C8/C9) --- VCCAUX must remain 2.5\,V after the
+      ferrite (a ferrite bead filters, it does not change DC voltage);
+      confirm this label belongs to a different, merely nearby net.
+\item JTAG pull-up array (R5--R8, 4.7\,k$\Omega$): TDI/TDO/TMS need a
+      pull-up to VCCIO8, TCK needs a pull-\emph{down} to GND --- a
+      single bussed (common-node) array package cannot provide both
+      polarities. Confirm TCK is wired separately from the other
+      three.
+\end{itemize}
+
+\section{PCB module form factor (reserved)}
+\label{sec:pcb-module}
+Target: a castellated-edge SMD module, approximately
+\textbf{50\,mm $\times$ 25\,mm}, for mounting onto a carrier board ---
+dimensions and pin-out placeholder, real layout pending. This section
+will be filled in with the actual module outline, castellation pin
+map, and mechanical drawing once available.
