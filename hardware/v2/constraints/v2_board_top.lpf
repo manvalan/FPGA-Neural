@@ -106,6 +106,15 @@ LOCATE COMP "sdram_dqm[1]" SITE "N3"; IOBUF PORT "sdram_dqm[1]" IO_TYPE=LVCMOS33
 // COMP in this file) via the Trellis iodb.json + official CSV.
 LOCATE COMP "data_ready" SITE "G3"; IOBUF PORT "data_ready" IO_TYPE=LVCMOS33;
 
+// Flash #1 (neural-network data), ordinary GPIO bank 7 -- V1's own
+// real balls (E3/D3/D5/E4) are NOT reusable here, already occupied by
+// V2's SDRAM bus (see decisions.log DEC-0041); these are new, free
+// balls confirmed via Trellis iodb.json.
+LOCATE COMP "flash_sclk"  SITE "B2"; IOBUF PORT "flash_sclk"  IO_TYPE=LVCMOS33;
+LOCATE COMP "flash_mosi"  SITE "E2"; IOBUF PORT "flash_mosi"  IO_TYPE=LVCMOS33;
+LOCATE COMP "flash_miso"  SITE "F2"; IOBUF PORT "flash_miso"  IO_TYPE=LVCMOS33;
+LOCATE COMP "flash_cs_n"  SITE "F3"; IOBUF PORT "flash_cs_n"  IO_TYPE=LVCMOS33;
+
 // All 17 top-level ports of fpga_neural_v2_top are now real-ball
 // assigned: osc_clk, ext_rst_n, spi_sclk, spi_mosi, spi_miso,
 // spi_cs_n, sdram_cke, sdram_cs_n, sdram_ras_n, sdram_cas_n,
