@@ -371,17 +371,19 @@ pull-up (inside the required 1--10\,k$\Omega$ range).
       disconnected from the FPGA's own configuration engine ---
       auto-boot from flash would silently fail. \textbf{Fix}: make all
       eight labels identical text.
-\item \textbf{SDRAM CAS\#/WE\# appear swapped}: schematic shows
-      CAS\#=F9, WE\#=F7; the real, independently-verified assignment
-      (this chapter, Alliance Memory datasheet-derived) is
-      \textbf{CAS\#=F7, WE\#=F9}.
 \end{enumerate}
+
+\begin{fnnote}[Checked and cleared]
+SDRAM CAS\#/WE\#: user confirmed CAS\#=F7, WE\#=F9 in the real
+schematic --- matches this chapter exactly. The apparent swap in the
+original review was a misread of the schematic image, not a real
+error.
+\end{fnnote}
 
 \subsection{Open items (not resolvable from the schematic image alone)}
 \begin{itemize}
 \item \code{TLV62568}'s EN pin: is \code{R3}=499\,k$\Omega$ actually on
       EN, and to which rail?
-\item \code{TLV73325}'s EN pin: connected to anything?
 \item A \code{+1V1} label appears near the VCCAUX ferrite (L2)/its
       decoupling (C8/C9) --- VCCAUX must remain 2.5\,V after the
       ferrite (a ferrite bead filters, it does not change DC voltage);
@@ -442,9 +444,13 @@ apply --- each resistor can go to its own correct rail. U5 confirms
 the 16\,MHz oscillator, previously missing from the capture, is now
 present.
 
-\subsection{Still open}
-TLV73325's EN pin has no dedicated resistor in this BOM --- presumably
-a direct wire to +3.3\,V (always-enabled); not yet confirmed.
+\subsection{Resolved}
+TLV73325's EN pin: no dedicated resistor needed --- direct wire to
++3.3\,V (VIN), always-enabled. Unlike TLV62568's own soft-start
+R3=499\,k$\Omega$ pull-up, a plain LDO has no equivalent timing
+requirement (per TI's own datasheet: ``active high, do not leave
+floating,'' no sequencing note); no dynamic enable/disable control
+exists elsewhere in this design.
 
 \section{PCB module form factor (reserved)}
 \label{sec:pcb-module}
