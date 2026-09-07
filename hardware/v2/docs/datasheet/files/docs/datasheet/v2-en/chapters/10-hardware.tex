@@ -393,6 +393,59 @@ pull-up (inside the required 1--10\,k$\Omega$ range).
       three.
 \end{itemize}
 
+\section{Bill of Materials (real, KiCad-exported, 2026-09-07)}
+\label{sec:bom}
+\begin{fnwarn}[Real export, cross-checked against every value this
+chapter specifies]
+Most values match exactly (feedback divider, inductor, ferrite,
+regulators, SDRAM). One real discrepancy found: see below.
+\end{fnwarn}
+
+\begin{tabularx}{\textwidth}{L{2.4cm} C{1.0cm} L{2.6cm} X}
+\toprule
+\rowh \thd{Ref} & \thd{Qty} & \thd{Value} & \thd{Footprint / Part} \\
+\midrule
+C2,C3,C9,C13,C15,C17,C19,C21,C23,C25,C27,C28,C30 & 13 & 100\,nF & 0402 \\
+\rowa C4 & 1 & 1\,\textmu F & 01005 (TLV73325 CIN) \\
+C5,C7,C8,C10,C11,C12,C14,C16,C18,C20,C22,C24,C26,C29 & 14 & 10\,\textmu F & 0603 \\
+\rowa C6 & 1 & 4.7\,\textmu F & 01005 (TLV62568 CIN) \\
+L1 & 1 & 2.2\,\textmu H & 0805, 1.7\,A/215\,m$\Omega$ \\
+\rowa L2 & 1 & 180\,$\Omega$ & 0603, \code{CBG160808U181T} (VCCAUX ferrite) \\
+R1 & 1 & 100\,k$\Omega$ & 0402 (TLV62568 FB) \\
+\rowa R2 & 1 & 120\,k$\Omega$ & 0402 (TLV62568 FB) \\
+R3 & 1 & 499\,k$\Omega$ & 0402 (TLV62568 EN, matches TI's own reference) \\
+\rowa R4 & 1 & 10\,k$\Omega$ & 0402 (CFG\_1 pull-up) \\
+R5--R12 & 8 & 4.7\,k$\Omega$ & 0402, discrete (JTAG/PROGRAMN/INITN/DONE/CSSPIN) \\
+\rowa U1 & 1 & \code{TLV62568DBV} & SOT-23-5 \\
+U2 & 1 & \code{LFE5U-45F-8BG381I} & CABGA381, \textbf{see discrepancy below} \\
+\rowa U3 & 1 & \code{TLV73325PDBV} & SOT-23-5 \\
+U4 & 1 & \code{AS4C32M16SB-7BIN} & 54-ball TFBGA, 8$\times$8$\times$1.2\,mm (real footprint dims match the datasheet exactly) \\
+\rowa U5 & 1 & 16\,MHz & 3225-4Pin crystal \\
+U9 & 1 & \code{W25Q128JVPIM} & WSON-8, 6$\times$5\,mm (real Winbond DTR datasheet linked) \\
+\bottomrule
+\end{tabularx}
+
+\subsection{Discrepancy: FPGA grade}
+\textbf{U2 is captured as \code{LFE5U-45F-8BG381I}} (industrial,
+$-40$ to $+85^{\circ}$C) --- every other reference in this project
+(LPF, this chapter, decisions.log) uses \textbf{\code{LFE5U-45F-8BG381C}}
+(commercial). Could be a deliberate upgrade (consistent with the
+SDRAM's own industrial rating), but needs an explicit confirmation ---
+otherwise a real part-number error in the KiCad library.
+
+\subsection{Open items resolved by this BOM}
+R3=499\,k$\Omega$ confirms TLV62568's EN is populated (matches TI's
+own reference circuit exactly). R5--R12 being 8 \emph{discrete} 0402
+parts (not a single multi-resistor array footprint) confirms the
+earlier ``bussed array can't mix pull-up/pull-down'' concern does not
+apply --- each resistor can go to its own correct rail. U5 confirms
+the 16\,MHz oscillator, previously missing from the capture, is now
+present.
+
+\subsection{Still open}
+TLV73325's EN pin has no dedicated resistor in this BOM --- presumably
+a direct wire to +3.3\,V (always-enabled); not yet confirmed.
+
 \section{PCB module form factor (reserved)}
 \label{sec:pcb-module}
 Target: a castellated-edge SMD module, approximately
