@@ -380,19 +380,25 @@ original review was a misread of the schematic image, not a real
 error.
 \end{fnnote}
 
-\subsection{Open items (not resolvable from the schematic image alone)}
+\subsection{Open items --- all resolved as of this pass}
 \begin{itemize}
-\item \code{TLV62568}'s EN pin: is \code{R3}=499\,k$\Omega$ actually on
-      EN, and to which rail?
-\item A \code{+1V1} label appears near the VCCAUX ferrite (L2)/its
-      decoupling (C8/C9) --- VCCAUX must remain 2.5\,V after the
-      ferrite (a ferrite bead filters, it does not change DC voltage);
-      confirm this label belongs to a different, merely nearby net.
-\item JTAG pull-up array (R5--R8, 4.7\,k$\Omega$): TDI/TDO/TMS need a
-      pull-up to VCCIO8, TCK needs a pull-\emph{down} to GND --- a
-      single bussed (common-node) array package cannot provide both
-      polarities. Confirm TCK is wired separately from the other
-      three.
+\item \code{TLV62568}'s EN pin: \textbf{resolved} --- \code{R3}=499\,k$\Omega$
+      confirmed on EN (BOM, \S\ref{sec:bom}), matches TI's own
+      reference circuit.
+\item The \code{+1V1} label near the VCCAUX ferrite (L2): \textbf{resolved,
+      false alarm}. \code{TLV62568} (U1) itself outputs 1.1\,V (confirmed
+      by the user directly, matches the R1/R2 divider calculation in
+      \S\ref{sec:power-addendum}) --- the label belongs to U1's own
+      real output net, merely placed nearby on the schematic page, not
+      routed through the VCCAUX ferrite. VCCAUX remains 2.5\,V as
+      required.
+\item JTAG pull-up array (R5--R12, 4.7\,k$\Omega$): TDI/TDO/TMS need a
+      pull-up to VCCIO8, TCK needs a pull-\emph{down} to GND ---
+      \textbf{resolved}: the real BOM (\S\ref{sec:bom}) confirms these
+      are 8 \emph{discrete} 0402 parts, not a single bussed-array
+      package, so each can carry its own correct polarity (still
+      needs a final visual confirmation of the actual net-by-net
+      wiring, but the package-level limitation is ruled out).
 \end{itemize}
 
 \section{Bill of Materials (real, KiCad-exported, 2026-09-07)}
