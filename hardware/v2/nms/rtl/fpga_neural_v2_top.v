@@ -77,14 +77,6 @@ module fpga_neural_v2_top #(
     // see nms_dataflow_core_sdram.v for the full design comment.
     output wire data_ready,
 
-    // ---- Flash #1 (neural-network weights/graph data): real,
-    // ordinary GPIO SPI bus, physically separate from flash #2 (boot)
-    // -- see decisions.log for the two-flash architecture rationale.
-    output wire flash_sclk,
-    output wire flash_mosi,
-    input  wire flash_miso,
-    output wire flash_cs_n,
-
     output wire pll_locked
 );
 
@@ -122,13 +114,6 @@ module fpga_neural_v2_top #(
     wire [15:0]            host_mem_wdata, host_mem_rdata;
     wire                   host_mem_ready;
 
-    wire                   flash_op_start;
-    wire [2:0]             flash_op_code;
-    wire [3:0]             flash_slot_id;
-    wire [23:0]            flash_new_offset, flash_new_length, flash_ext_length, flash_raw_flash_addr;
-    wire [7:0]              flash_new_type;
-    wire [ADDR_WIDTH-1:0]  flash_ext_addr;
-
     spi_host_bridge #(
         .ADDR_WIDTH(ADDR_WIDTH), .N_NODES(N_NODES), .MAX_DEPS(MAX_DEPS)
     ) u_spi_bridge (
@@ -141,13 +126,7 @@ module fpga_neural_v2_top #(
         .mem_req(host_mem_req), .mem_wr(host_mem_wr), .mem_addr(host_mem_addr),
         .mem_wdata(host_mem_wdata), .mem_lb_n(host_mem_lb_n), .mem_ub_n(host_mem_ub_n),
         .mem_rdata(host_mem_rdata), .mem_ready(host_mem_ready),
-        .soft_rst_pulse(soft_rst_pulse),
-        .flash_op_start(flash_op_start), .flash_op_code(flash_op_code),
-        .flash_slot_id(flash_slot_id), .flash_new_offset(flash_new_offset),
-        .flash_new_length(flash_new_length), .flash_new_type(flash_new_type),
-        .flash_ext_addr(flash_ext_addr), .flash_ext_length(flash_ext_length),
-        .flash_raw_flash_addr(flash_raw_flash_addr),
-        .flash_busy(flash1_busy), .flash_done(flash1_done), .flash_err(flash1_err)
+        .soft_rst_pulse(soft_rst_pulse)
     );
 
     // ============================================================
@@ -204,33 +183,24 @@ module fpga_neural_v2_top #(
         .m_rdata(arb_m_rdata), .m_ready(arb_m_ready)
     );
 
-    // ---- AR level 2 (STEP20/STEP21): compute-side AR stream (port0,
-    // highest priority) vs. SPI host raw memory port (port1) vs.
-    // flash #1 (neural-network data) port (port2, lowest priority --
-    // matches V1's own "Port D, lowest priority" convention for this
-    // exact traffic class) -- reuses slot_mem_arbiter completely
-    // unchanged, just at N_PORTS=3, its own already-proven pending-
-    // latch discipline applying equally to a 3-port instance ----
-    wire                    flash_ar_req, flash_ar_wr, flash_ar_lb_n, flash_ar_ub_n, flash_ar_ready;
-    wire [ADDR_WIDTH-1:0]   flash_ar_addr;
-    wire [15:0]             flash_ar_wdata, flash_ar_rdata;
+    // ---- AR level 2 (NEW, STEP20): compute-side AR stream (port0)
+    // vs. SPI host raw memory port (port1) -- reuses slot_mem_arbiter
+    // completely unchanged, just at N_PORTS=2, its own already-proven
+    // pending-latch discipline applying equally to a 2-port instance ----
+    wire [1:0]              host_arb_s_req, host_arb_s_wr, host_arb_s_lb_n, host_arb_s_ub_n, host_arb_s_ready;
+    wire [ADDR_WIDTH*2-1:0] host_arb_s_addr;
+    wire [16*2-1:0]         host_arb_s_wdata, host_arb_s_rdata;
 
-    wire [2:0]               host_arb_s_req, host_arb_s_wr, host_arb_s_lb_n, host_arb_s_ub_n, host_arb_s_ready;
-    wire [ADDR_WIDTH*3-1:0]  host_arb_s_addr;
-    wire [16*3-1:0]          host_arb_s_wdata, host_arb_s_rdata;
-
-    assign host_arb_s_req    = {flash_ar_req,   host_mem_req,   arb_m_req};
-    assign host_arb_s_wr     = {flash_ar_wr,    host_mem_wr,    arb_m_wr};
-    assign host_arb_s_lb_n   = {flash_ar_lb_n,  host_mem_lb_n,  arb_m_lb_n};
-    assign host_arb_s_ub_n   = {flash_ar_ub_n,  host_mem_ub_n,  arb_m_ub_n};
-    assign host_arb_s_addr   = {flash_ar_addr,  host_mem_addr,  arb_m_addr};
-    assign host_arb_s_wdata  = {flash_ar_wdata, host_mem_wdata, arb_m_wdata};
+    assign host_arb_s_req    = {host_mem_req,   arb_m_req};
+    assign host_arb_s_wr     = {host_mem_wr,    arb_m_wr};
+    assign host_arb_s_lb_n   = {host_mem_lb_n,  arb_m_lb_n};
+    assign host_arb_s_ub_n   = {host_mem_ub_n,  arb_m_ub_n};
+    assign host_arb_s_addr   = {host_mem_addr,  arb_m_addr};
+    assign host_arb_s_wdata  = {host_mem_wdata, arb_m_wdata};
     assign arb_m_ready       = host_arb_s_ready[0];
     assign arb_m_rdata       = host_arb_s_rdata[15:0];
     assign host_mem_ready    = host_arb_s_ready[1];
     assign host_mem_rdata    = host_arb_s_rdata[31:16];
-    assign flash_ar_ready    = host_arb_s_ready[2];
-    assign flash_ar_rdata    = host_arb_s_rdata[47:32];
 
     wire                  final_ar_req, final_ar_wr;
     wire [ADDR_WIDTH-1:0] final_ar_addr;
@@ -240,7 +210,7 @@ module fpga_neural_v2_top #(
     wire                  final_ar_ready;
 
     slot_mem_arbiter #(
-        .ADDR_WIDTH(ADDR_WIDTH), .N_PORTS(3)
+        .ADDR_WIDTH(ADDR_WIDTH), .N_PORTS(2)
     ) u_host_arb (
         .clk(clk), .rst(core_rst),
         .s_req(host_arb_s_req), .s_wr(host_arb_s_wr), .s_addr(host_arb_s_addr),
@@ -249,46 +219,6 @@ module fpga_neural_v2_top #(
         .m_req(final_ar_req), .m_wr(final_ar_wr), .m_addr(final_ar_addr), .m_wdata(final_ar_wdata),
         .m_lb_n(final_ar_lb_n), .m_ub_n(final_ar_ub_n),
         .m_rdata(final_ar_rdata), .m_ready(final_ar_ready)
-    );
-
-    // ---- Flash #1 (neural-network weights/graph data): real,
-    // unmodified V1 subsystem (flash_slot_manager.v, which owns
-    // flash_copy_engine.v, which owns spi_flash_master.v; crc32.v used
-    // internally too) -- see decisions.log for the integration design.
-    // Command interface driven by spi_host_bridge.v's own new
-    // OP_FLASH_CMD opcode. Data path bridged into the AR arbiter above
-    // via flash_mem_adapter.v (byte<->word, matches nms_memory_
-    // manager_stream_wide.v's own real masking convention). ----
-    wire flash_d_req, flash_d_wr, flash_d_ready;
-    wire [ADDR_WIDTH-1:0]  flash_d_addr;
-    wire signed [7:0]      flash_d_wdata, flash_d_rdata;
-    wire flash1_busy, flash1_done, flash1_err;
-
-    flash_slot_manager #(
-        .PSRAM_ADDR_WIDTH(ADDR_WIDTH), .CLK_FREQ_MHZ(64), .SCLK_DIV(2)
-    ) u_flash1 (
-        .clk(clk), .rst(core_rst),
-        .mosi(flash_mosi), .miso(flash_miso), .cs_n(flash_cs_n), .sclk(flash_sclk),
-        .op_start(flash_op_start), .op_code(flash_op_code), .slot_id(flash_slot_id),
-        .new_offset(flash_new_offset), .new_length(flash_new_length), .new_type(flash_new_type),
-        .ext_psram_addr(flash_ext_addr), .ext_length(flash_ext_length),
-        .raw_flash_addr(flash_raw_flash_addr),
-        .busy(flash1_busy), .done(flash1_done), .err(flash1_err),
-        .cat_read_sel(4'd0), .cat_out_offset(), .cat_out_length(),
-        .cat_out_type(), .cat_out_valid(), .cat_out_crc(),
-        .d_req(flash_d_req), .d_wr(flash_d_wr), .d_addr(flash_d_addr),
-        .d_wdata(flash_d_wdata), .d_rdata(flash_d_rdata), .d_ready(flash_d_ready)
-    );
-
-    flash_mem_adapter #(
-        .ADDR_WIDTH(ADDR_WIDTH), .BYTE_ADDR_WIDTH(ADDR_WIDTH)
-    ) u_flash_adapter (
-        .clk(clk), .rst(core_rst),
-        .d_req(flash_d_req), .d_wr(flash_d_wr), .d_addr(flash_d_addr),
-        .d_wdata(flash_d_wdata), .d_rdata(flash_d_rdata), .d_ready(flash_d_ready),
-        .s_req(flash_ar_req), .s_wr(flash_ar_wr), .s_addr(flash_ar_addr),
-        .s_wdata(flash_ar_wdata), .s_lb_n(flash_ar_lb_n), .s_ub_n(flash_ar_ub_n),
-        .s_rdata(flash_ar_rdata), .s_ready(flash_ar_ready)
     );
 
     // ---- W: weight fetch (unchanged) ----

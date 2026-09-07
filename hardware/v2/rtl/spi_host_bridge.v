@@ -117,22 +117,7 @@ module spi_host_bridge #(
     input  wire [15:0]            mem_rdata,
     input  wire                   mem_ready,
 
-    output reg  soft_rst_pulse,
-
-    // ---- flash #1 command interface (-> flash_slot_manager.v's own
-    // real V1 op_start/op_code/... port, unchanged shape/semantics) ----
-    output reg                    flash_op_start,
-    output reg  [2:0]             flash_op_code,
-    output reg  [3:0]             flash_slot_id,
-    output reg  [23:0]            flash_new_offset,
-    output reg  [23:0]            flash_new_length,
-    output reg  [7:0]             flash_new_type,
-    output reg  [ADDR_WIDTH-1:0]  flash_ext_addr,
-    output reg  [23:0]            flash_ext_length,
-    output reg  [23:0]            flash_raw_flash_addr,
-    input  wire                   flash_busy,
-    input  wire                   flash_done,
-    input  wire                   flash_err
+    output reg  soft_rst_pulse
 );
 
     localparam NODEW = $clog2(N_NODES);
@@ -252,7 +237,6 @@ module spi_host_bridge #(
     localparam OP_RESET     = 8'h0F;
     localparam OP_WRITE_JOB = 8'h10;
     localparam OP_STATUS    = 8'h20;
-    localparam OP_FLASH_CMD = 8'h30;
 
     localparam ST_OPCODE  = 4'd0;
     localparam ST_JOB     = 4'd1; // collecting 18 WRITE_JOB payload bytes
@@ -264,17 +248,14 @@ module spi_host_bridge #(
     localparam ST_MEM_RISS= 4'd7; // READ_MEM: issue+wait mem_req
     localparam ST_MEM_ROUT= 4'd8; // READ_MEM: shifting the 2 bytes of a word out
     localparam ST_IGNORE  = 4'd9; // opcode consumed / unknown, wait for cs_rose
-    localparam ST_FLASH      = 4'd10; // collecting 19 OP_FLASH_CMD payload bytes
-    localparam ST_FLASH_WAIT = 4'd11; // flash_op_start held, waiting flash_busy to clear
 
     reg [3:0]  state;
     reg [7:0]  opcode;
-    reg [4:0]  byte_idx;      // generic byte counter within a field (up to 18, OP_FLASH_CMD)
+    reg [4:0]  byte_idx;      // generic byte counter within a field (up to 17, WRITE_JOB)
     reg [15:0] len_words;
     reg [15:0] word_cnt;
     reg [15:0] cur_word;      // WRITE_MEM: assembling MSB,LSB; READ_MEM: holding readback
     reg        job_busy_r, mem_busy_r, last_job_accepted_r;
-    reg        flash_done_r, flash_err_r; // sticky, cleared by next OP_FLASH_CMD
 
     // combinational tx byte mux -- STATUS response, READ_MEM data,
     // everything else drives 0x00
@@ -282,8 +263,7 @@ module spi_host_bridge #(
     always @(*) begin
         tx_mux = 8'h00;
         if (opcode == OP_STATUS)
-            tx_mux = {2'b0, flash_err_r, flash_done_r, flash_busy,
-                      last_job_accepted_r, mem_busy_r, job_busy_r};
+            tx_mux = {5'b0, last_job_accepted_r, mem_busy_r, job_busy_r};
         else if (opcode == OP_READ_MEM && state == ST_MEM_ROUT)
             tx_mux = (byte_idx == 5'd0) ? cur_word[15:8] : cur_word[7:0];
     end
@@ -301,10 +281,6 @@ module spi_host_bridge #(
             mem_wdata <= 16'd0; mem_lb_n <= 1'b0; mem_ub_n <= 1'b0;
             soft_rst_pulse <= 1'b0;
             job_busy_r <= 1'b0; mem_busy_r <= 1'b0; last_job_accepted_r <= 1'b0;
-            flash_op_start <= 1'b0; flash_op_code <= 3'd0; flash_slot_id <= 4'd0;
-            flash_new_offset <= 24'd0; flash_new_length <= 24'd0; flash_new_type <= 8'd0;
-            flash_ext_addr <= {ADDR_WIDTH{1'b0}}; flash_ext_length <= 24'd0;
-            flash_raw_flash_addr <= 24'd0; flash_done_r <= 1'b0; flash_err_r <= 1'b0;
         end else begin
             mem_req        <= 1'b0;
             soft_rst_pulse <= 1'b0;
@@ -327,7 +303,7 @@ module spi_host_bridge #(
             // root-caused via a full internal signal trace before
             // this fix). Mirrors the same protection already applied
             // to cs_rose below.
-            if (cs_fell && state != ST_JOB_WAIT && state != ST_MEM_WISS && state != ST_MEM_RISS && state != ST_FLASH_WAIT) begin
+            if (cs_fell && state != ST_JOB_WAIT && state != ST_MEM_WISS && state != ST_MEM_RISS) begin
                 state    <= ST_OPCODE;
                 byte_idx <= 5'd0;
             end else if (!cs_fell && rx_valid) begin
@@ -339,7 +315,6 @@ module spi_host_bridge #(
                             OP_WRITE_JOB: state <= ST_JOB;
                             OP_WRITE_MEM: state <= ST_MEM_ADDR;
                             OP_READ_MEM:  state <= ST_MEM_ADDR;
-                            OP_FLASH_CMD: state <= ST_FLASH;
                             OP_RESET:     state <= ST_IGNORE;
                             default:      state <= ST_IGNORE; // NOP, STATUS: no MOSI payload
                         endcase
@@ -410,38 +385,7 @@ module spi_host_bridge #(
                         end
                     end
 
-                    ST_FLASH: begin
-                        case (byte_idx)
-                            5'd0:  flash_op_code            <= rx_byte[2:0];
-                            5'd1:  flash_slot_id             <= rx_byte[3:0];
-                            5'd2:  flash_new_offset[23:16]   <= rx_byte;
-                            5'd3:  flash_new_offset[15:8]    <= rx_byte;
-                            5'd4:  flash_new_offset[7:0]     <= rx_byte;
-                            5'd5:  flash_new_length[23:16]   <= rx_byte;
-                            5'd6:  flash_new_length[15:8]    <= rx_byte;
-                            5'd7:  flash_new_length[7:0]     <= rx_byte;
-                            5'd8:  flash_new_type            <= rx_byte;
-                            5'd9:  flash_ext_addr[ADDR_WIDTH-1:24] <= rx_byte[ADDR_WIDTH-25:0];
-                            5'd10: flash_ext_addr[23:16]     <= rx_byte;
-                            5'd11: flash_ext_addr[15:8]      <= rx_byte;
-                            5'd12: flash_ext_addr[7:0]       <= rx_byte;
-                            5'd13: flash_ext_length[23:16]   <= rx_byte;
-                            5'd14: flash_ext_length[15:8]    <= rx_byte;
-                            5'd15: flash_ext_length[7:0]     <= rx_byte;
-                            5'd16: flash_raw_flash_addr[23:16] <= rx_byte;
-                            5'd17: flash_raw_flash_addr[15:8]  <= rx_byte;
-                            5'd18: begin
-                                flash_raw_flash_addr[7:0] <= rx_byte;
-                                flash_op_start             <= 1'b1;
-                                flash_done_r                <= 1'b0;
-                                flash_err_r                 <= 1'b0;
-                                state                        <= ST_FLASH_WAIT;
-                            end
-                        endcase
-                        if (byte_idx != 5'd18) byte_idx <= byte_idx + 5'd1;
-                    end
-
-                    default: ; // ST_JOB_WAIT/ST_MEM_WISS/ST_MEM_RISS/ST_MEM_ROUT/ST_FLASH_WAIT/ST_IGNORE: no MOSI payload expected
+                    default: ; // ST_JOB_WAIT/ST_MEM_WISS/ST_MEM_RISS/ST_MEM_ROUT/ST_IGNORE: no MOSI payload expected
                 endcase
             end
 
@@ -493,23 +437,6 @@ module spi_host_bridge #(
                     byte_idx <= 5'd0;
                     state    <= (word_cnt == 16'd1) ? ST_IGNORE : ST_MEM_RISS;
                 end
-            end
-
-            // ---- OP_FLASH_CMD: hold flash_op_start until flash_busy
-            // rises (accepted, mirrors reg_valid/reg_ready and
-            // mem_req/mem_ready above), then wait for flash_busy to
-            // fall again (operation complete) before returning to
-            // ST_IGNORE, latching flash_done/flash_err into sticky
-            // STATUS bits (flash_slot_manager.v's own real done is a
-            // one-cycle pulse, err is held until the next op_start --
-            // both captured here, not re-derived).
-            if (state == ST_FLASH_WAIT && flash_op_start && flash_busy) begin
-                flash_op_start <= 1'b0;
-            end
-            if (flash_done) flash_done_r <= 1'b1;
-            if (flash_err)  flash_err_r  <= 1'b1;
-            if (state == ST_FLASH_WAIT && !flash_op_start && !flash_busy) begin
-                state <= ST_IGNORE;
             end
 
             job_busy_r <= (state == ST_JOB_WAIT);
