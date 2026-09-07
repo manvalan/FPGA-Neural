@@ -51,15 +51,61 @@ project uses for verification.
 
 \section{What a real host driver would still need to add}
 \begin{itemize}
-\item A physical transport (SPI, parallel bus, or otherwise) carrying
-      the fields of \S\ref{ch:host}'s own table across a real pin
-      interface --- not designed in this revision.
-\item A completion-notification path back to the host (V1's own
-      \code{data\_ready\_n}/\code{STATUS.done} has no V2 analogue yet);
-      today, completion is only observable internally
-      (\code{dir\_job\_out\_done}) or by polling the expected result
-      address.
 \item Per-job \code{bias}/\code{activation} selection, currently
       hardcoded to \code{bias=0}/\code{ACT\_RELU} for every job
       (\S\ref{ch:datapath}).
 \end{itemize}
+
+\section{Addendum (2026-09-07) --- real physical transport and
+completion signal, both now closed}
+\label{sec:host-addendum}
+\begin{fnwarn}[Supersedes the two items removed from the list above]
+Both real gaps this chapter used to list are closed. This section is
+the current, real state.
+\end{fnwarn}
+
+\textbf{Physical transport}: \code{spi\_host\_bridge.v}, a real SPI
+Mode~0 slave, is the board's actual node-registration transport ---
+real ball assignments (\code{spi\_sclk}/\code{spi\_mosi}/
+\code{spi\_miso}/\code{spi\_cs\_n}) verified, real place\&route (see
+ch.~\ref{ch:hw}). WRITE\_JOB carries the full table from
+\S\ref{ch:host} above as an 18-byte payload (grew from 15 after the
+64MB memory upgrade widened every address field from 3 to 4 bytes ---
+\code{decisions.log} DEC-0039).
+
+\textbf{Completion notification}: \code{FPGA\_DATA\_READY}, a real
+output pin (ball \code{G3}, bank~7), closes the exact gap this
+chapter used to flag. It is a system-idle detector, not a per-job
+pulse --- deliberately, since ``the whole graph has an answer'' and
+``one neuron finished'' are different questions and only the former is
+useful to a host waiting on a result:
+\[
+\text{sys\_busy} = \big(\textstyle\bigvee \text{job\_active}\big)
+\;\lor\; \lnot\text{queue\_empty} \;\lor\; \text{any\_pending}
+\]
+where \code{job\_active} is per-slot (already real, \S\ref{ch:sched}),
+\code{queue\_empty} is \code{neural\_director.v}'s own dispatch-queue
+occupancy, and \code{any\_pending} (new) is an OR-reduce over
+dependency\_manager's own node table for any node still
+\code{WAITING} or \code{READY} (i.e. registered but not yet
+dispatched --- \code{DISPATCHED} nodes are tracked by the two signals
+above instead, not here). \code{FPGA\_DATA\_READY} is a sticky
+register: set on the \code{sys\_busy} $1\to0$ edge, cleared the
+instant \code{sys\_busy} goes high again --- self-clearing, no host
+acknowledgement command needed.
+
+\begin{fnnote}[Real, disclosed assumption]
+This is correct only if the host finishes registering every node of a
+graph before the first one completes. Realistic for this
+architecture's own real timing (SPI registration: microseconds;
+per-neuron compute: $\sim$195 real measured cycles, \S\ref{ch:impl2})
+but not proven for every conceivable host registration pattern --- a
+host that deliberately staggers registration across a long enough gap
+could observe a premature \code{FPGA\_DATA\_READY} pulse after only
+the first node completes.
+\end{fnnote}
+
+Bit-exact regression re-verified with an explicit assertion on this
+signal (N\_SLOTS=4 and 8, both PASS, see \code{decisions.log}
+DEC-0041) and a real \code{nextpnr-ecp5} placement check (0 errors,
+\code{data\_ready} placed at \code{G3}).

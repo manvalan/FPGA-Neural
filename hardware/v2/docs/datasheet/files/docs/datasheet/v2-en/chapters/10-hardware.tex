@@ -245,3 +245,73 @@ the user is preparing separately.
 FPGA-TN-02038-2.0 \S3--4. Full schematic capture (BOM, connectors,
 FPGA--RAM/FLASH and PROG sections) pending separately.}
 \end{center}
+
+\section{Programming architecture (2026-09-07) --- two independent
+flash devices, ESP32 over JTAG only}
+\label{sec:prog-addendum}
+\begin{fnwarn}[Real, closed design -- not a placeholder]
+Converged after evaluating and rejecting a single-shared-flash and an
+SSPI-every-boot alternative (see \code{decisions.log} DEC-0041 for the
+full comparison). This is the current, real architecture.
+\end{fnwarn}
+
+\subsection{Two physically separate flash chips}
+\begin{itemize}
+\item \textbf{Flash \#1} --- neural-network weights/graph data.
+      V1's own real subsystem (\code{flash\_copy\_engine.v}/
+      \code{flash\_slot\_manager.v}), 4 ordinary GPIO balls. V1's own
+      real balls (\code{flash\_sclk}=E3, \code{flash\_mosi}=D3,
+      \code{flash\_miso}=D5, \code{flash\_cs\_n}=E4) are \textbf{not}
+      reusable in V2 --- confirmed conflict, all four already carry
+      V2's own SDRAM bus. New balls reserved (bank~7, 3.3\,V):
+      \code{flash\_sclk}=B2, \code{flash\_mosi}=E2,
+      \code{flash\_miso}=F2, \code{flash\_cs\_n}=F3. \textbf{Not yet
+      in the LPF} --- the RTL port does not exist in
+      \code{fpga\_neural\_v2\_top.v} yet (a real, separate, open
+      integration task).
+\item \textbf{Flash \#2} --- boot bitstream only. Connects
+      exclusively to the ECP5's own dedicated sysCONFIG pins, Master
+      SPI mode, auto-boots every power-up, zero ESP32 involvement in
+      normal operation.
+\end{itemize}
+
+\subsection{ESP32 $\leftrightarrow$ ECP5: JTAG only}
+Neither ESP32-S3 nor ESP32-C6 has a hardware JTAG \emph{master}
+peripheral (verified against Espressif's own documentation): their
+native ``USB Serial/JTAG Controller'' lets an external host debug the
+ESP32 itself --- the wrong direction for driving the ECP5. TCK/TMS/
+TDI/TDO are therefore bit-banged from ordinary ESP32 GPIO, standard
+practice. ESP32 updates flash~\#2 by commanding the ECP5's own
+internal sysCONFIG engine to bridge JTAG writes through to the
+external flash (real Lattice mechanism, FPGA-TN-02038-2.0 Figure~6.3,
+``Programming external Flash via JTAG'') --- ESP32 never drives
+flash~\#2's own SPI pins directly, zero bus contention by
+construction.
+
+\subsection{Real ball assignments (CABGA381)}
+From the official Lattice pinout CSV (\code{FPGA-SC-02034-3-0-
+ECP5U-45-Pinout.csv} rev.\,3.0) cross-checked against Project
+Trellis's \code{iodb.json}.
+
+\begin{fnnote}[JTAG (bank 40/TAP) --- to ESP32]
+TCK=T5, TMS=U5, TDI=R5, TDO=V4.
+\end{fnnote}
+\begin{fnnote}[Dedicated config (bank 8) --- to ESP32]
+PROGRAMN=W3, INITN=V3, DONE=Y3.
+\end{fnnote}
+\begin{fnnote}[CFG{[}2:0{]} (bank 8) --- board jumpers/0$\Omega$, NOT to ESP32]
+For MSPI, CFG[2:0]$=$[0,1,0] read MSB-first: CFG\_2(R4)$=$GND,
+CFG\_1(T4)$=$pull-up 1--10\,k$\Omega$ to VCCIO8, CFG\_0(U4)$=$GND.
+\end{fnnote}
+\begin{fnnote}[MSPI dedicated/dual-function pins to flash \#2 (bank 8) --- NOT to ESP32]
+MCLK/CCLK=U3, CSSPIN=R2 (dual w/ HOLDN/DI/BUSY/CEN), D0/MOSI=W2,
+D1/MISO=V2.
+\end{fnnote}
+
+Confirmed real and safe (Lattice FPGA-TN-02039-2.3 sysCONFIG User
+Guide, \S6.1.2): once User Mode is reached, the MSPI dedicated pins
+tristate with a weak pull-up, so they never contend with another
+driver on the same net --- not load-bearing for this specific
+two-chip architecture (flash \#1/\#2 are physically separate), but
+confirms the mechanism is real should a future revision ever share a
+single chip.
