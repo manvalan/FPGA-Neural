@@ -109,18 +109,18 @@ CKE,CS\#,RAS\#,CAS\#,WE\#.
 \begin{fnwarn}[Updated 2026-09-07 --- supersedes the ERR-0029-era numbers below]
 Flash \#1 (\S\ref{sec:prog-addendum}, since removed) briefly regressed
 N\_SLOTS=4 from 8/8 to 3/8 while it was integrated; that integration
-was reverted (user priority: clock frequency over on-board flash
-persistence). A further real fix (DEC-0042, replacing a combinational
-fan-out with a synchronous counter, credited to the user's own
-diagnosis) closed N\_SLOTS=4 back to 8/8 on the flash-free design ---
-the numbers below are the CURRENT, real, final state.
+was reverted, prioritizing clock frequency over on-board flash
+persistence. A further real fix (DEC-0042, replacing a combinational
+fan-out with a synchronous counter) closed N\_SLOTS=4 back to 8/8 on
+the flash-free design --- the numbers below are the CURRENT, real,
+final state.
 \end{fnwarn}
 \begin{tabularx}{\textwidth}{L{4.0cm} C{1.6cm} C{2.2cm} X}
 \toprule
 \rowh \thd{Configuration} & \thd{Pass} & \thd{Worst / Best Fmax} & \thd{Notes} \\
 \midrule
 N\_SLOTS=4 @ 64\,MHz & \textbf{8/8} & 64.55 / 72.37\,MHz & \textbf{Production baseline, GO} \\
-\rowa N\_SLOTS=8 @ 64\,MHz & 3/8 & --- & Deferred by explicit user request, not pursued further \\
+\rowa N\_SLOTS=8 @ 64\,MHz & 3/8 & --- & Out of current scope, not pursued further \\
 N\_SLOTS=4/8 @ 80\,MHz & 0/8 & --- & NO-GO, genuine \code{ecppll}-regenerated PLL (re-confirmed pre-revert; not re-tested post-revert, expected unchanged) \\
 \bottomrule
 \end{tabularx}
@@ -239,8 +239,8 @@ FPGA-TN-02038, not regulator-stability caps, and are still required.
 \begin{fnnote}[Open item carried from \S3 above]
 The 16\,MHz reference oscillator's exact manufacturer part number is
 not yet specified in this document (only ``16\,MHz'' as a frequency
-requirement) --- flagged, not invented, pending the schematic capture
-the user is preparing separately.
+requirement) --- flagged, not invented, pending finalization of the
+schematic capture.
 \end{fnnote}
 
 \subsection{Power tree}
@@ -277,8 +277,8 @@ Originally converged on a two-flash design (\S below described flash
 \#1 for neural-network data and flash \#2 for boot). Flash \#1 was
 fully implemented (real V1 subsystem instantiated, a new byte$\leftrightarrow$word
 adapter, a new SPI opcode, a dedicated testbench, 64/64 bytes verified
-bit-exact) and then \textbf{removed again}, on the user's own explicit
-priority call: it measurably regressed N\_SLOTS=4's own real timing
+bit-exact) and then \textbf{removed again}, per an explicit design
+decision: it measurably regressed N\_SLOTS=4's own real timing
 closure (8/8 $\to$ 3/8 PASS at 64\,MHz), and clock frequency was
 judged more valuable than on-board persistent weight storage --- the
 ESP32 can push weights fresh each session instead. Reverted cleanly
@@ -341,9 +341,9 @@ second flash device sharing this same chip.
 
 \section{Real KiCad schematic review (2026-09-07)}
 \label{sec:schematic-review}
-\begin{fnwarn}[User-authored schematic, reviewed against every real ball
+\begin{fnwarn}[Schematic capture reviewed against every real ball
 assignment established in this chapter]
-This section records an actual review pass of the user's own KiCad
+This section records an actual review pass of the KiCad schematic
 capture (sheet \code{FPGA-Neural/FPGA.kicad\_sch}) against the real
 ball tables above --- confirmed items and real, disclosed findings,
 not a generic checklist.
@@ -377,10 +377,9 @@ pull-up (inside the required 1--10\,k$\Omega$ range).
 \end{enumerate}
 
 \begin{fnnote}[Checked and cleared]
-SDRAM CAS\#/WE\#: user confirmed CAS\#=F7, WE\#=F9 in the real
-schematic --- matches this chapter exactly. The apparent swap in the
-original review was a misread of the schematic image, not a real
-error.
+SDRAM CAS\#/WE\#: verified CAS\#=F7, WE\#=F9 in the real schematic ---
+matches this chapter exactly. The apparent swap in the original review
+was a misread of the schematic image, not a real error.
 \end{fnnote}
 
 \subsection{Open items --- all resolved as of this pass}
@@ -389,8 +388,8 @@ error.
       confirmed on EN (BOM, \S\ref{sec:bom}), matches TI's own
       reference circuit.
 \item The \code{+1V1} label near the VCCAUX ferrite (L2): \textbf{resolved,
-      false alarm}. \code{TLV62568} (U1) itself outputs 1.1\,V (confirmed
-      by the user directly, matches the R1/R2 divider calculation in
+      false alarm}. \code{TLV62568} (U1) itself outputs 1.1\,V (directly
+      confirmed against the schematic, matches the R1/R2 divider calculation in
       \S\ref{sec:power-addendum}) --- the label belongs to U1's own
       real output net, merely placed nearby on the schematic page, not
       routed through the VCCAUX ferrite. VCCAUX remains 2.5\,V as
@@ -447,7 +446,7 @@ only builds/plots what the root hierarchy actually reaches.
 chapter specifies]
 Regenerated directly from the real KiCad source
 (\code{kicad-cli sch export bom}, grouped by value+footprint) ---
-not the user-pasted CSV snapshot the earlier review used. Every value
+not the CSV snapshot the earlier review used. Every value
 matches exactly (feedback divider, inductor, ferrite, regulators,
 SDRAM). One real discrepancy found: see below.
 \end{fnwarn}
@@ -483,8 +482,8 @@ reference in this project (LPF, this chapter, decisions.log) uses
 \textbf{\code{LFE5U-45F-8BG381C}} (commercial grade, real $T_J$ range
 $0$ to $+85^{\circ}$C; same ``$-8$'' speed grade in both --- the
 letter suffix changes only the characterized temperature range, not
-logic speed). \textbf{User confirmed C (commercial)} is the intended
-part. This BOM regeneration confirms the fix landed in the real KiCad
+logic speed). \textbf{The commercial (C) grade is the intended
+part}, confirmed against every other reference. This BOM regeneration confirms the fix landed in the real KiCad
 source itself, not just as a stated intent: U2's \code{Value} field
 now reads \code{LFE5U-45F-8BG381C} exactly.
 

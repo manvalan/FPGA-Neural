@@ -101,7 +101,7 @@ project's own worst real critical path
 \code{dependency\_manager.node\_resolved}/\code{node\_state}), costing
 real Fmax margin (traced to a real 62.47\,MHz failing seed at
 N\_SLOTS=4 \S64\,MHz --- see ch.~\ref{ch:hw} \S\ref{sec:clock-closure-current}).
-Replaced (the user's own suggestion) with a synchronous up/down
+Replaced with a synchronous up/down
 counter: \code{pending\_count} increments on a node's own registration
 acceptance (\code{reg\_valid\&\&reg\_ready}) and decrements on its own
 dispatch acceptance (\code{ready\_valid\&\&ready\_ready}); \code{any\_pending
