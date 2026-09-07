@@ -118,16 +118,26 @@ module dependency_manager #(
         end
     end
 
-    // ---- FPGA_DATA_READY support (see any_pending port comment above) ----
-    reg any_pending_r;
-    integer pi;
-    always @(*) begin
-        any_pending_r = 1'b0;
-        for (pi = 0; pi < N_NODES; pi = pi + 1)
-            if (node_state[pi] == ST_WAITING || node_state[pi] == ST_READY)
-                any_pending_r = 1'b1;
-    end
-    assign any_pending = any_pending_r;
+    // ---- FPGA_DATA_READY support (see any_pending port comment above).
+    // Originally a combinational OR-reduce over node_state[0:N_NODES-1]
+    // (16-wide), which added real fan-out load onto node_state -- a
+    // signal this session's own real P&R critical-path traces later
+    // showed sitting on the SAME already-congested job_out_slot ->
+    // node_resolved/node_state broadcast path (routing-dominated,
+    // 76-84%). Replaced with a synchronous up/down counter: +1 on a
+    // node's own registration acceptance (reg_valid&&reg_ready --
+    // exactly when it enters WAITING/READY), -1 on its own dispatch
+    // acceptance (ready_valid&&ready_ready -- exactly when it leaves
+    // WAITING/READY for DISPATCHED). registered-minus-dispatched is
+    // mathematically identical to the original OR-reduce's own
+    // "any node currently WAITING or READY" condition (DEC-0008: nodes
+    // are never reclaimed mid-run, so every node visits EMPTY ->
+    // {WAITING or READY} -> DISPATCHED exactly once), but reads a
+    // single small registered counter instead of scanning a wide array
+    // every cycle -- zero added fan-out on the congested signals. ----
+    localparam PENDW = $clog2(N_NODES+1);
+    reg [PENDW-1:0] pending_count;
+    assign any_pending = (pending_count != {PENDW{1'b0}});
 
     integer ni, di;
 
@@ -138,8 +148,18 @@ module dependency_manager #(
                 node_required[ni] <= {REQW{1'b0}};
                 node_resolved[ni] <= {REQW{1'b0}};
             end
-            ready_valid <= 1'b0;
+            ready_valid   <= 1'b0;
+            pending_count <= {PENDW{1'b0}};
         end else begin
+
+            // pending_count: +1 on registration acceptance, -1 on
+            // dispatch acceptance; a same-cycle occurrence of both is a
+            // net zero change (no assignment needed, old value holds).
+            case ({(reg_valid && reg_ready), (ready_valid && ready_ready)})
+                2'b10:   pending_count <= pending_count + 1'b1;
+                2'b01:   pending_count <= pending_count - 1'b1;
+                default: ; // 00 or 11: no net change
+            endcase
 
             // ---- registration: create a new WAITING (or immediately
             // READY, if required==0) node entry. ----

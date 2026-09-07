@@ -2402,3 +2402,63 @@ STATUS: two-flash architecture and FPGA_DATA_READY CLOSED and
 verified (bit-exact + real placement). Flash #1's RTL port
 (`flash_copy_engine.v` integration into V2's top-level) remains a
 real, separate, OPEN task -- ball positions reserved, not wired.
+
+DEC-0042 -- Flash #1 removed (user priority: MHz over on-board
+persistence); dependency_manager's any_pending switched from a
+combinational scan to a counter, recovering N_SLOTS=4 @ 64MHz to 8/8
+
+DATE: 2026-09-07
+CONTEXT: DEC-0042's own predecessor (see the reverted commit) closed
+flash #1 functionally but caused a real, disclosed timing regression
+(N_SLOTS=4 8/8 -> 3/8). User's explicit decision: prioritize clock
+frequency over on-board flash persistence -- "preferisco avere un
+Megahertz più alti che avere la flash" -- ESP32 can push data fresh
+each session instead. Flash #1 fully reverted (`git revert`, clean,
+history-preserving) rather than hand-edited back out.
+
+POST-REVERT REAL BASELINE (fresh 8-seed matrix, first rigorous
+measurement of this exact RTL state -- includes the earlier sdram_clk
+fix, never previously swept at full seed count): N_SLOTS=4 @ 64MHz
+7/8 PASS (worst seed1 62.47MHz FAIL; best seed4 77.21MHz). N_SLOTS=8
+@ 64MHz 3/8 PASS. User's explicit direction: focus exclusively on
+N_SLOTS=4 for now, treat N_SLOTS=8 as a later/separate effort.
+
+ROOT CAUSE of the remaining N=4 seed1 failure (real critical-path
+trace, not guessed): a NEW bottleneck class, distinct from every prior
+fix this session (ERR-0027/0028/0029, all serial-to-parallel logic
+restructurings) -- `neural_director.job_out_slot` ->
+`dependency_manager.node_resolved`/`node_state`, 76-84% routing.
+Inspected the actual logic: already a flat, parallel 64-way compare
+(N_NODES x MAX_DEPS independent comparators, no serial chain), so the
+established "flatten a chain" fix class does not apply. Root cause is
+signal FAN-OUT, not logic depth: this session's own earlier
+`any_pending` addition (DEC-0041/ERR's own FPGA_DATA_READY work) reads
+`node_state[0:N_NODES-1]` combinationally every cycle (a 16-wide
+OR-reduce), adding real fan-out load onto the SAME `node_state` array
+already sitting on this critical path.
+
+FIX (user's own idea, credited): replace the combinational OR-reduce
+with a synchronous up/down counter -- `pending_count` incremented on
+a node's own registration acceptance (`reg_valid&&reg_ready`, the
+exact edge it enters WAITING/READY) and decremented on its own
+dispatch acceptance (`ready_valid&&ready_ready`, the exact edge it
+leaves WAITING/READY for DISPATCHED); `any_pending = (pending_count !=
+0)`. Mathematically identical to the original OR-reduce (DEC-0008:
+nodes are never reclaimed mid-run, so registered-count minus
+dispatched-count exactly equals "currently WAITING or READY"), but
+reads one small registered counter instead of scanning a 16-wide array
+every cycle -- zero added fan-out on the congested node_state signal.
+File changed: `hardware/v2/rtl/dependency_manager.v`.
+
+VERIFICATION: D-Stress N_SLOTS=4 re-run, bit-exact (49927 cycles,
+identical to before, 256/256 vs golden), `data_ready` PASS (confirms
+the counter-based reimplementation is semantically identical in
+practice, not just in theory). Fresh 8-seed nextpnr-ecp5 P&R matrix:
+**N_SLOTS=4 @ 64MHz now 8/8 PASS** -- worst seed1 64.55MHz (real but
+thin margin, +0.55MHz), best seed0 72.37MHz.
+
+STATUS: N_SLOTS=4 @ 64MHz CLOSED, 8/8, real production baseline.
+N_SLOTS=8 explicitly deferred by user request, not attempted further
+this pass. Flash #1 removed; its RTL (flash_mem_adapter.v,
+tb_flash_integration_smoke.v, the OP_FLASH_CMD opcode) remains in git
+history (revertible commit `59901a4`) if ever needed again.
