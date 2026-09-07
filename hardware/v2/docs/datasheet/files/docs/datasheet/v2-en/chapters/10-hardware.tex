@@ -359,18 +359,21 @@ matching the approved \code{CBG160808U181T}); \code{FPGA\_DATA\_READY}=G3,
 \code{FPGA\_RESET}=B4, \code{osc\_clk}=H5; CFG\_1's 10\,k$\Omega$
 pull-up (inside the required 1--10\,k$\Omega$ range).
 
-\subsection{Real findings (confirmed, to be corrected)}
+\subsection{Real findings --- all resolved as of this pass}
 \begin{enumerate}
-\item \textbf{Boot-flash net-name mismatch}: the flash chip's own pins
-      are labeled \code{FPGA\_SPI\_CS/SCLK/MOSI/MISO}; the ECP5's
-      dedicated MSPI pins (CSSPIN/MCLK/D0/D1, ball R2/U3/W2/V2) are
-      labeled \code{FGPA\_SPI\_CLK/MISO/MOSI/CS} --- a transposed
+\item \textbf{Boot-flash net-name mismatch}: \textbf{resolved}. The
+      original capture had the flash chip's own pins labeled
+      \code{FPGA\_SPI\_CS/SCLK/MOSI/MISO} while the ECP5's dedicated
+      MSPI pins (CSSPIN/MCLK/D0/D1, ball R2/U3/W2/V2) were labeled
+      \code{FGPA\_SPI\_CLK/MISO/MOSI/CS} --- a transposed
       \code{FGPA}/\code{FPGA} typo, and \code{SCLK} vs.\ \code{CLK}
-      are two different label strings. KiCad nets are formed by exact
-      label-text match; as captured, the boot flash is electrically
-      disconnected from the FPGA's own configuration engine ---
-      auto-boot from flash would silently fail. \textbf{Fix}: make all
-      eight labels identical text.
+      being two different label strings (KiCad nets are formed by
+      exact label-text match, so auto-boot from flash would have
+      silently failed). The corrected schematic now shows all eight
+      labels as identical text, \code{FPGA\_SPI\_CS/SCLK/MOSI/MISO},
+      on both the flash chip and the ECP5's dedicated pins --- verified
+      by direct comparison of the two label sets in the updated
+      capture (\S\ref{sec:schematic-capture}).
 \end{enumerate}
 
 \begin{fnnote}[Checked and cleared]
@@ -401,12 +404,52 @@ error.
       wiring, but the package-level limitation is ruled out).
 \end{itemize}
 
+\section{Real KiCad schematic capture (2026-09-07)}
+\label{sec:schematic-capture}
+\begin{fnwarn}[Source of these figures]
+Plotted directly from the real KiCad project
+(\code{FPGA-Neural/FPGA-Neural.kicad\_sch}, hierarchy: root
+\code{FPGA-Neural} $\to$ sheet \code{FPGA} $\to$ sheet
+\code{UnusedBank}) via \code{kicad-cli sch export pdf}, not a
+re-rendered screenshot --- what follows is the schematic exactly as
+it exists in the project file at commit time.
+\end{fnwarn}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\textwidth,page=2]{images/fpga-neural-v2-schematic.pdf}
+\caption{Main sheet (\code{FPGA}): FPGA symbols U2A/U2F/U2G/U2H/U2I,
+regulators U1/U3, SDRAM U4, boot flash U9, 16\,MHz crystal U5, and the
+full real net/label set reviewed in \S\ref{sec:schematic-review}.}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\textwidth,page=3]{images/fpga-neural-v2-schematic.pdf}
+\caption{\code{UnusedBank} sheet: unused/reserved FPGA I/O bank, held
+for future expansion (\S\ref{sec:pcb-module}).}
+\end{figure}
+
+\begin{fnnote}[Sheets present in the project but not reachable from
+the root hierarchy]
+\code{power.kicad\_sch}, \code{ram.kicad\_sch}, and
+\code{embeddedia.kicad\_sch} exist as files in the KiCad project
+directory but are not referenced by any sheet symbol in the current
+hierarchy (checked directly against the real \code{.kicad\_sch}
+sheet-reference fields) --- their content is already folded into the
+\code{FPGA} sheet above. Left as-is; not board-affecting, since KiCad
+only builds/plots what the root hierarchy actually reaches.
+\end{fnnote}
+
 \section{Bill of Materials (real, KiCad-exported, 2026-09-07)}
 \label{sec:bom}
 \begin{fnwarn}[Real export, cross-checked against every value this
 chapter specifies]
-Most values match exactly (feedback divider, inductor, ferrite,
-regulators, SDRAM). One real discrepancy found: see below.
+Regenerated directly from the real KiCad source
+(\code{kicad-cli sch export bom}, grouped by value+footprint) ---
+not the user-pasted CSV snapshot the earlier review used. Every value
+matches exactly (feedback divider, inductor, ferrite, regulators,
+SDRAM). One real discrepancy found: see below.
 \end{fnwarn}
 
 \begin{tabularx}{\textwidth}{L{2.4cm} C{1.0cm} L{2.6cm} X}
@@ -425,24 +468,41 @@ R3 & 1 & 499\,k$\Omega$ & 0402 (TLV62568 EN, matches TI's own reference) \\
 \rowa R4 & 1 & 10\,k$\Omega$ & 0402 (CFG\_1 pull-up) \\
 R5--R12 & 8 & 4.7\,k$\Omega$ & 0402, discrete (JTAG/PROGRAMN/INITN/DONE/CSSPIN) \\
 \rowa U1 & 1 & \code{TLV62568DBV} & SOT-23-5 \\
-U2 & 1 & \code{LFE5U-45F-8BG381I} & CABGA381, \textbf{see discrepancy below} \\
+U2 & 1 & \code{LFE5U-45F-8BG381C} & 381-ball caBGA, 0.8\,mm pitch, 20$\times$20 array, 17$\times$17$\times$1.76\,mm body --- \textbf{grade now verified fixed, see below} \\
 \rowa U3 & 1 & \code{TLV73325PDBV} & SOT-23-5 \\
-U4 & 1 & \code{AS4C32M16SB-7BIN} & 54-ball TFBGA, 8$\times$8$\times$1.2\,mm (real footprint dims match the datasheet exactly) \\
+U4 & 1 & \code{AS4C32M16SB-7BIN} & 54-ball TFBGA, 0.8\,mm pitch, 6$\times$9 array, 8$\times$8$\times$1.2\,mm (real footprint dims match the datasheet exactly) \\
 \rowa U5 & 1 & 16\,MHz & 3225-4Pin crystal \\
 U9 & 1 & \code{W25Q128JVPIM} & WSON-8, 6$\times$5\,mm (real Winbond DTR datasheet linked) \\
 \bottomrule
 \end{tabularx}
 
-\subsection{Discrepancy: FPGA grade --- resolved}
-U2 was captured as \code{LFE5U-45F-8BG381I} (industrial grade, real
-$T_J$ range $-40$ to $+100^{\circ}$C) --- every other reference in
-this project (LPF, this chapter, decisions.log) uses
+\subsection{Discrepancy: FPGA grade --- resolved and now source-verified}
+U2 was originally captured as \code{LFE5U-45F-8BG381I} (industrial
+grade, real $T_J$ range $-40$ to $+100^{\circ}$C) --- every other
+reference in this project (LPF, this chapter, decisions.log) uses
 \textbf{\code{LFE5U-45F-8BG381C}} (commercial grade, real $T_J$ range
 $0$ to $+85^{\circ}$C; same ``$-8$'' speed grade in both --- the
 letter suffix changes only the characterized temperature range, not
 logic speed). \textbf{User confirmed C (commercial)} is the intended
-part, consistent with every other reference --- the KiCad library
-entry needs correcting from \code{...381I} to \code{...381C}.
+part. This BOM regeneration confirms the fix landed in the real KiCad
+source itself, not just as a stated intent: U2's \code{Value} field
+now reads \code{LFE5U-45F-8BG381C} exactly.
+
+\subsubsection{New, real, minor finding: stale footprint library name}
+U2's \emph{footprint} field is
+\code{MIKILAB\_LFE5U\_45F\_8BG381I:BGA381C80P20X20\_1700X1700X176}
+--- the library name still carries the old \code{...8BG381I} suffix
+even though the symbol \code{Value} was corrected to \code{...381C}.
+\textbf{Not board-affecting}: caBGA381-C and caBGA381-I are the same
+physical package (identical ball grid/pitch/body, grade suffix is a
+temperature-characterization distinction only, confirmed above), so
+the pad geometry itself
+(\code{BGA381C80P20X20\_1700X1700X176} --- 381 balls, 0.8\,mm pitch,
+20$\times$20, 17$\times$17$\times$1.76\,mm) is correct regardless of
+which grade the library folder is named after. Purely a stale/misleading
+library name; worth renaming the library folder to
+\code{..\_8BG381C} at some point for consistency, but does not block
+fabrication.
 
 \subsection{Open items resolved by this BOM}
 R3=499\,k$\Omega$ confirms TLV62568's EN is populated (matches TI's
