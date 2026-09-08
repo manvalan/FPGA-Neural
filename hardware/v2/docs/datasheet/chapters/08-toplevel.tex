@@ -1,0 +1,64 @@
+\chapter{Top-level module}
+\label{ch:toplevel}
+
+\begin{fnwarn}[Real, board-level top --- not the PSRAM-era compute core]
+This chapter describes \code{fpga\_neural\_v2\_top.v}, the module that
+is actually placed\&routed against real balls
+(\code{hardware/v2/constraints/v2\_board\_top.lpf}) and whose Fmax
+numbers appear throughout this datasheet. It supersedes an earlier
+milestone's \code{neural\_multiprocessor.v} top level, which drove
+V1's own PSRAM chain directly and is retained in the repository for
+regression purposes (\code{tb\_nms\_dstress\_sdram\_unified.v}'s own
+wrapper, \S\ref{sec:sdram-mem-addendum}) but is not the physical top.
+\end{fnwarn}
+
+\section{\texttt{fpga\_neural\_v2\_top.v}}
+The real, board-level top: a PLL/reset front-end, a real SPI host
+bridge, the compute/scheduling core, and a single unified SDRAM
+backend --- 18 physical ports, every one ball-assigned.
+
+\begin{tabularx}{\textwidth}{L{3.4cm} C{1.2cm} C{1.6cm} Y}
+\toprule
+\rowh \thd{Port} & \thd{Dir} & \thd{Width} & \thd{Function} \\
+\midrule
+\code{osc\_clk} & IN & 1 & 16\,MHz board oscillator (ball H5). \\
+\rowa \code{ext\_rst\_n} & IN & 1 & External POR/supervisor, active-low (ball B4). \\
+\code{spi\_sclk}, \code{spi\_mosi}, \code{spi\_cs\_n} & IN & 1 each & Physical SPI host transport (ch.~\ref{ch:host}). \\
+\rowa \code{spi\_miso} & OUT & 1 & SPI host transport, response direction. \\
+\code{sdram\_clk} & OUT & 1 & SDRAM chip's own \code{CLK} pin --- a real board-level output, not internal-only routing (found missing during this session's own schematic review; ball J4). \\
+\rowa \code{sdram\_cke}, \code{sdram\_cs\_n}, \code{sdram\_ras\_n}, \code{sdram\_cas\_n}, \code{sdram\_we\_n} & OUT & 1 each & SDRAM control lines. \\
+\code{sdram\_ba} & OUT & 2 & SDRAM bank address. \\
+\rowa \code{sdram\_a} & OUT & 13 & SDRAM row/column address (widened 12$\to$13 bits for the 64\,MB device, DEC-0039). \\
+\code{sdram\_dq} & INOUT & 16 & SDRAM bidirectional data bus. \\
+\rowa \code{sdram\_dqm} & OUT & 2 & SDRAM byte mask. \\
+\code{data\_ready} & OUT & 1 & \code{FPGA\_DATA\_READY}, system-idle completion flag (ball G3, \S\ref{sec:host-addendum}). \\
+\rowa \code{pll\_locked} & OUT & 1 & PLL lock status, bring-up/debug (ball L1). \\
+\bottomrule
+\end{tabularx}
+
+\section{Internal hierarchy}
+\noindent\code{fpga\_neural\_v2\_top.v}
+\begin{itemize}[leftmargin=2.4em]
+\footnotesize
+\item \code{u\_pll} : \code{ecp5\_pll\_sys\_clk.v} (real \code{EHXPLLL} primitive, 16$\to$64\,MHz)
+\item \code{u\_reset\_sync} : \code{reset\_sync.v} (async assert, sync deassert, gated by \code{ext\_rst\_n} AND \code{pll\_locked})
+\item \code{u\_spi\_bridge} : \code{spi\_host\_bridge.v} (real SPI Mode~0 slave, triple-flop CDC)
+\item \code{u\_dataflow\_core} : \code{nms\_dataflow\_core\_sdram.v}
+  \begin{itemize}
+    \item \code{u\_dep\_mgr} : \code{dependency\_manager.v}
+    \item \code{u\_director} : \code{neural\_director.v}
+    \item \code{GEN\_SLOT[0..N\_SLOTS-1]}: \code{nms\_memory\_manager\_stream\_wide.v} $+$ \code{neural\_processor.v}
+  \end{itemize}
+\item \code{u\_arbiter\_w}, \code{u\_arbiter\_ar} : \code{slot\_mem\_arbiter.v} (one per logical SDRAM port, W and AR)
+\item \code{u\_sdram\_backend} : \code{sdram\_unified\_backend.v} $\to$ \code{sdram\_controller.v} (single physical SDRAM)
+\end{itemize}
+
+\begin{fnnote}[No shared activation cache in this datapath]
+The PSRAM-era shared activation cache (\code{activation\_cache.v},
+ch.~\ref{ch:mem} \S\ref{sec:cache}) is not part of the current SDRAM
+top-level's instantiation tree --- \code{nms\_memory\_manager\_stream\_wide.v}
+handles per-slot activation/weight/result streaming directly against
+the unified SDRAM backend. The PSRAM-era module remains real, correct,
+and documented for the architecture it was measured on
+(ch.~\ref{ch:mem}), but is not reused here.
+\end{fnnote}

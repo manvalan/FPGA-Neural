@@ -1,0 +1,67 @@
+\thispagestyle{plain}
+\noindent
+\begin{tikzpicture}
+\node[fill=fnDark,text=white,rounded corners=2pt,inner sep=6pt,
+      minimum width=\textwidth,anchor=west]
+  {\large\bfseries Pinout summary --- real, board-verified};
+\end{tikzpicture}
+
+\vspace{6pt}
+\noindent
+{\footnotesize
+V2's top-level module, \code{fpga\_neural\_v2\_top.v}, has a complete,
+real ball assignment: every signal --- SDRAM bus, SPI host transport,
+clock/reset, \code{FPGA\_DATA\_READY}, JTAG, configuration mode straps,
+and the boot flash's dedicated MSPI pins --- carries a real CABGA381 ball
+site, sourced from the official Lattice pinout CSV (rev 3.0) and
+cross-checked against Project Trellis's own \code{iodb.json}. This
+supersedes an earlier V2 milestone in which the board-level top had been
+placed only \textbf{unconstrained}; a full, constrained \code{.lpf} now
+exists (\code{hardware/v2/constraints/v2\_board\_top.lpf}) and every
+Fmax number in this datasheet (\S\ref{sec:clock-closure-current}) is
+measured against it.
+}
+
+\vspace{6pt}
+\begin{fnnote}[What is real]
+Every ball in the summary table below is placed, P\&R-confirmed, and
+cross-checked against a real, exported KiCad schematic and BOM
+(\S\ref{sec:schematic-capture}--\ref{sec:bom}) --- not a simulation-only
+placeholder. No PSRAM signals exist anywhere in this revision: the
+single external memory is SDR SDRAM (\S\ref{sec:sdram-mem-addendum}).
+\end{fnnote}
+
+\begin{fnwarn}[What remains open]
+FPGA dynamic power/current draw has not been measured post-implementation
+(no ECP5 power estimator is available in this toolchain), so exact
+decoupling/regulator sizing uses datasheet-based engineering margin, not
+a computed budget. Hold-time closure is a genuine tool-chain limitation
+(no min-delay analysis path available) --- setup timing is fully
+verified. See ch.~\ref{ch:hw} for the complete, disclosed list.
+\end{fnwarn}
+
+\vspace{6pt}
+\noindent
+{\small\color{fnDark}\bfseries Ball summary (see ch.~\ref{ch:hw} for the
+complete, per-signal table)}
+\vspace{2pt}
+
+\noindent
+\begin{tabularx}{\textwidth}{L{3.4cm}L{2.4cm}Y}
+\toprule
+\rowh \thd{Interface} & \thd{Ball count} & \thd{Notes} \\
+\midrule
+SDRAM bus (A[0:12], BA[0:1], DQ[0:15], DQM[0:1], CKE/CS\#/RAS\#/CAS\#/WE\#) & 35 & Bank 6/7, real, P\&R-confirmed \\
+\rowa SPI host transport (\code{sclk}/\code{mosi}/\code{miso}/\code{cs\_n}) & 4 & Bank 6/7, plain GPIO \\
+\code{FPGA\_DATA\_READY}, \code{osc\_clk}, \code{ext\_rst\_n}, \code{sdram\_clk}, \code{pll\_locked} & 5 & Bank 6/7 \\
+\rowa JTAG (TCK/TMS/TDI/TDO) & 4 & Bank 40, to ESP32 \\
+Config control (PROGRAMN/INITN/DONE) + CFG[2:0] straps & 6 & Bank 8 \\
+\rowa Boot-flash dedicated MSPI (CSSPIN/MCLK/D0/D1) & 4 & Bank 8, dual-function \\
+\bottomrule
+\end{tabularx}
+
+\vspace{4pt}
+\noindent
+{\footnotesize\color{fnGrey}
+Complete per-signal ball tables and the real KiCad schematic/BOM: ch.~\ref{ch:hw}.
+Logical (not physical) register-level port list: ch.~\ref{ch:regs}.\par}

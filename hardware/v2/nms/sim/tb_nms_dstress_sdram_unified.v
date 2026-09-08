@@ -850,9 +850,9 @@ module tb #(
         wait (u_nmp.u_sdram_backend.u_sdram_ctrl.state == u_nmp.u_sdram_backend.u_sdram_ctrl.S_IDLE);
         @(posedge clk);
 
-        // STEP19 official memory map (hardware/v2/docs/MEMORY_ARCHITECTURE.md):
-        // weights @ 0x010000, activations @ 0x200000, results @ 0x300000 --
-        // non-overlapping 1MB-aligned regions in the single 8MB SDRAM.
+        // Official V2 memory map (datasheet ch.5): weights @ 0x010000,
+        // activations @ 0x200000, results @ 0x300000 -- non-overlapping
+        // 1MB-aligned regions in the single SDRAM.
         run_dense_layer("D-Stress", 256, 16, 16'd400, 26'h200000, 26'h010000, 26'h300000, 1'b0);
 
         // FPGA_DATA_READY check: the whole graph (256 nodes) just

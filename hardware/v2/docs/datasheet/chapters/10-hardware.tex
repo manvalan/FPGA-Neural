@@ -1,0 +1,564 @@
+\chapter{Hardware and board}
+\label{ch:hw}
+
+\section{Board summary}
+V2 targets Lattice ECP5 \code{LFE5U-45F-8BG381C} ($-8$, commercial
+grade, 381-ball caBGA, 0.8\,mm pitch, real package geometry
+17$\times$17$\times$1.76\,mm) --- the same die/package family as V1,
+but the board around it has diverged substantially: V2 replaces V1's
+PSRAM with a single external SDR SDRAM device (\S\ref{sec:sdram-addendum}),
+adds a real, placed SPI host transport and \code{FPGA\_DATA\_READY}
+completion pin (ch.~\ref{ch:host}), and has a real, exported KiCad
+schematic capture and BOM (\S\ref{sec:schematic-capture}--\ref{sec:bom}).
+Every top-level signal of \code{fpga\_neural\_v2\_top.v} carries a real
+ball assignment in \code{hardware/v2/constraints/v2\_board\_top.lpf} ---
+no unconstrained/placeholder pins remain in this revision.
+
+\begin{fnnote}[V1's own PSRAM chain: retained in RTL, not on this board]
+\code{psram\_controller.v}/\code{memory\_interface.v} remain byte-for-byte
+identical to V1's own copies in the repository (frozen golden reference),
+but are \textbf{not instantiated anywhere in V2's real physical top}
+--- confirmed by inspection (\code{grep -ri psram hardware/v2/} returns
+nothing outside historical commentary). V1's own PSRAM ball assignment
+therefore does not apply to this board.
+\end{fnnote}
+
+\section{SDRAM upgrade addendum (2026-09-07) --- current, authoritative
+board state}
+\label{sec:sdram-addendum}
+\begin{fnwarn}[Real, closed architectural decision]
+An earlier V2 milestone reused V1's own PSRAM chain, placed
+unconstrained. The project has since made a closed architectural
+decision (real \code{decisions.log} DEC-0034) to replace external
+memory with a single SDR SDRAM device, and has since upgraded that
+device's capacity (8\,MB $\to$ 64\,MB) and re-verified real,
+constrained place\&route timing end to end. This section is the
+current, real, measured state.
+\end{fnwarn}
+
+\subsection{Memory device}
+\textbf{Alliance Memory AS4C32M16SB-7BIN} --- 512\,Mbit (64\,MByte) SDR
+SDRAM, organized 4 banks $\times$ 8M words $\times$ 16 bits, 54-ball
+FBGA package (8$\times$8$\times$1.2\,mm max), $-40$ to $85^{\circ}$C
+industrial, $-7$ speed grade (143\,MHz max). VDD/VDDQ 3.3\,V $\pm$0.3\,V.
+Single-ended \code{CLK} --- \textbf{no \code{CLK\_N}}, this is SDR, not
+DDR, SDRAM. Real distributor availability confirmed: DigiKey product
+11613071, 568 units in stock, \$31.12/unit (qty 1), 16-week
+manufacturer lead time.
+
+\subsection{Complete AS4C32M16SB-7BIN ball assignment}
+From the manufacturer's own \code{-7BIN}-specific datasheet (Alliance
+Memory, Rev.\,1.4, June 2024, Figure~1.1 --- the real TFBGA ball
+diagram, not inferred from the TSOP-II \code{-7TIN} pinout).
+
+\begin{fnnote}[Address / Bank]
+A0=H7, A1=H8, A2=J8, A3=J7, A4=J3, A5=J2, A6=H3, A7=H2, A8=H1, A9=G3,
+A10/AP=H9, A11=G2, A12=G1, BA0=G7, BA1=G8.
+\end{fnnote}
+\begin{fnnote}[Data / Masks]
+DQ0=A8, DQ1=B9, DQ2=B8, DQ3=C9, DQ4=C8, DQ5=D9, DQ6=D8, DQ7=E9, DQ8=E1,
+DQ9=D2, DQ10=D1, DQ11=C2, DQ12=C1, DQ13=B2, DQ14=B1, DQ15=A2, LDQM=E8,
+UDQM=F1.
+\end{fnnote}
+\begin{fnnote}[Control / Power]
+CLK=F2, CKE=F3, CS\#=G9, RAS\#=F8, CAS\#=F7, WE\#=F9. VDD=\{A9,E7,J9\},
+VSS=\{A1,E3,J1\}, VDDQ=\{A7,B3,C7,D3\}, VSSQ=\{A3,B7,C3,D7\}, NC=E2.
+\end{fnnote}
+
+\subsection{FPGA $\leftrightarrow$ SDRAM mapping (real, LPF-verified)}
+From \code{hardware/v2/constraints/v2\_board\_top.lpf} (45/45 unique
+FPGA balls, no duplicates, LFE5U-45F-8BG381 rev.\,3.0 CSV-verified).
+
+\begin{fnnote}[FPGA ball $\to$ SDRAM ball, by signal group]
+\code{sdram\_a[0..12]}: D5,D3,F4,E5,E3,F5,A2,B1,C2,C1,D2,D1,F1 $\to$
+A0..A12 (H7,H8,J8,J7,J3,J2,H3,H2,H1,G3,H9,G2,G1). \code{sdram\_ba[0:1]}:
+E4,C3 $\to$ BA0,BA1 (G7,G8). \code{sdram\_dq[0..15]}:
+E1,G5,H3,J5,K3,K2,H1,J1,K1,K4,L4,L5,M5,M4,N4,N5 $\to$ DQ0..DQ15.
+\code{sdram\_dqm[0:1]}: P5,N3 $\to$ LDQM,UDQM. Control:
+\code{sdram\_cke/cs\_n/ras\_n/cas\_n/we\_n}: B5,C5,C4,A3,B3 $\to$
+CKE,CS\#,RAS\#,CAS\#,WE\#.
+\end{fnnote}
+
+\subsection{Real, measured clock closure (nextpnr-ecp5, 8 seeds/config)}
+\label{sec:clock-closure-current}
+\begin{fnwarn}[Updated 2026-09-07 --- supersedes the ERR-0029-era numbers below]
+Flash \#1 (\S\ref{sec:prog-addendum}, since removed) briefly regressed
+N\_SLOTS=4 from 8/8 to 3/8 while it was integrated; that integration
+was reverted, prioritizing clock frequency over on-board flash
+persistence. A further real fix (DEC-0042, replacing a combinational
+fan-out with a synchronous counter) closed N\_SLOTS=4 back to 8/8 on
+the flash-free design --- the numbers below are the CURRENT, real,
+final state.
+\end{fnwarn}
+\begin{tabularx}{\textwidth}{L{4.0cm} C{1.6cm} C{2.2cm} X}
+\toprule
+\rowh \thd{Configuration} & \thd{Pass} & \thd{Worst / Best Fmax} & \thd{Notes} \\
+\midrule
+N\_SLOTS=4 @ 64\,MHz & \textbf{8/8} & 64.55 / 72.37\,MHz & \textbf{Production baseline, GO} \\
+\rowa N\_SLOTS=8 @ 64\,MHz & 3/8 & --- & Out of current scope, not pursued further \\
+N\_SLOTS=4/8 @ 80\,MHz & 0/8 & --- & NO-GO, genuine \code{ecppll}-regenerated PLL (re-confirmed pre-revert; not re-tested post-revert, expected unchanged) \\
+\bottomrule
+\end{tabularx}
+Root cause of the last N\_SLOTS=4 failure (seed1, real critical-path
+trace): \code{neural\_director.job\_out\_slot} $\to$
+\code{dependency\_manager.node\_resolved}/\code{node\_state}, a
+producer-completion broadcast crossing physically distant regions of
+the die (75--84\% routing, not a serial logic chain --- already a
+flat, parallel 64-way compare, so the ERR-0027/0028/0029 restructuring
+fix class does not apply here). The real contributor found: this
+chapter's own \code{FPGA\_DATA\_READY} support (\S\ref{sec:host-addendum})
+read \code{node\_state[0:N\_NODES-1]} combinationally every cycle,
+adding real fan-out onto that same congested signal. Fixed by
+replacing the OR-reduce with a synchronous up/down counter (see
+\S\ref{sec:host-addendum} for the exact formula) --- worst seed
+improved 62.47\,MHz $\to$ 64.55\,MHz, closing the last failing seed.
+See \code{decisions.log} DEC-0042 for full detail. A further
+pipelining fix on the same broadcast path is a real, identified,
+not-yet-attempted option if more margin is ever needed.
+
+\subsection{Directed SDRAM boundary verification}
+A dedicated directed testbench (\code{tb\_sdram\_boundary.v}, 21 checks)
+covers every address/row/bank boundary the randomized D-Stress
+regression does not directly target: exact first/last address
+(\code{0x000000}/\code{0x3FFFFF}), the row-10/row-11 column boundary,
+all three inter-bank crossings, the real V2 memory-map boundaries
+(weights/activations/results base and last-word-before-next-region),
+and all four byte-mask combinations with distinct deterministic
+patterns. All 21 addresses are written first, then read back in
+\textbf{reversed} order with address-derived patterns, proving no
+write corrupts any neighbouring address. \textbf{Result: 21/21 PASS at
+both 64\,MHz and 166\,MHz --- no bug found}, closing the one directed
+boundary-test gap disclosed earlier in the project's own verification
+history.
+
+\subsection{Verified SPI host operating clock}
+\label{sec:spi-max-verified}
+A dedicated sweep testbench (\code{tb\_spi\_freq\_sweep.v}) drives the
+real \code{fpga\_neural\_v2\_top} (not \code{spi\_host\_bridge} in
+isolation) at the real 64\,MHz system clock and sweeps the SPI bit
+rate across single-job, back-to-back, gapped, and raw
+\code{WRITE\_MEM}/\code{READ\_MEM} traffic. The breakpoint is
+\textbf{exact and deterministic}: PASS at every rate up to
+\textbf{12.8\,MHz (precisely 64\,MHz/5)}, FAIL (data corruption, then
+protocol FSM hang) at every rate at or above it --- the triple-flop CDC
+synchronizer plus edge-detect/FSM reaction in \code{spi\_host\_bridge.v}
+requires at least 5 full system-clock cycles per SPI bit period to
+reliably track \code{sclk}/\code{mosi}/\code{cs\_n} transitions, a real
+property of the CDC design (correct, standard practice), not a bug.
+\textbf{SPI\_MAX\_VERIFIED = 12\,MHz} is the recommended host operating
+point (real margin below the hard 12.8\,MHz edge, $\approx$6.7\%
+headroom). Board-level electrical limits (trace length, driver
+rise/fall time, ground bounce, real metastability risk) are
+\textbf{not} modeled by this deterministic simulation and remain to be
+confirmed empirically at bring-up.
+
+\section{Power supply design (2026-09-07) --- verified against the real
+Lattice hardware checklist}
+\label{sec:power-addendum}
+\begin{fnwarn}[Real design data, not estimated]
+The actual rail topology, sized against the real, primary-source
+Lattice and TI documents below.
+\end{fnwarn}
+
+\subsection{Rail topology}
+Three rails, one simplification from the original V1 reference design:
+\textbf{no separate buck regulator for the 3.3\,V I/O rail} --- the
+board's own external input is specified as \textbf{3.3\,V}, so
+\code{VCCIO}, the SDRAM (VDD/VDDQ, 3.3\,V per its own datasheet), and
+the flash (3.3\,V) are fed directly from the board input. A buck
+targeting 3.3\,V output from a 3.3\,V input would run at 100\% duty
+cycle permanently --- zero regulation margin, no benefit over a direct
+connection.
+
+\begin{tabularx}{\textwidth}{L{2.6cm} L{2.0cm} L{3.2cm} X}
+\toprule
+\rowh \thd{Rail} & \thd{Value} & \thd{Source} & \thd{Feeds} \\
+\midrule
+I/O & 3.3\,V & Direct board input & FPGA \code{VCCIO0--8}, SDRAM VDD/VDDQ, SPI flash, PMOD \\
+\rowa Core & 1.1\,V & TLV62568 (buck), from the 3.3\,V rail & FPGA \code{VCC} \\
+Auxiliary & 2.5\,V & TLV73325 (LDO), from the 3.3\,V rail & FPGA \code{VCCAUX} \\
+\bottomrule
+\end{tabularx}
+
+\subsection{Power-up sequencing --- real Lattice requirement, verified
+compliant}
+Per Lattice's own \emph{ECP5 and ECP5-5G Hardware Checklist}
+(FPGA-TN-02038-2.0, July 2024), \S4: \emph{``\code{VCCIO} supplies
+should be powered up before or together with the \code{VCC} and
+\code{VCCAUX} supplies.''} The same document's \S2 adds: all three
+monitored rails must rise \textbf{monotonically}, and the on-chip
+Power-On-Reset de-asserts only once \code{VCC}$\geq$0.9\,V,
+\code{VCCAUX}$\geq$2.0\,V, and \code{VCCIO8}$\geq$0.95\,V are all
+simultaneously satisfied --- device initialization waits for whichever
+of the three is slowest.
+
+This board's topology satisfies the requirement \textbf{by construction},
+with no sequencer IC needed: \code{VCCIO} (3.3\,V) is a direct,
+unregulated connection to the board input, so it rises first/fastest,
+strictly before the two regulated rails (Core, Aux) can even begin
+their own soft-start ramps --- ``before or together with'' is met on
+every possible power-up transient, not just the typical case.
+
+\subsection{Decoupling --- real Lattice-recommended values (not a
+generic ``one cap per pin'' guess)}
+Per FPGA-TN-02038-2.0 Table~3.1 (\S3.1), applied per-rail:
+
+\begin{tabularx}{\textwidth}{L{2.0cm} L{5.0cm} X}
+\toprule
+\rowh \thd{Rail} & \thd{Filter} & \thd{Notes} \\
+\midrule
+\code{VCC} & 10\,\textmu F $\times$3 (bulk) $+$ 100\,nF per pin & Core, 1.1\,V \\
+\rowa \code{VCCAUX} & 120\,$\Omega$ ferrite bead $+$ 10\,\textmu F $+$
+  100\,nF per pin & 2.5\,V; \textbf{new part not in the earlier power
+  tree draft} --- a ferrite bead in series was missing before this
+  verification pass \\
+\code{VCCIO[0--8]} & 10\,\textmu F $+$ 100\,nF per pin (per bank in
+  use) & 1\textmu F acceptable on unused banks; 22\,\textmu F (or a
+  second 10\,\textmu F) on banks with heavy output loading \\
+\bottomrule
+\end{tabularx}
+
+Capacitor selection, also per the same document: X5R/X7R dielectric
+(avoid Y5V/Z5U), voltage rating $\geq$80\% above the rail's maximum ---
+for the 3.3\,V rail this means a \textbf{6.3\,V minimum} rating, not
+the bare 3.3\,V-rated parts sometimes used to save cost. All ground
+pins tie to the board's ground plane (no star grounding on this
+family).
+
+\subsection{Regulator component values (real, computed from datasheet
+constants)}
+\textbf{TLV62568} (core, 1.1\,V): input range 2.5--5.5\,V (3.3\,V
+input has full margin); feedback reference \code{VFB}$=0.6$\,V
+(typical, per TI SLVSD89B). Output set via
+$V_{OUT}=V_{FB}\left(1+\frac{R1}{R2}\right)$: choosing
+\textbf{R1$=$100\,k$\Omega$, R2$=$120\,k$\Omega$} gives
+$0.6\times(1+100/120)=1.1$\,V exactly. Per TI's own typical
+application circuit: C1$=$4.7\,\textmu F on \code{VIN}, L1$=$2.2\,
+\textmu H inductor, C2$=$10\,\textmu F on \code{VOUT}.
+
+\textbf{TLV73325} (auxiliary, 2.5\,V fixed-output LDO): input range
+1.4--5.5\,V (per TI SBVS221, real datasheet), dropout 125\,mV at
+300\,mA --- far above this rail's $\sim$10\,mA real load, so dropout is
+not a concern at 3.3\,V input. Capacitor-free architecture (stable
+without external caps at the regulator itself); the 10\,\textmu F$+$
+100\,nF on \code{VCCAUX} above are the FPGA-side filter from
+FPGA-TN-02038, not regulator-stability caps, and are still required.
+
+\begin{fnnote}[16\,MHz oscillator: frozen]
+\textbf{ECS Inc. International \code{ECS-3225MV-160-BN-TR}} --- a
+quartz crystal oscillator (XO, not a bare crystal; direct digital clock
+output, no external oscillator circuit needed), 3225 SMD package
+(3.2$\times$2.5\,mm, 4-pad, matching the real KiCad footprint for U5),
+3.3\,V supply (matches \code{osc\_clk}'s real \code{IO\_TYPE=LVCMOS33}
+ball H5 exactly, no level-shifting needed), $\pm$50\,ppm stability,
+$-40$ to $+85^{\circ}$C. One 100\,nF decoupling capacitor across
+\code{VDD}/\code{GND}, placed close to the supply pin. The exact
+terminal order-code suffix (stability/output-enable option letters)
+should be cross-checked against ECS's current published datasheet at
+BOM lock --- normal due diligence, not an open architectural question.
+\end{fnnote}
+
+\subsection{Power tree}
+\begin{center}
+\begin{tikzpicture}[node distance=10mm and 14mm,font=\footnotesize]
+  \node[fnblockD,minimum width=30mm,minimum height=11mm] (in){Board input\\3.3\,V};
+  \node[fnblock,below left=14mm and -6mm of in,minimum width=32mm,minimum height=13mm] (u3){TLV62568 (buck)\\R1/R2 $\to$ 1.1\,V};
+  \node[fnblockT,below right=14mm and -6mm of in,minimum width=32mm,minimum height=13mm] (u5){TLV73325 (LDO)\\fixed 2.5\,V};
+  \node[fnblockA,right=30mm of in,minimum width=26mm,minimum height=11mm] (io){\code{VCCIO0--8}\\3.3\,V direct};
+  \node[fnreg,below=8mm of io,minimum width=26mm] (sd){SDRAM VDD/VDDQ};
+  \node[fnreg,below=6mm of sd,minimum width=26mm] (fl){SPI flash \code{VCC}};
+  \node[fnblock,below=18mm of u3,minimum width=30mm,minimum height=11mm] (core){FPGA \code{VCC}\\1.1\,V core};
+  \node[fnblockT,below=18mm of u5,minimum width=30mm,minimum height=11mm] (aux){FPGA \code{VCCAUX}\\2.5\,V};
+  \draw[fnbus] (in) -- (io);
+  \draw[fnarrow] (io) -- (sd);
+  \draw[fnarrow] (io) -- (fl);
+  \draw[fnbus] (in) -- (u3);
+  \draw[fnbus] (in) -- (u5);
+  \draw[fnbus] (u3) -- node[fnlbl,right]{10\textmu F$\times$3 + 100nF/pin} (core);
+  \draw[fnbus] (u5) -- node[fnlbl,right]{120$\Omega$ FB + 10\textmu F + 100nF/pin} (aux);
+\end{tikzpicture}
+\end{center}
+\begin{center}
+{\scriptsize Power tree, direct 3.3\,V I/O rail (no redundant buck), verified against
+FPGA-TN-02038-2.0 \S3--4. Full schematic capture (BOM, connectors,
+FPGA--RAM/FLASH and PROG sections) pending separately.}
+\end{center}
+
+\section{Programming architecture (updated 2026-09-07) --- single
+boot flash, ESP32 over JTAG only}
+\label{sec:prog-addendum}
+\begin{fnwarn}[Real, closed design -- superseded once, now final]
+Originally converged on a two-flash design (\S below described flash
+\#1 for neural-network data and flash \#2 for boot). Flash \#1 was
+fully implemented (real V1 subsystem instantiated, a new byte$\leftrightarrow$word
+adapter, a new SPI opcode, a dedicated testbench, 64/64 bytes verified
+bit-exact) and then \textbf{removed again}, per an explicit design
+decision: it measurably regressed N\_SLOTS=4's own real timing
+closure (8/8 $\to$ 3/8 PASS at 64\,MHz), and clock frequency was
+judged more valuable than on-board persistent weight storage --- the
+ESP32 can push weights fresh each session instead. Reverted cleanly
+via \code{git revert} (commit \code{59901a4}, fully recoverable from
+history if ever needed again). This section now describes the
+current, real, single-flash architecture. See \code{decisions.log}
+DEC-0041 (original two-flash design) and DEC-0042 (removal + the
+timing recovery that followed) for the complete history.
+\end{fnwarn}
+
+\subsection{One physical flash chip: boot bitstream only}
+\textbf{Winbond \code{W25Q128JVPIM}} (128\,Mbit, WSON-8, 6$\times$5\,mm
+--- real BOM entry U9, \S\ref{sec:bom}). Connects exclusively to the
+ECP5's own dedicated sysCONFIG pins, Master SPI mode, auto-boots every
+power-up, zero ESP32 involvement in normal operation. No second flash
+device, no on-board neural-network
+weight persistence in the current design --- the host (ESP32) is
+responsible for pushing weight/activation data into SDRAM fresh each
+session via the real SPI application protocol
+(\S\ref{sec:host-addendum}).
+
+\subsection{ESP32 $\leftrightarrow$ ECP5: JTAG only}
+Neither ESP32-S3 nor ESP32-C6 has a hardware JTAG \emph{master}
+peripheral (verified against Espressif's own documentation): their
+native ``USB Serial/JTAG Controller'' lets an external host debug the
+ESP32 itself --- the wrong direction for driving the ECP5. TCK/TMS/
+TDI/TDO are therefore bit-banged from ordinary ESP32 GPIO, standard
+practice. ESP32 updates flash~\#2 by commanding the ECP5's own
+internal sysCONFIG engine to bridge JTAG writes through to the
+external flash (real Lattice mechanism, FPGA-TN-02038-2.0 Figure~6.3,
+``Programming external Flash via JTAG'') --- ESP32 never drives
+flash~\#2's own SPI pins directly, zero bus contention by
+construction.
+
+\subsection{Real ball assignments (CABGA381)}
+From the official Lattice pinout CSV (\code{FPGA-SC-02034-3-0-
+ECP5U-45-Pinout.csv} rev.\,3.0) cross-checked against Project
+Trellis's \code{iodb.json}.
+
+\begin{fnnote}[JTAG (bank 40/TAP) --- to ESP32]
+TCK=T5, TMS=U5, TDI=R5, TDO=V4.
+\end{fnnote}
+\begin{fnnote}[Dedicated config (bank 8) --- to ESP32]
+PROGRAMN=W3, INITN=V3, DONE=Y3.
+\end{fnnote}
+\begin{fnnote}[CFG{[}2:0{]} (bank 8) --- board jumpers/0$\Omega$, NOT to ESP32]
+For MSPI, CFG[2:0]$=$[0,1,0] read MSB-first: CFG\_2(R4)$=$GND,
+CFG\_1(T4)$=$pull-up 1--10\,k$\Omega$ to VCCIO8, CFG\_0(U4)$=$GND.
+\end{fnnote}
+\begin{fnnote}[MSPI dedicated/dual-function pins to flash \#2 (bank 8) --- NOT to ESP32]
+MCLK/CCLK=U3, CSSPIN=R2 (dual w/ HOLDN/DI/BUSY/CEN), D0/MOSI=W2,
+D1/MISO=V2.
+\end{fnnote}
+
+Confirmed real and safe (Lattice FPGA-TN-02039-2.3 sysCONFIG User
+Guide, \S6.1.2): once User Mode is reached, the MSPI dedicated pins
+tristate with a weak pull-up, so they never contend with another
+driver on the same net --- not load-bearing for the current
+single-flash architecture (nothing else shares these pins), but
+confirms the mechanism is real should a future revision ever add a
+second flash device sharing this same chip.
+
+\section{Real KiCad schematic review (2026-09-07)}
+\label{sec:schematic-review}
+\begin{fnwarn}[Schematic capture reviewed against every real ball
+assignment established in this chapter]
+This section records an actual review pass of the KiCad schematic
+capture (sheet \code{FPGA-Neural/FPGA.kicad\_sch}) against the real
+ball tables above --- confirmed items and real, disclosed findings,
+not a generic checklist.
+\end{fnwarn}
+
+\subsection{Confirmed correct}
+JTAG (TCK=T5, TDI=R5, TDO=V4, TMS=U5); the complete real SDRAM bus
+(A0--A12, all 16 DQ, BA0/BA1, LDQM/UDQM, CLK=F2, CKE=F3, CS\#=G9,
+RAS\#=F8); \code{TLV62568}'s real component values (L1=2.2\,\textmu H,
+R1=100\,k$\Omega$/R2=120\,k$\Omega$ feedback divider, C6=4.7\,\textmu F);
+\code{TLV73325}'s 2.5\,V output; the VCCAUX ferrite (180\,$\Omega$,
+matching the approved \code{CBG160808U181T}); \code{FPGA\_DATA\_READY}=G3,
+\code{FPGA\_RESET}=B4, \code{osc\_clk}=H5; CFG\_1's 10\,k$\Omega$
+pull-up (inside the required 1--10\,k$\Omega$ range).
+
+\subsection{Real findings --- all resolved as of this pass}
+\begin{enumerate}
+\item \textbf{Boot-flash net-name mismatch}: \textbf{resolved}. The
+      original capture had the flash chip's own pins labeled
+      \code{FPGA\_SPI\_CS/SCLK/MOSI/MISO} while the ECP5's dedicated
+      MSPI pins (CSSPIN/MCLK/D0/D1, ball R2/U3/W2/V2) were labeled
+      \code{FGPA\_SPI\_CLK/MISO/MOSI/CS} --- a transposed
+      \code{FGPA}/\code{FPGA} typo, and \code{SCLK} vs.\ \code{CLK}
+      being two different label strings (KiCad nets are formed by
+      exact label-text match, so auto-boot from flash would have
+      silently failed). The corrected schematic now shows all eight
+      labels as identical text, \code{FPGA\_SPI\_CS/SCLK/MOSI/MISO},
+      on both the flash chip and the ECP5's dedicated pins --- verified
+      by direct comparison of the two label sets in the updated
+      capture (\S\ref{sec:schematic-capture}).
+\end{enumerate}
+
+\begin{fnnote}[Checked and cleared]
+SDRAM CAS\#/WE\#: verified CAS\#=F7, WE\#=F9 in the real schematic ---
+matches this chapter exactly. The apparent swap in the original review
+was a misread of the schematic image, not a real error.
+\end{fnnote}
+
+\subsection{Open items --- all resolved as of this pass}
+\begin{itemize}
+\item \code{TLV62568}'s EN pin: \textbf{resolved} --- \code{R3}=499\,k$\Omega$
+      confirmed on EN (BOM, \S\ref{sec:bom}), matches TI's own
+      reference circuit.
+\item The \code{+1V1} label near the VCCAUX ferrite (L2): \textbf{resolved,
+      false alarm}. \code{TLV62568} (U1) itself outputs 1.1\,V (directly
+      confirmed against the schematic, matches the R1/R2 divider calculation in
+      \S\ref{sec:power-addendum}) --- the label belongs to U1's own
+      real output net, merely placed nearby on the schematic page, not
+      routed through the VCCAUX ferrite. VCCAUX remains 2.5\,V as
+      required.
+\item JTAG pull-up array (R5--R12, 4.7\,k$\Omega$): TDI/TDO/TMS need a
+      pull-up to VCCIO8, TCK needs a pull-\emph{down} to GND ---
+      \textbf{resolved}: the real BOM (\S\ref{sec:bom}) confirms these
+      are 8 \emph{discrete} 0402 parts, not a single bussed-array
+      package, so each can carry its own correct polarity (still
+      needs a final visual confirmation of the actual net-by-net
+      wiring, but the package-level limitation is ruled out).
+\end{itemize}
+
+\section{Real KiCad schematic capture (2026-09-07)}
+\label{sec:schematic-capture}
+\begin{fnwarn}[Source of these figures]
+Plotted directly from the real KiCad project
+(\code{FPGA-Neural/FPGA-Neural.kicad\_sch}, hierarchy: root
+\code{FPGA-Neural} $\to$ sheet \code{FPGA} $\to$ sheet
+\code{UnusedBank}) via \code{kicad-cli sch export pdf}, not a
+re-rendered screenshot --- what follows is the schematic exactly as
+it exists in the project file at commit time.
+\end{fnwarn}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\textwidth,page=2]{images/fpga-neural-v2-schematic.pdf}
+\caption{Main sheet (\code{FPGA}): FPGA symbols U2A/U2F/U2G/U2H/U2I,
+regulators U1/U3, SDRAM U4, boot flash U9, 16\,MHz crystal U5, and the
+full real net/label set reviewed in \S\ref{sec:schematic-review}.}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\textwidth,page=3]{images/fpga-neural-v2-schematic.pdf}
+\caption{\code{UnusedBank} sheet: unused/reserved FPGA I/O bank, held
+for future expansion (\S\ref{sec:pcb-module}).}
+\end{figure}
+
+\begin{fnnote}[Sheets present in the project but not reachable from
+the root hierarchy]
+\code{power.kicad\_sch}, \code{ram.kicad\_sch}, and
+\code{embeddedia.kicad\_sch} exist as files in the KiCad project
+directory but are not referenced by any sheet symbol in the current
+hierarchy (checked directly against the real \code{.kicad\_sch}
+sheet-reference fields) --- their content is already folded into the
+\code{FPGA} sheet above. Left as-is; not board-affecting, since KiCad
+only builds/plots what the root hierarchy actually reaches.
+\end{fnnote}
+
+\section{Bill of Materials (real, KiCad-exported, 2026-09-07)}
+\label{sec:bom}
+\begin{fnwarn}[Real export, cross-checked against every value this
+chapter specifies]
+Regenerated directly from the real KiCad source
+(\code{kicad-cli sch export bom}, grouped by value+footprint) ---
+not the CSV snapshot the earlier review used. Every value
+matches exactly (feedback divider, inductor, ferrite, regulators,
+SDRAM). One real discrepancy found: see below.
+\end{fnwarn}
+
+\begin{tabularx}{\textwidth}{L{2.4cm} C{1.0cm} L{2.6cm} X}
+\toprule
+\rowh \thd{Ref} & \thd{Qty} & \thd{Value} & \thd{Footprint / Part} \\
+\midrule
+C2,C3,C9,C13,C15,C17,C19,C21,C23,C25,C27,C28,C30 & 13 & 100\,nF & 0402 \\
+\rowa C4 & 1 & 1\,\textmu F & 01005 (TLV73325 CIN) \\
+C5,C7,C8,C10,C11,C12,C14,C16,C18,C20,C22,C24,C26,C29 & 14 & 10\,\textmu F & 0603 \\
+\rowa C6 & 1 & 4.7\,\textmu F & 01005 (TLV62568 CIN) \\
+L1 & 1 & 2.2\,\textmu H & 0805, 1.7\,A/215\,m$\Omega$ \\
+\rowa L2 & 1 & 180\,$\Omega$ & 0603, \code{CBG160808U181T} (VCCAUX ferrite) \\
+R1 & 1 & 100\,k$\Omega$ & 0402 (TLV62568 FB) \\
+\rowa R2 & 1 & 120\,k$\Omega$ & 0402 (TLV62568 FB) \\
+R3 & 1 & 499\,k$\Omega$ & 0402 (TLV62568 EN, matches TI's own reference) \\
+\rowa R4 & 1 & 10\,k$\Omega$ & 0402 (CFG\_1 pull-up) \\
+R5--R12 & 8 & 4.7\,k$\Omega$ & 0402, discrete (JTAG/PROGRAMN/INITN/DONE/CSSPIN) \\
+\rowa U1 & 1 & \code{TLV62568DBV} & SOT-23-5 \\
+U2 & 1 & \code{LFE5U-45F-8BG381C} & 381-ball caBGA, 0.8\,mm pitch, 20$\times$20 array, 17$\times$17$\times$1.76\,mm body --- \textbf{grade now verified fixed, see below} \\
+\rowa U3 & 1 & \code{TLV73325PDBV} & SOT-23-5 \\
+U4 & 1 & \code{AS4C32M16SB-7BIN} & 54-ball TFBGA, 0.8\,mm pitch, 6$\times$9 array, 8$\times$8$\times$1.2\,mm (real footprint dims match the datasheet exactly) \\
+\rowa U5 & 1 & 16\,MHz & 3225-4Pin crystal \\
+U9 & 1 & \code{W25Q128JVPIM} & WSON-8, 6$\times$5\,mm (real Winbond DTR datasheet linked) \\
+\bottomrule
+\end{tabularx}
+
+\subsection{Discrepancy: FPGA grade --- resolved and now source-verified}
+U2 was originally captured as \code{LFE5U-45F-8BG381I} (industrial
+grade, real $T_J$ range $-40$ to $+100^{\circ}$C) --- every other
+reference in this project (LPF, this chapter, decisions.log) uses
+\textbf{\code{LFE5U-45F-8BG381C}} (commercial grade, real $T_J$ range
+$0$ to $+85^{\circ}$C; same ``$-8$'' speed grade in both --- the
+letter suffix changes only the characterized temperature range, not
+logic speed). \textbf{The commercial (C) grade is the intended
+part}, confirmed against every other reference. This BOM regeneration confirms the fix landed in the real KiCad
+source itself, not just as a stated intent: U2's \code{Value} field
+now reads \code{LFE5U-45F-8BG381C} exactly.
+
+\subsubsection{New, real, minor finding: stale footprint library name}
+U2's \emph{footprint} field is
+\code{MIKILAB\_LFE5U\_45F\_8BG381I:BGA381C80P20X20\_1700X1700X176}
+--- the library name still carries the old \code{...8BG381I} suffix
+even though the symbol \code{Value} was corrected to \code{...381C}.
+\textbf{Not board-affecting}: caBGA381-C and caBGA381-I are the same
+physical package (identical ball grid/pitch/body, grade suffix is a
+temperature-characterization distinction only, confirmed above), so
+the pad geometry itself
+(\code{BGA381C80P20X20\_1700X1700X176} --- 381 balls, 0.8\,mm pitch,
+20$\times$20, 17$\times$17$\times$1.76\,mm) is correct regardless of
+which grade the library folder is named after. Purely a stale/misleading
+library name; worth renaming the library folder to
+\code{..\_8BG381C} at some point for consistency, but does not block
+fabrication.
+
+\subsection{Open items resolved by this BOM}
+R3=499\,k$\Omega$ confirms TLV62568's EN is populated (matches TI's
+own reference circuit exactly). R5--R12 being 8 \emph{discrete} 0402
+parts (not a single multi-resistor array footprint) confirms the
+earlier ``bussed array can't mix pull-up/pull-down'' concern does not
+apply --- each resistor can go to its own correct rail. U5 confirms
+the 16\,MHz oscillator, previously missing from the capture, is now
+present.
+
+\subsection{Resolved}
+TLV73325's EN pin: no dedicated resistor needed --- direct wire to
++3.3\,V (VIN), always-enabled. Unlike TLV62568's own soft-start
+R3=499\,k$\Omega$ pull-up, a plain LDO has no equivalent timing
+requirement (per TI's own datasheet: ``active high, do not leave
+floating,'' no sequencing note); no dynamic enable/disable control
+exists elsewhere in this design.
+
+\section{PCB module form factor (reserved)}
+\label{sec:pcb-module}
+Target: a castellated-edge SMD module, approximately
+\textbf{50\,mm $\times$ 25\,mm}, for mounting onto a carrier board ---
+dimensions and pin-out placeholder, real layout pending. This section
+will be filled in with the actual module outline, castellation pin
+map, and mechanical drawing once available.
+
+\section{Verification status --- real, disclosed open items}
+\label{sec:hw-open-items}
+Everything above is real (simulated, synthesized, and/or place\&route
+measured); this section lists what is genuinely \textbf{not yet}
+verified, honestly, rather than silently omitted.
+
+\begin{tabularx}{\textwidth}{L{4.4cm} Y}
+\toprule
+\rowh \thd{Item} & \thd{Status} \\
+\midrule
+Hold-time closure & \textbf{OPEN --- tool-chain limitation.} \code{nextpnr-ecp5}'s own timing report contains setup-side (posedge$\to$posedge max-delay) data only; no hold/min-delay analysis. No \code{pytrellis}-based min-delay pass or vendor (Lattice Diamond/Radiant) static timing analysis is available in this environment. Setup timing is fully verified (\S\ref{sec:clock-closure-current}). \\
+\rowa FPGA dynamic power/current draw & \textbf{OPEN --- not computable without post-implementation tools.} No ECP5 power estimator (\code{ecppower} or equivalent) is available in this toolchain. Regulator current ratings (\S\ref{sec:power-addendum}) are real, datasheet-supported engineering margin against this unknown, not a computed budget. \\
+N\_SLOTS=8 @ 64\,MHz & \textbf{Deferred, not production-frozen} --- functionally correct (bit-exact), 3/8 seeds pass timing closure. See \S\ref{sec:clock-closure-current}. \\
+\rowa Board-level SPI electrical limit & \textbf{OPEN --- requires real hardware.} \S\ref{sec:spi-max-verified}'s 12\,MHz recommendation is a simulation-verified logical limit; real trace length, driver rise/fall time, and metastability risk are not modeled by simulation. \\
+Embedded-host (ESP32-class) benchmark baseline & \textbf{OPEN --- no hardware available.} No comparison against a real ESP32 host exists; all host-side timing is protocol-level (ch.~\ref{ch:host}), not measured on real silicon. \\
+\bottomrule
+\end{tabularx}

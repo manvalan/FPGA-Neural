@@ -1,0 +1,144 @@
+\thispagestyle{plain}
+\noindent
+\begin{tikzpicture}
+\node[fill=fnDark,text=white,rounded corners=2pt,inner sep=6pt,
+      minimum width=\textwidth,anchor=west]
+  {\large\bfseries FPGA-Neural V2 --- General description and features};
+\end{tikzpicture}
+
+\vspace{6pt}
+\noindent
+{\small FPGA-Neural V2 is a \textbf{neural multiprocessor / dataflow machine},
+the evolution of the V1 sequential accelerator (documented separately, frozen
+and unmodified as the project's golden reference). Where V1 executes one
+neuron at a time under host-driven SPI control, V2 registers a
+\textbf{dependency graph of neurons} and keeps \code{N\_SLOTS} independent
+Neural Processor $+$ Memory Manager pairs busy concurrently, resolving data
+dependencies and hiding memory latency in hardware, without host
+intervention once a graph is loaded. Computation (INT8 MAC, ReLU,
+saturation) is bit-exact identical to V1's own datapath; what changed is
+everything \emph{around} it, including, mid-project, the external memory
+device itself (\S\ref{sec:sdram-mem-addendum}).}
+
+\vspace{8pt}
+\begin{multicols}{2}
+{\color{fnDark}\large\bfseries Features}\\[2pt]
+{\footnotesize
+\begin{itemize}[leftmargin=1.1em]
+\item \textbf{Dependency-graph scheduling}: nodes are registered with an
+      explicit producer list; a node becomes eligible for execution only
+      once every producer it depends on has genuinely completed --- verified
+      for 1-hop shared-producer/multi-consumer graphs and 2-hop transitive
+      (diamond) graphs.
+\item \code{N\_SLOTS}=4 independent \textbf{Neural Processor + Memory
+      Manager} pairs (production baseline), each running the identical
+      8-stage INT8 pipeline inherited from V1.
+\item \textbf{Single unified SDRAM}: one external SDR SDRAM device serves
+      weights, activations, AND results through one arbitrated backend
+      (\code{sdram\_unified\_backend.v}) --- no PSRAM, no second physical
+      memory device, in the current, frozen hardware path.
+\item \textbf{Real physical host transport}: a placed, ball-assigned SPI
+      Mode~0 slave (\code{spi\_host\_bridge.v}) plus a real
+      \code{FPGA\_DATA\_READY} completion pin --- both verified on real
+      \code{nextpnr-ecp5} place\&route, not just in simulation.
+\item \textbf{Real, board-level verification}: a real KiCad schematic
+      capture, a real exported BOM, and real component selections
+      (regulators, oscillator, configuration flash) all cross-checked
+      against this datasheet --- not merely a simulated design.
+\item \textbf{Real, measured} characterization at every step: Verilator
+      RTL simulation, Yosys synthesis, real \code{nextpnr-ecp5}
+      place\&route --- no theoretical number reported without a matching
+      real measurement.
+\end{itemize}}
+
+\columnbreak
+
+{\color{fnDark}\large\bfseries Honest, measured limitations}\\[2pt]
+{\footnotesize
+\begin{itemize}[leftmargin=1.1em]
+\item \code{N\_SLOTS}=8 is \textbf{functionally correct but not
+      timing-closed}: only 3/8 tested placement seeds pass 64\,MHz ---
+      deferred, not production-frozen (\S\ref{sec:clock-closure-current}).
+\item \textbf{Hold-time closure is a genuine, disclosed tool-chain
+      limitation}: no \code{pytrellis}/vendor static-timing-analysis path
+      is available in this environment to check min-delay/hold, only
+      setup (\S\ref{sec:clock-closure-current}).
+\item \textbf{FPGA dynamic power/current draw is not measured}: no ECP5
+      power estimator is available in this toolchain; regulator sizing
+      uses datasheet-based engineering margin, not a computed budget
+      (\S\ref{sec:power-addendum}).
+\item Fixed, lowest-index-priority arbitration (Director and memory
+      arbiter alike) is not fairness-balanced --- a real, measured
+      per-slot workload imbalance exists under sustained contention.
+\end{itemize}}
+
+\vspace{4pt}
+{\color{fnDark}\large\bfseries Target \& toolchain}\\[2pt]
+{\footnotesize
+\begin{itemize}[leftmargin=1.1em]
+\item FPGA: Lattice ECP5 \code{LFE5U-45F-8BG381C} ($-8$, commercial grade,
+      381-ball caBGA, 0.8\,mm pitch) --- same target device as V1.
+\item SDRAM: Alliance Memory \code{AS4C32M16SB-7BIN} (512\,Mbit/64\,MB,
+      4M$\times$16, 54-ball FBGA).
+\item Synthesis: Yosys; place\&route: real \code{nextpnr-ecp5} 0.11.1.
+\item Simulation: Verilator 5.050 (\code{--binary --timing}) --- adopted
+      for V2 after two independent Icarus Verilog v13.0 scheduling
+      defects were found and reproduced on minimal repros (V1's own
+      certification, performed separately, was unaffected).
+\end{itemize}}
+\end{multicols}
+
+\vspace{2pt}
+% --- key parameter table ---
+\noindent
+{\small\color{fnDark}\bfseries Key parameters (production configuration,
+real measured data)}
+\vspace{2pt}
+
+\noindent
+\begin{tabularx}{\textwidth}{L{3.6cm}L{3.6cm}Y}
+\toprule
+\rowh \thd{Quantity} & \thd{Value} & \thd{Notes} \\
+\midrule
+Data precision & INT8 (signed) & \code{DATA\_WIDTH}=8, identical to V1 \\
+\rowa Accumulator & INT32 (signed) & \code{ACC\_WIDTH}=32 \\
+Dot-product width & 8 & \code{P\_IN}=8 parallel MAC lanes per neuron \\
+\rowa Production concurrency & \code{N\_SLOTS}=4 & real, 8/8-seed timing closure; see \S\ref{sec:clock-closure-current} \\
+System clock & 64\,MHz & 16\,MHz oscillator $\to$ \code{EHXPLLL} PLL; 80\,MHz confirmed NO-GO (genuine regenerated PLL, 0/8 seeds) \\
+\rowa Fmax, \code{N\_SLOTS}=4 (real P\&R, 8 seeds) & worst 64.55\,MHz / best 72.37\,MHz & production baseline, 8/8 PASS \\
+D-Stress regression (256 neurons) & 49,927 cycles, 256/256 bit-exact & 780\,\textmu s wall-clock @ 64\,MHz \\
+\rowa SPI host clock, verified & 12\,MHz recommended (12.8\,MHz hard CDC edge) & simulation-verified, real margin below the deterministic edge \\
+Address space & 26~bit (byte), single SDRAM & \code{ADDR\_WIDTH}=26 \\
+\bottomrule
+\end{tabularx}
+
+\vspace{8pt}
+\noindent
+{\small\color{fnDark}\bfseries System block diagram}
+\begin{center}
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[node distance=6mm and 9mm,font=\footnotesize]
+  \node[fnblockD,minimum width=24mm,minimum height=15mm] (host){HOST (SPI)\\{\scriptsize registers a node graph}};
+  \node[fnblockT,right=14mm of host,minimum width=30mm,minimum height=13mm] (dm){Dependency\\Manager};
+  \node[fnblockT,right=14mm of dm,minimum width=28mm,minimum height=13mm] (dir){Neural\\Director};
+  \node[fnreg,fill=white,right=14mm of dir,minimum width=30mm,minimum height=20mm] (slots){
+    \begin{tabular}{c}
+      N\_SLOTS=4 $\times$ \\
+      Memory Manager \\
+      $+$ Neural Processor
+    \end{tabular}};
+  \node[fnblock,right=14mm of slots,minimum width=26mm,minimum height=15mm] (ram){SDRAM 64\,MB\\{\scriptsize unified backend}};
+  \draw[fnbus] (host) -- (dm);
+  \draw[fnbus] (dm) -- node[fnlbl,above]{ready node} (dir);
+  \draw[fnbus] (dir) -- (slots);
+  \draw[fnbus] (slots) -- node[fnlbl,above]{W / AR ports} (ram);
+  \draw[fnarrowT] (slots.south) |- ++(0,-4mm) -| node[fnlbl,below]{producer done} (dm.south);
+\end{tikzpicture}%
+}
+\end{center}
+\begin{center}\footnotesize\itshape\color{fnGrey}
+A slot's completion feeds back to the Director (frees the slot) and to the
+Dependency Manager (wakes up any node waiting on it) --- closing the
+dataflow loop entirely on-chip. \code{FPGA\_DATA\_READY} (ball G3) goes high
+once every registered node has both resolved and dispatched
+(\S\ref{sec:host-addendum}).\end{center}
