@@ -268,3 +268,36 @@ synthesis.log/timing.log entry should record `yosys -V` and
 `nextpnr-ecp5 --version` output going forward -- neither was ever
 captured historically, which is what made this investigation take real
 effort instead of a one-line diff.
+
+[2026-09-15] EXP-0051 -- fpga_neural_v2_top, N_SLOTS=4 and N_SLOTS=8,
+POST DEC-0043 fix (slot_mem_arbiter/slot_mem_arbiter_wide/
+dataflow_core_sdram runtime-index removal), fresh 8-seed nextpnr-ecp5
+sweep, same flow/LPF as EXP-0049/EXP-0050
+N_SLOTS=4: 82.43, 93.23, 90.08, 90.22, 96.84, 89.59, 83.14, 90.29 MHz.
+  worst=82.43MHz (was 81.20MHz pre-fix, +1.23MHz), mean=89.48MHz (was
+  91.05MHz pre-fix, -1.57MHz). 8/8 PASS at 64MHz, unchanged pass count.
+  Essentially a WASH -- within normal seed-to-seed placement noise,
+  not a clear win or loss.
+N_SLOTS=8: 80.85, 81.41, 82.14, 81.34, 77.55, 77.36, 86.00, 79.05 MHz.
+  worst=77.36MHz (was 80.97MHz pre-fix, -3.61MHz), mean=80.71MHz (was
+  84.62MHz pre-fix, -3.91MHz). 8/8 PASS at 64MHz, unchanged pass count,
+  real margin (+21% over target) -- but a REAL, MEASURED REGRESSION
+  from the fix, disclosed honestly per this project's own real-data
+  standard, not spun as an improvement it did not deliver.
+INTERPRETATION: DEC-0043's fix is architecturally correct (removes a
+real hardware multiplier+crossbar on a path that scales with N_SLOTS,
+confirmed bit-exact) but real P&R is a stochastic heuristic search --
+removing logic from one path can shift the placer's own convergence
+onto a different, coincidentally worse-mapped critical path for this
+specific netlist+seed set, especially on an already-congested N=8
+design. Both configs remain comfortably closed at 64MHz either way, so
+this is not a functional regression, just a smaller measured margin
+for N=8 specifically after this change.
+DECISION: keep the fix (it is bit-exact, architecturally sound, and
+removes real technical debt the project itself already flagged this
+pattern as harmful once before at neural_director.v) despite the
+measured N=8 Fmax not improving -- the goal of DEC-0043 was code
+quality/scalability headroom (the anti-pattern gets WORSE, not better,
+as N_SLOTS grows further toward 16), not a guaranteed Fmax win at
+today's N=8. Both N_SLOTS=4/8 baselines (worst 82.43/77.36MHz) are the
+new operative post-fix numbers for any future comparison.
