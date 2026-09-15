@@ -1,0 +1,394 @@
+Info: constraining clock net 'osc_clk' to 16.00 MHz
+
+Info: Logic utilisation before packing:
+Info:     Total LUT4s:      6905/43848    15%
+Info:         logic LUTs:   4251/43848     9%
+Info:         carry LUTs:   1484/43848     3%
+Info:           RAM LUTs:    780/ 5481    14%
+Info:          RAMW LUTs:    390/10962     3%
+
+Info:      Total DFFs:      6527/43848    14%
+
+Info: Packing IOs..
+Info: $sdram_dq[15]$iobuf_i: sdram_dq_$_TBUF__Y.Y
+Info: pin 'sdram_dq[15]$tr_io' constrained to Bel 'X0/Y59/PIOB'.
+Info: $sdram_dq[14]$iobuf_i: sdram_dq_$_TBUF__Y_15.Y
+Info: pin 'sdram_dq[14]$tr_io' constrained to Bel 'X0/Y59/PIOC'.
+Info: $sdram_dq[13]$iobuf_i: sdram_dq_$_TBUF__Y_14.Y
+Info: pin 'sdram_dq[13]$tr_io' constrained to Bel 'X0/Y59/PIOA'.
+Info: $sdram_dq[12]$iobuf_i: sdram_dq_$_TBUF__Y_13.Y
+Info: pin 'sdram_dq[12]$tr_io' constrained to Bel 'X0/Y53/PIOA'.
+Info: $sdram_dq[11]$iobuf_i: sdram_dq_$_TBUF__Y_12.Y
+Info: pin 'sdram_dq[11]$tr_io' constrained to Bel 'X0/Y44/PIOD'.
+Info: $sdram_dq[10]$iobuf_i: sdram_dq_$_TBUF__Y_11.Y
+Info: pin 'sdram_dq[10]$tr_io' constrained to Bel 'X0/Y44/PIOC'.
+Info: $sdram_dq[9]$iobuf_i: sdram_dq_$_TBUF__Y_10.Y
+Info: pin 'sdram_dq[9]$tr_io' constrained to Bel 'X0/Y44/PIOA'.
+Info: $sdram_dq[8]$iobuf_i: sdram_dq_$_TBUF__Y_9.Y
+Info: pin 'sdram_dq[8]$tr_io' constrained to Bel 'X0/Y41/PIOD'.
+Info: $sdram_dq[7]$iobuf_i: sdram_dq_$_TBUF__Y_8.Y
+Info: pin 'sdram_dq[7]$tr_io' constrained to Bel 'X0/Y41/PIOB'.
+Info: $sdram_dq[6]$iobuf_i: sdram_dq_$_TBUF__Y_7.Y
+Info: pin 'sdram_dq[6]$tr_io' constrained to Bel 'X0/Y41/PIOC'.
+Info: $sdram_dq[5]$iobuf_i: sdram_dq_$_TBUF__Y_6.Y
+Info: pin 'sdram_dq[5]$tr_io' constrained to Bel 'X0/Y41/PIOA'.
+Info: $sdram_dq[4]$iobuf_i: sdram_dq_$_TBUF__Y_5.Y
+Info: pin 'sdram_dq[4]$tr_io' constrained to Bel 'X0/Y38/PIOD'.
+Info: $sdram_dq[3]$iobuf_i: sdram_dq_$_TBUF__Y_4.Y
+Info: pin 'sdram_dq[3]$tr_io' constrained to Bel 'X0/Y38/PIOB'.
+Info: $sdram_dq[2]$iobuf_i: sdram_dq_$_TBUF__Y_1.Y
+Info: pin 'sdram_dq[2]$tr_io' constrained to Bel 'X0/Y29/PIOD'.
+Info: $sdram_dq[1]$iobuf_i: sdram_dq_$_TBUF__Y_3.Y
+Info: pin 'sdram_dq[1]$tr_io' constrained to Bel 'X0/Y29/PIOB'.
+Info: $sdram_dq[0]$iobuf_i: sdram_dq_$_TBUF__Y_2.Y
+Info: pin 'sdram_dq[0]$tr_io' constrained to Bel 'X0/Y26/PIOD'.
+Info: pin 'spi_sclk$tr_io' constrained to Bel 'X0/Y62/PIOC'.
+Info: pin 'spi_mosi$tr_io' constrained to Bel 'X0/Y62/PIOB'.
+Info: pin 'spi_miso$tr_io' constrained to Bel 'X0/Y62/PIOD'.
+Info: pin 'spi_cs_n$tr_io' constrained to Bel 'X0/Y65/PIOA'.
+Info: pin 'sdram_we_n$tr_io' constrained to Bel 'X0/Y14/PIOD'.
+Info: pin 'sdram_ras_n$tr_io' constrained to Bel 'X0/Y14/PIOA'.
+Info: pin 'sdram_dqm[1]$tr_io' constrained to Bel 'X0/Y62/PIOA'.
+Info: pin 'sdram_dqm[0]$tr_io' constrained to Bel 'X0/Y59/PIOD'.
+Info: pin 'sdram_cs_n$tr_io' constrained to Bel 'X0/Y11/PIOD'.
+Info: pin 'sdram_clk$tr_io' constrained to Bel 'X0/Y38/PIOA'.
+Info: pin 'sdram_cke$tr_io' constrained to Bel 'X0/Y11/PIOC'.
+Info: pin 'sdram_cas_n$tr_io' constrained to Bel 'X0/Y14/PIOC'.
+Info: pin 'sdram_ba[1]$tr_io' constrained to Bel 'X0/Y17/PIOC'.
+Info: pin 'sdram_ba[0]$tr_io' constrained to Bel 'X0/Y17/PIOA'.
+Info: pin 'sdram_a[12]$tr_io' constrained to Bel 'X0/Y35/PIOB'.
+Info: pin 'sdram_a[11]$tr_io' constrained to Bel 'X0/Y26/PIOB'.
+Info: pin 'sdram_a[10]$tr_io' constrained to Bel 'X0/Y26/PIOC'.
+Info: pin 'sdram_a[9]$tr_io' constrained to Bel 'X0/Y26/PIOA'.
+Info: pin 'sdram_a[8]$tr_io' constrained to Bel 'X0/Y23/PIOD'.
+Info: pin 'sdram_a[7]$tr_io' constrained to Bel 'X0/Y23/PIOB'.
+Info: pin 'sdram_a[6]$tr_io' constrained to Bel 'X0/Y23/PIOA'.
+Info: pin 'sdram_a[5]$tr_io' constrained to Bel 'X0/Y20/PIOD'.
+Info: pin 'sdram_a[4]$tr_io' constrained to Bel 'X0/Y20/PIOB'.
+Info: pin 'sdram_a[3]$tr_io' constrained to Bel 'X0/Y20/PIOC'.
+Info: pin 'sdram_a[2]$tr_io' constrained to Bel 'X0/Y20/PIOA'.
+Info: pin 'sdram_a[1]$tr_io' constrained to Bel 'X0/Y17/PIOD'.
+Info: pin 'sdram_a[0]$tr_io' constrained to Bel 'X0/Y17/PIOB'.
+Info: pin 'pll_locked$tr_io' constrained to Bel 'X0/Y65/PIOC'.
+Info: pin 'osc_clk$tr_io' constrained to Bel 'X0/Y29/PIOC'.
+Info: pin 'ext_rst_n$tr_io' constrained to Bel 'X0/Y14/PIOB'.
+Info: pin 'data_ready$tr_io' constrained to Bel 'X0/Y32/PIOA'.
+Info: placed PLL 'u_pll.pll_i' at bel 'X1/Y4/EHXPLL_UL'
+Info: Packing constants..
+Info: Packing carries...
+Info: Packing LUTs...
+Info: Packing LUT5-7s...
+Info: Packing FFs...
+Info:     2367 FFs paired with LUTs.
+Info: Generating derived timing constraints...
+Info:     Input frequency of PLL 'u_pll.pll_i' is constrained to 16.0 MHz
+Info:     Derived frequency constraint of 64.0 MHz for net sdram_clk$TRELLIS_IO_OUT
+Info: Promoting globals...
+Info:     promoting clock net sdram_clk$TRELLIS_IO_OUT to global network
+Info: Checksum: 0x53454a1f
+
+Info: Device utilisation:
+Info: 	          TRELLIS_IO:      47/    245    19%
+Info: 	                DCCA:       1/     56     1%
+Info: 	              DP16KD:       0/    108     0%
+Info: 	          MULT18X18D:      32/     72    44%
+Info: 	              ALU54B:       0/     36     0%
+Info: 	             EHXPLLL:       1/      4    25%
+Info: 	             EXTREFB:       0/      2     0%
+Info: 	                DCUA:       0/      2     0%
+Info: 	           PCSCLKDIV:       0/      2     0%
+Info: 	             IOLOGIC:       0/    160     0%
+Info: 	            SIOLOGIC:       0/     85     0%
+Info: 	                 GSR:       0/      1     0%
+Info: 	               JTAGG:       0/      1     0%
+Info: 	                OSCG:       0/      1     0%
+Info: 	               SEDGA:       0/      1     0%
+Info: 	                 DTR:       0/      1     0%
+Info: 	             USRMCLK:       0/      1     0%
+Info: 	             CLKDIVF:       0/      4     0%
+Info: 	           ECLKSYNCB:       0/     10     0%
+Info: 	             DLLDELD:       0/      8     0%
+Info: 	              DDRDLL:       0/      4     0%
+Info: 	             DQSBUFM:       0/     10     0%
+Info: 	     TRELLIS_ECLKBUF:       0/      8     0%
+Info: 	        ECLKBRIDGECS:       0/      2     0%
+Info: 	                DCSC:       0/      2     0%
+Info: 	          TRELLIS_FF:    6527/  43848    14%
+Info: 	        TRELLIS_COMB:    7363/  43848    16%
+Info: 	        TRELLIS_RAMW:     195/   5481     3%
+
+Info: Placed 48 cells based on constraints.
+Info: Creating initial analytic placement for 8044 cells, random placement wirelen = 659893.
+Info:     at initial placer iter 0, wirelen = 3804
+Info:     at initial placer iter 1, wirelen = 3418
+Info:     at initial placer iter 2, wirelen = 3166
+Info:     at initial placer iter 3, wirelen = 3156
+Info: Running main analytical placer, max placement attempts per cell = 25084444.
+Info:     at iteration #1, type ALL: wirelen solved = 3096, spread = 111406, legal = 125486; time = 0.53s
+Info:     at iteration #2, type ALL: wirelen solved = 12698, spread = 81233, legal = 97847; time = 0.52s
+Info:     at iteration #3, type ALL: wirelen solved = 19122, spread = 72009, legal = 88536; time = 0.50s
+Info:     at iteration #4, type ALL: wirelen solved = 22864, spread = 67327, legal = 85354; time = 0.44s
+Info:     at iteration #5, type ALL: wirelen solved = 24628, spread = 65589, legal = 80927; time = 0.39s
+Info:     at iteration #6, type ALL: wirelen solved = 25853, spread = 65011, legal = 81238; time = 0.46s
+Info:     at iteration #7, type ALL: wirelen solved = 27382, spread = 63244, legal = 79647; time = 0.46s
+Info:     at iteration #8, type ALL: wirelen solved = 28170, spread = 63034, legal = 79694; time = 0.40s
+Info:     at iteration #9, type ALL: wirelen solved = 28883, spread = 63060, legal = 80527; time = 0.41s
+Info:     at iteration #10, type ALL: wirelen solved = 29696, spread = 62909, legal = 81324; time = 0.44s
+Info:     at iteration #11, type ALL: wirelen solved = 30752, spread = 62896, legal = 80283; time = 0.43s
+Info:     at iteration #12, type ALL: wirelen solved = 31448, spread = 62563, legal = 81569; time = 0.43s
+Info: HeAP Placer Time: 7.93s
+Info:   of which solving equations: 3.95s
+Info:   of which spreading cells: 0.52s
+Info:   of which strict legalisation: 1.85s
+
+Info: Running simulated annealing placer for refinement.
+Info:   at iteration #1: temp = 0.000000, timing cost = 1276, wirelen = 79647
+Info:   at iteration #5: temp = 0.000000, timing cost = 1232, wirelen = 73781
+Info:   at iteration #10: temp = 0.000000, timing cost = 1417, wirelen = 71986
+Info:   at iteration #15: temp = 0.000000, timing cost = 1243, wirelen = 71482
+Info:   at iteration #20: temp = 0.000000, timing cost = 1359, wirelen = 71286
+Info:   at iteration #25: temp = 0.000000, timing cost = 1211, wirelen = 71193
+Info:   at iteration #28: temp = 0.000000, timing cost = 1385, wirelen = 71165 
+Info: SA placement time 25.66s
+
+Info: Max frequency for clock '$glbnet$sdram_clk$TRELLIS_IO_OUT': 75.96 MHz (PASS at 64.00 MHz)
+
+Info: Max delay <async>                                  -> posedge $glbnet$sdram_clk$TRELLIS_IO_OUT: 4.45 ns
+Info: Max delay posedge $glbnet$sdram_clk$TRELLIS_IO_OUT -> <async>                                 : 8.99 ns
+
+Info: Slack histogram:
+Info:  legend: * represents 37 endpoint(s)
+Info:          + represents [1,37) endpoint(s)
+Info: [  2460,   3090) |+
+Info: [  3090,   3720) |*+
+Info: [  3720,   4350) |*+
+Info: [  4350,   4980) |****+
+Info: [  4980,   5610) |*****+
+Info: [  5610,   6240) |*********+
+Info: [  6240,   6870) |********+
+Info: [  6870,   7500) |********+
+Info: [  7500,   8130) |*******************+
+Info: [  8130,   8760) |**************************+
+Info: [  8760,   9390) |***********************************+
+Info: [  9390,  10020) |****************************************+
+Info: [ 10020,  10650) |**************************************+
+Info: [ 10650,  11280) |********************************+
+Info: [ 11280,  11910) |****************************+
+Info: [ 11910,  12540) |***********************************+
+Info: [ 12540,  13170) |*******************************************************+
+Info: [ 13170,  13800) |************************************************************ 
+Info: [ 13800,  14430) |********************************************+
+Info: [ 14430,  15060) |*********************************************+
+Info: Checksum: 0xb2c62bb6
+Info: Routing globals...
+Info:     routing clock net $glbnet$sdram_clk$TRELLIS_IO_OUT using global 0
+
+Info: Routing..
+Info: Setting up routing queue.
+Info: Routing 39305 arcs.
+Info:            |   (re-)routed arcs  |   delta    | remaining|       time spent     |
+Info:    IterCnt |  w/ripup   wo/ripup |  w/r  wo/r |      arcs| batch(sec) total(sec)|
+Info:       1000 |      648        351 |  648   351 |     39084|       1.56       1.56|
+Info:       2000 |     1167        832 |  519   481 |     38773|       1.32       2.89|
+Info:       3000 |     1508       1491 |  341   659 |     38348|       1.39       4.28|
+Info:       4000 |     1776       2223 |  268   732 |     37825|       1.24       5.52|
+Info:       5000 |     1933       3066 |  157   843 |     37141|       0.57       6.09|
+Info:       6000 |     2046       3953 |  113   887 |     36364|       0.53       6.61|
+Info:       7000 |     2154       4845 |  108   892 |     35523|       0.37       6.98|
+Info:       8000 |     2242       5757 |   88   912 |     34666|       0.46       7.45|
+Info:       9000 |     2353       6646 |  111   889 |     33869|       0.37       7.82|
+Info:      10000 |     2467       7532 |  114   886 |     33075|       0.48       8.30|
+Info:      11000 |     2565       8434 |   98   902 |     32276|       0.38       8.68|
+Info:      12000 |     2635       9364 |   70   930 |     31392|       0.43       9.11|
+Info:      13000 |     2740      10259 |  105   895 |     30571|       0.34       9.45|
+Info:      14000 |     2870      11129 |  130   870 |     29863|       0.39       9.85|
+Info:      15000 |     3002      11997 |  132   868 |     29118|       0.50      10.35|
+Info:      16000 |     3156      12843 |  154   846 |     28398|       0.37      10.71|
+Info:      17000 |     3277      13722 |  121   879 |     27645|       0.39      11.10|
+Info:      18000 |     3533      14466 |  256   744 |     27197|       1.65      12.74|
+Info:      19000 |     3640      15359 |  107   893 |     26361|       0.38      13.13|
+Info:      20000 |     3782      16217 |  142   858 |     25694|       0.35      13.48|
+Info:      21000 |     4023      16976 |  241   759 |     25023|       0.44      13.92|
+Info:      22000 |     4192      17807 |  169   831 |     24385|       0.39      14.31|
+Info:      23000 |     4368      18628 |  176   821 |     23684|       0.48      14.79|
+Info:      24000 |     4641      19348 |  273   720 |     23194|       0.56      15.35|
+Info:      25000 |     4875      20098 |  234   750 |     22651|       0.35      15.71|
+Info:      26000 |     5157      20794 |  282   696 |     22122|       0.46      16.17|
+Info:      27000 |     5477      21431 |  320   637 |     21521|       0.46      16.63|
+Info:      28000 |     5754      22117 |  277   686 |     20895|       0.38      17.00|
+Info:      29000 |     5986      22841 |  232   724 |     20214|       0.42      17.42|
+Info:      30000 |     6241      23555 |  255   714 |     19612|       0.49      17.92|
+Info:      31000 |     6507      24270 |  266   715 |     19013|       0.44      18.36|
+Info:      32000 |     6746      25011 |  239   741 |     18362|       0.58      18.93|
+Info:      33000 |     7019      25697 |  273   686 |     17785|       0.53      19.47|
+Info:      34000 |     7256      26401 |  237   704 |     17265|       0.54      20.01|
+Info:      35000 |     7496      27097 |  240   696 |     16642|       0.60      20.61|
+Info:      36000 |     7752      27808 |  256   711 |     16088|       0.74      21.35|
+Info:      37000 |     7982      28527 |  230   719 |     15452|       0.53      21.87|
+Info:      38000 |     8191      29261 |  209   734 |     14842|       0.65      22.52|
+Info:      39000 |     8350      30037 |  159   776 |     14120|       0.57      23.09|
+Info:      40000 |     8514      30839 |  164   802 |     13616|       0.66      23.75|
+Info:      41000 |     8687      31639 |  173   800 |     13031|       0.57      24.32|
+Info:      42000 |     8841      32408 |  154   769 |     12413|       0.59      24.90|
+Info:      43000 |     8993      33207 |  152   799 |     11666|       0.66      25.56|
+Info:      44000 |     9216      33950 |  223   743 |     11003|       0.60      26.17|
+Info:      45000 |     9495      34651 |  279   701 |     10555|       1.06      27.23|
+Info:      46000 |     9683      35402 |  188   751 |      9884|       0.59      27.82|
+Info:      47000 |     9832      36197 |  149   795 |      9127|       0.47      28.29|
+Info:      48000 |    10182      36823 |  350   626 |      8676|       1.01      29.30|
+Info:      49000 |    10313      37608 |  131   785 |      7869|       0.31      29.61|
+Info:      50000 |    10454      38412 |  141   804 |      7160|       0.41      30.02|
+Info:      51000 |    10638      39205 |  184   793 |      6485|       0.71      30.73|
+Info:      52000 |    10861      39962 |  223   757 |      5850|       0.81      31.54|
+Info:      53000 |    10995      40790 |  134   828 |      5111|       0.40      31.94|
+Info:      54000 |    11420      41365 |  425   575 |      4836|       1.02      32.97|
+Info:      55000 |    11741      42044 |  321   679 |      4570|       1.09      34.05|
+Info:      56000 |    12032      42751 |  291   707 |      4094|       1.12      35.18|
+Info:      57000 |    12275      43508 |  243   757 |      3475|       0.74      35.91|
+Info:      58000 |    12694      44089 |  419   581 |      3248|       1.32      37.23|
+Info:      59000 |    13098      44685 |  404   596 |      3240|       1.57      38.80|
+Info:      60000 |    13504      45279 |  406   594 |      3019|       1.44      40.24|
+Info:      61000 |    13859      45924 |  355   645 |      2674|       0.97      41.21|
+Info:      62000 |    14148      46635 |  289   711 |      2496|       0.98      42.19|
+Info:      63000 |    14432      47348 |  284   713 |      1948|       0.61      42.80|
+Info:      64000 |    14664      48081 |  232   733 |      1743|       0.77      43.57|
+Info:      65000 |    14811      48801 |  147   720 |       992|       0.66      44.23|
+Info:      66000 |    15036      49482 |  225   681 |       476|       0.97      45.20|
+Info:      66865 |    15175      50133 |  139   651 |         0|       0.67      45.87|
+Info: Routing complete.
+Info: Router1 time 45.87s
+Info: Checksum: 0xc233a902
+
+Info: Critical path report for clock '$glbnet$sdram_clk$TRELLIS_IO_OUT' (posedge -> posedge):
+Info:       type curr  total name
+Info:   clk-to-q  0.40  0.40 Source u_sdram_backend.w_cache_addr[2]_TRELLIS_FF_Q_19.Q
+Info:    routing  0.87  1.26 Net u_sdram_backend.w_cache_addr[2][19] (24,3) -> (24,3)
+Info:                          Sink u_sdram_backend.w_cache_valid[2]_LUT4_C_Z_LUT4_D_Z_LUT4_D_Z_LUT4_Z_2_D_LUT4_Z_D_LUT4_Z_2.D
+Info:      logic  0.18  1.44 Source u_sdram_backend.w_cache_valid[2]_LUT4_C_Z_LUT4_D_Z_LUT4_D_Z_LUT4_Z_2_D_LUT4_Z_D_LUT4_Z_2.F
+Info:    routing  0.60  2.04 Net u_sdram_backend.w_cache_valid[2]_LUT4_C_Z_LUT4_D_Z_LUT4_D_Z_LUT4_Z_2_D_LUT4_Z_D[1] (24,3) -> (24,3)
+Info:                          Sink u_sdram_backend.w_cache_valid[2]_LUT4_C_Z_LUT4_D_Z_LUT4_D_Z_LUT4_Z_2_D_LUT4_Z.B
+Info:                          Defined in:
+Info:                               /root/tools_cache/oss-cad-suite/lib/../share/yosys/lattice/cells_map_trellis.v:108.23-108.24
+Info:      logic  0.18  2.22 Source u_sdram_backend.w_cache_valid[2]_LUT4_C_Z_LUT4_D_Z_LUT4_D_Z_LUT4_Z_2_D_LUT4_Z.F
+Info:    routing  0.85  3.07 Net u_sdram_backend.w_cache_valid[2]_LUT4_C_Z_LUT4_D_Z_LUT4_D_Z_LUT4_Z_2_D[3] (24,3) -> (23,2)
+Info:                          Sink u_sdram_backend.w_cache_valid[2]_LUT4_C_Z_LUT4_D_Z_LUT4_D_Z_LUT4_Z_2.D
+Info:                          Defined in:
+Info:                               /root/tools_cache/oss-cad-suite/lib/../share/yosys/lattice/cells_map_trellis.v:108.23-108.24
+Info:      logic  0.18  3.25 Source u_sdram_backend.w_cache_valid[2]_LUT4_C_Z_LUT4_D_Z_LUT4_D_Z_LUT4_Z_2.F
+Info:    routing  0.60  3.85 Net u_sdram_backend.w_cache_valid[2]_LUT4_C_Z_LUT4_D_Z_LUT4_D_Z[2] (23,2) -> (23,2)
+Info:                          Sink u_sdram_backend.w_cache_valid[2]_LUT4_C_Z_LUT4_D_Z_LUT4_D_Z_LUT4_D.C
+Info:                          Defined in:
+Info:                               /root/tools_cache/oss-cad-suite/lib/../share/yosys/lattice/cells_map_trellis.v:108.23-108.24
+Info:      logic  0.18  4.03 Source u_sdram_backend.w_cache_valid[2]_LUT4_C_Z_LUT4_D_Z_LUT4_D_Z_LUT4_D.F
+Info:    routing  1.28  5.32 Net u_sdram_backend.w_cache_valid[2]_LUT4_C_Z_LUT4_D_Z_LUT4_D_Z_LUT4_D_Z[1] (23,2) -> (13,6)
+Info:                          Sink u_sdram_backend.w_cache_valid[0]_LUT4_C_Z_PFUMX_BLUT_Z_LUT4_D_Z_LUT4_D_Z_LUT4_D_Z_LUT4_Z.C
+Info:                          Defined in:
+Info:                               /root/tools_cache/oss-cad-suite/lib/../share/yosys/lattice/cells_map_trellis.v:108.23-108.24
+Info:      logic  0.18  5.50 Source u_sdram_backend.w_cache_valid[0]_LUT4_C_Z_PFUMX_BLUT_Z_LUT4_D_Z_LUT4_D_Z_LUT4_D_Z_LUT4_Z.F
+Info:    routing  0.80  6.30 Net u_sdram_backend.w_cache_valid[0]_LUT4_C_Z_PFUMX_BLUT_Z_LUT4_D_Z_LUT4_D_Z_LUT4_D_Z[3] (13,6) -> (18,5)
+Info:                          Sink u_sdram_backend.w_cache_hit_LUT4_Z.D
+Info:                          Defined in:
+Info:                               /root/tools_cache/oss-cad-suite/lib/../share/yosys/lattice/cells_map_trellis.v:108.23-108.24
+Info:      logic  0.18  6.48 Source u_sdram_backend.w_cache_hit_LUT4_Z.F
+Info:    routing  0.48  6.95 Net u_sdram_backend.w_alloc_ptr_TRELLIS_FF_Q_CE[0] (18,5) -> (18,5)
+Info:                          Sink u_host_arb.m_wr_LUT4_C_Z_LUT4_Z_C_LUT4_Z.C
+Info:                          Defined in:
+Info:                               hardware/v2/nms/rtl/sdram_unified_backend.v:184.10-184.21
+Info:      logic  0.18  7.13 Source u_host_arb.m_wr_LUT4_C_Z_LUT4_Z_C_LUT4_Z.F
+Info:    routing  0.34  7.47 Net u_host_arb.m_wr_LUT4_C_Z_LUT4_Z_C[0] (18,5) -> (18,5)
+Info:                          Sink u_host_arb.m_wr_LUT4_C_Z_LUT4_Z.C
+Info:                          Defined in:
+Info:                               /root/tools_cache/oss-cad-suite/lib/../share/yosys/lattice/cells_map_trellis.v:108.23-108.24
+Info:      logic  0.18  7.65 Source u_host_arb.m_wr_LUT4_C_Z_LUT4_Z.F
+Info:    routing  1.81  9.46 Net u_host_arb.m_wr_LUT4_C_Z[3] (18,5) -> (7,21)
+Info:                          Sink u_sdram_backend.ar_req_pending_LUT4_B.D
+Info:                          Defined in:
+Info:                               /root/tools_cache/oss-cad-suite/lib/../share/yosys/lattice/cells_map_trellis.v:108.23-108.24
+Info:      logic  0.18  9.64 Source u_sdram_backend.ar_req_pending_LUT4_B.F
+Info:    routing  1.11  10.75 Net u_sdram_backend.ar_req_pending_LUT4_B_Z[3] (7,21) -> (10,4)
+Info:                          Sink u_sdram_backend.state_TRELLIS_FF_Q_3_DI_LUT4_Z.D
+Info:                          Defined in:
+Info:                               /root/tools_cache/oss-cad-suite/lib/../share/yosys/lattice/cells_map_trellis.v:108.23-108.24
+Info:      logic  0.18  10.93 Source u_sdram_backend.state_TRELLIS_FF_Q_3_DI_LUT4_Z.F
+Info:    routing  0.12  11.04 Net u_sdram_backend.state_TRELLIS_FF_Q_3_DI (10,4) -> (10,4)
+Info:                          Sink u_sdram_backend.state_TRELLIS_FF_Q_3.DI
+Info:      setup  0.00  11.04 Source u_sdram_backend.state_TRELLIS_FF_Q_3.DI
+Info: 2.19 ns logic, 8.85 ns routing
+
+Info: Critical path report for cross-domain path '<async>' -> 'posedge $glbnet$sdram_clk$TRELLIS_IO_OUT':
+Info:       type curr  total name
+Info:     source  0.00  0.00 Source sdram_dq[2]$tr_io.O
+Info:    routing  3.35  3.35 Net sdram_dq[2]$TRELLIS_IO_IN (0,29) -> (15,4)
+Info:                          Sink u_sdram_backend.ctrl_rdata_TRELLIS_FF_Q_50_DI_LUT4_Z_D_LUT4_Z.C
+Info:                          Defined in:
+Info:                               hardware/v2/nms/rtl/sdram_unified_backend.v:104.24-104.32
+Info:      logic  0.18  3.53 Source u_sdram_backend.ctrl_rdata_TRELLIS_FF_Q_50_DI_LUT4_Z_D_LUT4_Z.F
+Info:    routing  0.63  4.16 Net u_sdram_backend.ctrl_rdata_TRELLIS_FF_Q_50_DI_LUT4_Z_D[2] (15,4) -> (17,4)
+Info:                          Sink u_sdram_backend.ctrl_rdata_TRELLIS_FF_Q_50_DI_LUT4_Z.D
+Info:                          Defined in:
+Info:                               /root/tools_cache/oss-cad-suite/lib/../share/yosys/lattice/cells_map_trellis.v:108.23-108.24
+Info:      logic  0.18  4.34 Source u_sdram_backend.ctrl_rdata_TRELLIS_FF_Q_50_DI_LUT4_Z.F
+Info:    routing  0.12  4.46 Net u_sdram_backend.ctrl_rdata_TRELLIS_FF_Q_50_DI (17,4) -> (17,4)
+Info:                          Sink u_sdram_backend.ctrl_rdata_TRELLIS_FF_Q_50.DI
+Info:      setup  0.00  4.46 Source u_sdram_backend.ctrl_rdata_TRELLIS_FF_Q_50.DI
+Info: 0.36 ns logic, 4.10 ns routing
+
+Info: Critical path report for cross-domain path 'posedge $glbnet$sdram_clk$TRELLIS_IO_OUT' -> '<async>':
+Info:       type curr  total name
+Info:   clk-to-q  0.40  0.40 Source u_spi_bridge.byte_idx_TRELLIS_FF_Q_3.Q
+Info:    routing  0.99  1.39 Net u_spi_bridge.byte_idx[3] (25,33) -> (25,26)
+Info:                          Sink u_spi_bridge.state_TRELLIS_FF_Q_2_DI_LUT4_Z_B_LUT4_Z_C_LUT4_Z.C
+Info:                          Defined in:
+Info:                               /root/tools_cache/oss-cad-suite/lib/../share/yosys/lattice/cells_map_trellis.v:108.23-108.24
+Info:      logic  0.18  1.57 Source u_spi_bridge.state_TRELLIS_FF_Q_2_DI_LUT4_Z_B_LUT4_Z_C_LUT4_Z.F
+Info:    routing  0.65  2.22 Net u_spi_bridge.state_TRELLIS_FF_Q_2_DI_LUT4_Z_B_LUT4_Z_C[3] (25,26) -> (24,26)
+Info:                          Sink u_spi_bridge.state_TRELLIS_FF_Q_DI_LUT4_Z_D_LUT4_Z_B_LUT4_D_Z_LUT4_D_Z_LUT4_Z.D
+Info:                          Defined in:
+Info:                               /root/tools_cache/oss-cad-suite/lib/../share/yosys/lattice/cells_map_trellis.v:108.23-108.24
+Info:      logic  0.18  2.40 Source u_spi_bridge.state_TRELLIS_FF_Q_DI_LUT4_Z_D_LUT4_Z_B_LUT4_D_Z_LUT4_D_Z_LUT4_Z.F
+Info:    routing  2.01  4.41 Net spi_miso_LUT4_Z_C_LUT4_D_Z_LUT4_D_Z_PFUMX_Z_C0_PFUMX_Z_C0[3] (24,26) -> (16,45)
+Info:                          Sink spi_miso_LUT4_Z_C_LUT4_Z.D
+Info:                          Defined in:
+Info:                               /root/tools_cache/oss-cad-suite/lib/../share/yosys/lattice/cells_map_trellis.v:108.23-108.24
+Info:      logic  0.18  4.59 Source spi_miso_LUT4_Z_C_LUT4_Z.F
+Info:    routing  0.50  5.09 Net spi_miso_LUT4_Z_B[2] (16,45) -> (17,45)
+Info:                          Sink spi_miso_LUT4_Z.C
+Info:                          Defined in:
+Info:                               /root/tools_cache/oss-cad-suite/lib/../share/yosys/lattice/cells_map_trellis.v:108.23-108.24
+Info:      logic  0.18  5.27 Source spi_miso_LUT4_Z.F
+Info:    routing  2.06  7.33 Net spi_miso$TRELLIS_IO_OUT (17,45) -> (0,62)
+Info:                          Sink spi_miso$tr_io.I
+Info:                          Defined in:
+Info:                               hardware/v2/nms/rtl/fpga_neural_v2_top.v:55.17-55.25
+Info: 1.12 ns logic, 6.21 ns routing
+
+Info: Max frequency for clock '$glbnet$sdram_clk$TRELLIS_IO_OUT': 90.55 MHz (PASS at 64.00 MHz)
+
+Info: Max delay <async>                                  -> posedge $glbnet$sdram_clk$TRELLIS_IO_OUT: 4.46 ns
+Info: Max delay posedge $glbnet$sdram_clk$TRELLIS_IO_OUT -> <async>                                 : 7.33 ns
+
+Info: Slack histogram:
+Info:  legend: * represents 42 endpoint(s)
+Info:          + represents [1,42) endpoint(s)
+Info: [  4581,   5098) |+
+Info: [  5098,   5615) |+
+Info: [  5615,   6132) |**+
+Info: [  6132,   6649) |**+
+Info: [  6649,   7166) |******+
+Info: [  7166,   7683) |******+
+Info: [  7683,   8200) |*******+
+Info: [  8200,   8717) |*******+
+Info: [  8717,   9234) |***********+
+Info: [  9234,   9751) |***************+
+Info: [  9751,  10268) |*********************+
+Info: [ 10268,  10785) |**********************************+
+Info: [ 10785,  11302) |**************************************+
+Info: [ 11302,  11819) |***********************************+
+Info: [ 11819,  12336) |***********************************+
+Info: [ 12336,  12853) |*****************************+
+Info: [ 12853,  13370) |***************************************+
+Info: [ 13370,  13887) |************************************************************ 
+Info: [ 13887,  14404) |*************************************************+
+Info: [ 14404,  14921) |******************************************+
+
+Info: Program finished normally.

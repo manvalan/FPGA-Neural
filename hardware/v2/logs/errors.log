@@ -1463,3 +1463,94 @@ trace). N_SLOTS=4 remains 8/8 PASS at 64MHz but with reduced margin,
 disclosed above -- flagged, not hidden, per this project's own real-
 data-only reporting standard. File changed: hardware/v2/nms/rtl/
 sdram_unified_backend.v.
+
+ERR-0030 -- constraints/v2_unified.lpf's FREQUENCY PORT "clk" directive
+was stale at 80 MHz, silently mislabeling every real-pin-constrained
+nextpnr PASS/FAIL result against the wrong bar
+
+DATE: 2026-09-15
+CONTEXT: new brief to close N=8 timing, retarget to LFE5U-85F, and
+sweep 4/8/16 processors x 1/2 SDRAM banks. Phase 0 baseline: re-ran
+nms_neural_multiprocessor_sdram_unified (N_SLOTS=4/8) through the real
+existing flow. First attempt used `--lpf-allow-unconstrained` with NO
+`--lpf` file at all (no real pin locations) -- achieved Fmax came out
+implausibly high (N=4 worst-seed 86.86MHz, mean ~100MHz across 8
+seeds) versus the last real production baseline (DEC-0042: N=4
+worst-seed 64.55MHz). Re-ran the same N=4 netlist WITH the real
+`constraints/v2_unified.lpf` (real H5/B4 clk/rst balls, real SDRAM
+balls) -- achieved Fmax dropped to a much more plausible 70.03MHz
+(seed0), confirming free/unconstrained IO placement was the source of
+the gap, not an RTL difference.
+ROOT CAUSE (real, found while investigating): `v2_unified.lpf` line 35
+still reads `FREQUENCY PORT "clk" 80 MHZ` from its original STEP19
+freeze -- never updated when the project's achievable/target bar moved
+to 64MHz (DEC-0038 onward). Passing `--freq 64` on the nextpnr-ecp5
+command line does NOT override this: nextpnr uses the LPF's own
+explicit per-port FREQUENCY constraint for any port that has one, and
+`--freq` only supplies a default for ports left unconstrained. Real
+effect verified: with the LPF loaded, nextpnr-ecp5 reported "70.03 MHz
+(FAIL at 80.00 MHz)" even with `--freq 64` passed on the command line --
+the achieved-MHz number itself was real, but the PASS/FAIL label next
+to it was being judged against the wrong, stale 80MHz bar the whole
+time this LPF has been used for any 64MHz-era measurement.
+FIX: updated `constraints/v2_unified.lpf` line 35 to `FREQUENCY PORT
+"clk" 64 MHZ`, with a comment explaining why. This does not touch any
+physical pin/ball assignment (SDRAM/clk/rst LOCATE COMP lines are
+unchanged) and has zero effect on RTL/datapath semantics -- it only
+corrects which frequency nextpnr-ecp5 optimizes/labels against.
+OPEN QUESTION (disclosed, not resolved here): it is not established
+whether earlier 64MHz-labeled results in decisions.log (e.g. DEC-0042)
+were themselves generated WITH this same stale-80MHz LPF (in which
+case their own PASS/FAIL labels would have the same defect, though
+their raw achieved-MHz numbers would remain valid and comparable) or
+via a different invocation (e.g. no LPF, matching this session's first,
+discarded attempt). Re-verify against a fresh N=4 8-seed sweep with the
+corrected LPF before treating DEC-0042's specific pass-count (8/8) as
+still authoritative under real pin constraints.
+
+ERR-0031 -- Phase 0 baseline was being measured against the wrong
+top-level module (nms_neural_multiprocessor_sdram_unified.v, an
+obsolete testbench-only wrapper), giving falsely-optimistic Fmax
+
+DATE: 2026-09-15
+CONTEXT: same brief as ERR-0030. After fixing the stale 80MHz LPF
+constraint, re-ran the N=4 8-seed sweep against
+`nms_neural_multiprocessor_sdram_unified.v` + `constraints/
+v2_unified.lpf`: 8/8 PASS at 64MHz, worst-seed 84.91MHz, mean 92.65MHz
+-- still implausibly high, HIGHER than DEC-0042's own best-case seed
+(77.21MHz), not just its worst.
+ROOT CAUSE (found by re-reading decisions.log DEC-0038 entry, which
+explicitly documents this): `nms_neural_multiprocessor_sdram_unified.v`
+is NOT instantiated by the real board-level top. Per decisions.log's
+own prior finding (search "NOT instantiated by the real board-level
+top"), `fpga_neural_v2_top.v` instantiates `nms_dataflow_core_sdram`
+and `sdram_unified_backend` directly, bypassing this wrapper entirely.
+The wrapper is only still used by one testbench
+(`tb_nms_dstress_sdram_unified.v`) as a bit-exact regression oracle --
+it was never the real synthesis target. `constraints/v2_unified.lpf`
+itself says as much in its own superseding file's header
+(`v2_board_top.lpf`: "This supersedes ... v2_unified.lpf"), which this
+session missed on the first two attempts.
+The real board top adds an EHXPLLL PLL (16MHz osc -> 64MHz internal),
+a reset_sync POR synchronizer, a real spi_host_bridge (replacing the
+wrapper's raw 110-pin reg_* testbench bus), and a SECOND arbitration
+level (host SPI raw-memory port vs. compute AR stream) -- all real
+logic and real routing congestion the wrapper never has, which is
+exactly why the wrapper measured faster.
+FIX: re-target synthesis+P&R to `hardware/v2/nms/rtl/
+fpga_neural_v2_top.v` (chparam N_SLOTS) with `hardware/v2/constraints/
+v2_board_top.lpf` (all 17 real ports ball-assigned; PLL's own
+FREQUENCY_PIN_CLKI=16/FREQUENCY_PIN_CLKOP=64 attributes read
+automatically by nextpnr-ecp5 for the internal clock domain, no manual
+--freq needed). Sanity check, single seed: 72.23MHz achieved, PASS at
+64MHz -- squarely inside DEC-0042/ERR-0029's real historical range
+(60-77MHz), confirming this is now the right target.
+LESSON: ERR-0030's fix (to v2_unified.lpf) was not wrong on its own
+terms (the 80MHz value really was stale) but was applied to a file
+that should not be used for this brief's baseline going forward --
+`v2_unified.lpf` remains valid only for whoever still exercises the
+`nms_neural_multiprocessor_sdram_unified.v` testbench wrapper, not for
+any real hardware Fmax claim.
+STATUS: Phase 0 N=4 baseline being re-measured now against the correct
+target (fresh 8-seed sweep in progress). N=8 baseline deferred by user
+request until N=4 is fully understood.

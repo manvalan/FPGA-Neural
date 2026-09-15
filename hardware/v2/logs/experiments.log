@@ -2901,3 +2901,27 @@ decision: ACCEPT the single-SDRAM architecture as the STEP19 hardware
   operation) is fully achieved, and the timing regression is reported
   as a real, unresolved CRITICAL item for follow-up (see DEC-0034),
   not hidden or worked around by reverting to two chips.
+
+EXP-0049 -- Phase 0 baseline for the new N=8-timing/85F-retarget/
+SDRAM-bank sweep brief (2026-09-15)
+config: fpga_neural_v2_top (real board-level top), N_SLOTS=4, RTL
+  bit-identical to DEC-0042's frozen state (no RTL changes)
+action: real Yosys synthesis + fresh 8-seed nextpnr-ecp5 P&R, real
+  physical pins (constraints/v2_board_top.lpf), real PLL-derived 64MHz
+  internal clock domain
+result: 8/8 PASS at 64MHz. Fmax worst=81.20MHz, mean=91.05MHz (full
+  per-seed numbers and utilization in synthesis.log/timing.log).
+  Resources: LUT4 6905/43848 (15%), DFF 6527/43848 (14%), MULT18X18D
+  32/72 (44%), DP16KD 0/108 (0%).
+decision: adopted as the operative Phase-0 BASELINE row (see
+  timing.log for the disclosed, unresolved discrepancy vs DEC-0042's
+  own historical numbers, and STEP19-era experiments.log precedent
+  showing N=4 Fmax as high as 81.84MHz on a related pre-fix config --
+  this range is not without precedent in this project's own history).
+  N_SLOTS=8 baseline deferred by explicit user request after the wrong
+  synthesis target (obsolete nms_neural_multiprocessor_sdram_unified.v
+  wrapper, see ERR-0031) caused a 2h42m non-converging P&R run;
+  N_SLOTS=8 to be re-attempted against fpga_neural_v2_top with an
+  agreed time budget.
+next_action: Phase 1 (N=8 timing fix) blocked on N_SLOTS=8 baseline;
+  in the meantime this N_SLOTS=4 baseline is committed to branch v21.

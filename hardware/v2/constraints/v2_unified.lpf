@@ -32,7 +32,15 @@
 BLOCK ASYNCPATHS;
 BLOCK RESETPATHS;
 
-FREQUENCY PORT "clk" 80 MHZ;
+// Updated from the STEP19 freeze's original 80 MHz to the project's
+// current 64 MHz target (see decisions.log DEC-0038+/errors.log
+// ERR-0029/DEC-0042): this file's own FREQUENCY directive was never
+// bumped down when the achievable target moved from 80 to 64 MHz,
+// silently making every nextpnr PASS/FAIL label using this LPF report
+// against the wrong, stale bar (only the achieved MHz number itself
+// was real; the FAIL/PASS annotation next to it was not) -- see
+// errors.log for the disclosed fix.
+FREQUENCY PORT "clk" 64 MHZ;
 
 LOCATE COMP "clk" SITE "H5";
 IOBUF PORT "clk" IO_TYPE=LVCMOS33;

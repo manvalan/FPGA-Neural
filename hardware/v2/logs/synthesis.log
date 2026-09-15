@@ -122,3 +122,17 @@ N_SLOTS=4: LUT4=9158  CCU2C=698  TRELLIS_FF=7986  MULT18X18D=32  DP16KD=0
 CHECK: 0 problems on all three (same benign warnings as always).
   Resource cost is modest (activation_cache itself is small -- a
   16-tile x 64-bit store plus N_SLOTS-way pending/hit logic).
+
+[2026-09-15] EXP-0049 -- fpga_neural_v2_top (real board-level top,
+N_SLOTS=4), real synthesis via the corrected flow (see errors.log
+ERR-0030/ERR-0031)
+LUT4=6905 (15%)  DFF=6527 (14%)  MULT18X18D=32/72 (44%)  DP16KD=0/108
+(0%)  EHXPLLL=1/4 (25%)  TRELLIS_IO=47/245 (19%)
+CHECK: 0 problems. File list: dependency_manager.v, neural_director.v,
+neural_processor.v, prefetch_engine.v, weight_prefetch_engine_wide.v,
+nms_activation_replicated.v, nms_activation_fill_ctrl_v3.v,
+nms_weight_packed.v, nms_memory_manager_stream_wide.v,
+nms_dataflow_core_sdram.v, slot_mem_arbiter.v, slot_mem_arbiter_wide.v,
+sdram_controller.v, sdram_unified_backend.v, ecp5_pll_sys_clk.v,
+reset_sync.v, spi_host_bridge.v, fpga_neural_v2_top.v.
+Log: hardware/v2/nms/synthesis/nms_multiproc_n4/yosys.log

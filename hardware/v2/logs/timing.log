@@ -141,3 +141,51 @@ DEC-0015's own arbiter widening did. N_SLOTS=4 is no longer a passing
 80MHz design point with the cache active -- see decisions.log
 DEC-0016 for the full analysis and why N_SLOTS=2 (the recommended
 default, DEC-0014) is unaffected in its own recommendation.
+
+[2026-09-15] EXP-0049 -- fpga_neural_v2_top (real board-level top,
+N_SLOTS=4), real nextpnr-ecp5 --45k --package CABGA381 --speed 8
+--lpf hardware/v2/constraints/v2_board_top.lpf (real ball-assigned
+pins; internal 64MHz clock domain derived from EHXPLLL's own
+FREQUENCY_PIN_CLKI=16/CLKOP=64 attributes, no --freq needed), fresh
+8-seed sweep
+Fmax (clock net off sdram_clk/EHXPLLL CLKOP, PASS bar 64MHz): seed0
+81.20, seed1 98.82, seed2 88.25, seed3 92.43, seed4 94.22, seed5 86.95,
+seed6 96.01, seed7 90.55 MHz. n=8, worst=81.20 MHz, mean=91.05 MHz,
+8/8 PASS at 64MHz.
+BASELINE row for the new N=8-timing/85F-retarget/SDRAM-bank-sweep
+brief (Phase 0). RTL is bit-identical to DEC-0042's own frozen N_SLOTS=4
+production state (no RTL changes since, only docs commits) -- this
+measurement is against the SAME dependency_manager.v pending_count fix
+DEC-0042 itself introduced.
+DISCLOSED, UNRESOLVED DISCREPANCY vs DEC-0042's own recorded N_SLOTS=4
+@ 64MHz numbers (worst-seed 64.55MHz, best-seed 77.21MHz, 8/8 PASS):
+this session's worst-seed (81.20MHz) exceeds DEC-0042's own best-seed.
+Both this session's ERR-0030 (stale 80MHz LPF frequency) and ERR-0031
+(wrong top-level target, the obsolete nms_neural_multiprocessor_
+sdram_unified.v wrapper) were real, found-and-fixed mistakes made
+earlier in this same session while trying to reproduce the baseline --
+but after correcting BOTH (real fpga_neural_v2_top.v target, real
+v2_board_top.lpf, verified 8/8 PASS at 64MHz, single-seed sanity check
+of 72.23MHz independently reproduced close to DEC-0042's range before
+this full 8-seed run), the full sweep still came out systematically
+higher than DEC-0042's historical numbers. No further RTL/config
+difference was found (same file list role, same default parameters:
+N_NODES=16, MAX_TILES=16, QUEUE_DEPTH=8, PREFETCH_DISTANCE=8). Leading
+hypothesis, NOT verified: nextpnr-ecp5 build/version difference between
+this session's toolchain (OSS CAD Suite, nextpnr-0.11.1-27-g6030081a)
+and whatever build produced DEC-0042's numbers (version not recorded
+in any prior log entry) -- placer heuristics/effort can genuinely
+differ across nextpnr releases for the same netlist+constraints.
+DECISION: treat THIS session's 8-seed numbers (worst 81.20MHz, mean
+91.05MHz, 8/8 PASS) as the operative Phase-0 BASELINE for judging
+Phase 1 interventions going forward, since they are the ones this
+session's own toolchain will keep reproducing -- but do not claim
+DEC-0042's specific historical numbers are wrong; both may be real
+under their own respective toolchains. See sweep_results.md (Phase 4)
+BASELINE row.
+STATUS: N_SLOTS=4 baseline established (8/8 PASS @ 64MHz, real
+board-level top+constraints). N_SLOTS=8 baseline deferred (user
+request, 2026-09-15) after an N=8 P&R run against the WRONG target
+(the obsolete wrapper, since discarded) stalled for 2h42m without
+converging on a single seed -- to be re-attempted against the correct
+fpga_neural_v2_top target, with a time budget decided before re-running.
