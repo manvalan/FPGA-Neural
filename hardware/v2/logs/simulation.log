@@ -180,3 +180,27 @@ errors: 2 real bugs found and fixed during implementation (errors.log
   a new instance in the activation-cache side of memory_manager.v),
   and a repeat of ERR-0009's N_SLOTS=1 zero-width replication bug
   (this time in activation_cache.v itself).
+
+[2026-09-15] DEC-0043 verification -- Verilator 5.053 (-DSIM for PLL
+behavioral bypass on tb_fpga_neural_v2_top_smoke.v; plain build for
+tb_nms_dstress_sdram_unified.v, -GN_SLOTS_CFG override)
+test=tb_fpga_neural_v2_top_smoke, config=fpga_neural_v2_top N_SLOTS=4
+  (default): 11/11 PASS, unchanged.
+test=tb_nms_dstress_sdram_unified (D-Stress, 256 neurons, 128 inputs
+  each), config=N_SLOTS_CFG=4: PASS, 256/256 bit-exact vs golden,
+  total_cycles=49927 (IDENTICAL to pre-fix), sdram_busy=81.56%,
+  weight_stall=89.37% of total_cycles*N_SLOTS, useful_mac_cycles=2.04%
+  of slot-cycles.
+test=tb_nms_dstress_sdram_unified (D-Stress), config=N_SLOTS_CFG=8:
+  PASS, 256/256 bit-exact vs golden, total_cycles=49909 (IDENTICAL to
+  pre-fix, matches DEC-0042's own recorded N=8 cycle count exactly),
+  sdram_busy=81.62%, weight_stall=94.54% of total_cycles*N_SLOTS,
+  useful_mac_cycles=1.02% of slot-cycles (HALF of N=4's fraction --
+  more slots sharing one SDRAM channel does not proportionally
+  increase useful work).
+Result: zero behavioral/cycle-count regression from the slot_mem_
+arbiter.v/slot_mem_arbiter_wide.v/nms_dataflow_core_sdram.v runtime-
+index fix (DEC-0043). Real, disclosed evidence the system is
+memory-bound at both N=4 and N=8 on a single SDRAM bank, independent
+of the arbiter fix or Fmax -- relevant to Phase 3/4 of the current
+brief.

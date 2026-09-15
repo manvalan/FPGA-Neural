@@ -186,9 +186,30 @@ module nms_dataflow_core_sdram #(
     end
     assign data_ready = data_ready_reg;
 
-    wire [15:0] completed_node_id_16 = dir_slot_node_id[dir_job_out_slot*16 +: 16];
+    // completed_node_id_16: which slot's node_id feeds dependency_manager
+    // this cycle, selected via N_SLOTS parallel CONSTANT-indexed reads
+    // (`cni` is the for-loop's own unrolled constant) instead of a
+    // runtime-indexed part-select (`dir_job_out_slot*16`) -- same fix
+    // class as neural_director.v's own write-side fix (see that file's
+    // header) and slot_mem_arbiter.v/slot_mem_arbiter_wide.v's grant_idx
+    // fix: this exact signal was DEC-0042's own diagnosed N=4 critical
+    // path (neural_director.job_out_slot -> dependency_manager.
+    // node_resolved/node_state). The multiplier here is by a power of 2
+    // (16), so no real hardware multiplier was involved, but the
+    // resulting N_SLOTS-way runtime mux still grows with N_SLOTS.
+    // Functionally IDENTICAL (exactly one cni matches dir_job_out_slot).
+    reg [15:0] completed_node_id_16_c;
+    integer cni;
+    always @(*) begin
+        completed_node_id_16_c = 16'h0000;
+        for (cni = 0; cni < N_SLOTS; cni = cni + 1) begin
+            if (dir_job_out_slot == cni[$clog2(N_SLOTS)-1:0]) begin
+                completed_node_id_16_c = dir_slot_node_id[cni*16 +: 16];
+            end
+        end
+    end
     assign dm_producer_done_valid    = dir_job_out_done;
-    assign dm_producer_done_node_id  = completed_node_id_16[NODE_IDW-1:0];
+    assign dm_producer_done_node_id  = completed_node_id_16_c[NODE_IDW-1:0];
 
     // ---- NMS memory: shared Activation SRAM (replicated) + private
     // Weight SRAM (packed), per DEC-0019/DEC-0020 ----

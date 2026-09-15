@@ -2462,3 +2462,78 @@ N_SLOTS=8 explicitly deferred by user request, not attempted further
 this pass. Flash #1 removed; its RTL (flash_mem_adapter.v,
 tb_flash_integration_smoke.v, the OP_FLASH_CMD opcode) remains in git
 history (revertible commit `59901a4`) if ever needed again.
+
+DEC-0043 -- Propagated the neural_director.v runtime-indexed-crossbar
+fix to slot_mem_arbiter.v/slot_mem_arbiter_wide.v and to
+nms_dataflow_core_sdram.v's own director->dependency_manager mux
+
+DATE: 2026-09-15
+CONTEXT: new brief (N=8 timing closure, LFE5U-85F retarget, 4/8/16 x
+1/2-bank SDRAM sweep). Phase 0 established N_SLOTS=4/8 both already
+PASS at 64MHz on this session's toolchain (EXP-0049/EXP-0050) with
+real margin, but RTL analysis of the arbiter<->backend boundary (the
+congestion hub the brief itself names) found a real, concrete,
+previously-missed instance of an anti-pattern this project had ALREADY
+found and fixed once before, just not everywhere it occurs.
+ROOT CAUSE (real, found by direct RTL inspection, not guessed):
+neural_director.v's own header comment documents a real historical
+bug -- a runtime-computed part-select (`slot_x_base[free_slot_idx*
+ADDR_WIDTH +: ADDR_WIDTH] <= ...`) synthesized as an actual
+MULT18X18D hard multiplier feeding a wide demux/crossbar (ADDR_WIDTH=26
+is not a power of 2), collapsing worst-seed Fmax from 68.51MHz to
+40-47MHz -- fixed there via N_SLOTS parallel CONSTANT-indexed
+comparisons instead. The SAME exact pattern was found, unfixed, in:
+  - rtl/slot_mem_arbiter.v line ~162-163 and rtl/slot_mem_arbiter_
+    wide.v line ~163-164: `m_addr <= pending_addr[grant_idx*
+    ADDR_WIDTH +: ADDR_WIDTH]` where `grant_idx` is a REGISTER (the
+    output of the arbiter's own priority-encoder), not a constant --
+    sitting exactly on the arbiter<->backend boundary, whose N_PORTS
+    (=N_SLOTS+1 / N_SLOTS) scales with N_SLOTS.
+  - nms/rtl/nms_dataflow_core_sdram.v line 189: `dir_slot_node_id[
+    dir_job_out_slot*16 +: 16]`, feeding directly into
+    dependency_manager -- the multiplier here is by a power of 2 (16),
+    so cheaper (no real hardware multiplier), but the resulting
+    N_SLOTS-way runtime mux still grows with N_SLOTS, and this EXACT
+    signal was DEC-0042's own diagnosed N=4 critical path (neural_
+    director.job_out_slot -> dependency_manager.node_resolved/
+    node_state) -- confirmed again in this session's own N=4 seed3
+    critical path report (EXP-0049).
+FIX: replaced all three runtime-indexed reads with N_PORTS/N_SLOTS
+parallel CONSTANT-indexed comparisons (`for` loop, unrolled at
+elaboration, each iteration's index is a compile-time constant) --
+same technique neural_director.v itself already established.
+Functionally IDENTICAL: exactly one iteration's condition is ever true
+(grant_idx/dir_job_out_slot is always a single valid index when the
+mux fires), so this is a pure internal-implementation change, zero
+external behavior change. Files changed: rtl/slot_mem_arbiter.v,
+rtl/slot_mem_arbiter_wide.v, nms/rtl/nms_dataflow_core_sdram.v.
+VERIFICATION (bit-exact, real): tb_fpga_neural_v2_top_smoke.v (the
+real board-level top's own smoke test, run via Verilator 5.053 with
+-DSIM for the PLL behavioral bypass): 11/11 PASS, unchanged. tb_nms_
+dstress_sdram_unified.v (256-neuron stress regression, the project's
+main bit-exact oracle) at both N_SLOTS_CFG=4 and N_SLOTS_CFG=8: PASS,
+all 256 neurons bit-exact vs golden, total_cycles IDENTICAL to the
+pre-fix historical values (N=4: 49927 cycles; N=8: 49909 cycles,
+matching DEC-0042's own recorded numbers exactly) -- confirms zero
+behavioral/cycle-count change, as expected for an internal-
+implementation-only fix.
+BONUS FINDING (not this decision's main point, but real and worth
+flagging for Phase 3/4): tb_nms_dstress_sdram_unified.v's own
+benchmark report already shows sdram_busy_cycles ~81.6% and weight_
+stall_cycles 89-94% of total_cycles*N_SLOTS at BOTH N=4 and N=8, with
+the useful-MAC-cycle fraction actually HALVING from N=4 to N=8
+(2.04%->1.02% of slot-cycles) -- strong existing evidence, from a
+testbench this project already had, that the system is memory-bound
+(single shared SDRAM channel) well before N=8, independent of Fmax.
+Relevant to the brief's own Phase 4 question; see experiments.log.
+STATUS: fix applied and bit-exact verified. Re-synthesis (fresh 8-seed
+nextpnr-ecp5 sweep, N=4/N=8, real fpga_neural_v2_top +
+v2_board_top.lpf) in progress to measure the actual Fmax delta -- see
+timing.log for the result once available.
+
+TOOLCHAIN NOTE: this session's environment had no C/C++ toolchain
+(make/gcc/g++) or working Perl FindBin module, both required to build/
+run Verilator-based simulations -- installed via `dnf install -y make
+gcc-c++ perl-FindBin libatomic` (system packages, not project files)
+to make bit-exact verification possible at all. Recorded here since it
+was a real, if minor, environment gap.

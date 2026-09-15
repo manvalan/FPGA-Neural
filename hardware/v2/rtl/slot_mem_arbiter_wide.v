@@ -111,6 +111,39 @@ module slot_mem_arbiter_wide #(
         end
     end
 
+    // grant_idx-selected pending fields, read out via N_PORTS parallel
+    // CONSTANT-indexed comparisons (`gi` is the for-loop's own unrolled
+    // constant, not a runtime value) instead of a runtime-indexed part-
+    // select of a wide packed array -- same fix class already applied
+    // in neural_director.v (see that file's own header comment): a
+    // variable-indexed read/write of a wide packed array synthesizes as
+    // a real multiplier (index * ADDR_WIDTH, ADDR_WIDTH=26 not a power
+    // of 2) feeding a wide demux/crossbar, measurably worse as
+    // ADDR_WIDTH/N_PORTS grow -- exactly the arbiter<->backend boundary
+    // this project's own N=8 congestion diagnosis names. Functionally
+    // IDENTICAL to the old `pending_*[grant_idx]` reads (exactly one gi
+    // matches grant_idx whenever any_pending is set).
+    reg                   grant_wr_c, grant_lb_n_c, grant_ub_n_c;
+    reg [ADDR_WIDTH-1:0]  grant_addr_c;
+    reg [DATA_WIDTH-1:0]  grant_wdata_c;
+    integer gi;
+    always @(*) begin
+        grant_wr_c    = 1'b0;
+        grant_lb_n_c  = 1'b1;
+        grant_ub_n_c  = 1'b1;
+        grant_addr_c  = {ADDR_WIDTH{1'b0}};
+        grant_wdata_c = {DATA_WIDTH{1'b0}};
+        for (gi = 0; gi < N_PORTS; gi = gi + 1) begin
+            if (grant_idx == gi[PIDXW-1:0]) begin
+                grant_wr_c    = pending_wr[gi];
+                grant_lb_n_c  = pending_lb_n[gi];
+                grant_ub_n_c  = pending_ub_n[gi];
+                grant_addr_c  = pending_addr[gi*ADDR_WIDTH +: ADDR_WIDTH];
+                grant_wdata_c = pending_wdata[gi*DATA_WIDTH +: DATA_WIDTH];
+            end
+        end
+    end
+
     integer pi;
 
     always @(posedge clk) begin
@@ -157,12 +190,14 @@ module slot_mem_arbiter_wide #(
                 if (any_pending) begin
                     owner   <= grant_idx + 1'b1;
                     m_req   <= 1'b1;
-                    m_wr    <= pending_wr[grant_idx];
-                    m_lb_n  <= pending_lb_n[grant_idx];
-                    m_ub_n  <= pending_ub_n[grant_idx];
-                    m_addr  <= pending_addr[grant_idx*ADDR_WIDTH +: ADDR_WIDTH];
-                    m_wdata <= pending_wdata[grant_idx*DATA_WIDTH +: DATA_WIDTH];
-                    pending[grant_idx] <= 1'b0;
+                    m_wr    <= grant_wr_c;
+                    m_lb_n  <= grant_lb_n_c;
+                    m_ub_n  <= grant_ub_n_c;
+                    m_addr  <= grant_addr_c;
+                    m_wdata <= grant_wdata_c;
+                    for (pi = 0; pi < N_PORTS; pi = pi + 1) begin
+                        if (grant_idx == pi[PIDXW-1:0]) pending[pi] <= 1'b0;
+                    end
                 end
             end else begin
                 if (m_ready) begin
