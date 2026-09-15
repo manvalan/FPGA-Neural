@@ -189,3 +189,82 @@ request, 2026-09-15) after an N=8 P&R run against the WRONG target
 (the obsolete wrapper, since discarded) stalled for 2h42m without
 converging on a single seed -- to be re-attempted against the correct
 fpga_neural_v2_top target, with a time budget decided before re-running.
+
+[2026-09-15] EXP-0050 -- fpga_neural_v2_top (real board-level top,
+N_SLOTS=8), real nextpnr-ecp5 --45k --package CABGA381 --speed 8
+--lpf hardware/v2/constraints/v2_board_top.lpf, fresh 8-seed sweep
+(re-attempt after ERR-0031's wrong-target run stalled 2h42m/seed0
+without converging -- this run, on the CORRECT target, completed all
+8 seeds in under 30 minutes total, ~2-3 min/seed)
+Fmax: seed0 84.22, seed1 81.77, seed2 88.64, seed3 84.81, seed4 86.78,
+seed5 81.04, seed6 88.70, seed7 80.97 MHz. n=8, worst=80.97 MHz,
+mean=84.62 MHz, **8/8 PASS at 64MHz**.
+Resources: MULT18X18D 64/72 (88.9%, exactly 8/slot x 8 slots, confirms
+N_SLOTS=8 genuinely applied, not a silent N=4 default). DP16KD 0/108.
+Critical path (worst seed7, real report, sanity-checked -- NOT a
+degenerate/false-path result): u_dataflow_core.GEN_SLOT[4].u_mm.
+act_resident_tag (a TRELLIS_FF) -> routing/logic chain through
+GEN_SLOT[0] and GEN_SLOT[7]'s own buf_valid LUT chains -- 2.96ns
+logic + 9.39ns routing. This IS the activation-fill resident_tag/
+resident_count broadcast path the brief's own diagnosis named, real
+and present, but NOT enough by itself to fail 64MHz on this
+toolchain/seed set.
+SURPRISING RESULT, disclosed not hidden: this directly contradicts
+the brief's own stated premise ("N8 integrato ~31 MHz crolla") and
+this project's own prior historical measurements (errors.log/
+decisions.log record N_SLOTS=8 @ 64MHz around 3-5/8 PASS, worst-case
+~55-67MHz, across several fix passes). RTL is bit-identical to that
+historical state (no RTL changes this session). Consistent with
+EXP-0049's own N_SLOTS=4 finding (this session's numbers also came out
+higher than DEC-0042's historical N=4 numbers) -- same direction, same
+open, unresolved hypothesis (nextpnr-ecp5 build/version difference
+between this session's OSS CAD Suite toolchain and whatever produced
+the historical numbers).
+STATUS: Phase 0 baseline for N_SLOTS=8 established: 8/8 PASS @ 64MHz,
+worst 80.97MHz, mean 84.62MHz -- under THIS session's toolchain, the
+N=8 "gate" the brief is built around does not reproduce. Reported to
+user for direction before proceeding with Phase 1's RTL interventions.
+
+[2026-09-15] Discrepancy investigation (EXP-0049/EXP-0050 vs DEC-0042/
+ERR-0029 historical numbers) -- CLOSED, root cause confirmed (partially)
+CONFIRMED: `logs/experiments.log` line 2563 (a prior session's own
+entry) explicitly classifies its own historical Fmax numbers as
+"POST-SYNTH (Yosys 0.68+, synth_ecp5) + POST-P&R". This session's
+toolchain (OSS CAD Suite) reports `yosys -V` = "Yosys 0.69+59 (git
+sha1 d85872386-dirty)" and its own `VERSION` file = "20260915" (a
+nightly build dated the SAME DAY as this session, downloaded fresh
+this session per tools_cache/oss-cad-suite-linux-x64.tgz's own
+timestamp) -- a real, confirmed Yosys version gap of 59+ commits
+between the historical baseline (Sep 5-9) and now (Sep 15).
+nextpnr-ecp5's own historical version was never recorded in any prior
+log entry (a real logging gap -- see recommendation below), so the
+nextpnr side of this hypothesis remains unconfirmed, but nextpnr-ecp5
+and Yosys/Trellis are released together in OSS CAD Suite nightlies, so
+a comparable placer-side version gap is likely.
+CROSS-CHECK, not just version numbers: both this session's N=4 (seed3)
+and N=8 (seed7) critical paths were inspected directly and are REAL,
+sane, and land on the SAME bottleneck locations this project's own
+prior sessions already diagnosed -- N=4: job_out_slot (neural_director)
+-> node_producer_ids (dependency_manager), matching DEC-0042's own
+root-cause trace verbatim; N=8: act_resident_tag broadcast fan-out
+across GEN_SLOT instances, matching the brief's own activation-fill
+congestion hypothesis. The underlying RTL congestion this project
+diagnosed is REAL and still present -- this session's newer toolchain
+places it well enough to still clear 64MHz, it did not make the
+bottleneck disappear from the netlist.
+CONCLUSION: the higher Fmax this session measures for both N_SLOTS=4
+and N_SLOTS=8 is attributed to a real Yosys/nextpnr-ecp5 toolchain
+version difference (confirmed for Yosys, likely for nextpnr-ecp5),
+not a methodology error, missing constraint, or wrong target (both of
+which WERE real errors this session, already found and fixed
+separately -- ERR-0030/ERR-0031 -- before this investigation). Given
+this session's numbers come from real synthesis+P&R with real physical
+constraints and real, sane, precedented critical paths, they are
+adopted as the authoritative current baseline for all Phase 1+ work in
+this brief, superseding DEC-0042/ERR-0029's numbers (which remain
+historically valid for their own, older toolchain).
+PROCESS RECOMMENDATION (to prevent this ambiguity recurring): every
+synthesis.log/timing.log entry should record `yosys -V` and
+`nextpnr-ecp5 --version` output going forward -- neither was ever
+captured historically, which is what made this investigation take real
+effort instead of a one-line diff.
