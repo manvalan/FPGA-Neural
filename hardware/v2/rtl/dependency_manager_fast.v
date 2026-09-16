@@ -1,0 +1,253 @@
+`timescale 1ns/1ps
+
+// ================================================================
+// EXP-0056 -- fork of dependency_manager.v: the ONLY change is
+// first_ready_idx/any_ready, replaced with priority_encoder_lsb.v
+// (see that computation's own inline comment for the full rationale
+// and the fix-pattern precedent -- ERR-0027/ERR-0028/ERR-0029). This
+// targets the real critical path found blocking N_SLOTS=16 timing
+// closure on the LFE5U-85F (measured: worst 23.52MHz vs 64MHz target,
+// see hardware/v2/logs/experiments.log EXP-0056). Everything else in
+// this module is byte-for-byte identical to dependency_manager.v.
+//
+// Everything below this point is the ORIGINAL module's own header,
+// preserved as-is:
+//
+// FPGA-Neural V2 -- Dependency Manager (M6, docs/v2-description.md §10)
+//
+// Holds a small table of N_NODES job descriptors, each tracking:
+//   node_id, state (EMPTY/WAITING/READY/DISPATCHED),
+//   required_dependencies, resolved_dependencies, producer_ids[MAX_DEPS]
+// (§10's exact field list), plus the job descriptor fields
+// (x_base/w_base/n_tiles/result_addr) needed to hand the node off to
+// the Neural Director (M5) once it becomes READY.
+//
+// A node with required_dependencies==0 is immediately READY on
+// registration (no producers to wait for -- a graph's own input
+// nodes, or a fully-independent job). When a PRODUCER completes
+// (producer_done_valid/producer_done_node_id, tagged by whichever
+// node just finished -- fed from the Director's own job_out_done/
+// job_out_slot, resolved back to a node_id by the caller), every
+// OTHER node that lists that producer among its own producer_ids
+// gets its resolved_dependencies incremented -- a single producer
+// can satisfy MULTIPLE waiting consumers this way (§10 "risultati
+// condivisi... più consumer"), and a node depending on several
+// producers accumulates resolved_dependencies across separate
+// producer-done events ("dipendenze multiple").
+//
+// Ready nodes are handed to the Director one at a time via a
+// valid/ready producer interface (ready_valid/ready_ready), backpressure-
+// safe (§10 "backpressure"): a node stays READY, occupying its table
+// slot, until the consumer (Director) actually accepts it.
+//
+// Scope note (see hardware/v2/logs/decisions.log DEC-0008): §11's
+// direct producer-to-consumer VALUE forwarding (bypassing the Result
+// Buffer / external memory round-trip) is NOT implemented here --
+// this module tracks dependency COUNTS/readiness only ("has this
+// node's data become available", not the data itself), which is what
+// actually gates scheduling; the job descriptor's result_addr already
+// points at wherever the Memory Manager (M4) wrote the producer's
+// result, which is how a ready consumer finds its inputs today. Real
+// zero-copy forwarding is a possible future optimization (§11 itself:
+// "quando possibile"), deferred until measured to matter (§22).
+// ================================================================
+
+module dependency_manager_fast #(
+    parameter N_NODES    = 16,
+    parameter MAX_DEPS   = 4,
+    parameter ADDR_WIDTH = 26
+)(
+    input  wire clk,
+    input  wire rst,
+
+    // ---- node registration (host / graph loader) ----
+    input  wire                                   reg_valid,
+    output wire                                    reg_ready,
+    input  wire [$clog2(N_NODES)-1:0]             reg_node_id,
+    input  wire [$clog2(MAX_DEPS+1)-1:0]          reg_required,
+    input  wire [MAX_DEPS*$clog2(N_NODES)-1:0]    reg_producer_ids,
+    input  wire [ADDR_WIDTH-1:0]                   reg_x_base,
+    input  wire [ADDR_WIDTH-1:0]                   reg_w_base,
+    input  wire [15:0]                             reg_n_tiles,
+    input  wire [ADDR_WIDTH-1:0]                   reg_result_addr,
+
+    // ---- producer completion notification ----
+    input  wire                          producer_done_valid,
+    input  wire [$clog2(N_NODES)-1:0]    producer_done_node_id,
+
+    // ---- ready job output (to neural_director.v's job_in_* port) ----
+    output reg                       ready_valid,
+    input  wire                      ready_ready,
+    output reg  [$clog2(N_NODES)-1:0] ready_node_id,
+    output reg  [ADDR_WIDTH-1:0]      ready_x_base,
+    output reg  [ADDR_WIDTH-1:0]      ready_w_base,
+    output reg  [15:0]                ready_n_tiles,
+    output reg  [ADDR_WIDTH-1:0]      ready_result_addr,
+
+    // FPGA_DATA_READY support: high while at least one registered node
+    // has not yet been handed to the Director (ST_WAITING or ST_READY --
+    // ST_DISPATCHED is deliberately excluded, since dispatched work is
+    // tracked downstream by neural_director.v's own queue/slot state,
+    // not here -- see this file's own ST_DISPATCHED comment).
+    output wire                       any_pending
+);
+
+    localparam ST_EMPTY      = 2'd0;
+    localparam ST_WAITING    = 2'd1;
+    localparam ST_READY      = 2'd2;
+    localparam ST_DISPATCHED = 2'd3;
+
+    localparam NODE_IDW = $clog2(N_NODES);
+    localparam REQW      = $clog2(MAX_DEPS+1);
+
+    reg [1:0]              node_state         [0:N_NODES-1];
+    reg [REQW-1:0]          node_required       [0:N_NODES-1];
+    reg [REQW-1:0]          node_resolved       [0:N_NODES-1];
+    reg [NODE_IDW-1:0]      node_producer_ids  [0:N_NODES-1][0:MAX_DEPS-1];
+    reg [ADDR_WIDTH-1:0]    node_x_base        [0:N_NODES-1];
+    reg [ADDR_WIDTH-1:0]    node_w_base        [0:N_NODES-1];
+    reg [15:0]              node_n_tiles       [0:N_NODES-1];
+    reg [ADDR_WIDTH-1:0]    node_result_addr   [0:N_NODES-1];
+
+    // A node id doubles as its own table slot index (§10's example
+    // literally addresses nodes by id: "node 37") -- N_NODES must
+    // therefore cover the full id range a caller intends to use.
+    assign reg_ready = (node_state[reg_node_id] == ST_EMPTY);
+
+    // ---- EXP-0056: priority-encoded first READY node, via a
+    // recursive binary-tree lowest-set-bit encoder (O(log2(N_NODES))
+    // depth) instead of the original serial for-loop scan (O(N_NODES)
+    // depth, the SAME architectural anti-pattern already fixed twice
+    // elsewhere in this project -- ERR-0027/ERR-0028/ERR-0029 -- see
+    // priority_encoder_lsb.v's own header for the full rationale).
+    // Semantically identical to the original: ready_oh's lowest set
+    // bit is the lowest node index currently READY, matching the
+    // original loop's own "last (lowest-index) match wins" behavior
+    // exactly -- verified bit-exact against the original module by
+    // tb_dependency_manager_fast.v before this fork was integrated
+    // anywhere.
+    // ============================================================
+    wire [N_NODES-1:0] ready_oh;
+    generate
+        genvar gi;
+        for (gi = 0; gi < N_NODES; gi = gi + 1) begin : GEN_READY_OH
+            assign ready_oh[gi] = (node_state[gi] == ST_READY);
+        end
+    endgenerate
+
+    wire [NODE_IDW-1:0] first_ready_idx;
+    wire                 any_ready;
+    priority_encoder_lsb #(.WIDTH(N_NODES)) u_ready_penc (
+        .in(ready_oh), .idx(first_ready_idx), .valid(any_ready)
+    );
+
+    // ---- FPGA_DATA_READY support (see any_pending port comment above).
+    // Originally a combinational OR-reduce over node_state[0:N_NODES-1]
+    // (16-wide), which added real fan-out load onto node_state -- a
+    // signal this session's own real P&R critical-path traces later
+    // showed sitting on the SAME already-congested job_out_slot ->
+    // node_resolved/node_state broadcast path (routing-dominated,
+    // 76-84%). Replaced with a synchronous up/down counter: +1 on a
+    // node's own registration acceptance (reg_valid&&reg_ready --
+    // exactly when it enters WAITING/READY), -1 on its own dispatch
+    // acceptance (ready_valid&&ready_ready -- exactly when it leaves
+    // WAITING/READY for DISPATCHED). registered-minus-dispatched is
+    // mathematically identical to the original OR-reduce's own
+    // "any node currently WAITING or READY" condition (DEC-0008: nodes
+    // are never reclaimed mid-run, so every node visits EMPTY ->
+    // {WAITING or READY} -> DISPATCHED exactly once), but reads a
+    // single small registered counter instead of scanning a wide array
+    // every cycle -- zero added fan-out on the congested signals. ----
+    localparam PENDW = $clog2(N_NODES+1);
+    reg [PENDW-1:0] pending_count;
+    assign any_pending = (pending_count != {PENDW{1'b0}});
+
+    integer ni, di;
+
+    always @(posedge clk) begin
+        if (rst) begin
+            for (ni = 0; ni < N_NODES; ni = ni + 1) begin
+                node_state[ni]    <= ST_EMPTY;
+                node_required[ni] <= {REQW{1'b0}};
+                node_resolved[ni] <= {REQW{1'b0}};
+            end
+            ready_valid   <= 1'b0;
+            pending_count <= {PENDW{1'b0}};
+        end else begin
+
+            // pending_count: +1 on registration acceptance, -1 on
+            // dispatch acceptance; a same-cycle occurrence of both is a
+            // net zero change (no assignment needed, old value holds).
+            case ({(reg_valid && reg_ready), (ready_valid && ready_ready)})
+                2'b10:   pending_count <= pending_count + 1'b1;
+                2'b01:   pending_count <= pending_count - 1'b1;
+                default: ; // 00 or 11: no net change
+            endcase
+
+            // ---- registration: create a new WAITING (or immediately
+            // READY, if required==0) node entry. ----
+            if (reg_valid && reg_ready) begin
+                node_required[reg_node_id]     <= reg_required;
+                node_resolved[reg_node_id]     <= {REQW{1'b0}};
+                node_x_base[reg_node_id]       <= reg_x_base;
+                node_w_base[reg_node_id]       <= reg_w_base;
+                node_n_tiles[reg_node_id]      <= reg_n_tiles;
+                node_result_addr[reg_node_id]  <= reg_result_addr;
+                for (di = 0; di < MAX_DEPS; di = di + 1)
+                    node_producer_ids[reg_node_id][di] <= reg_producer_ids[di*NODE_IDW +: NODE_IDW];
+                node_state[reg_node_id] <= (reg_required == {REQW{1'b0}}) ? ST_READY : ST_WAITING;
+            end
+
+            // ---- wake-up: a completed producer increments
+            // resolved_dependencies for EVERY WAITING node that lists
+            // it, independent of the registration above (a node can
+            // be registered and immediately woken by an in-flight
+            // producer-done event the same cycle, since both read the
+            // PRE-edge node_state/node_producer_ids consistently). ----
+            if (producer_done_valid) begin
+                for (ni = 0; ni < N_NODES; ni = ni + 1) begin
+                    if (node_state[ni] == ST_WAITING) begin
+                        for (di = 0; di < MAX_DEPS; di = di + 1) begin
+                            if (di < node_required[ni] &&
+                                node_producer_ids[ni][di] == producer_done_node_id) begin
+                                if (node_resolved[ni] + 1'b1 >= node_required[ni])
+                                    node_state[ni] <= ST_READY;
+                                node_resolved[ni] <= node_resolved[ni] + 1'b1;
+                            end
+                        end
+                    end
+                end
+            end
+
+            // ---- dispatch: hand the first READY node to the
+            // Director, one at a time, backpressure-safe. ----
+            if (ready_valid && ready_ready) begin
+                node_state[ready_node_id] <= ST_DISPATCHED;
+                // ST_DISPATCHED is terminal here (M6 does not yet
+                // reclaim slots for re-use -- see decisions.log
+                // DEC-0008): a full graph run allocates N_NODES once.
+                ready_valid <= 1'b0;
+            end else if (!ready_valid && any_ready) begin
+                // Deliberately NOT combined with the dispatch branch
+                // above into "!ready_valid || (ready_valid&&ready_ready)"
+                // -- the scan for first_ready_idx is combinational
+                // over node_state's PRE-edge value, which still shows
+                // the about-to-be-dispatched node as READY this same
+                // edge; reloading in the same cycle as a dispatch
+                // could re-present the SAME node that is simultaneously
+                // transitioning to DISPATCHED. Reloading strictly the
+                // cycle AFTER (once ready_valid has genuinely gone
+                // low and node_state has committed) costs one extra
+                // idle cycle between consecutive dispatches but is
+                // unambiguously correct.
+                ready_valid       <= 1'b1;
+                ready_node_id     <= first_ready_idx;
+                ready_x_base      <= node_x_base[first_ready_idx];
+                ready_w_base      <= node_w_base[first_ready_idx];
+                ready_n_tiles     <= node_n_tiles[first_ready_idx];
+                ready_result_addr <= node_result_addr[first_ready_idx];
+            end
+        end
+    end
+
+endmodule

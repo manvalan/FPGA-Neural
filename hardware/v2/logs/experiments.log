@@ -3345,3 +3345,140 @@ hardware/v2/nms/sim/tb_sdram_cdc_bridge_openrow.v,
 hardware/v2/nms/sim/tb_nms_dstress_sdram_combined.v,
 hardware/v2/nms/sim/tb_nms_dstress_sdram_openrow.v,
 hardware/v2/nms/sim/tb_nms_dstress_sdram_cdc.v.
+
+EXP-0056 -- N_SLOTS=16 timing closure on LFE5U-85F: two real fixes,
+one didn't matter, one did (2026-09-16)
+
+DATE: 2026-09-16
+CONTEXT: EXP-0055 (open-row backend, real board top) promoted to a
+candidate but never checked at N_SLOTS=16 -- real 8-seed P&R baseline
+(EXP-0049/0050-era numbers) never covered N=16 either. Real synthesis
++ nextpnr-ecp5 --85k (LFE5U-85F, same CABGA381 package/pinout as the
+real board's v2_board_top.lpf -- confirmed pin-compatible) at
+N_SLOTS=16: worst 23.52-24.64MHz across two independent seeds, FAIL at
+the real 64MHz target. DSP fit confirmed fine (128/156 MULT18X18D,
+82%) -- this is a timing-closure problem, not a resource problem.
+
+HYPOTHESIS 1 (wrong, but real work, kept as a disclosed negative
+result): dependency_manager.v's own first_ready_idx scan (serial
+for-loop over up to N_NODES=1024, same architectural anti-pattern
+already fixed twice elsewhere -- ERR-0027/ERR-0028/ERR-0029). Built
+priority_encoder_lsb.v (generic recursive binary-tree lowest-set-bit
+encoder, O(log2(WIDTH)) depth) + dependency_manager_fast.v (fork,
+swaps in the encoder). Isolated: 65536/65536 exhaustive at WIDTH=16,
+76562/76562 at WIDTH=1024. Bit-exact equivalence vs the original
+module: 20000/20000 cycles matched under random stimulus
+(tb_dependency_manager_fast.v), plus the original hand-crafted DAG
+testbench, both 100%. Integrated (N_SLOTS=16, LFE5U-85F): worst
+24.26MHz -- ESSENTIALLY UNCHANGED from the pre-fix 23.52-24.64MHz.
+CONCLUSION: dependency_manager.v was not the real N=16 bottleneck.
+Kept as a real, verified, low-risk correctness-neutral improvement
+(shorter combinational depth is never worse), just not the fix that
+mattered here.
+
+HYPOTHESIS 2 (real root cause, found from the actual nextpnr critical-
+path report on the Hypothesis-1 run): nms_activation_fill_ctrl_v3.v's
+own balanced max-tree (a real fix from an EARLIER session, its own
+header says so explicitly) was hand-coded ONLY for N_SLOTS in
+{1,2,4,8} -- any other value, INCLUDING N_SLOTS=16, falls through to
+GEN_MAXTREE_FALLBACK, the exact same flat N_SLOTS-wide sequential
+scan/carry-chain that earlier fix was written to eliminate. Never
+extended to cover 16. Real critical path (nextpnr's own report,
+Hypothesis-1 run): a long CCU2C COUT/CIN carry chain inside
+nms_activation_fill_ctrl_v3.v's max_n_tiles_reg comparator, confirming
+this exactly.
+FIX: nms_activation_fill_ctrl_v3_n16.v (fork), added the missing
+N_SLOTS==16 case -- same balanced-tree pattern as the existing N==8
+case, one more level (8 pairwise compares -> 4 -> 2 -> 1, 4 levels
+total). Isolated: tb_maxtree_n16.v, 10017/10017 (targeted + random)
+against the same flat-scan reference the fallback path itself uses as
+its own documented "correct but not optimized" baseline.
+RESULT (N_SLOTS=16, LFE5U-85F, seed 1, both fixes combined --
+dependency_manager_fast + activation_fill_ctrl_v3_n16 -- in nms_
+dataflow_core_sdram_fast.v / fpga_neural_v2_top_openrow_fast.v):
+worst 71.01MHz, PASS at 64MHz. 0 errors. Functional regression
+unaffected: D-Stress N=16 still 256/256 bit-exact, total_cycles=47454
+(identical to the pre-fix functional baseline, as expected -- these
+are pure combinational-depth fixes, not behavior changes) -- and still
+confirms N=16 gives ZERO extra real throughput over N=4/N=8 on the
+zero-reuse D-Stress workload (memory-bound, unrelated to this fix).
+STATUS: single-seed PASS, not yet the project's own 8-seed standard.
+next_action: run the full 8-seed sweep before treating N=16 as a
+closed, production-ready configuration. New files (additive only,
+none touch the real board top or existing production RTL):
+hardware/v2/rtl/priority_encoder_lsb.v,
+hardware/v2/rtl/dependency_manager_fast.v,
+hardware/v2/nms/rtl/nms_activation_fill_ctrl_v3_n16.v,
+hardware/v2/nms/rtl/nms_dataflow_core_sdram_fast.v,
+hardware/v2/nms/rtl/fpga_neural_v2_top_openrow_fast.v,
+hardware/v2/nms/rtl/nms_neural_multiprocessor_sdram_openrow_fast.v,
+hardware/v2/sim/tb_priority_encoder_lsb.v,
+hardware/v2/sim/tb_dependency_manager_fast.v,
+hardware/v2/sim/tb_maxtree_n16.v,
+hardware/v2/nms/sim/tb_fpga_neural_v2_top_openrow_fast_smoke.v,
+hardware/v2/nms/sim/tb_nms_dstress_sdram_openrow_fast.v.
+
+EXP-0057 -- weight-stationary layer reuse: real measured 7.16x memory-
+side speedup, SAME hardware, no DDR3 (2026-09-16)
+
+DATE: 2026-09-16
+CONTEXT: user-driven pivot after establishing the real target
+application class (generic neural accelerator for face-recognition-
+style CNNs, not the zero-reuse D-Stress worst case this whole project
+has been benchmarked against). D-Stress's own zero reuse means no
+architecture can beat the physical bandwidth floor (established
+earlier this session); a real conv-style workload has massive weight
+reuse (same filter applied at every spatial position) that D-Stress
+deliberately excludes -- this experiment measures that case for real,
+on the SAME SDR SDRAM hardware this project already has (no DDR3, no
+clock change), to answer directly whether DDR3 is even necessary for
+a workload class that actually has reuse.
+
+METHOD: layer_weight_buffer.v (new) -- double-buffered, per-layer
+resident weight scratchpad (BRAM-style, same coding idiom as nms_
+weight_packed.v). One buffer read many times (M reuses) while the
+OTHER is filled in the background from SDRAM; swap is order-
+independent (fill_done/consume_done latched separately, swap fires
+once both have been seen since the last swap -- same req_pending-latch
+discipline as sdram_unified_backend.v's own established correctness
+fixes). Isolated: tb_layer_weight_buffer.v, 1540/1540, including
+out-of-order fill/consume completion and a "consume_done alone must
+not swap without a matching fill_done" negative check.
+
+tb_layer_reuse_vs_zero_reuse.v: wired layer_weight_buffer.v to the
+REAL sdram_controller_openrow.v (EXP-0054) + sdram_model.v -- same
+hardware, nothing new. SAME total useful-byte-consumption in both
+cases (32768 bytes, matching D-Stress's own 256x128 total exactly):
+  REUSE case:      16 layers x 128 bytes each fetched ONCE, reused 16x
+                    locally = 2048 bytes actually fetched from SDRAM.
+  ZERO-REUSE case:  16 layers x 16 reuses x 128 bytes, every reuse
+                    fetched independently = 32768 bytes (D-Stress's
+                    own pattern, through the identical controller).
+Fair timing comparison (an earlier version of this testbench asymmetrically
+added compute-side consumption cycles to only the reuse case, making it
+look SLOWER -- found and fixed before trusting any number; final
+version measures ONLY real SDRAM fetch cost in both cases, which is
+the actual question this experiment exists to answer).
+
+RESULT: REUSE case data correctness 32768/32768, 0 errors, through the
+real controller+model. Real measured cycles: REUSE = 3777, ZERO-REUSE
+= 27048 (for the identical 32768 bytes of useful data delivered) --
+**7.16x real measured speedup from weight reuse alone**, same SDR
+SDRAM, same 64MHz clock, zero new hardware. Substantially larger than
+any protocol-level lever measured this session (open-row +5%, dual-
+bank ~9%, CDC net-negative) -- because this reduces bytes actually
+moved rather than trying to move the same bytes faster.
+DECISION: for workload classes with real reuse (conv-style, unlike
+D-Stress), DDR3 is NOT established as necessary -- this result directly
+contradicts the earlier (correct, but scope-limited-to-zero-reuse)
+conclusion that only more physical bandwidth could help. DDR3 remains
+relevant only if a real target model's per-layer working set exceeds
+what layer-by-layer streaming + on-chip BRAM can hold, which depends
+on the real model size (still not pinned down as of this entry).
+next_action: integrate layer_weight_buffer.v with the real per-slot
+compute path (neural_processor.v) and a real conv-shaped benchmark
+(not just the synthetic byte-reuse pattern here) before calling this
+production-ready. New files (additive only):
+hardware/v2/rtl/layer_weight_buffer.v,
+hardware/v2/sim/tb_layer_weight_buffer.v,
+hardware/v2/sim/tb_layer_reuse_vs_zero_reuse.v.

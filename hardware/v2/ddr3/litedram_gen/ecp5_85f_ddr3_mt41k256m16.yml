@@ -1,0 +1,15 @@
+device: "LFE5U-85F-8BG381C"
+cpu: "None"
+memtype: "DDR3"
+sdram_phy: "ECP5DDRPHY"
+sdram_module: "MT41K256M16"
+sdram_module_nb: 2
+sdram_rank_nb: 1
+input_clk_freq: 16e6
+sys_clk_freq: 75e6
+init_clk_freq: 25e6
+cmd_latency: 0
+speedgrade: -8
+user_ports:
+  native_0:
+    type: "native"
