@@ -67,12 +67,6 @@ module tb;
     reg  [16*BURST_LEN-1:0] wpre_wdata;
     reg  pre_active;
 
-    assign ctrl_req   = pre_active ? wpre_req   : pf_ctrl_req;
-    assign ctrl_wr    = pre_active ? wpre_wr    : pf_ctrl_wr;
-    assign ctrl_addr  = pre_active ? wpre_addr  : pf_ctrl_addr;
-    assign ctrl_wdata = pre_active ? wpre_wdata : pf_ctrl_wdata;
-    assign ctrl_wmask = pre_active ? {(2*BURST_LEN){1'b0}} : pf_ctrl_wmask;
-
     task automatic sdram_write_burst(input [ADDR_WIDTH-1:0] word_addr, input [16*BURST_LEN-1:0] data);
         begin
             @(posedge clk); while (ctrl_busy) @(posedge clk);
@@ -101,6 +95,18 @@ module tb;
     wire [ADDR_WIDTH-1:0] pf_ctrl_addr;
     wire [16*BURST_LEN-1:0] pf_ctrl_wdata;
     wire [2*BURST_LEN-1:0]  pf_ctrl_wmask;
+
+    // moved here (below the pf_ctrl_* declarations above) -- iverilog's
+    // current elaboration requires a continuous assign's RHS names to be
+    // declared earlier in the module than the assign itself, which the
+    // original position (right after wpre_*/pre_active, before pf_ctrl_*
+    // existed textually) violated; found while re-verifying this file for
+    // EXP-0058, see this file's own note by pre_active's assignment below.
+    assign ctrl_req   = pre_active ? wpre_req   : pf_ctrl_req;
+    assign ctrl_wr    = pre_active ? wpre_wr    : pf_ctrl_wr;
+    assign ctrl_addr  = pre_active ? wpre_addr  : pf_ctrl_addr;
+    assign ctrl_wdata = pre_active ? wpre_wdata : pf_ctrl_wdata;
+    assign ctrl_wmask = pre_active ? {(2*BURST_LEN){1'b0}} : pf_ctrl_wmask;
 
     reg  pf_start;
     reg  [ADDR_WIDTH-1:0] pf_layer_base;
@@ -148,6 +154,18 @@ module tb;
 
         $display("=== preload SDRAM with %0d distinct layer patterns ===", L);
         preload_sdram_layers;
+        @(posedge clk); // ERR-0001 workaround: sync before the first blocking
+                         // assignment following a time-consuming task call --
+                         // without this, pre_active's switchover was not
+                         // reliably visible to the ctrl_* mux at the next
+                         // clock edge, so layer_prefetch_ctrl.v's own
+                         // ctrl_req never actually reached the real SDRAM
+                         // controller and this whole test hung on "while
+                         // (!pf_done)" forever instead of ever producing a
+                         // result (found while integrating this module into
+                         // tb_neural_processor_layer_reuse.v, EXP-0058 --
+                         // this file's own real-hardware run had never
+                         // actually completed before that).
         pre_active = 1'b0; // hand control to layer_prefetch_ctrl.v
 
         // NOTE: sequential (no prefetch/consume overlap) -- this test
@@ -162,9 +180,23 @@ module tb;
         // information.
         $display("=== real-RTL prefetch + reuse, %0d layers, sequential (correctness only) ===", L);
         t0 = cyc;
-        pf_layer_base = 0; pf_start = 1'b1; @(posedge clk); pf_start = 1'b0;
+        pf_layer_base = 0; pf_start = 1'b1; @(posedge clk); #1; pf_start = 1'b0;
         while (!pf_done) @(posedge clk);
-        consume_done = 1'b1; @(posedge clk); consume_done = 1'b0; // initial swap
+        // Clock-edge-adjacent pulse idiom, hardened: setting a pulse then
+        // clearing it on the VERY NEXT @(posedge clk) puts the clear in the
+        // SAME active-region pass as the edge where a receiving module's own
+        // synchronous always block reads it -- their relative execution
+        // order at that shared edge is implementation-defined (Icarus does
+        // not guarantee testbench-thread-vs-DUT-always-block ordering), so
+        // the clear can occasionally run before the DUT's read and the pulse
+        // is silently missed (found via direct $strobe tracing while
+        // integrating this module for EXP-0058 -- layer_weight_buffer.v's
+        // own consume_done_latched stayed 0 even though this exact sequence
+        // visibly drove consume_done=1 for a full clock period). Fixed by
+        // holding the pulse past the edge with a real time delay (#1) before
+        // clearing, so the clear unambiguously lands in a later time step
+        // than every process that reacted to the edge.
+        consume_done = 1'b1; @(posedge clk); #1; consume_done = 1'b0; // initial swap
         @(posedge clk); #1;
 
         for (li_i = 0; li_i < L; li_i = li_i + 1) begin
@@ -182,11 +214,11 @@ module tb;
                     @(posedge clk);
                 end
             end
-            consume_done = 1'b1; @(posedge clk); consume_done = 1'b0;
+            consume_done = 1'b1; @(posedge clk); #1; consume_done = 1'b0; // same pulse-hardening as the initial swap above
 
             if (li_i+1 < L) begin
                 pf_layer_base = (li_i+1)*WORDS_PER_LAYER;
-                pf_start = 1'b1; @(posedge clk); pf_start = 1'b0;
+                pf_start = 1'b1; @(posedge clk); #1; pf_start = 1'b0;
                 while (!pf_done) @(posedge clk);
             end
             @(posedge clk); #1; // let the swap settle before the next iteration reads

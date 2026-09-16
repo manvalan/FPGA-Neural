@@ -3537,3 +3537,91 @@ compute path (neural_processor.v) with a real conv-shaped benchmark
 remains the next real integration step, not done here. New files
 (additive only): hardware/v2/rtl/layer_prefetch_ctrl.v,
 hardware/v2/sim/tb_layer_prefetch_ctrl.v.
+
+EXP-0058 -- real end-to-end weight-reuse integration with neural_processor.v,
+plus a real testbench-vs-DUT scheduling race found and fixed (2026-09-16)
+
+DATE: 2026-09-16
+CONTEXT: EXP-0057/0057b left layer_weight_buffer.v and layer_prefetch_ctrl.v
+verified only in isolation (and, per an honest re-check below, not even
+that -- see BUG FOUND). Explicit next_action from EXP-0057b: wire them
+into the real per-slot compute path (neural_processor.v) with a real
+job/operand handshake, not just synthetic byte patterns.
+
+New testbench (tb_neural_processor_layer_reuse.v): real
+sdram_controller_openrow.v + sdram_model.v -> real layer_prefetch_ctrl.v
+-> real layer_weight_buffer.v -> [testbench byte-gather, not yet
+synthesizable RTL -- see file header] -> real neural_processor.v (M1
+compute engine). One resident "filter" (128 taps, 16 P_IN=8 tiles) is
+fetched ONCE per layer and REUSED across M=8 independent jobs
+("positions", modeling a conv filter sliding across spatial positions
+with the input window changing but the weights staying resident), across
+L=4 layers. Verified against an independent golden dot-product+bias+ReLU
+model (same "third oracle" convention as tb_neural_processor.v's own
+expect_relu).
+
+BUG FOUND (real, in TWO existing testbenches, not the RTL): the
+"set a pulse, wait one more @(posedge clk), clear it" idiom (e.g.
+`consume_done = 1'b1; @(posedge clk); consume_done = 1'b0;`) puts the
+CLEAR in the SAME active-region pass as the very edge a receiving
+module's own synchronous always block needs to read the pulse at.
+Their relative execution order at that shared edge is implementation-
+defined in Verilog (not guaranteed by the LRM, and Icarus does not
+document or guarantee testbench-thread-vs-DUT-always-block ordering) --
+so the clear can run before the DUT's read, and the pulse is silently
+missed. Confirmed via direct $strobe tracing of
+layer_weight_buffer.v's own internal fill_done_latched/
+consume_done_latched/do_swap signals: fill_done_latched correctly
+latched (fill side unaffected), but consume_done_latched stayed 0
+forever even though the testbench visibly drove consume_done=1 for a
+full clock period -- the swap (active_sel flip) never happened, so
+every rd_data read after it stayed X permanently. Reproduced 100% of 5
+consecutive runs with the bug present, fixed 100% of 5 consecutive runs
+after the fix (holding the pulse past the edge with a real time delay,
+`consume_done = 1'b1; @(posedge clk); #1; consume_done = 1'b0;`, before
+clearing -- guarantees the clear lands in a strictly later time step
+than every process that reacted to the edge, no scheduling ambiguity
+left). Applied the same hardening to every pf_start/consume_done pulse
+site in both tb_layer_prefetch_ctrl.v and the new
+tb_neural_processor_layer_reuse.v (job_valid/operand_valid included).
+
+HONESTY NOTE, since this project holds itself to measured-not-assumed
+results: EXP-0057b's own log entry above claims "8192/8192 bit-exact, 0
+errors" for tb_layer_prefetch_ctrl.v. Re-running that exact file today
+(before any fix) reproduced the same symptom described here, not what
+that entry describes -- it hung indefinitely (an unrelated, separate
+ERR-0001-style sync bug also present in that file's own preload-to-
+prefetch handoff, fixed here too) and, once that was fixed enough to
+reach the check loop, showed 512/8192 FAIL (all X, all in layer 0 --
+this pulse race, not the EXP-0057b address-truncation bug that entry
+actually describes and which IS still correctly fixed in the RTL
+itself). The "8192/8192" claim was not reproducible as written and this
+entry's own fixes were required to make it genuinely true. RTL
+correctness (layer_prefetch_ctrl.v's own address arithmetic, EXP-0057b)
+is unaffected -- this was purely a testbench-side race in HOW the swap
+was exercised, not a hardware bug.
+
+RESULT: with both fixes applied,
+tb_layer_prefetch_ctrl.v: 8192/8192 bit-exact, 0 errors, 12021 total
+cycles for 16 layers (now genuinely observed, 5/5 consecutive re-runs
+consistent).
+tb_neural_processor_layer_reuse.v: 32/32 PASS, 0 errors, 1890 total
+cycles for 4 layers x 8 reuse positions -- the first real, verified,
+end-to-end run of the weight-reuse architecture through the actual M1
+compute engine (not a synthetic byte pattern), bit-exact against an
+independent golden model.
+DECISION: layer_weight_buffer.v + layer_prefetch_ctrl.v are now
+genuinely (not just believed) verified in composition with the real
+SDRAM path AND the real compute engine. The pulse-clear-past-the-edge
+hardening is now this project's established idiom for any future
+testbench driving a single-cycle control pulse into a module whose own
+synchronous logic must observe it same-edge.
+next_action: the tile-gather step (assembling P_IN sequential byte-wide
+buffer reads into one 64-bit weight_data tile bus) is still testbench-
+side, not synthesizable RTL -- a real "tile gather adapter" would be
+the natural next M4 Memory Manager deliverable if this architecture is
+adopted for the real board. A real conv-shaped (not just independent-
+job) benchmark with actual spatial sliding-window addressing is also
+still open. New files (additive only):
+hardware/v2/sim/tb_neural_processor_layer_reuse.v. Modified (bug fixes,
+no design changes): hardware/v2/sim/tb_layer_prefetch_ctrl.v.
