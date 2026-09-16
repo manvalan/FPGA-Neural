@@ -3880,3 +3880,48 @@ EXP-0060) for a real system-adjacent Fmax number; (2) neural_director.v
 port to dispatch job PAIRS per packed core remains the next real
 integration step for a genuine multi-core, multi-layer system, still
 not started.
+
+EXP-0063 -- real P&R of the EXP-0062-verified weight-reuse memory path
++ packed core together (2026-09-17)
+
+CONTEXT: EXP-0062's own next_action -- synthesize the just-verified
+combined path (sdram_controller.v -> layer_prefetch_ctrl.v ->
+layer_weight_buffer.v -> weight_tile_gather.v -> neural_processor_
+packed.v), not just the isolated compute core (EXP-0059) or the
+zero-interconnect compute array (EXP-0060), for a real Fmax number
+that includes actual memory-path control logic, not just DSP/placement
+density.
+
+METHOD: new hardware/v3/rtl/np_packed_weight_reuse_top.v, flat
+structural wrapper instantiating the real, EXP-0062-verified module
+chain with its real internal connections; control ports (pf_start,
+tile_req, operand_valid, ...) exposed at the top level rather than
+internally sequenced (the closed-loop sequencing is neural_director.v's
+still-not-built job, deliberately out of scope here -- this module
+exists only to let Vivado see the real combined logic together).
+Real Vivado 2026.1 synth + opt_design + place_design + route_design,
+same 200MHz constraint and part (xc7a100tcsg324-1) as EXP-0059/0060,
+via hardware/v3/synth/synth_np_packed_weight_reuse_top.tcl.
+
+RESULT (real, post-route): 8/240 DSP48E1 (3.33%, unchanged from the
+isolated core -- the memory path itself uses zero DSPs, as expected).
+WNS -2.502ns @ 200MHz -> real critical path 7.502ns -> Fmax ~133.3MHz.
+Vs EXP-0059's isolated single core (134.9MHz): only -1.2%.
+
+DECISION: real memory-path control logic (prefetch controller, double-
+buffered weight scratchpad, tile gather adapter, SDRAM controller) adds
+negligible Fmax cost on top of the compute core alone, consistent with
+EXP-0060's own finding that placement/interconnect density near the
+compute core is not the dominant Fmax driver at this scale. The
+remaining open question (still not answered by EXP-0059/0060/0063)
+is what a REAL multi-core Director-driven system does to Fmax --
+none of these three checks include neural_director.v or N>1 packed
+cores sharing a single memory path with real arbitration.
+
+next_action: neural_director.v port for job-PAIR dispatch per packed
+core remains the largest, still-not-started real integration step
+needed before a genuine multi-core system-level P&R number can be
+trusted. Until that exists (correctness-verified per this project's
+own standard, per EXP-0062's own disclosed lesson about saturating-
+output tests hiding real bugs), no further Fmax numbers from larger
+configurations should be treated as system-representative.
