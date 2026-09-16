@@ -3051,3 +3051,120 @@ next_action: report this refined finding to the user before choosing
   used by the real board top, additive only): hardware/v2/nms/rtl/
   nms_neural_multiprocessor_sdram_dualbank.v, hardware/v2/nms/sim/
   tb_nms_dstress_sdram_dualbank.v.
+
+EXP-0052 -- Bank-interleaved pipelining for the W (weight-fetch) SDRAM
+channel: the mechanism works in isolation (verified) but the real
+D-Stress integration gain is negligible, because the CALLER never
+issues a second request early enough to trigger it (2026-09-16)
+
+DATE: 2026-09-16
+CONTEXT: follow-up to EXP-0051, which found the weight-fetch (W)
+channel itself (not W/AR cross-traffic) as the real ~77-78%-busy
+ceiling, and identified the per-transaction fixed cost (measured ~16
+cycles: 1 issue + 2 T_RCD + 4 CAS_LATENCY-wait + 7 BURST_LEN=8 read +
+2 T_RP) as the lever to attack, since the real transaction COUNT is
+already close to optimal (2163 measured vs 2048 theoretical minimum
+for the D-Stress workload, ~5.6% overhead). This session chose to
+pursue this via a fork given the real correctness-risk history of this
+exact FSM area (ERR-0019/0020/0023, all req-latching races).
+TOOLCHAIN: unchanged from EXP-0051 (Yosys 0.69+59 d85872386-dirty,
+Verilator 5.053) -- this experiment is Verilator-only, no synthesis/
+P&R.
+
+METHOD (two-phase, isolated-correctness-first per this project's own
+established discipline):
+  Phase A: `sdram_controller_pipelined.v` (new, forked from
+  sdram_controller.v) remaps the addr->{bank,row,col} decomposition
+  from high-order bits (today: bank always 0 for this project's
+  compact weight region, since bank comes from the TOP address bits)
+  to LOW-order bits placed just above the burst-alignment zero bits --
+  so consecutive burst-aligned weight fetches (each BURST_LEN=8 words
+  apart) now naturally rotate across the SDRAM's own 4 internal banks
+  instead of all landing on bank 0. Added a depth-1 "shadow" slot: while
+  the current transaction is in CAS_WAIT/BURST/PRECHARGE_WAIT (command
+  bus otherwise idle), a newly-arriving request for a DIFFERENT bank
+  has its ACTIVATE issued immediately, overlapping that bank's own
+  T_RCD wait with the current transaction's tail. Same-bank requests,
+  and refresh, are unaffected (S_IDLE priority: open shadow > refresh >
+  new request, so AUTO REFRESH can never fire with a row left open).
+  New isolated testbench `tb_sdram_controller_pipelined.v`: 38/38 PASS,
+  bit-exact across all 4 banks. Real, INDEPENDENTLY RE-VERIFIED result
+  for back-to-back different-bank transactions: 30 cycles total vs a
+  32-cycle serial baseline for the same pair -- exactly 2 cycles saved
+  (= T_RCD), NOT a multiple-x speedup. This matches the theoretical
+  ceiling worked out BEFORE measuring: CAS_LATENCY+BURST_LEN (11 of the
+  16 cycles) are serial on the SHARED data bus regardless of bank, and
+  no amount of bank interleaving can hide that -- only the T_RCD+T_RP
+  portion (5 of 16 cycles) is bank-local and therefore hideable, and
+  only T_RCD (2 cycles) was actually recovered here since the OTHER
+  bank's T_RP tail still has to clear before its OWN next reuse. Same-
+  bank consecutive case: unchanged, no regression. Refresh-during-
+  interleaving case (Test 4): AUTO REFRESH spacing rose from 634 to 657
+  cycles under sustained back-to-back different-bank stress (vs
+  tREFI=626 target) -- a real, disclosed +3.6%, already within the
+  margin this project's OWN unmodified controller already tolerates
+  under the same synthetic stress pattern, not a new violation.
+  One bug found and fixed, in the NEW TESTBENCH ONLY (not the RTL):
+  calling wait_ready() twice in a row double-consumed the same `ready`
+  pulse -- fixed by advancing one extra @(posedge clk) between calls.
+
+  Phase B (integration, gated on Phase A passing): forked
+  `sdram_unified_backend_pipelined.v` (swaps in the pipelined
+  controller, W_ENTRIES cache and W/AR arbitration untouched) and
+  `nms_neural_multiprocessor_sdram_pipelined.v`, plus a new
+  `tb_nms_dstress_sdram_pipelined.v` (same D-Stress workload/golden
+  model; backdoor peek/poke rewritten to go through a `sdram_model.v`
+  backdoor_read/write helper keyed on the SAME decomposition the new
+  controller uses, instead of the old flat-address assumption, so
+  bit-exact verification stays valid under the new addr->bank mapping
+  -- this was flagged in advance as the one correctness trap in this
+  whole exercise, and was handled by construction rather than by
+  parallel, error-prone reimplementation).
+RESULT (INDEPENDENTLY RE-BUILT AND RE-RUN by this session directly, not
+just taken from the sub-task's own report -- both PASS 256/256 bit-
+exact + data_ready PASS in both configs):
+  N=4: total_cycles=49760 (vs single-bank baseline 49927, EXP-0049 --
+    only -0.33%). N=8: total_cycles=49755 (vs baseline 49909 --
+    -0.31%). Both essentially within noise of the unmodified single-
+    bank system, nowhere near either Phase A's own measured 2-cycle-
+    per-different-bank-pair saving scaled up, or EXP-0051's dual-bank
+    -8/-10%.
+ROOT CAUSE of the gap between Phase A (works) and Phase B (doesn't
+help): `slot_mem_arbiter_wide.v` -> `sdram_unified_backend.v`'s own W
+port is a synchronous one-request-at-a-time interface -- the caller
+waits for `w_ready` before ever asserting the next `w_req`. Phase A's
+interleaving mechanism can ONLY help if a request for a DIFFERENT bank
+is already pending WHILE the current transaction is still mid-flight
+(CAS_WAIT/BURST/PRECHARGE) -- a condition the current arbiter/backend
+call convention almost never creates, since nothing is ever dispatched
+early. The mechanism itself is real and correctly verified in Phase A
+(directly, artificially stimulated); the SYSTEM around it, as it exists
+today, essentially never exercises it.
+decision: do NOT integrate sdram_controller_pipelined.v into the
+  production path on this evidence -- the real, measured, system-level
+  gain (~0.3%) does not justify carrying a second, more complex
+  controller variant with its own (even if currently well-verified)
+  correctness surface. The isolated Phase A result remains genuinely
+  useful and is KEPT as an additive, uncommitted-to-production file:
+  it proves the mechanism works and quantifies its real ceiling (2
+  cycles/pair, not more), which is exactly the number needed to decide
+  whether a FUTURE arbiter/backend rewrite (teaching the W port to
+  dispatch its NEXT request BEFORT the current one's `ready`, i.e. a
+  real pipelined/multi-outstanding-request interface, not just the
+  memory-side FSM) would be worth attempting -- that rewrite is a
+  materially larger, riskier change (touches the arbiter's own request/
+  grant protocol, not just the memory-side FSM) and was explicitly kept
+  out of scope for this experiment.
+next_action: report to the user; do not pursue the arbiter/backend
+  pipelined-dispatch rewrite without an explicit go-ahead, given its
+  larger scope and the modest (2 cycles/pair, capped) ceiling this
+  experiment just measured -- the slot-group weight-split ("aspettiamo"
+  item from EXP-0051) remains the other, still-open, ORTHOGONAL lever
+  (it does not depend on this pipelining work at all and would stack
+  with it if the arbiter rewrite is ever done). New files (additive
+  only, none touch the real board top or existing production RTL):
+  hardware/v2/nms/rtl/sdram_controller_pipelined.v,
+  hardware/v2/nms/rtl/sdram_unified_backend_pipelined.v,
+  hardware/v2/nms/rtl/nms_neural_multiprocessor_sdram_pipelined.v,
+  hardware/v2/nms/sim/tb_sdram_controller_pipelined.v,
+  hardware/v2/nms/sim/tb_nms_dstress_sdram_pipelined.v.
