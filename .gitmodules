@@ -1,0 +1,3 @@
+[submodule "hardware/v2/docs/datasheet"]
+	path = hardware/v2/docs/datasheet
+	url = http://localhost:3000/michele/FPGA-Neural-Datasheet
