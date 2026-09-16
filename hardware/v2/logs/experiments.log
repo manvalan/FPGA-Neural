@@ -3625,3 +3625,91 @@ job) benchmark with actual spatial sliding-window addressing is also
 still open. New files (additive only):
 hardware/v2/sim/tb_neural_processor_layer_reuse.v. Modified (bug fixes,
 no design changes): hardware/v2/sim/tb_layer_prefetch_ctrl.v.
+
+EXP-0059 -- Artix-7 (XC7A100T) real Vivado synthesis + P&R of the
+DSP48-packed V3 compute core, first real numbers on the new target
+part (2026-09-16/17)
+
+CONTEXT: DEC-0009 paused V2/ECP5 on a hard DSP48/MULT18X18D resource
+ceiling (ECP5-85F: 156 DSP, ceiling ~19 cores, ~6-8x max theoretical
+speedup -- nowhere near the 200-1000x target). Branch v3-artix7,
+commit 1cbe7b8, already built and exhaustively verified (RTL-level,
+Verilator) mac2_dsp_packed.v (2 INT8 MACs sharing one resident weight
+packed into a single DSP48-shaped 25x18 multiply, 16,777,216/16,777,216
+combinations bit-exact) and neural_processor_packed.v (full V2 pipeline
+port, doubled on the accumulate/bias/activation/saturation side, 18/18
+PASS vs two real V2 neural_processor.v instances). Neither had been
+run through real Xilinx synthesis yet -- this experiment is that first
+real-toolchain check, on Vivado 2026.1 (freshly installed this
+session, 61GB, `~/tools_cache/Xilinx/2026.1/`, free Vivado Basic Tier
+node-locked license). Two real toolchain issues fixed to get here, not
+toolchain bugs but environment/OS mismatches: (1) installLibs.sh
+shipped with CRLF line endings, failed bash parsing on `elif` --
+fixed via `sed -i 's/\r$//'`; (2) Vivado's own libxv_commontasks.so
+needs libncurses.so.5, which Ubuntu 26.04 (this machine, too new for
+Vivado 2026.1's own OS-detection table, which stops at Ubuntu 24) no
+longer ships -- worked around by pointing LD_LIBRARY_PATH at Vivado's
+own bundled `lib/lnx64.o/Ubuntu/24/libncurses.so.5` (not a real distro
+package, ABI-compatible fallback only).
+
+METHOD: two additive synthesis scripts, `hardware/v3/synth/
+synth_mac2_dsp_packed.tcl` (out-of-context synth only, no clock
+constraint -- isolated resource check) and `hardware/v3/synth/
+synth_neural_processor_packed.tcl` (out-of-context synth + opt_design +
+real place_design + route_design, `create_clock -period 5.000` i.e.
+200MHz target, on `xc7a100tcsg324-1`).
+
+RESULT (real Vivado output, not estimated):
+  mac2_dsp_packed.v alone: 1 LUT, 33 FF, 4 CARRY4, exactly 1 DSP48E1 --
+    confirms the 2-MAC-per-DSP packing survives real Xilinx synthesis,
+    not just the RTL-level exhaustive check.
+  neural_processor_packed.v, POST-SYNTHESIS ONLY (no P&R yet): 507 LUT,
+    837 FF, 8 DSP48E1/240 (3.33%) for the WHOLE 2-job pipeline -- half
+    the DSP of two separate V2 cores for the same 2 jobs' worth of
+    work, confirmed at full-pipeline level, not just the isolated MAC.
+    WNS -2.376ns @ 200MHz -> real critical path 7.376ns -> Fmax ~135.6MHz.
+  neural_processor_packed.v, POST-ROUTE (real place_design+route_design,
+    checkpoint saved /tmp/np_packed_postroute.dcp): WNS -2.414ns @
+    200MHz -> real critical path 7.414ns -> Fmax ~134.9MHz. Utilization
+    unchanged (8 DSP48E1, resource count doesn't move with P&R). Real
+    P&R is within 0.5% of the post-synthesis estimate here -- the
+    synth-only number was NOT optimistic for this small, isolated,
+    out-of-context module.
+
+HONESTY NOTE (this project's own standard): 134.9MHz is the ISOLATED
+compute core only, out-of-context, no real I/O/clock-source constraint
+(`HD.CLK_SRC` warning present both runs -- Vivado can't fully model
+clock insertion delay in this mode). Matches this project's own V2/
+ECP5 pattern where the dataflow-core-only Fmax (92.63MHz, M10/EXP-0011)
+was measurably different from the real full-system board-level Fmax
+(64-97MHz range, multiple N_SLOTS configs). A real N-core XC7A100T
+system number (Director/arbiter/SDRAM path all real, all instantiated
+together) has NOT been measured yet and should NOT be assumed equal to
+this isolated-core number.
+
+Combining this real data point with DEC-0009's own numbers, purely as
+an early projection (not a measured system result): 240 DSP / 8 =
+30 packed cores possible, each worth 2 job-equivalents = 60 job-
+equivalents (vs ECP5-85F's 19 real cores/job-equivalents) = ~3.16x DSP-
+budget headroom, x ~1.93x clock (134.9MHz real vs ~70MHz real ECP5
+average) = ~6.1x over the ECP5 N=16 baseline, which was itself ~9.5-14x
+over ESP32-S3 -> projected ~55-85x over ESP32-S3 IF a real N-core
+system holds close to this isolated-core Fmax (unverified assumption,
+flagged as such).
+
+DECISION: real numbers now exist for the packed compute core on the
+real target part -- promising enough (DSP packing survives real
+synthesis, Fmax in a useful range) to justify building the real N-core
+XC7A100T system (Director + arbiter + SDRAM/DDR path, real board
+constraints) rather than stopping at isolated-module checks.
+
+next_action: (1) commit synth_mac2_dsp_packed.tcl and
+synth_neural_processor_packed.tcl (were untracked, first real toolchain
+run happened this session); (2) build the real multi-core XC7A100T
+top-level (N packed cores + Director + memory path) and get a REAL
+system-level P&R Fmax before trusting the ~55-85x projection above;
+(3) a real board/constraints file for whichever XC7A100T board is
+actually targeted (part number confirmed xc7a100tcsg324-1, package/
+board pinout not yet chosen) is still needed before any real bring-up,
+matching this project's own "no board target skipped" discipline from
+V2/STEP19.
