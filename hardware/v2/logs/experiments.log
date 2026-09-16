@@ -3810,3 +3810,73 @@ job-pairing changes needed for this step (a single hardcoded layer/
 position-pair sequence is enough to prove the memory path + packed
 core compose correctly; Director-level dynamic pairing is a separate,
 later increment).
+
+EXP-0062 -- first real end-to-end integration test, packed weight-reuse
+memory path -> neural_processor_packed.v, ALL real synthesizable RTL
+including the tile-gather step (2026-09-17)
+
+CONTEXT: EXP-0061's own next_action -- wire together sdram_controller.v
++ sdram_model.v -> layer_prefetch_ctrl.v -> layer_weight_buffer.v ->
+weight_tile_gather.v (EXP-0061) -> neural_processor_packed.v
+(EXP-0059), mirroring EXP-0058's own tb_neural_processor_layer_reuse.v
+methodology (same weight_byte/input_byte golden formulas, independently
+reproduced not shared, per this project's "third oracle" convention)
+but for the packed 2-job core and with a real synthesizable gather
+step instead of a testbench-only one. New: hardware/v3/sim/
+tb_np_packed_layer_reuse.v. L=4 layers x M=8 reuse positions, paired
+2-at-a-time (16 pairs total) into neural_processor_packed.v's A/B
+job structure, one shared weight_tile_gather fetch per tile serving
+both positions.
+
+FIRST RUN: 15/16 PASS, 1 FAIL (li=0, pos_a=6/pos_b=7: got_a=127
+got_b=127, expected_a=127 expected_b=0) -- NOT hidden or re-run away,
+root-caused per this project's own standard.
+
+ROOT CAUSE (found via hierarchical signal tracing, u_np.acc_reg_a/b +
+u_np.valid0, comparing per-tile and final-value against the golden
+running sum): a genuine testbench bug, not a DUT bug. neural_processor_
+packed.v's operand_ready stays HIGH CONTINUOUSLY across the entire
+16-tile stream (not a one-shot pulse per tile -- np_state remains
+NP_WAIT_OPERANDS until tile_last), but the testbench's tile loop held
+operand_valid=1 for one EXTRA clock edge after each accepted handshake
+(before the next tile's weight_data/input_data were ready), and that
+extra edge got ALSO accepted (operand_ready still 1), double-consuming
+the SAME (stale) tile data. This inflated every job's accumulator by
+roughly the same relative amount every tile (confirmed: acc_reg_a=
+751240 vs golden 82880, acc_reg_b=210880 vs golden -26880, both
+~9x/-7.8x off) -- REAL numeric corruption on every single one of the
+16 pairs, not just the one that visibly failed. The other 15 "PASS"
+results were CORRECT BY COINCIDENCE ONLY: this test's golden dot
+products saturate to 0 or 127 for nearly every case (large INT8 sums
+over 128 taps routinely overflow the clamp range), so an inflated-but-
+still-saturating accumulator produces the SAME clamped output as the
+correct one -- until one case (li=0 pos 6/7) where the inflation
+flipped the SIGN of the sum (negative golden -> positive corrupted),
+changing which side of the clamp it landed on and finally exposing the
+bug. This is a real, disclosed methodology risk for saturating-output
+tests in general, flagged here rather than silently trusted.
+
+FIX: drop operand_valid the SAME delta the accepted handshake edge is
+observed (before any further simulation time/clock edge can pass),
+instead of one edge later -- see the fix's own inline comment for the
+exact reasoning. Re-ran full test after the fix.
+
+RESULT (after fix): 16/16 PASS, 0 errors, 4007 total cycles for 4
+layers x 8 positions (16 pairs) -- bit-exact against the independent
+golden model, through the COMPLETE real RTL path: real SDR SDRAM ->
+layer_prefetch_ctrl.v -> layer_weight_buffer.v -> weight_tile_gather.v
+-> neural_processor_packed.v. This is the first fully real (no
+testbench-side gather step, unlike EXP-0058) end-to-end verification
+of the V3 weight-reuse + DSP-packing architecture.
+
+DECISION: the packed weight-reuse memory path is genuinely (not just
+believed) verified end-to-end. Ready for the next real P&R check
+(synthesizing this combined path) and, separately, for the larger
+neural_director.v job-pairing integration.
+
+next_action: (1) synthesize the combined memory-path + packed-core
+design (real P&R, not just the isolated compute-array check from
+EXP-0060) for a real system-adjacent Fmax number; (2) neural_director.v
+port to dispatch job PAIRS per packed core remains the next real
+integration step for a genuine multi-core, multi-layer system, still
+not started.
