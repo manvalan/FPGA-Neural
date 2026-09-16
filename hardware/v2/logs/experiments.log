@@ -3925,3 +3925,64 @@ trusted. Until that exists (correctness-verified per this project's
 own standard, per EXP-0062's own disclosed lesson about saturating-
 output tests hiding real bugs), no further Fmax numbers from larger
 configurations should be treated as system-representative.
+
+EXP-0064 -- neural_director_packed.v: job-pairing scheduler for
+packed cores, isolated correctness verification (2026-09-17)
+
+CONTEXT: EXP-0063's own next_action -- the largest remaining V3
+integration gap. hardware/v2/rtl/neural_director.v (M5) dispatches ONE
+job per free slot; neural_processor_packed.v needs TWO jobs (A/B)
+sharing one weight stream per dispatch. Scope decision, disclosed not
+hidden: the two OLDEST queue entries are dispatched together only if
+they share w_base AND n_tiles (the pattern this project's own
+EXP-0057/0058/0062 testbenches already use -- reuse-position jobs for
+one resident weight, submitted consecutively); a submitter that
+violates this ordering sees the queue visibly stop draining (a
+diagnosable stall), never a silent mis-pair. Odd-length position
+batches are not supported by this Director alone.
+
+METHOD: new hardware/v3/rtl/neural_director_packed.v, forked from
+neural_director.v (same FIFO/busy-tracking/constant-indexed-slot-write
+structure, ERR-0027 anti-pattern avoidance preserved), with dispatch
+logic changed to pop/check/dispatch PAIRS (q_count -= 2 per dispatch,
+not -1) and slot ports doubled (x_base_a/b, result_addr_a/b,
+node_id_a/b; w_base/n_tiles shared). Isolated testbench (hardware/v3/
+sim/tb_neural_director_packed.v), mirroring tb_neural_director.v's own
+DEC-0007 scope decision: lightweight behavioral per-slot stubs
+(fixed-latency job_start->job_done + scoreboard of received fields),
+NOT the real packed core/memory path (already verified separately,
+EXP-0059/0062) -- isolates the SCHEDULING logic specifically.
+
+FIRST RUN: 4/7 tests passed, 3 failed (TEST3 "both slots busy" check,
+TEST3 completion count, TEST4 backpressure fill count). Investigated
+each before accepting or rejecting -- root-caused as THREE separate
+testbench-side timing bugs, NOT Director bugs (confirmed via
+hierarchical q_count/q_head/slot_busy tracing): (1) TEST3 checked
+slot busy status using a wait-loop long enough that the stub's own
+short fixed latency (6 cycles) had ALREADY completed the jobs by the
+time the check ran; (2) a related same-cycle-late-check issue after
+fixing (1) -- submit_job's own return doesn't guarantee the Director's
+independent 2-state (SCAN_READY/ALLOCATE) FSM has caught up dispatching
+both pairs yet, needed a short settle wait; (3) TEST4's push loop held
+job_in_valid across TWO clock edges per loop iteration instead of one,
+making the real push count ambiguous. Fixed all three (longer stub
+latency for a comfortable observation window, a settle delay after
+submission before checking dispatch state, and a corrected one-push-
+per-iteration loop) -- none of these fixes touched neural_director_
+packed.v itself.
+
+RESULT (after fixes): 8/8 tests, 0 errors -- matched-w_base pairing,
+mismatched-w_base stall (does not skip ahead), two-pair dispatch to
+both slots with a third pair correctly queued, and queue backpressure
+(fill/deassert/recover) all verified.
+
+DECISION: neural_director_packed.v's own scheduling/pairing logic is
+genuinely verified in isolation. Ready to integrate with the real
+verified compute+memory path (EXP-0062/0063) for a true multi-core
+system test -- still not done.
+
+next_action: wire neural_director_packed.v to N real packed cores +
+N real weight-reuse memory paths (not behavioral stubs) for the first
+genuine multi-core system correctness test, THEN (only after that
+passes) a real multi-core system-level P&R Fmax number -- the number
+this whole V3 pivot has been building toward since EXP-0059.
