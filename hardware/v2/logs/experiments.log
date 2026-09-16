@@ -4111,3 +4111,54 @@ system-representative); (2) scale to the real target N (up to ~30
 packed cores per EXP-0059's own DSP budget projection) once N=2's real
 timing is known; (3) the real DDR3/MIG memory interface, replacing the
 SDR SDRAM placeholder used throughout -- separate, larger, not started.
+
+EXP-0067 -- real P&R of the EXP-0066 verified N=2 system: the first
+genuine multi-core Fmax number (2026-09-17)
+
+CONTEXT: EXP-0066's own next_action -- the number this entire V3 pivot
+has been building toward since EXP-0059: a real system-level Fmax that
+includes the Director, the shared-SDRAM arbiter, AND N>1 real compute+
+memory slots together, not an isolated core or a zero-interconnect
+compute array.
+
+METHOD: new hardware/v3/rtl/n2_system_top.v, flat structural synthesis
+wrapper around the EXP-0066-verified module chain (neural_director_
+packed.v + sdram_slot_arbiter2.v + real sdram_controller.v + 2x real
+packed_slot.v, each with its own full memory-reuse path). Activation
+stand-in ports exposed per-slot at the top level (same disclosed scope
+as packed_slot.v itself). Real Vivado synth + opt_design + place_design
++ route_design, same 200MHz constraint and part (xc7a100tcsg324-1) as
+every prior V3 P&R check, via hardware/v3/synth/synth_n2_system_top.tcl.
+
+RESULT (real, post-route): 16/240 DSP48E1 (6.67%, exactly 2x8, matches
+EXP-0059's per-core count). WNS -2.570ns @ 200MHz -> real critical
+path 7.570ns -> Fmax ~132.1MHz.
+
+Comparison across every V3 P&R checkpoint so far:
+  EXP-0059 isolated single core:                    134.9MHz
+  EXP-0063 single core + real memory path:           133.3MHz (-1.2%)
+  EXP-0060 8-core array, zero interconnect:          131.7MHz (-2.4%)
+  EXP-0067 full N=2 system (Director+arbiter+2 slots): 132.1MHz (-2.1%)
+
+DECISION: unlike the V2/ECP5 pattern (isolated dataflow-core Fmax
+92.63MHz vs real full-system Fmax 64-97MHz, a real ~0-30% gap
+depending on config), this V3 architecture shows NO comparable
+Director/arbiter Fmax penalty -- the shared scheduling and arbitration
+logic here is lightweight enough that it is not on (or not much on)
+the critical path, even in this first real multi-core measurement.
+This substantially de-risks the ~55-85x-over-ESP32-S3 projection
+first floated in EXP-0059: it was explicitly conditioned on "IF a real
+N-core system holds close to the isolated-core Fmax" -- this
+experiment is real (not projected) confirmation that it does, at
+N=2. Scaling to larger N (up to ~30 cores) may still show more
+congestion than N=2 did; this is not yet proof the ceiling holds at
+every N, only that the Director/arbiter architecture itself is not
+the bottleneck class V2 had.
+
+next_action: (1) the real DDR3/MIG memory interface remains the
+largest deferred piece (everything measured so far uses the declared
+SDR SDRAM placeholder); (2) if/when scaling to a larger N is
+attempted, watch specifically for placement congestion effects (the
+EXP-0060 8-core-array class of degradation) since that is the one
+variable not yet tested at higher N with the REAL Director+arbiter
+system, only with a zero-interconnect array.
