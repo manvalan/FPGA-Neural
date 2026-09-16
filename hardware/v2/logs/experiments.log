@@ -3482,3 +3482,58 @@ production-ready. New files (additive only):
 hardware/v2/rtl/layer_weight_buffer.v,
 hardware/v2/sim/tb_layer_weight_buffer.v,
 hardware/v2/sim/tb_layer_reuse_vs_zero_reuse.v.
+
+EXP-0057b -- layer_prefetch_ctrl.v: real synthesizable RTL for the
+layer-reuse prefetch pattern, real bug found and fixed (2026-09-16)
+
+DATE: 2026-09-16
+CONTEXT: EXP-0057's own 7.16x real measured speedup was driven by a
+testbench TASK (prefetch_layer), not synthesizable RTL. Built
+layer_prefetch_ctrl.v -- a real FSM that drives sdram_controller_
+openrow.v's own req/wr/addr contract to bulk-fetch one layer into
+layer_weight_buffer.v -- so the mechanism is actually instantiable in
+a real design, not just a simulation convenience.
+
+BUG FOUND (real, in the RTL, not the testbench): cur_fill_addr's own
+address arithmetic used `BYTES_PER_BURST[BIDXW-1:0]` -- a bit-select
+that TRUNCATED the 16-byte-per-burst constant down to BIDXW=3 bits,
+silently evaluating to 0. Every burst's drained bytes landed in fill
+addresses 0-15 instead of their real offset within the layer,
+overwriting each other -- only the LAST burst of each layer survived.
+Symptom: layer 0 always correct (its own fill happened to line up by
+construction), every layer after showed only its last 16 bytes
+correct and the rest reading back as 0 (never written). Two sibling
+instances of the same pattern (`BYTES_PER_BURST[DIDXW-1:0]-1`,
+`BURSTS_PER_LAYER[BIDXW-1:0]-1`) turned out to be harmless by
+coincidence (power-of-2 modular-underflow identity happens to produce
+the right N-1 value for THESE specific widths) but were cleaned up
+anyway rather than left as a latent landmine for a future non-power-
+of-2 parameter change. Root cause of reaching for the wrong pattern in
+the first place: misapplied a WIDENING idiom seen elsewhere in this
+codebase (e.g. `BURST_LEN[ADDR_WIDTH-1:0]`, safe because the target
+width is LARGER than needed) to a case where the target width was
+SMALLER than needed -- the same bit-select syntax means something
+different depending on which direction the width mismatch goes.
+
+Found via an isolated standalone-sequential debug testbench first
+(confirmed the FSM's own busy/done control-flow was correct across
+repeated invocations) followed by tracing the actual DATA once
+control-flow was cleared as a suspect -- not by staring at the RTL in
+isolation.
+
+RESULT (tb_layer_prefetch_ctrl.v, real sdram_controller_openrow.v +
+sdram_model.v, 16 layers x 4 reuses, sequential -- no double-buffer
+overlap in THIS specific testbench, see its own header for why):
+8192/8192 bit-exact, 0 errors, after the fix (was 512/8192 before,
+i.e. only layer 0 correct). The double-buffered OVERLAPPED performance
+number (7.16x) itself was already established via EXP-0057's own
+task-based driver and is not re-derived here -- this experiment's own
+job was confirming the real RTL controller composes correctly with
+layer_weight_buffer.v end-to-end, which it now does.
+next_action: layer_prefetch_ctrl.v + layer_weight_buffer.v are now
+both real, verified, synthesizable building blocks for a weight-
+stationary conv-style dataflow -- wiring them into the real per-slot
+compute path (neural_processor.v) with a real conv-shaped benchmark
+remains the next real integration step, not done here. New files
+(additive only): hardware/v2/rtl/layer_prefetch_ctrl.v,
+hardware/v2/sim/tb_layer_prefetch_ctrl.v.
