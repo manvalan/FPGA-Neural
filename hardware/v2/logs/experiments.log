@@ -3986,3 +3986,55 @@ N real weight-reuse memory paths (not behavioral stubs) for the first
 genuine multi-core system correctness test, THEN (only after that
 passes) a real multi-core system-level P&R Fmax number -- the number
 this whole V3 pivot has been building toward since EXP-0059.
+
+EXP-0065 -- packed_slot.v: real per-slot sequencer, promotes EXP-0062's
+testbench procedure into synthesizable RTL (2026-09-17)
+
+CONTEXT: EXP-0064's own next_action -- neural_director_packed.v only
+dispatches job descriptors; something must actually sequence prefetch
+-> weight-buffer-swap -> per-tile gather -> operand streaming ->
+result capture for each dispatched pair. EXP-0062 proved this sequence
+correct PROCEDURALLY (testbench driving each sub-module by hand); this
+experiment promotes that same sequence into real RTL, matching the
+same "testbench-step becomes synthesizable RTL" pattern weight_tile_
+gather.v already established (EXP-0061).
+
+METHOD: new hardware/v3/rtl/packed_slot.v -- wraps layer_prefetch_ctrl.v
+-> layer_weight_buffer.v -> weight_tile_gather.v -> neural_processor_
+packed.v behind a new 9-state sequencing FSM, presenting exactly the
+per-slot contract neural_director_packed.v already expects. Disclosed
+scope limits (matches this project's own established precedent, EXP-
+0058/0062's "activation path is separate, out of scope" framing):
+activations come through a wide, per-tile, combinational stand-in port
+(real fetch engine deferred, same spirit as this project's earlier
+ideal_memory_model.v staging); no result-writeback engine exists yet
+either (result_addr_a/b pass through unused, for a future stage). Every
+job re-fetches its layer (no resident-weight-skip optimization --
+correctness first). Isolated testbench (hardware/v3/sim/tb_packed_slot.v),
+same golden formulas as EXP-0062 (independently reproduced), real SDRAM
+controller+model, a simple decode-based activation stand-in memory.
+
+FIRST RUN: 5/9 PASS, 4 FAIL, deterministic (li=0 all correct, li=1
+partial, li=2 all wrong). Root-caused via hierarchical signal tracing
+(dut.state/pf_busy/w_base_lat) -- NOT a sequencer logic bug: the
+testbench's own w_base computation was wrong (`li*WORDS_PER_LAYER*2`,
+treating w_base as a byte address needing conversion), while layer_
+prefetch_ctrl.v expects a WORD address directly (its own established
+convention since EXP-0057) and packed_slot.v already passes w_base
+through unconverted to match that -- the stray `*2` pointed every
+layer after the first at the wrong SDRAM region. Fixed (removed the
+`*2`, matching EXP-0062's own addressing exactly).
+
+RESULT (after fix): 9/9 PASS, 0 errors -- 3 layers x 6 positions (9
+pairs), bit-exact results AND correct node_id/result_addr passthrough,
+driven entirely by packed_slot.v's own real sequencing FSM (no
+testbench-side procedural sequencing of the sub-modules, unlike
+EXP-0062).
+
+DECISION: packed_slot.v is genuinely verified. This is the last
+missing piece between neural_director_packed.v (EXP-0064, dispatch-
+only) and a real multi-core system.
+
+next_action: wire N=2 packed_slot.v instances behind a shared SDRAM
+arbiter, driven by neural_director_packed.v, for the first genuine
+multi-core system correctness test.
