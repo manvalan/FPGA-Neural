@@ -2925,3 +2925,129 @@ decision: adopted as the operative Phase-0 BASELINE row (see
   agreed time budget.
 next_action: Phase 1 (N=8 timing fix) blocked on N_SLOTS=8 baseline;
   in the meantime this N_SLOTS=4 baseline is committed to branch v21.
+
+EXP-0051 -- Two-physical-SDRAM-bank experiment (SIMULATION ONLY): does
+splitting weight-fetch (W) and activation/result (AR) traffic onto two
+independent physical SDRAM channels remove the memory-bound thrashing
+EXP-0049/0050 measured on the real board-level top? (2026-09-16)
+
+DATE: 2026-09-16
+CONTEXT: per decisions.log's own "next recommended step" note after
+EXP-0049/0050 closed Phase 0 (real board-top baseline, N=4 worst
+82.43MHz/N=8 worst 77.36MHz, both 8/8 PASS @ 64MHz -- see decisions.log
+for that specific number set, gathered in a prior pass of this same
+session) -- before spending effort on Phase 2 (85F retarget, N=16),
+verify whether the system is genuinely external-memory-bandwidth-bound
+(as tb_nms_dstress_sdram_unified.v's own instrumentation already
+strongly suggested: SDRAM controller port busy ~81.6% of all D-Stress
+cycles at BOTH N_SLOTS=4 (49927 cycles) and N_SLOTS=8 (49909 cycles) --
+see decisions.log/errors.log) by testing the "Fase 3" 1-vs-2-SDRAM-bank
+question from the brief's own original scope, at N=4/N=8, ahead of
+schedule. NOTE: STEP19/EXP-0048's own governing spec explicitly
+mandated a SINGLE physical SDRAM for the real board ("una SDRAM, anche
+se richiede un Memory Manager piu intelligente") -- this experiment
+does NOT propose reopening that decision for the real hardware/v2
+board (constraints/v2_board_top.lpf is untouched, still wires exactly
+one physical chip); it is scoped, per this session's own current
+brief, as SIMULATION-ONLY architecture exploration to inform whether a
+future board revision or a different RTL fix direction is worth
+pursuing at all.
+
+TOOLCHAIN (recorded per timing.log's own process recommendation after
+the EXP-0049/0050 Yosys-version discrepancy investigation): this
+session's OSS CAD Suite install at ~/tools_cache/oss-cad-suite/ reports
+`yosys -V` = "Yosys 0.69+59 (git sha1 d85872386-dirty)" -- the IDENTICAL
+commit hash already recorded for the EXP-0049/0050 session, confirming
+NO toolchain drift since that investigation closed (this experiment
+uses Verilator only, no synthesis/P&R was run). `verilator --version` =
+"Verilator 5.053 devel rev v5.052-85-g270c528af (mod)".
+
+METHOD: forked nms_neural_multiprocessor_sdram_unified.v (STEP19) into
+a new module, `nms_neural_multiprocessor_sdram_dualbank.v` --
+u_dataflow_core/u_arbiter/u_arbiter_wide all byte-for-byte unchanged;
+the single sdram_unified_backend.v instance is replaced by TWO
+instances of that SAME, unmodified module: u_sdram_backend_w (W port
+only, ar_req tied to 0) and u_sdram_backend_ar (AR port only, w_req
+tied to 0), each with its own sdram_controller.v and its own physical
+SDRAM pins. Safety of the permanent tie-off verified by inspection: an
+always-0 ar_req/w_req means S_AR_RD_WAIT/S_AR_WR_WAIT (resp. S_W_WAIT)
+are simply never entered -- no dead-state risk. Forked
+tb_nms_dstress_sdram_unified.v into `tb_nms_dstress_sdram_dualbank.v`
+(new files, both under hardware/v2/nms/{rtl,sim}/) -- identical D-Stress
+workload/golden-model/bit-exact verification; only the backdoor
+poke_byte/peek_byte targets change (weight pokes -> u_sdram_w.mem,
+activation/result pokes -> u_sdram_ar.mem, a split that already existed
+in the original testbench's own naming convention even when both
+pointed at the same array) and instrumentation now reports each bank's
+own sdram_controller.v busy%/req/ready/refresh counts separately, plus
+an "either bank busy" figure directly comparable to the single-bank
+sdram_busy_pct.
+command: `verilator --binary --timing -j 0 -Wno-fatal -GN_SLOTS_CFG=<4|8>
+  -GPFD_CFG=8 --top-module tb -Mdir <dir> sim/tb_nms_dstress_sdram_
+  dualbank.v sim/sdram_model.v <rtl deps>`, then run the resulting Vtb
+  binary. Baseline (single-bank) re-run first for direct comparison,
+  same command against the unmodified tb_nms_dstress_sdram_unified.v --
+  reproduced EXACTLY: N=4 49927 cycles/81.56% busy, N=8 49909
+  cycles/81.62% busy, both 256/256 bit-exact -- confirms this session's
+  toolchain/methodology matches the numbers already on record before
+  trusting the new dual-bank numbers below.
+
+RESULT (dual-bank, both 256/256 neurons bit-exact vs golden, data_ready
+PASS, zero functional regression):
+  N=4: total_cycles=45724 (vs single-bank 49927, a real but MODEST
+    8.4% reduction). BANK W (weight-fetch): busy=35112/45724 (76.79%).
+    BANK AR (activation+result): busy=5375/45724 (11.76%). EITHER-bank-
+    busy=36391/45724 (79.59%) -- barely different from the single-bank
+    figure of 81.56%.
+  N=8: total_cycles=44980 (vs single-bank 49909, 9.9% reduction). BANK
+    W: busy=35057/44980 (77.94%). BANK AR: busy=5368/44980 (11.93%).
+    EITHER-bank-busy=35976/44980 (79.98%) -- again barely different
+    from the single-bank 81.62%.
+  Both configs: BANK W's own req/ready counts are near-identical
+    across N=4 and N=8 (2163 vs 2160) -- confirms weight-fetch traffic
+    volume itself does not grow much with N_SLOTS (same total tiles
+    processed either way), yet Bank W alone still saturates at ~77-78%
+    busy EVEN with a fully dedicated physical channel and zero AR
+    cross-traffic.
+
+INTERPRETATION (SURPRISING, disclosed honestly -- this is NOT the
+dramatic "thrashing disappears with 2 banks" result the hypothesis's
+naive framing might have predicted): the memory-bound hypothesis is
+CONFIRMED at the system level (~80% memory-port busy either way) but
+REFINED in a way that changes the recommended next step. Splitting
+traffic by CLASS (W vs AR) barely moves total_cycles (8-10%) because
+the AR path was never the dominant contention source in the first
+place (STEP17/EXP-0045 already showed AR at <=7.2% of all external-
+memory activity, confirmed again here: Bank AR sits at ~12% busy even
+with its own fully dedicated channel and zero contention). The real
+ceiling is BANK W's OWN throughput -- i.e. how fast a SINGLE weight-
+fetch channel (BURST_LEN=8, one sdram_controller.v transaction in
+flight at a time, W_ENTRIES=4 "other half" cache) can deliver 64-bit
+weight words to however many slots are requesting them -- not
+arbitration contention between logically-different traffic classes on
+one shared bus. Giving AR its own physical bank was, in effect, solving
+a problem that was not the binding one.
+decision: do NOT recommend a 2-physical-bank (W/AR split) board
+  revision on this evidence alone -- the ~8-10% cycle-count gain does
+  not obviously justify the doubled physical SDRAM pin count (74 vs 37
+  pins) for Phase 2's LFE5U-85F retarget, given the real bottleneck
+  visibly sits inside the weight-fetch channel itself, not in cross-
+  class contention. This does NOT close the memory-bandwidth question
+  -- it REDIRECTS it: the next diagnostic worth running before Phase 2
+  is characterizing what specifically caps Bank W's own ~77-78%
+  ceiling (single-transaction-in-flight controller design? W_ENTRIES=4
+  cache depth/hit rate under N=8 contention? BURST_LEN=8 granularity
+  vs per-tile fetch size?) and whether splitting WEIGHT traffic itself
+  across two banks (e.g. by slot-group, not by traffic class) would
+  fare differently -- that specific variant was NOT tested here and is
+  a real, disclosed gap, not assumed to also fail.
+next_action: report this refined finding to the user before choosing
+  between (a) a slot-group-split weight-bank experiment as a follow-up
+  to this same Fase-3 investigation, (b) a Bank-W-internal-only
+  optimization pass (cache depth, burst size, pipelining), or (c)
+  proceeding directly to Phase 2 (85F retarget + N=16) with the
+  memory-bandwidth ceiling accepted as a known, disclosed limitation
+  rather than something Phase 3 can cheaply remove. New files (not yet
+  used by the real board top, additive only): hardware/v2/nms/rtl/
+  nms_neural_multiprocessor_sdram_dualbank.v, hardware/v2/nms/sim/
+  tb_nms_dstress_sdram_dualbank.v.
