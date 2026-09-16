@@ -77,11 +77,25 @@ module tb;
         .ba(ba), .a(a), .dq(dq), .dqm(dqm)
     );
 
+    // Pulse-hardening note (found while debugging this exact file,
+    // EXP-0058 follow-up): clearing ctrl_req on the very next
+    // @(posedge clk) after setting it puts the clear in the SAME
+    // active-region pass as the edge sdram_controller_openrow.v's own
+    // synchronous `if (req) req_pending <= 1'b1;` latch needs to sample
+    // it at -- their relative execution order is implementation-
+    // defined, so the one-cycle req pulse can be silently missed
+    // (confirmed via direct state/req tracing: the controller sat in
+    // S_IDLE with busy=0 forever after the first burst, never latching
+    // req_pending for the second). Same class of bug as the
+    // consume_done/pf_start races fixed in tb_layer_prefetch_ctrl.v
+    // and tb_neural_processor_layer_reuse.v -- fixed the same way, by
+    // holding the pulse past the edge with a real time delay (#1)
+    // before clearing.
     task automatic sdram_write_burst(input [ADDR_WIDTH-1:0] word_addr, input [16*BURST_LEN-1:0] data);
         begin
             @(posedge clk); while (ctrl_busy) @(posedge clk);
             ctrl_req = 1'b1; ctrl_wr = 1'b1; ctrl_addr = word_addr; ctrl_wdata = data; ctrl_wmask = {(2*BURST_LEN){1'b0}};
-            @(posedge clk); ctrl_req = 1'b0;
+            @(posedge clk); #1; ctrl_req = 1'b0;
             while (!ctrl_ready) @(posedge clk);
         end
     endtask
@@ -89,7 +103,7 @@ module tb;
         begin
             @(posedge clk); while (ctrl_busy) @(posedge clk);
             ctrl_req = 1'b1; ctrl_wr = 1'b0; ctrl_addr = word_addr; ctrl_wmask = {(2*BURST_LEN){1'b0}};
-            @(posedge clk); ctrl_req = 1'b0;
+            @(posedge clk); #1; ctrl_req = 1'b0;
             while (!ctrl_ready) @(posedge clk);
             data = ctrl_rdata;
         end
@@ -150,7 +164,7 @@ module tb;
                 end
             end
             @(posedge clk); fill_we = 1'b0;
-            fill_done = 1'b1; @(posedge clk); fill_done = 1'b0;
+            fill_done = 1'b1; @(posedge clk); #1; fill_done = 1'b0;
         end
     endtask
 
@@ -175,7 +189,7 @@ module tb;
                     @(posedge clk);
                 end
             end
-            consume_done = 1'b1; @(posedge clk); consume_done = 1'b0;
+            consume_done = 1'b1; @(posedge clk); #1; consume_done = 1'b0;
         end
     endtask
 
@@ -213,7 +227,7 @@ module tb;
 
         $display("=== REUSE case correctness pass: %0d layers x %0d reuses, double-buffered background prefetch (data check only, not timed) ===", L, M);
         prefetch_layer(0);
-        consume_done = 1'b1; @(posedge clk); consume_done = 1'b0; // trigger initial swap
+        consume_done = 1'b1; @(posedge clk); #1; consume_done = 1'b0; // trigger initial swap
         for (li_i = 0; li_i < L; li_i = li_i + 1) begin
             fork
                 consume_layer_check(li_i, errors, errors);
