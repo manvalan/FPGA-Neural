@@ -3761,3 +3761,52 @@ correctness-verified (isolated testbench, bit-exact vs golden model)
 integration BEFORE the next real P&R congestion check -- do not
 synthesize unverified integration RTL just to get another Fmax number,
 per this project's own correctness-first standard.
+
+EXP-0061 -- weight_tile_gather.v: real synthesizable RTL for the
+byte-to-tile assembly step EXP-0058 left testbench-only (2026-09-17)
+
+CONTEXT: EXP-0058's own log entry (tb_neural_processor_layer_reuse.v)
+explicitly flagged that assembling P_IN sequential byte-wide
+layer_weight_buffer.v reads into one weight_data tile bus was done in
+the TESTBENCH driver task, not synthesizable RTL, and named this as
+"the natural next M4 Memory Manager deliverable if this architecture
+is adopted for the real board" -- V3/XC7A100T is that adoption
+(EXP-0059/0060), so this gap needed closing before any real
+integration synthesis.
+
+METHOD: new hardware/v3/rtl/weight_tile_gather.v, a small FSM (IDLE/
+RUN, P_IN+1 cycles/tile) sitting between layer_weight_buffer.v's
+byte-wide read port and a P_IN-wide tile_data bus. Deliberately avoids
+the runtime-indexed-part-select anti-pattern this project has already
+been bitten by twice (neural_director.v's own slot_x_base_r fix,
+ERR-0027-class Fmax collapse from a variable-indexed write into a wide
+packed register) -- uses a fixed compile-time-constant shift-concat
+(`tile_data <= {rd_data, tile_data[DATA_WIDTH*P_IN-1:DATA_WIDTH]}`)
+instead. Verified in isolation (hardware/v3/sim/tb_weight_tile_gather.v)
+against a real, unmodified layer_weight_buffer.v (hardware/v2/rtl/,
+128-byte layer, deterministic non-uniform pattern): sequential tiles,
+back-to-back requests with no idle gap, and non-sequential/repeated
+(real reuse-position-style) tile requests.
+
+RESULT: 37/37 tests, 0 errors, bit-exact byte->tile assembly in every
+access pattern tested, including the real reuse-position pattern
+(same tile requested twice, non-monotonic addresses).
+
+DECISION: weight_tile_gather.v is verified correct in isolation and
+ready to be wired into the full weight-reuse memory path (layer_
+prefetch_ctrl.v -> layer_weight_buffer.v -> weight_tile_gather.v ->
+neural_processor_packed.v) for a real end-to-end integration test,
+mirroring EXP-0058's own tb_neural_processor_layer_reuse.v methodology
+but with real synthesizable gather RTL instead of a testbench-only
+gather step, and the packed 2-job core instead of two separate M1
+cores.
+
+next_action: build that end-to-end integration testbench (real SDRAM
+model -> layer_prefetch_ctrl.v -> layer_weight_buffer.v ->
+weight_tile_gather.v -> neural_processor_packed.v, independent golden
+model), verify bit-exact, THEN (only after that passes) synthesize the
+combined path for a real P&R number -- still no neural_director.v
+job-pairing changes needed for this step (a single hardcoded layer/
+position-pair sequence is enough to prove the memory path + packed
+core compose correctly; Director-level dynamic pairing is a separate,
+later increment).
