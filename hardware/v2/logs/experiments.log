@@ -3713,3 +3713,51 @@ actually targeted (part number confirmed xc7a100tcsg324-1, package/
 board pinout not yet chosen) is still needed before any real bring-up,
 matching this project's own "no board target skipped" discipline from
 V2/STEP19.
+
+EXP-0060 -- N=8 neural_processor_packed.v placement/routing density
+check, real Vivado P&R, isolating the congestion variable from any
+Director/arbiter/memory RTL (2026-09-17)
+
+CONTEXT: EXP-0059's own next_action flagged that the isolated single-
+core Fmax (134.9MHz real post-route) is not the same question as real
+N-core system Fmax -- on V2/ECP5 the full board-level system Fmax
+(64-97MHz) was measurably lower than the isolated dataflow-core Fmax
+(92.63MHz). Before building the (larger, riskier, unverified) real
+Director+arbiter+memory integration, this experiment isolates ONE
+variable first, per this project's own "one variable at a time" rule:
+what does pure DSP/placement DENSITY alone do to Fmax, with zero
+shared interconnect logic between cores?
+
+METHOD: new `hardware/v3/rtl/np_packed_array.v`, N_CORES=8 flat array
+of unmodified neural_processor_packed.v instances, each core's I/O fully
+independent (flattened N*WIDTH buses, sliced per-instance, generate
+block) -- deliberately NO arbiter/Director/shared bus, so any Fmax
+change vs EXP-0059's single-core number is attributable ONLY to
+placement/routing congestion from DSP/LUT/FF density, not to any new
+(unverified) integration logic. Real Vivado 2026.1 out-of-context
+synth + opt_design + place_design + route_design, same 200MHz
+(-period 5.000) constraint and part (xc7a100tcsg324-1) as EXP-0059,
+via `hardware/v3/synth/synth_np_packed_array_n8.tcl`.
+
+RESULT (real, post-route, not estimated): 64/240 DSP48E1 (26.67%,
+exactly 8 cores x 8 DSP, matches EXP-0059's per-core count). WNS
+-2.592ns @ 200MHz -> real critical path 7.592ns -> Fmax ~131.7MHz.
+Vs EXP-0059's single-core 134.9MHz: a real but SMALL degradation,
+-2.4%, from placement/routing density alone at 8 independent cores /
+~27% DSP utilization.
+
+DECISION: the earlier V2/ECP5 gap between isolated-core and full-
+system Fmax is NOT mostly explained by raw compute-array placement
+density (this experiment's -2.4% is far smaller than ECP5's ~30%+
+isolated-vs-system gap) -- the real driver is most likely the shared
+Director/arbiter/memory-path interconnect logic itself, not yet built
+or tested here. This narrows, not answers, the open question from
+EXP-0059 -- still no real system-level number exists.
+
+next_action: build the real Director + memory-feed path for the
+packed 2-job-per-core model (neural_director.v needs real changes to
+dispatch PAIRS of jobs per core, not a 1:1 port) as a properly
+correctness-verified (isolated testbench, bit-exact vs golden model)
+integration BEFORE the next real P&R congestion check -- do not
+synthesize unverified integration RTL just to get another Fmax number,
+per this project's own correctness-first standard.
