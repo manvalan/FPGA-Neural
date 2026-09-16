@@ -3168,3 +3168,180 @@ next_action: report to the user; do not pursue the arbiter/backend
   hardware/v2/nms/rtl/nms_neural_multiprocessor_sdram_pipelined.v,
   hardware/v2/nms/sim/tb_sdram_controller_pipelined.v,
   hardware/v2/nms/sim/tb_nms_dstress_sdram_pipelined.v.
+
+EXP-0053 -- SDRAM clock-domain-crossing bridge: decouple the physical
+SDRAM clock from the 64MHz compute domain (2026-09-16)
+
+DATE: 2026-09-16
+CONTEXT: user asked for the inverse roofline calculation (given N-core
+compute demand, what memory bandwidth would be needed) after EXP-0052
+closed with only 0.3% real gain; derived requirement ~1GB/s/slot at
+64MHz, current single 16-bit SDR SDRAM chip (Alliance AS4C32M16SB-7,
+143MHz max) delivers ~90-130MB/s at the board's real 64MHz clk_sys.
+Found via real ecppll -i 16 -o 64 --clkout1 <target> sweep (OSS CAD
+Suite, now installed at ~/tools_cache/oss-cad-suite, added to PATH via
+~/.bashrc this session) that the board's existing PLL VCO is fixed at
+576MHz by the ALREADY-VERIFIED 64MHz CLKOP config -- the only clean
+integer VCO/N divisors near the chip's ceiling are 576/4=144MHz (0.8%
+OVER the real 143MHz max, rejected) and 576/5=115.2MHz (~19% real
+margin). 115.2MHz chosen as the fast SDRAM clock, derivable from the
+SAME PLL with a second CLKOS output, zero new board components.
+
+METHOD: sdram_cdc_bridge.v -- toggle+last-seen two-flop-synchronizer
+handshake (slow-domain caller interface, fast-domain sdram_
+controller.v instance), safe because this project's own req/busy/
+ready protocol never has more than one transaction outstanding (see
+module header for the full quasi-static-bus argument). Isolated tb
+(tb_sdram_cdc_bridge.v): 64MHz vs 115.2MHz, deliberately non-integer
+ratio, no lucky alignment.
+
+RESULT (Phase A, isolated): 137/137 tests, 0 errors, including
+back-to-back stress. REAL measured total-cycle speedup over 40
+transactions: 1.095x -- NOT the naive 1.8x clock-ratio estimate. Root
+cause: the CDC handshake's own synchronizer round-trip (~4-6
+slow-cycle-equivalent per transaction) is a FIXED tax that eats most
+of the benefit when the underlying transaction is short (~13 cycles at
+BURST_LEN=8). Ad-hoc check at BURST_LEN=32 showed speedup rising to
+1.45x (fixed tax amortized over more useful cycles) but also exposed a
+real, disclosed, pre-existing controller limitation (see EXP-0054).
+decision: correctness verified; real-system integration deferred to
+EXP-0055 (composed with EXP-0054). New files (additive only):
+hardware/v2/nms/rtl/sdram_cdc_bridge.v,
+hardware/v2/nms/sim/tb_sdram_cdc_bridge.v.
+
+EXP-0054 -- open-row (page-hit/keep-row-open) SDRAM controller policy
+(2026-09-16)
+
+DATE: 2026-09-16
+CONTEXT: investigating why BURST_LEN=32 broke (EXP-0053's ad-hoc
+check) led to the real root cause: sdram_controller.v's own mrs_value
+function only encodes JEDEC burst-length 1/2/4/8 -- any other value
+silently falls through to burst-length code 3'b111 ("full page"),
+a real, disclosed, unimplemented-elsewhere scope limit, not a bug to
+fix. This redirected the effort toward the controller's OWN header,
+which already named the real next lever: "ALWAYS uses auto-precharge
+... NOT the fastest possible design (no page-hit/keep-row-open
+optimization)". weight_prefetch_engine_wide.v (confirmed via grep,
+NOT dead/exploratory code as its own stale header claims -- real
+production traffic, instantiated by nms_dataflow_core_sdram.v,
+PREFETCH_DISTANCE=8) issues strictly sequential per-job tile addresses
+that mostly stay within one SDRAM row (1024 cols/row = 256 tile-blocks
+at BURST_LEN=8) -- closing/reopening that row on every single tile
+(today's fixed policy) pays tRP+tRCD twice per transaction for no
+reason when the next transaction hits the same row anyway.
+
+METHOD: sdram_controller_openrow.v, forked from sdram_controller.v.
+Never auto-precharges; tracks the single currently-open bank+row
+(same one-transaction-in-flight scope as the original); on the next
+request: ROW HIT (same bank+row) skips ACTIVATE entirely (saves
+tRCD); ROW MISS with a row open issues an explicit PRECHARGE first,
+same total cost as today's auto-precharge, just paid on-demand. Two
+real correctness hazards this policy introduces vs the original
+(both fixed, not assumed safe):
+  (1) JEDEC AUTO REFRESH requires all banks precharged first -- the
+      original design's own comment ("no row is ever left open...")
+      no longer holds; fixed via a new S_PRE_THEN_REF_WAIT state.
+  (2) tWR (write recovery, 2 CLK, real datasheet value) was folded
+      into the original's always-paid post-write precharge wait --
+      now paid alone via a new S_WRITE_RECOVERY_WAIT state.
+DISCLOSED, NOT independently verified: read-to-read/read-to-write
+same-row turnaround has no extra wait beyond the existing 1-cycle
+S_IDLE minimum (standard JEDEC page-mode reasoning) -- sdram_model.v
+does NOT itself assert tCCD/tRTW/tWTR (confirmed by inspection), so
+this relies on DATA-correctness checks (tb_sdram_controller_openrow.v
+TEST 4) rather than an independent timing oracle.
+
+RESULT (Phase A, isolated, vs sdram_controller.v baseline, same
+sdram_model.v-checked correctness harness): 154/154 tests, 0 errors,
+0 protocol VIOLATIONs -- including refresh-while-row-open (the one
+real new hazard) across 80 write/read pairs spanning real tREFI.
+REAL measured speedup, 32 sequential same-row tile reads (the actual
+weight_prefetch_engine_wide.v access pattern): 1.141x.
+decision: correctness verified; real-system integration in EXP-0055.
+New files (additive only):
+hardware/v2/nms/rtl/sdram_controller_openrow.v,
+hardware/v2/nms/sim/tb_sdram_controller_openrow.v.
+
+EXP-0055 -- Phase B integration: EXP-0053 (CDC) + EXP-0054 (open-row),
+isolated combination AND real D-Stress system, N=4/N=8 -- combined
+result is WORSE than baseline; open-row ALONE is a real, disclosed win
+(2026-09-16)
+
+DATE: 2026-09-16
+CONTEXT: per user direction ("procediamo"/"implementiamo queste"),
+integrate both mechanisms and measure the real combined effect on the
+actual D-Stress benchmark, following this project's own established
+Phase A (isolated) -> Phase B (integration) discipline.
+
+METHOD: sdram_cdc_bridge_openrow.v (EXP-0053's CDC composed with
+EXP-0054's page-hit controller as the fast-domain DUT -- CDC handshake
+itself unchanged, treats the controller as a black box). Isolated tb
+(tb_sdram_cdc_bridge_openrow.v): 149/149 tests, 0 errors, 0
+VIOLATIONs. REAL measured combined speedup, same 32-tile same-row
+sequential pattern: 1.158x -- LOWER than the naive product of the two
+isolated numbers (1.095 x 1.141 = 1.25), a real, disclosed, non-linear
+interaction (the CDC's fixed tax becomes a proportionally BIGGER
+fraction of an already-shorter open-row transaction), not assumed.
+
+Phase B (full system, forked exactly as EXP-0052's own minimal-diff
+pattern: sdram_unified_backend_combined.v + nms_neural_multiprocessor_
+sdram_combined.v + tb_nms_dstress_sdram_combined.v, real D-Stress
+workload, 256/256 bit-exact + data_ready PASS in every configuration
+below):
+
+  baseline (today, real):            N=4: 49927 cyc   N=8: 49909 cyc
+  CDC alone (no open-row):           N=4: 54096 cyc   (+8.35%, WORSE)
+  open-row alone (no CDC):           N=4: 47445 cyc   N=8: 47468 cyc
+                                      (-4.97% / -4.89%, REAL GAIN)
+  combined (CDC + open-row):         N=4: 51931 cyc   N=8: 51943 cyc
+                                      (+4.02% / +4.10%, still WORSE)
+
+ROOT CAUSE of the combined regression: the CDC bridge's synchronizer
+round-trip is a FIXED tax paid on EVERY transaction, hit or miss,
+regardless of benefit -- unlike EXP-0052's pipelining mechanism (which
+simply reverts to baseline-equivalent cost when its condition doesn't
+trigger), this tax is not "free when unused". The real D-Stress
+traffic is NOT purely sequential same-row (sdram_unified_backend.v's
+own 2-way W/AR priority arbitration interleaves weight-fetch and
+activation/result traffic, which live in different address regions --
+see its own header, "W granted priority when both pending, AR never
+starved" -- meaning the physical channel alternates row context far
+more often than the open-row mechanism's own isolated same-row-sweep
+test exercised). Open-row's real per-transaction saving (real, ~5%,
+confirmed at both N=4 and N=8) is not enough to offset the CDC's own
+per-transaction cost once row hits become less frequent under real
+interleaved traffic.
+
+DECISION: do NOT adopt the CDC clock-domain-crossing approach (EXP-
+0053) -- measured net negative in the real system despite passing
+isolated correctness and even showing a real isolated speedup on its
+own synthetic same-row test. ADOPT-CANDIDATE: sdram_controller_
+openrow.v (EXP-0054) alone, without any clock change -- real,
+consistent ~5% D-Stress cycle-count improvement at both N=4 and N=8,
+zero new clock domains, zero CDC correctness surface, single-variable
+change. Not yet promoted to production (that would mean swapping
+sdram_controller.v itself in the real board top, fpga_neural_v2_top.v
+-- an explicit go-ahead item, not assumed here). This ~5% is
+consistent with, and stacks multiplicatively with, EXP-0051's
+dual-bank ~9% (different mechanism, same physical-floor-efficiency
+class) if both are ever combined -- not measured together in this
+session, an open item for a future experiment, not claimed here.
+
+next_action: report combined finding to the user (CDC bridge measured
+net-negative despite being individually correct and individually
+faster in isolation -- do not pursue further without new evidence);
+open-row is the one real, disclosed win from this whole EXP-0053/54/55
+line and is the candidate worth promoting toward production if the
+user wants that next. New files (additive only, none touch the real
+board top or existing production RTL):
+hardware/v2/nms/rtl/sdram_cdc_bridge_openrow.v,
+hardware/v2/nms/rtl/sdram_unified_backend_combined.v,
+hardware/v2/nms/rtl/nms_neural_multiprocessor_sdram_combined.v,
+hardware/v2/nms/rtl/sdram_unified_backend_openrow.v,
+hardware/v2/nms/rtl/nms_neural_multiprocessor_sdram_openrow.v,
+hardware/v2/nms/rtl/sdram_unified_backend_cdc.v,
+hardware/v2/nms/rtl/nms_neural_multiprocessor_sdram_cdc.v,
+hardware/v2/nms/sim/tb_sdram_cdc_bridge_openrow.v,
+hardware/v2/nms/sim/tb_nms_dstress_sdram_combined.v,
+hardware/v2/nms/sim/tb_nms_dstress_sdram_openrow.v,
+hardware/v2/nms/sim/tb_nms_dstress_sdram_cdc.v.
