@@ -2462,3 +2462,65 @@ N_SLOTS=8 explicitly deferred by user request, not attempted further
 this pass. Flash #1 removed; its RTL (flash_mem_adapter.v,
 tb_flash_integration_smoke.v, the OP_FLASH_CMD opcode) remains in git
 history (revertible commit `59901a4`) if ever needed again.
+
+DEC-0009 -- project v22 paused: hard DSP resource ceiling makes the
+required speedup target physically unreachable on ECP5 (2026-09-16)
+
+CONTEXT: EXP-0058's real, verified weight-reuse integration gave
+~9.5-14x speedup vs ESP32-S3 (measured baseline) and ~2.7-11x vs
+Cortex-A7 (NEON, estimated) for a MobileFaceNet-class face-recognition
+workload, using N=16 parallel neural_processor.v cores at 64-97MHz
+(real P&R). User's actual bar for the project to be worth its ~100
+EUR hardware cost: 200-1000x over software -- later reduced to a
+"let's at least check 20x over the current state" exploratory ask.
+
+DECISIVE CHECK (real synthesis + real nextpnr-ecp5 resource report,
+not estimated): one neural_processor.v core (P_IN=8) uses 8
+MULT18X18D hardware multipliers (confirmed via yosys synth_ecp5 DSP
+inference -- already correctly using hard DSP blocks, not wasting
+LUTs). ECP5 chip DSP budget (real numbers from nextpnr-ecp5 --45k/--85k
+utilisation reports):
+  LFE5U-45F: 72 MULT18X18D total  -> hard ceiling of  9 cores
+  LFE5U-85F: 156 MULT18X18D total -> hard ceiling of 19 cores
+N=16 (already the practical target this session worked to close
+timing for) was already within ~3 cores of the 85F's absolute
+physical ceiling -- not a coincidence of difficult timing closure, a
+near-total exhaustion of the chip's actual multiplier hardware.
+
+20x over the current baseline requires ~211-320 parallel cores
+(depending on clock). Even the theoretical absolute maximum -- EVERY
+MULT18X18D on the 85F, with 2x SIMD-style INT8 packing per DSP (a real
+technique, not yet implemented) and an optimistic 200MHz DSP clock --
+tops out around 6-8x over today's baseline. This is a hard physical
+ceiling of the ECP5 family as a whole, not a property of this
+project's specific architecture: no RTL redesign (systolic array,
+wider datapath, anything) changes it, because the limiting resource is
+the FIXED COUNT of hardware multipliers silicon, which no amount of
+LUT/routing cleverness can create more of.
+
+DECISION: user explicitly closed this line of investigation --
+"o il miglioramento è ordine 200-1000x rispetto a software o non ha
+senso. E non ha senso nemmeno spendere cifre assurde" (needs to be
+200-1000x over software to be worth it, and spending drastically more
+for a bigger chip isn't worth it either). Project v22 is PAUSED, not
+abandoned -- the user explicitly called today's work "un buon
+esercizio" (a good exercise), not wasted effort. All work up to this
+point remains real, verified, and committed (EXP-0053 through
+EXP-0058, DEC-0001 through DEC-0009).
+
+If ever resumed, the physical ceiling above means the SAME question
+must be answered differently next time -- not "how do we make this
+architecture bigger on ECP5" (provably capped at 6-8x, hard physical
+limit) but either (a) accept a smaller speedup target for a genuinely
+resource-constrained embedded deployment where even ESP32-class
+software isn't a viable alternative, or (b) a fundamentally larger/
+different FPGA family with an order of magnitude more DSP blocks --
+which the user has already ruled out on cost grounds ("non ha senso
+spendere cifre assurde").
+
+next_action: none -- project paused. No further RTL/testbench work
+planned. hardware/v2/sim/tb_layer_reuse_vs_zero_reuse.v still has a
+known, unfixed, real data-correctness bug in prefetch_layer's fill_addr
+sequencing (see EXP-0058 follow-up commit 3416b8d) -- EXP-0057's own
+"7.16x" headline number remains UNVERIFIED as of this pause, flagged
+honestly rather than left as an unchecked claim.
