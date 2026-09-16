@@ -178,6 +178,36 @@ module nms_activation_fill_ctrl_v3 #(
                 if (rst) max_n_tiles_reg <= 16'h0;
                 else     max_n_tiles_reg <= max_final;
             end
+        end else if (N_SLOTS == 16) begin : GEN_MAXTREE_N16
+            // EXP-0056: same balanced-tree pattern as N_SLOTS==8 above,
+            // one more level. Promoted from nms_activation_fill_ctrl_v3_n16.v
+            // (experimental fork) after that fork's own fix was
+            // verified (isolated: 10017/10017; real nextpnr-ecp5 P&R
+            // at N_SLOTS=16, LFE5U-85F: 71.01MHz, PASS at 64MHz, vs
+            // 23.52-24.64MHz before -- see experiments.log EXP-0056)
+            // -- this exact case used to fall through to
+            // GEN_MAXTREE_FALLBACK's own flat sequential scan, the
+            // real measured critical path blocking N_SLOTS=16 timing
+            // closure.
+            wire [15:0] m0 = (n_tiles_masked[0]  > n_tiles_masked[1])  ? n_tiles_masked[0]  : n_tiles_masked[1];
+            wire [15:0] m1 = (n_tiles_masked[2]  > n_tiles_masked[3])  ? n_tiles_masked[2]  : n_tiles_masked[3];
+            wire [15:0] m2 = (n_tiles_masked[4]  > n_tiles_masked[5])  ? n_tiles_masked[4]  : n_tiles_masked[5];
+            wire [15:0] m3 = (n_tiles_masked[6]  > n_tiles_masked[7])  ? n_tiles_masked[6]  : n_tiles_masked[7];
+            wire [15:0] m4 = (n_tiles_masked[8]  > n_tiles_masked[9])  ? n_tiles_masked[8]  : n_tiles_masked[9];
+            wire [15:0] m5 = (n_tiles_masked[10] > n_tiles_masked[11]) ? n_tiles_masked[10] : n_tiles_masked[11];
+            wire [15:0] m6 = (n_tiles_masked[12] > n_tiles_masked[13]) ? n_tiles_masked[12] : n_tiles_masked[13];
+            wire [15:0] m7 = (n_tiles_masked[14] > n_tiles_masked[15]) ? n_tiles_masked[14] : n_tiles_masked[15];
+            wire [15:0] m01   = (m0  > m1)  ? m0  : m1;
+            wire [15:0] m23   = (m2  > m3)  ? m2  : m3;
+            wire [15:0] m45   = (m4  > m5)  ? m4  : m5;
+            wire [15:0] m67   = (m6  > m7)  ? m6  : m7;
+            wire [15:0] m0123 = (m01 > m23) ? m01 : m23;
+            wire [15:0] m4567 = (m45 > m67) ? m45 : m67;
+            wire [15:0] max_final = (m0123 > m4567) ? m0123 : m4567;
+            always @(posedge clk) begin
+                if (rst) max_n_tiles_reg <= 16'h0;
+                else     max_n_tiles_reg <= max_final;
+            end
         end else begin : GEN_MAXTREE_FALLBACK
             reg [15:0] max_n_tiles_comb_fallback;
             integer j;

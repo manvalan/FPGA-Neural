@@ -102,21 +102,36 @@ module dependency_manager #(
     // therefore cover the full id range a caller intends to use.
     assign reg_ready = (node_state[reg_node_id] == ST_EMPTY);
 
-    // ---- priority-encoded first READY node (first-found scan, same
-    // idiom as neural_director's own free-slot scan) ----
-    reg [NODE_IDW-1:0] first_ready_idx;
-    reg                any_ready;
-    integer ri;
-    always @(*) begin
-        first_ready_idx = {NODE_IDW{1'b0}};
-        any_ready       = 1'b0;
-        for (ri = N_NODES-1; ri >= 0; ri = ri - 1) begin
-            if (node_state[ri] == ST_READY) begin
-                first_ready_idx = ri[NODE_IDW-1:0];
-                any_ready       = 1'b1;
-            end
+    // ---- EXP-0056: priority-encoded first READY node, via a
+    // recursive binary-tree lowest-set-bit encoder (O(log2(N_NODES))
+    // depth) instead of the original serial for-loop scan (O(N_NODES)
+    // depth, the same architectural anti-pattern already fixed twice
+    // elsewhere in this project -- ERR-0027/ERR-0028/ERR-0029).
+    // Promoted from dependency_manager_fast.v (experimental fork)
+    // after that fork's own fix was verified bit-exact equivalent to
+    // this original scan (isolated: 65536/65536 exhaustive at
+    // WIDTH=16, 76562/76562 at WIDTH=1024; 20000/20000 cycles matched
+    // under random stimulus against this exact module, plus the
+    // original hand-crafted DAG testbench, both 100% -- see
+    // priority_encoder_lsb.v's own header and experiments.log
+    // EXP-0056). Correctness-neutral by construction (shorter
+    // combinational depth is never worse); NOTE this was NOT the real
+    // N_SLOTS=16 timing bottleneck (that was nms_activation_fill_
+    // ctrl_v3.v's own missing N==16 case, see that file) -- kept here
+    // as a real, disclosed, strictly-better improvement regardless. ----
+    wire [N_NODES-1:0] ready_oh;
+    generate
+        genvar gi;
+        for (gi = 0; gi < N_NODES; gi = gi + 1) begin : GEN_READY_OH
+            assign ready_oh[gi] = (node_state[gi] == ST_READY);
         end
-    end
+    endgenerate
+
+    wire [NODE_IDW-1:0] first_ready_idx;
+    wire                 any_ready;
+    priority_encoder_lsb #(.WIDTH(N_NODES)) u_ready_penc (
+        .in(ready_oh), .idx(first_ready_idx), .valid(any_ready)
+    );
 
     // ---- FPGA_DATA_READY support (see any_pending port comment above).
     // Originally a combinational OR-reduce over node_state[0:N_NODES-1]
