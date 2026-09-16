@@ -4038,3 +4038,76 @@ only) and a real multi-core system.
 next_action: wire N=2 packed_slot.v instances behind a shared SDRAM
 arbiter, driven by neural_director_packed.v, for the first genuine
 multi-core system correctness test.
+
+EXP-0066 -- first genuine N=2 multi-core system, real correctness
+verification, two real integration bugs found and fixed (2026-09-17)
+
+CONTEXT: EXP-0065's own next_action -- the final piece before a real
+multi-core V3 system: N real packed_slot.v instances sharing ONE real
+SDRAM controller, dispatched by the already-isolated-verified neural_
+director_packed.v (EXP-0064). Note (user correction, same session):
+the SDRAM controller used throughout this whole memory-path (EXP-0057
+onward, reused unmodified) is a DECLARED PLACEHOLDER -- XC7A100T was
+chosen specifically for real DDR3 support, this is a from-scratch
+custom board (bare chip, not a dev board), and a real DDR3/MIG
+interface is separate, not-yet-started work. Everything in this and
+prior V3 memory-path experiments proves the COMPUTE/SCHEDULING
+architecture, independent of the final physical memory technology.
+
+METHOD: new hardware/v3/rtl/sdram_slot_arbiter2.v (2-way arbiter,
+locks for a slot's whole multi-burst fetch via a new mem_active/
+mem_grant handshake, not per-transaction) + hardware/v3/sim/
+tb_np_director_n2_system.v (real neural_director_packed.v, 2 real
+packed_slot.v instances, real sdram_controller.v+sdram_model.v shared
+through the arbiter, jobs submitted ONE AT A TIME through the
+Director's own producer interface -- unlike every prior V3 test, the
+Director's OWN scheduling decisions determine which physical slot runs
+which pair here).
+
+BUG 1 (real, found via hierarchical dir_state/q_count/slot-state/pf-
+state tracing): the arbiter's first design registered its grant
+decision (valid only the cycle AFTER a slot's mem_active first went
+high). layer_prefetch_ctrl.v issues ctrl_req as a genuine ONE-SHOT
+pulse with NO retry -- every prior use of that module (EXP-0057
+onward) wired it DIRECTLY to a controller with no arbitration delay
+possible, so it was never designed to tolerate a late grant. The
+result: a slot's very first ctrl_req could fire before the arbiter
+had actually granted it the bus, that pulse was silently lost forever,
+and the slot hung permanently in layer_prefetch_ctrl's own S_WAIT
+state waiting for a ctrl_ready that would never come. FIX (structural,
+not a timing patch): packed_slot.v gained a new S_MEMWAIT state
+between job dispatch and S_PREFETCH -- it now asserts mem_active
+(a "want the bus" signal) and WAITS for a new combinational mem_grant
+input from the arbiter before ever pulsing layer_prefetch_ctrl's
+start. The arbiter's own grant decision was also made combinational
+(available the SAME cycle mem_active first asserts, not one cycle
+later), with a registered "locked" bit only to keep the choice sticky
+once made, never to delay the first grant.
+
+BUG 2 (real, in the testbench, not the DUT): node_id was computed as
+`li_i[15:8]*M + pp_i` (a stray bit-slice copied from EXP-0062's own
+formula) -- for small li values (0,1,2) bits [15:8] are always 0, so
+EVERY layer produced the SAME node_ids (0..3), and the scoreboard's
+"first matching expect_node" lookup silently checked completed jobs
+against layer 0's own expected values regardless of which layer
+actually ran. Fixed: `li_i*M + pp_i` (real multiply, genuinely unique
+per position).
+
+RESULT (after both fixes): 12/12 PASS, 0 errors, all 12 positions (3
+layers x 4 positions) across both physical slots, bit-exact against
+an independent golden model. Real observed interleaving: slot 0 ran
+positions {0,1,4,5,8,9}, slot 1 ran {2,3,6,7,10,11} -- genuine
+concurrent multi-core execution, not sequential.
+
+DECISION: this is the first real, correctness-verified V3 multi-core
+system -- Director, N real compute+memory slots, shared arbitrated
+SDRAM path, all composing correctly. The architecture (DSP packing,
+weight-reuse, Director pairing, per-slot sequencing, shared-arbiter
+memory) is now proven end-to-end at N=2.
+
+next_action: (1) a real P&R Fmax number for this N=2 system (still not
+measured -- EXP-0059/0060/0063's own isolated-core numbers are not
+system-representative); (2) scale to the real target N (up to ~30
+packed cores per EXP-0059's own DSP budget projection) once N=2's real
+timing is known; (3) the real DDR3/MIG memory interface, replacing the
+SDR SDRAM placeholder used throughout -- separate, larger, not started.

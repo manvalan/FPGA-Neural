@@ -153,6 +153,7 @@ module tb;
         .result_addr_a_out(result_addr_a_out), .result_addr_b_out(result_addr_b_out),
         .act_tile_addr_a(act_addr_a), .act_tile_addr_b(act_addr_b),
         .act_tile_data_a(act_data_a), .act_tile_data_b(act_data_b),
+        .mem_grant(1'b1), // no arbiter in this single-slot test
         .ctrl_req(slot_ctrl_req), .ctrl_wr(slot_ctrl_wr), .ctrl_addr(slot_ctrl_addr),
         .ctrl_wdata(slot_ctrl_wdata), .ctrl_wmask(slot_ctrl_wmask),
         .ctrl_rdata(ctrl_rdata), .ctrl_ready(ctrl_ready), .ctrl_busy(ctrl_busy)

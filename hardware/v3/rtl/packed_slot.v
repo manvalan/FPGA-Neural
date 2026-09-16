@@ -71,12 +71,29 @@ module packed_slot #(
     output reg  [ADDR_WIDTH-1:0]        result_addr_a_out,
     output reg  [ADDR_WIDTH-1:0]        result_addr_b_out,
 
+    // high exactly while this slot needs exclusive access to the
+    // shared SDRAM controller (its own weight-fetch phase) -- a
+    // shared-controller arbiter uses this to lock a grant for the
+    // whole multi-burst fetch, not just one transaction.
+    output wire                    mem_active,
+
     // ---- activation stand-in port (see header -- real fetch engine
     // deferred) ----
     output reg  [ADDR_WIDTH-1:0]            act_tile_addr_a,
     output reg  [ADDR_WIDTH-1:0]            act_tile_addr_b,
     input  wire signed [DATA_WIDTH*P_IN-1:0] act_tile_data_a,
     input  wire signed [DATA_WIDTH*P_IN-1:0] act_tile_data_b,
+
+    // grant from a shared-controller arbiter (see mem_active's own
+    // comment): must be asserted before this slot may pulse its own
+    // layer_prefetch_ctrl.v start, since that module's ctrl_req is a
+    // one-shot pulse with no retry -- issuing it before the arbiter
+    // has actually granted this slot the bus loses it permanently
+    // (found empirically integrating N=2 slots behind sdram_slot_
+    // arbiter2.v: a slot could hang forever in S_WAIT with ctrl_req
+    // already dropped and ctrl_ready never coming). Tie high for a
+    // single-slot (N=1, no arbiter) system.
+    input  wire                    mem_grant,
 
     // ---- SDRAM controller port (connects directly, or through a
     // shared arbiter for N>1 slots) ----
@@ -90,16 +107,18 @@ module packed_slot #(
     input  wire                    ctrl_busy
 );
     localparam S_IDLE      = 4'd0,
-               S_PREFETCH  = 4'd1,
-               S_SWAP      = 4'd2,
-               S_JOBSTART  = 4'd3,
-               S_TILEREQ   = 4'd4,
-               S_TILEWAIT  = 4'd5,
-               S_OPERAND   = 4'd6,
-               S_RESULT    = 4'd7,
-               S_DONE      = 4'd8;
+               S_MEMWAIT   = 4'd1,
+               S_PREFETCH  = 4'd2,
+               S_SWAP      = 4'd3,
+               S_JOBSTART  = 4'd4,
+               S_TILEREQ   = 4'd5,
+               S_TILEWAIT  = 4'd6,
+               S_OPERAND   = 4'd7,
+               S_RESULT    = 4'd8,
+               S_DONE      = 4'd9;
 
     reg [3:0] state;
+    assign mem_active = (state == S_MEMWAIT) || (state == S_PREFETCH);
     reg [ADDR_WIDTH-1:0] w_base_lat, x_base_a_lat, x_base_b_lat;
     reg [15:0]            n_tiles_lat;
     reg [ADDR_WIDTH-1:0]  result_addr_a_lat, result_addr_b_lat;
@@ -221,8 +240,14 @@ module packed_slot #(
                         node_id_b_lat      <= node_id_b;
                         job_bias           <= {DATA_WIDTH{1'b0}};
                         job_activation     <= ACT_RELU;
-                        pf_start           <= 1'b1;
-                        state              <= S_PREFETCH;
+                        state              <= S_MEMWAIT;
+                    end
+                end
+
+                S_MEMWAIT: begin
+                    if (mem_grant) begin
+                        pf_start <= 1'b1;
+                        state    <= S_PREFETCH;
                     end
                 end
 
