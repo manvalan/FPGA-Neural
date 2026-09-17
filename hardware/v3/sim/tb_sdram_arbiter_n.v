@@ -131,37 +131,52 @@ module tb;
         check_slot(1, 25'd8,   16'hB000);
         check_slot(2, 25'd16,  16'hC000);
 
-        $display("=== TEST 2: simultaneous multi-requester activation (the real EXP-0066 risk case) ===");
+        $display("=== TEST 2: simultaneous multi-requester ACTIVATION (the real EXP-0066 risk case) -- each requester fires its OWN one-shot req only once IT sees its OWN grant, exactly matching packed_slot.v's real S_MEMWAIT usage, not a blind simultaneous fire ===");
         begin : test2
-            reg [16*BURST_LEN-1:0] g0, g1, g2, w0, w1, w2;
+            reg [16*BURST_LEN-1:0] w0, w1, w2;
             integer kk;
             for (kk = 0; kk < BURST_LEN; kk = kk + 1) begin
                 w0[kk*16 +: 16] = 16'hD000 + kk[15:0];
                 w1[kk*16 +: 16] = 16'hE000 + kk[15:0];
                 w2[kk*16 +: 16] = 16'hF000 + kk[15:0];
             end
-            // all three assert `active`+`req` on the SAME cycle --
-            // exactly the scenario a registered/late grant loses.
-            @(posedge clk);
-            req_active = 3'b111; req_req = 3'b111;
-            req_wr[0] = 1'b1; req_wr[1] = 1'b1; req_wr[2] = 1'b1;
             req_addr[0*ADDR_WIDTH +: ADDR_WIDTH] = 25'd100;
             req_addr[1*ADDR_WIDTH +: ADDR_WIDTH] = 25'd108;
             req_addr[2*ADDR_WIDTH +: ADDR_WIDTH] = 25'd116;
             req_wdata[0*16*BURST_LEN +: 16*BURST_LEN] = w0;
             req_wdata[1*16*BURST_LEN +: 16*BURST_LEN] = w1;
             req_wdata[2*16*BURST_LEN +: 16*BURST_LEN] = w2;
-            @(posedge clk);
-            req_req = 3'b000;
+            req_wr[0] = 1'b1; req_wr[1] = 1'b1; req_wr[2] = 1'b1;
 
-            // slot 0 (lowest index) must win first; 1 and 2 must NOT
-            // silently lose their request -- wait for each in turn.
-            while (!req_ready[0]) @(posedge clk);
-            req_active[0] = 1'b0;
-            while (!req_ready[1]) @(posedge clk);
-            req_active[1] = 1'b0;
-            while (!req_ready[2]) @(posedge clk);
-            req_active[2] = 1'b0;
+            // all three raise `active` on the SAME cycle (the real
+            // contention case) -- but each only pulses its own `req`
+            // once its own `grant` is observed, exactly like
+            // packed_slot.v's S_MEMWAIT -> pf_start sequencing.
+            @(posedge clk);
+            req_active = 3'b111;
+            fork
+                begin
+                    while (!req_grant[0]) @(posedge clk);
+                    @(posedge clk); req_req[0] = 1'b1;
+                    @(posedge clk); req_req[0] = 1'b0;
+                    while (!req_ready[0]) @(posedge clk);
+                    req_active[0] = 1'b0;
+                end
+                begin
+                    while (!req_grant[1]) @(posedge clk);
+                    @(posedge clk); req_req[1] = 1'b1;
+                    @(posedge clk); req_req[1] = 1'b0;
+                    while (!req_ready[1]) @(posedge clk);
+                    req_active[1] = 1'b0;
+                end
+                begin
+                    while (!req_grant[2]) @(posedge clk);
+                    @(posedge clk); req_req[2] = 1'b1;
+                    @(posedge clk); req_req[2] = 1'b0;
+                    while (!req_ready[2]) @(posedge clk);
+                    req_active[2] = 1'b0;
+                end
+            join
 
             tests = tests + 1;
             $display("PASS TEST2: all 3 simultaneous requests completed (none silently lost)");

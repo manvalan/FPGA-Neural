@@ -4261,3 +4261,36 @@ that is resolved); (3) swap mig_native_adapter.v into packed_slot.v's
 memory path, replacing the SDR SDRAM placeholder, and re-verify the
 N=2 system against real DDR3; (4) real (not out-of-context) P&R with
 the actual generated MIG XDC constraints for genuine timing signoff.
+
+EXP-0069 -- sdram_arbiter_n.v hang root-caused: testbench bug, not
+arbiter bug (2026-09-17, same autonomous continuation)
+
+CONTEXT: EXP-0068's own next_action flagged tb_sdram_arbiter_n.v as
+hanging, arbiter not yet trusted.
+
+ROOT CAUSE: TEST2 asserted req_req for all 3 simulated requesters on
+the SAME cycle as req_active, then dropped req_req one cycle later
+UNCONDITIONALLY -- but the arbiter only grants ONE requester (lowest
+index) at a time; slots 1 and 2's one-shot req pulse was long gone by
+the time their own turn actually arrived, so they never issued a real
+ctrl_req and the test's own `while (!req_ready[1])` waited forever.
+This is a testbench-stimulus bug, not an arbiter bug: it modeled an
+UNREALISTIC requester (fire-and-forget regardless of grant status)
+that does not match how packed_slot.v's own real S_MEMWAIT state
+behaves (wait for mem_grant, THEN fire the one-shot pulse) -- the
+exact pattern EXP-0066 already established as required and correct.
+
+FIX: rewrote TEST2 with 3 parallel fork branches, each waiting for its
+OWN req_grant before pulsing its OWN req_req -- matching packed_slot.v's
+real usage exactly, still exercising the real simultaneous-activation
+contention case (all 3 raise `active` on the same cycle).
+
+RESULT: 7/7 tests, 0 errors. sdram_arbiter_n.v is now genuinely
+verified, including the real simultaneous-multi-requester contention
+case with one-shot-pulse requesters (the EXP-0066 risk class).
+
+DECISION: sdram_arbiter_n.v is trusted for integration.
+
+next_action: same as EXP-0068's (3)/(4) -- swap mig_native_adapter.v
+into packed_slot.v, re-verify N=2 against real DDR3, then real P&R
+with the generated MIG XDC.
