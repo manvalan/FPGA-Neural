@@ -4353,3 +4353,54 @@ not-yet-consumed (no dependency manager in V3 yet); (3) real (not
 out-of-context) Vivado P&R using the actual MIG-generated XDC pin/
 timing constraints, for genuine board-accurate Fmax signoff -- this
 is the user's own explicit ask and still outstanding.
+
+EXP-0071 -- host_mem_bridge.v: word<->burst translator for host raw
+DDR3 access, isolated verification (2026-09-17, same autonomous
+continuation)
+
+CONTEXT: EXP-0068's spi_host_bridge.v audit found V3 has NO host raw-
+memory-access path into DDR3 at all (the WRITE_MEM/READ_MEM opcode
+equivalent). spi_host_bridge.v's own mem_req/wr/addr/wdata/lb_n/ub_n
+-> rdata/ready port is single-16-bit-WORD granularity (same shape as
+V2's real AR-port convention), but V3's shared memory path only
+understands BURST_LEN=8 (128-bit) chunks. Wrote hardware/v3/rtl/
+host_mem_bridge.v to translate between them, using the exact same
+DQM-style partial-burst-mask technique already proven throughout this
+project's memory stack (not a new invented mechanism): a single-word
+write replicates the word across the whole burst and masks out every
+byte except the target word's own 2 mask bits (set from the host's
+own lb_n/ub_n); a single-word read fetches the whole burst and
+extracts the target word by its offset. Sits as one requester on
+sdram_arbiter_n.v (req_active/req_grant/req_req/... naming, matching
+that module's own per-slot convention exactly), observing req_grant
+once in S_MEMWAIT before firing its own one-shot req_req -- same
+EXP-0066 discipline as every other requester in this project.
+
+METHOD: hardware/v3/sim/tb_host_mem_bridge.v, isolated test against
+the cheap SDR SDRAM placeholder (sdram_controller.v + sdram_model.v,
+same precedent as tb_sdram_arbiter_n.v -- verify new glue logic on the
+fast backend before real-DDR3 integration). TEST1: write+read all 8
+word offsets within one burst, confirm each is bit-exact. TEST2:
+rewrite only word 3, confirm words 0,1,2,4..7 are untouched (the real
+risk this module exists to get right -- masking correctness, not just
+happy-path data movement). Compiled/run with iverilog+vvp (plain
+Verilog, no Xilinx primitives needed at this stage).
+
+RESULT: 16/16 tests, 0 errors. Byte-mask arithmetic (the
+ALL_ONES & ~(2'b11<<shift) | ({ub_n,lb_n}<<shift) expression) verified
+correct at every one of the 8 possible burst offsets, including the
+cross-word-corruption check.
+
+DECISION: host_mem_bridge.v is trusted standalone. Not yet integrated
+as a 3rd arbiter requester alongside the 2 packed_slot instances, and
+not yet driven by spi_host_bridge.v's real opcode decode -- both still
+open.
+
+next_action: (1) wire host_mem_bridge.v as req[2] on a NUM_REQ=3
+sdram_arbiter_n.v alongside 2 packed_slot instances and confirm no
+regression/contention issue vs EXP-0070's 2-requester result; (2) the
+SPI opcode re-audit itself (spi_host_bridge.v's WRITE_JOB dependency
+fields vs neural_director_packed.v's simpler job_in_* port) -- this is
+the user's own explicit, still-outstanding request, and is the next
+priority over further memory-path polish; (3) real Vivado P&R with
+the actual MIG-generated XDC constraints, still outstanding.
