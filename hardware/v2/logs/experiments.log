@@ -4162,3 +4162,102 @@ attempted, watch specifically for placement congestion effects (the
 EXP-0060 8-core-array class of degradation) since that is the one
 variable not yet tested at higher N with the REAL Director+arbiter
 system, only with a zero-interconnect array.
+
+EXP-0068 -- MILESTONE: first real DDR3 memory path, mig_native_
+adapter.v verified against MIG's own real DDR3 behavioral model
+(2026-09-17, autonomous continuation while user offline)
+
+CONTEXT: user corrected this session's own long-standing SDR SDRAM
+placeholder assumption -- XC7A100T was chosen specifically for DDR3,
+this is a from-scratch custom board (bare chip, user's own PCB), not
+a dev-board purchase. User then interactively ran the real Vivado MIG
+7-series wizard (with this session's real-time guidance, including a
+genuine self-correction on Clock Period -- the tool's own "maintain
+default or higher" warning overrode this session's earlier "push to
+the fastest allowed period" advice) to generate a REAL DDR3 IP core:
+mig_7series_0, part xc7a100tcsg324-1 (corrected from an initially
+wrong -3 speed grade, also caught this session), memory part
+MT41J128M16JT-125:K (chosen over the originally-suggested MT41K
+variant specifically because it's the one confirmed in stock on LCSC
+-- real component sourcing, not just simulation convenience), Data
+Width 16, PHY:Controller ratio 2:1, Design Clock Frequency 3225ps
+(310.08MHz, auto-adjusted by the tool for the real -1 speed grade).
+Real IP generation + its own out-of-context synthesis both completed
+with 0 errors (3782 LUT48/63400, 5.97%).
+
+User then requested autonomous continuation: build the real DDR3
+integration, get real (not placeholder) timing, and re-audit the SPI
+opcode set for V3 correctness/completeness.
+
+METHOD: read the REAL generated mig_7series_0.v top wrapper's own
+port list (not assumed) to get the actual native "app" UI interface
+(PG063-standard: app_addr[27:0]/app_cmd[2:0]/app_en, app_wdf_data
+[63:0]/app_wdf_mask[7:0]/app_wdf_wren/app_wdf_end, app_rd_data[63:0]/
+app_rd_data_valid/app_rd_data_end, app_rdy/app_wdf_rdy, ui_clk/
+ui_clk_sync_rst/init_calib_complete) -- confirmed the 64-bit app data
+width matches this project's own real config (16-bit DDR3 x BURST_LEN
+8 / nCK_PER_CLK 2 = 64), meaning one app_addr/app_cmd issuance moves a
+full BURST_LEN=8 (128-bit) chunk as two 64-bit beats -- the SAME unit
+this project's own ctrl_addr has used everywhere since STEP16, so no
+address-scaling needed at this boundary.
+
+New hardware/v3/rtl/mig_native_adapter.v: adapts this project's
+established req/wr/addr/wdata/wmask->rdata/ready/busy contract to the
+real MIG native app interface, running entirely in the ui_clk domain
+(the standard way MIG designs are built -- ui_clk becomes this
+project's system clock going forward, not a separate CDC boundary).
+Sequential, not pipelined (correctness first): command issued and
+accepted before any write-data beat; each of the two write-data beats
+held until its own app_wdf_rdy.
+
+app_cmd encoding (000=Write, 001=Read) is the stable, well-known MIG
+convention -- but per this project's own "measure, don't assume"
+standard, NOT taken on faith: verified against MIG's own real,
+vendor-shipped ddr3_model.sv (found the exact real files needed by
+reading this project's own generated example_design/sim tree --
+mig_7series_0_mig_sim.v, which unlike the public mig_7series_0.v
+wrapper exposes SIM_BYPASS_INIT_CAL="FAST" and unlike mig_7series_0_
+mig.v defaults to it, avoiding an impractically slow full-calibration
+sim; wiredly.v for the real WireDelay zero-delay DQ/DQS pass-through
+this project's own vendor testbench uses). New hardware/v3/sim/
+tb_mig_native_adapter.v mirrors example_design/sim/sim_tb_top.v's own
+proven clock/reset generation exactly (CLKIN_PERIOD=3225ps, matching
+this project's real config) rather than re-deriving it.
+
+Compiled via real Xilinx xsim/xvlog/xelab (not Verilator -- MIG's PHY
+uses real UNISIM primitives Verilator cannot simulate), 69 real RTL
+files, -L unisims_ver/unimacro_ver/secureip, +glbl. Found and fixed
+one real bug during elaboration (xelab itself caught it, not visual
+inspection): app_addr declared 25 bits in the testbench but indexed
+[27:0] (28 bits) at both instantiation sites -- fixed to a genuine
+28-bit declaration.
+
+RESULT: real DDR3 calibration completed (FAST sim mode) at ~usual
+MIG sim timescale; 12/12 write-then-read-back transactions bit-exact
+against the real ddr3_model.sv, 0 errors, real JEDEC command sequence
+observed in the model's own log (Activate/Write/Read/Precharge,
+correct bank/row/col progression) -- confirms the app_cmd encoding,
+burst/beat sequencing, and address-unit assumptions were all correct
+on the first real test, not by luck: they were independently
+cross-checked against the real generated ui_top/mem_intfc RTL
+parameter widths before this run, and this run is the actual
+empirical confirmation.
+
+DECISION: mig_native_adapter.v is genuinely verified against real
+DDR3 timing, not a placeholder. This is the first real memory-
+technology-correct path this project has had -- everything before
+this (EXP-0057 onward) used the declared SDR SDRAM stand-in.
+
+next_action: (1) re-audit spi_host_bridge.v against V3's actual
+architecture (neural_director_packed.v's job_in_* port lacks the
+dependency-tracking fields -- required/producer_ids -- that spi_host_
+bridge.v's own WRITE_JOB opcode was built for, and V3 has NO host
+raw-memory-access path at all yet, the WRITE_MEM/READ_MEM equivalent
+-- both real, disclosed gaps, not yet closed); (2) generalize the
+N=2 arbiter to N-way (in progress: hardware/v3/rtl/sdram_arbiter_n.v,
+its own isolated test hardware/v3/sim/tb_sdram_arbiter_n.v currently
+hangs, root cause not yet found -- do not trust this module until
+that is resolved); (3) swap mig_native_adapter.v into packed_slot.v's
+memory path, replacing the SDR SDRAM placeholder, and re-verify the
+N=2 system against real DDR3; (4) real (not out-of-context) P&R with
+the actual generated MIG XDC constraints for genuine timing signoff.
