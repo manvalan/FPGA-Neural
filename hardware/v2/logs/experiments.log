@@ -4404,3 +4404,74 @@ fields vs neural_director_packed.v's simpler job_in_* port) -- this is
 the user's own explicit, still-outstanding request, and is the next
 priority over further memory-path polish; (3) real Vivado P&R with
 the actual MIG-generated XDC constraints, still outstanding.
+
+EXP-0072 -- SPI opcode re-audit: forked spi_host_bridge_v3.v to match
+V3's real architecture (2026-09-17, same autonomous continuation,
+user's own explicit request: "Ricontrolla anche gli opcode SPI per
+essere sicuri che in questo contesto siano corretti e completi")
+
+CONTEXT: EXP-0068's audit found two real mismatches between V2's
+spi_host_bridge.v and V3's actual RTL: (1) WRITE_JOB's payload
+(node_id/required/producer_ids/x_base/w_base/n_tiles/result_addr)
+targets dependency_manager.v's reg_* port, but neural_director_
+packed.v's job_in_* port has no required/producer_ids fields at all
+(no dependency manager exists in V3); (2) WRITE_MEM/READ_MEM's mem_*
+port assumed a WORD-granularity host-arb port that V3's actual shared
+memory path (sdram_arbiter_n.v, BURST_LEN=8) does not provide.
+
+METHOD: (1) forked hardware/v3/rtl/spi_host_bridge_v3.v from V2's
+module -- physical layer (byte shift register/CS framing/CDC, the
+hard-won MISO falling-edge-lookahead fix) carried over byte-for-byte
+unchanged, only the protocol FSM changed. WRITE_JOB shrunk from 18 to
+16 payload bytes: required[2:0] and producer_ids[15:0] are DROPPED
+(not silently ignored -- documented in the module header as a
+deliberate protocol difference, since V3 has no dependency-tracking
+layer to consume them), node_id widened from 4 to 16 bits (2 bytes,
+matching job_in_node_id's real width) since it's no longer an index
+into a small N_NODES table. WRITE_MEM/READ_MEM's addr field narrowed
+from 26 to 25 bits (4 bytes either way, matches MEM_ADDR_WIDTH=25,
+the word/burst-address convention host_mem_bridge.v and sdram_
+arbiter_n.v already use, NOT the 26-bit byte-base-address convention
+job_in_x_base/w_base/result_addr use -- two DIFFERENT address widths
+now explicitly named as two separate module parameters, JOB_ADDR_
+WIDTH vs MEM_ADDR_WIDTH, rather than conflated under one ADDR_WIDTH
+the way V2's single-address-space module could get away with). (2)
+mem_* port is unchanged in shape from V2's (still single-16-bit-word
+req/wr/addr/wdata/lb_n/ub_n->rdata/ready) -- wired directly to
+host_mem_bridge.v's own host-facing port (EXP-0071), which was
+deliberately built to match it, so this bridge's own RTL needed no
+burst-packing logic of its own.
+
+Verification: hardware/v3/sim/tb_spi_host_bridge_v3.v, adapted from
+V2's own tb_spi_host_bridge.v (same BFM/timing/latency-model
+structure). Tests: WRITE_JOB 16-byte decode + job_in_valid held-until-
+ready contract + STATUS readback; WRITE_MEM/READ_MEM single-word
+round-trip; a second WRITE_MEM/READ_MEM case exercising MEM_ADDR_
+WIDTH's own top bit (addr=2^24, multi-word) to catch any bit-width
+mismatch the narrower 25-bit field could introduce; RESET opcode.
+Compiled/run with iverilog+vvp.
+
+RESULT: 18/18 tests, 0 errors. spi_host_bridge_v3.v's WRITE_JOB
+payload lands bit-exact on neural_director_packed.v's real job_in_*
+port shape; WRITE_MEM/READ_MEM correctly drives host_mem_bridge.v's
+real mem_* port shape including the narrower 25-bit address field.
+
+DECISION: the SPI opcode set is now genuinely correct and complete
+for V3's real architecture, with one gap explicitly disclosed rather
+than hidden: V3 has no dependency-tracking layer, so WRITE_JOB cannot
+express node dependencies the way V2's could. If/when V3 gets its own
+dependency manager, it needs its own new opcode/fields -- this
+protocol deliberately does not reserve dead space for that today.
+
+Not yet done: end-to-end wiring of spi_host_bridge_v3.v +
+host_mem_bridge.v + neural_director_packed.v + N packed_slot
+instances all together as one physical-interface-driven system (each
+piece is independently verified now, but never run together).
+
+next_action: given the user's own explicit, still-outstanding request
+for "un timing reale (e questa volta un confronto affidabile e
+veritiero)", the real Vivado P&R run using the actual MIG-generated
+XDC pin/timing constraints takes priority over further integration
+testing -- every P&R so far in this project has been out-of-context
+synthesis without real board I/O timing, which is not yet a
+trustworthy signoff number.
