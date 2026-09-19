@@ -4475,3 +4475,81 @@ XDC pin/timing constraints takes priority over further integration
 testing -- every P&R so far in this project has been out-of-context
 synthesis without real board I/O timing, which is not yet a
 trustworthy signoff number.
+
+EXP-0073 -- neural_director_packed.v cleared of suspected pairing bug:
+root-caused as an Icarus-specific testbench race, not an RTL defect
+(2026-09-19, same autonomous continuation, discovered while preparing
+real P&R sources)
+
+CONTEXT: while adding neural_director_packed.v to the real Vivado
+project for in-context P&R, Vivado's synth_design rejected its three
+uses of the SystemVerilog `'0` self-sizing literal (plain Verilog-2001
+mode, same class of issue as EXP-0070's xvlog -sv requirement, but
+this time in synth_design itself, which has no -sv-equivalent flag in
+this flow). Fixed by replacing all three `'0` with explicit-width
+{$clog2(N_SLOTS){1'b0}} (semantically identical, portable). Re-running
+this module's own isolated regression (tb_neural_director_packed.v)
+after that edit, to confirm no behavioral change, surfaced 3/8 FAILING
+tests -- xb/rb/nb (the "B" job's fields in a pair) landing equal to
+the "A" job's fields instead of their own.
+
+INVESTIGATION (root-cause discipline, not guessing): confirmed via
+`git stash` that the SAME failures reproduce on the untouched,
+already-committed neural_director_packed.v -- ruling out the width-
+literal edit as the cause. Instrumented the DUT's own clocked always
+block directly (a $display inside neural_director_packed.v itself,
+avoiding any separate-process sampling race in the debug harness) and
+found job_in_valid sampled as HIGH on TWO CONSECUTIVE clock edges from
+a SINGLE submit_job() call, both times still carrying the FIRST
+submitted job's x_base -- a spurious duplicate enqueue, not a Director
+defect. Traced to tb_neural_director_packed.v's own submit_job task:
+it drives job_in_valid/job_in_x_base/etc with BLOCKING assignment (=)
+immediately after `@(posedge clk)`, then clears them after a SECOND
+`@(posedge clk)` separated by a while-loop that (in the common case)
+executes zero iterations. Icarus does not consistently order "a
+process resuming from @(posedge clk) and executing a blocking write"
+against "the DUT's own always @(posedge clk) block reading that same
+signal" when both wake on the identical edge -- and this ordering was
+observed to differ between the SET edge (testbench appears to win,
+DUT sees the new value immediately) and the CLEAR edge (DUT appears
+to win, sampling the stale value one extra time) within the SAME
+submit_job() call, producing the duplicate-enqueue artifact.
+
+FIX: rewrote submit_job to drive all DUT inputs with NONBLOCKING
+assignment (<=) instead of blocking, which removes the race by
+construction (NBA updates commit strictly after the Active region
+where the DUT's own always block runs, so the DUT is GUARANTEED to
+see the OLD value at the driving edge, never a same-edge stale-or-new
+ambiguity). Re-ran the full original test suite: 8/8 tests, 0 errors,
+including the previously-failing TEST1 field-pairing check and
+TEST2/2b's mismatched-w_base stall behavior.
+
+SCOPE CHECK (not fixed today, documented instead): the same blocking-
+assignment-then-while-loop-then-second-wait idiom appears in numerous
+other testbenches across this project (grep found 15 files, V2 and
+V3). Checked the one that matters most for trust -- hardware/v3/sim/
+tb_n2_system_ddr3.v (EXP-0070's real-DDR3 N=2 system milestone) uses
+the IDENTICAL vulnerable pattern, but that test was compiled/run
+through Xilinx's xsim, not Icarus, and produced a correct, bit-exact
+8/8 result -- meaning xsim's own scheduler did not hit this particular
+race (a different, but equally LRM-legal, resolution of the same
+unspecified ordering). EXP-0070's result therefore stands as
+genuinely verified for the real run that produced it, but the
+underlying idiom is confirmed fragile/simulator-dependent and should
+not be trusted blindly in any FUTURE Icarus-based testbench.
+
+DECISION: neural_director_packed.v is fully exonerated -- its
+pairing/dispatch/stall logic was correct all along. The nonblocking-
+assignment idiom (this fix) is now the preferred pattern for driving
+DUT inputs in this project's future testbenches; existing passing
+testbenches using the old blocking idiom are not being mass-rewritten
+today (out of scope, and several were verified via xsim where the
+race did not manifest), but this log entry exists so a future
+Icarus-based test that shows a similarly-shaped "shuffled/duplicated
+fields" failure is investigated as a testbench race FIRST, not
+assumed to be an RTL bug.
+
+next_action: resume the real, in-context Vivado P&R (n2_system_ddr3_top.v
++ the real MIG-generated XDC), the task this fix was a prerequisite
+for -- neural_director_packed.v's `'0`-literal fix must propagate into
+that synthesis run.

@@ -113,18 +113,38 @@ module tb;
 
     integer errors, tests;
 
+    // Drives DUT inputs with NONBLOCKING assignment (<=), not blocking
+    // (=). Root-caused this session: the previous blocking-assignment
+    // version raced neural_director_packed.v's own posedge-triggered
+    // always block -- Icarus does not consistently order "testbench
+    // process resumes from @(posedge clk) and executes a blocking
+    // write" against "DUT's always @(posedge clk) block reads that
+    // same signal" when both wake on the SAME edge, and the ordering
+    // was observed to differ between the SET edge and the CLEAR edge
+    // within the same task call (confirmed via a DUT-internal $display
+    // showing job_in_valid sampled as 1 on TWO consecutive edges from
+    // a single submit_job call, both times with the FIRST job's stale
+    // x_base -- a spurious duplicate enqueue, not a Director bug: the
+    // committed neural_director_packed.v was re-verified bit-identical
+    // via the same test with this fix applied). Nonblocking assignment
+    // removes the race entirely: NBA updates land strictly after the
+    // Active region where the DUT's own always block runs, so the DUT
+    // always samples the OLD value at the driving edge and the NEW
+    // value only from the NEXT edge onward -- deterministic by the
+    // language, not by scheduler luck.
     task automatic submit_job(
         input [ADDR_WIDTH-1:0] xb, input [ADDR_WIDTH-1:0] wb,
         input [15:0] nt, input [ADDR_WIDTH-1:0] resaddr, input [15:0] nid
     );
         begin
             @(posedge clk);
-            job_in_x_base = xb; job_in_w_base = wb; job_in_n_tiles = nt;
-            job_in_result_addr = resaddr; job_in_node_id = nid;
-            job_in_valid = 1'b1;
-            while (!job_in_ready) @(posedge clk);
+            job_in_x_base <= xb; job_in_w_base <= wb; job_in_n_tiles <= nt;
+            job_in_result_addr <= resaddr; job_in_node_id <= nid;
+            job_in_valid <= 1'b1;
             @(posedge clk);
-            job_in_valid = 1'b0;
+            while (!job_in_ready) @(posedge clk);
+            job_in_valid <= 1'b0;
+            @(posedge clk);
         end
     endtask
 

@@ -115,7 +115,7 @@ module neural_director_packed #(
     reg [$clog2(N_SLOTS)-1:0] free_slot_idx;
     integer fi;
     always @(*) begin
-        free_slot_idx = '0;
+        free_slot_idx = {$clog2(N_SLOTS){1'b0}};
         for (fi = N_SLOTS-1; fi >= 0; fi = fi - 1) begin
             if (slot_free[fi]) free_slot_idx = fi[$clog2(N_SLOTS)-1:0];
         end
@@ -152,7 +152,7 @@ module neural_director_packed #(
     reg [$clog2(N_SLOTS)-1:0] done_slot_idx;
     integer di;
     always @(*) begin
-        done_slot_idx = '0;
+        done_slot_idx = {$clog2(N_SLOTS){1'b0}};
         for (di = N_SLOTS-1; di >= 0; di = di - 1) begin
             if (slot_job_done[di]) done_slot_idx = di[$clog2(N_SLOTS)-1:0];
         end
@@ -178,7 +178,7 @@ module neural_director_packed #(
                 slot_node_id_b_r[fi]     <= 16'b0;
             end
             job_out_done <= 1'b0;
-            job_out_slot <= '0;
+            job_out_slot <= {$clog2(N_SLOTS){1'b0}};
         end else begin
             for (fi = 0; fi < N_SLOTS; fi = fi + 1) slot_job_start_r[fi] <= 1'b0;
             job_out_done <= 1'b0;
