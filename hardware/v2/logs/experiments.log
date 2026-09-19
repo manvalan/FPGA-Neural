@@ -4737,3 +4737,36 @@ up-to-date timing/resource signoff; write up the FPGA configuration
 config flash, using the real dedicated pins found this session
 (PROGRAM_B=P9, INIT_B=P7, DONE=P10, M0=P12/M1=P13/M2=P11, CCLK=E9,
 D00_MOSI=K17, D01_DIN=K18, FCS_B=L13).
+
+EXP-0076 -- final real P&R re-verification with pin constraints +
+register file + SPI physical-layer fix (2026-09-19, same autonomous
+continuation)
+
+CONTEXT: EXP-0074's real P&R (WNS +0.040ns) predates EXP-0075's real
+fixes (SPI MISO bit-corruption bug, register file, real pin
+constraints for the neural-processor SPI + reserved config-flash
+pins). Re-ran the full real in-context synth+impl to confirm none of
+that regressed the timing signoff.
+
+RESULT: route_design 100%, all timing constraints still met.
+WNS = +0.056ns (TNS 0.000, 0/17341 failing setup endpoints) -- slightly
+BETTER than EXP-0074's +0.040ns, not worse. WHS = +0.048ns (unchanged).
+5173 LUTs (8.16%, +33 vs EXP-0074's 5140 -- the register file's own
+small cost), 16 DSP48E1 (6.67%, unchanged). Real pin assignments
+(sclk=A15/mosi=B16/miso=B17/cs_n=A16, config-flash pins reserved) are
+now part of this signoff, not auto-placed.
+
+DECISION: this is the current, final, trustworthy real timing/
+resource signoff for the whole physically-interfaced N=2 system --
+real DDR3, real pin constraints, real register-file host control
+path, real (fixed) SPI physical layer. User confirmed board plan: both
+JTAG (dev/debug) and Master SPI boot from an external config flash
+(Winbond W25Q32JVSSIQ, verified in-stock on LCSC) will be present on
+the custom PCB -- standard practice, no RTL work needed for this
+(config boot is handled entirely by the FPGA's own dedicated
+configuration logic, outside this project's own RTL).
+
+next_action: none blocking -- remaining work is scaling past N=2,
+building a real activation-fetch engine, and finalizing PCB-specific
+constraints (SPI/reset pin LOCs) once the board layout itself is
+underway. All disclosed, none of it changes today's real signoff.
