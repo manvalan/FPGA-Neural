@@ -41,12 +41,15 @@ module tb_spi_host_bridge_v3;
     reg                      mem_ready_model = 0;
 
     wire soft_rst_pulse;
+    reg init_calib_complete_model = 0;
+    reg dir_error_model = 0;
 
     spi_host_bridge_v3 #(
-        .JOB_ADDR_WIDTH(JOB_ADDR_WIDTH), .MEM_ADDR_WIDTH(MEM_ADDR_WIDTH)
+        .JOB_ADDR_WIDTH(JOB_ADDR_WIDTH), .MEM_ADDR_WIDTH(MEM_ADDR_WIDTH), .N_SLOTS(2)
     ) dut (
         .clk(clk), .rst(rst),
         .sclk(sclk), .mosi(mosi), .miso(miso), .cs_n(cs_n),
+        .init_calib_complete(init_calib_complete_model), .dir_error(dir_error_model),
         .job_in_valid(job_in_valid), .job_in_ready(job_in_ready_model),
         .job_in_x_base(job_in_x_base), .job_in_w_base(job_in_w_base),
         .job_in_n_tiles(job_in_n_tiles), .job_in_result_addr(job_in_result_addr),
@@ -194,7 +197,87 @@ module tb_spi_host_bridge_v3;
         check(mem_model[(25'h1000000) & 10'h3FF] == 16'hAABB, "E: WRITE_MEM word0 @ addr bit24 set");
         check(mem_model[((25'h1000000)+1) & 10'h3FF] == 16'hCCDD, "E: WRITE_MEM word1 @ addr bit24 set");
 
-        // ================= Test F: RESET opcode ======================
+        // ================= Test G: REG_READ, DEVICE_ID (0x00) ========
+        cs_n = 0; #20;
+        spi_byte(8'h31, rxb);               // opcode REG_READ
+        spi_byte(8'h00, rxb);               // reg_addr=0x00 DEVICE_ID
+        spi_byte(8'h00, rxb); check(rxb == 8'h4E, "G: DEVICE_ID byte0 == 'N'");
+        spi_byte(8'h00, rxb); check(rxb == 8'h50, "G: DEVICE_ID byte1 == 'P'");
+        spi_byte(8'h00, rxb); check(rxb == 8'h56, "G: DEVICE_ID byte2 == 'V'");
+        spi_byte(8'h00, rxb); check(rxb == 8'h01, "G: DEVICE_ID byte3 == version 1");
+        cs_n = 1; #40;
+
+        // ================= Test H: REG_READ, N_SLOTS (0x03) ==========
+        cs_n = 0; #20;
+        spi_byte(8'h31, rxb);
+        spi_byte(8'h03, rxb);
+        spi_byte(8'h00, rxb); check(rxb == 8'h00, "H: N_SLOTS byte0 == 0");
+        spi_byte(8'h00, rxb); check(rxb == 8'h00, "H: N_SLOTS byte1 == 0");
+        spi_byte(8'h00, rxb); check(rxb == 8'h00, "H: N_SLOTS byte2 == 0");
+        spi_byte(8'h00, rxb); check(rxb == 8'h02, "H: N_SLOTS byte3 == 2 (matches N_SLOTS param)");
+        cs_n = 1; #40;
+
+        // ================= Test I: REG_READ, STATUS (0x02), with
+        // init_calib_complete and dir_error both driven high by the
+        // model, confirming they land in the right bits ============
+        init_calib_complete_model = 1'b1;
+        dir_error_model = 1'b1;
+        cs_n = 0; #20;
+        spi_byte(8'h31, rxb);
+        spi_byte(8'h02, rxb);
+        spi_byte(8'h00, rxb); check(rxb == 8'h00, "I: STATUS byte0 == 0 (bits[31:8] reserved)");
+        spi_byte(8'h00, rxb); check(rxb == 8'h00, "I: STATUS byte1 == 0");
+        spi_byte(8'h00, rxb); check(rxb == 8'h00, "I: STATUS byte2 == 0");
+        spi_byte(8'h00, rxb); check(rxb[3] == 1'b1, "I: STATUS bit3 == init_calib_complete");
+        check(rxb[4] == 1'b1, "I: STATUS bit4 == dir_error");
+        cs_n = 1; #40;
+        init_calib_complete_model = 1'b0;
+        dir_error_model = 1'b0;
+
+        // ================= Test J: REG_READ, unknown address =========
+        cs_n = 0; #20;
+        spi_byte(8'h31, rxb);
+        spi_byte(8'hEE, rxb);               // unmapped register
+        spi_byte(8'h00, rxb); check(rxb == 8'hFF, "J: unmapped reg byte0 == 0xFF");
+        spi_byte(8'h00, rxb); check(rxb == 8'hFF, "J: unmapped reg byte1 == 0xFF");
+        spi_byte(8'h00, rxb); check(rxb == 8'hFF, "J: unmapped reg byte2 == 0xFF");
+        spi_byte(8'h00, rxb); check(rxb == 8'hFF, "J: unmapped reg byte3 == 0xFF (distinct from a real 0)");
+        cs_n = 1; #40;
+
+        // ================= Test K: REG_WRITE to CONTROL (0x01) bit0
+        // pulses soft_rst_pulse, same physical effect as RESET.
+        // UNLIKE the RESET opcode (which pulses only after CS rises),
+        // REG_WRITE applies immediately when its last data byte
+        // lands -- no backend handshake to wait on (see this module's
+        // own header). The watchdog must therefore run CONCURRENTLY
+        // with the last data byte's own spi_byte() call (a `fork`,
+        // same technique as tb_sdram_arbiter_n.v's own one-shot-pulse
+        // watchers), not after CS has already risen -- a first draft
+        // of this test watched only after CS rose and missed the
+        // pulse entirely (a testbench-timing bug, not an RTL one,
+        // confirmed via a DUT-internal trace before writing this). ==
+        cs_n = 0; #20;
+        spi_byte(8'h30, rxb);               // opcode REG_WRITE
+        spi_byte(8'h01, rxb);               // reg_addr=0x01 CONTROL
+        spi_byte(8'h00, rxb); spi_byte(8'h00, rxb); spi_byte(8'h00, rxb); // value bytes 31:8 = 0
+        begin : wait_reg_soft_rst
+            reg seen;
+            seen = 1'b0;
+            fork
+                spi_byte(8'h01, rxb);           // value byte 7:0 = 1 (bit0 set) -- triggers the pulse
+                begin : watcher
+                    integer wi;
+                    for (wi = 0; wi < 410; wi = wi + 1) begin // covers spi_byte's own ~400-clk duration plus margin
+                        @(posedge clk);
+                        if (soft_rst_pulse) seen = 1'b1;
+                    end
+                end
+            join
+            check(seen, "K: REG_WRITE CONTROL bit0 pulses soft_rst_pulse");
+        end
+        cs_n = 1; #40;
+
+        // ================= Test L: RESET opcode ======================
         cs_n = 0; #20;
         spi_byte(8'h0F, rxb);               // opcode RESET
         cs_n = 1;
@@ -205,8 +288,32 @@ module tb_spi_host_bridge_v3;
                 @(posedge clk);
                 if (soft_rst_pulse) seen = 1'b1;
             end
-            check(seen, "F: soft_rst_pulse asserted after CS rises (within CDC latency)");
+            check(seen, "L: soft_rst_pulse asserted after CS rises (within CDC latency)");
         end
+
+        // ================= Test M: READ_MEM regression for the ROUT-
+        // exit bit_count==0 corruption (found via REG_READ this
+        // session, see spi_host_bridge_v3.v's own header note) --
+        // Test C/D's word 0x1234 has LSB byte 0x34 (bit0=0), which
+        // coincidentally matched the corrupted substitute's bit7=0
+        // and masked the bug. Use 0x5679 instead: LSB byte 0x79 =
+        // 0111_1001, bit0=1, which the (now-fixed) bug would have
+        // flipped to 0 (reading back 0x78 instead of 0x79). =========
+        cs_n = 0; #20;
+        spi_byte(8'h01, rxb);
+        spi_byte(8'h00, rxb); spi_byte(8'h00, rxb); spi_byte(8'h00, rxb); spi_byte(8'h60, rxb); // addr=0x60
+        spi_byte(8'h00, rxb); spi_byte(8'h01, rxb); // len_words=1
+        spi_byte(8'h56, rxb); spi_byte(8'h79, rxb); // data=0x5679
+        #200;
+        cs_n = 1; #40;
+        cs_n = 0; #20;
+        spi_byte(8'h02, rxb);
+        spi_byte(8'h00, rxb); spi_byte(8'h00, rxb); spi_byte(8'h00, rxb); spi_byte(8'h60, rxb);
+        spi_byte(8'h00, rxb); spi_byte(8'h01, rxb);
+        #200;
+        spi_byte(8'h00, rxb); check(rxb == 8'h56, "M: READ_MEM MSB byte == 0x56");
+        spi_byte(8'h00, rxb); check(rxb == 8'h79, "M: READ_MEM LSB byte == 0x79 (bit0=1, catches the ROUT-exit bug)");
+        cs_n = 1; #40;
 
         $display("=== tb_spi_host_bridge_v3: %0d/%0d PASS ===", tests-errors, tests);
         if (errors != 0) $display("*** %0d FAILURES ***", errors);

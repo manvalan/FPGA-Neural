@@ -202,10 +202,11 @@ module n2_system_ddr3_top #(
     wire soft_rst_pulse;
 
     spi_host_bridge_v3 #(
-        .JOB_ADDR_WIDTH(JOB_ADDR_WIDTH), .MEM_ADDR_WIDTH(MEM_ADDR_WIDTH)
+        .JOB_ADDR_WIDTH(JOB_ADDR_WIDTH), .MEM_ADDR_WIDTH(MEM_ADDR_WIDTH), .N_SLOTS(N_SLOTS)
     ) u_spi (
         .clk(ui_clk), .rst(ui_clk_sync_rst),
         .sclk(sclk), .mosi(mosi), .miso(miso), .cs_n(cs_n),
+        .init_calib_complete(init_calib_complete), .dir_error(dir_error),
         .job_in_valid(job_in_valid), .job_in_ready(job_in_ready),
         .job_in_x_base(job_in_x_base), .job_in_w_base(job_in_w_base),
         .job_in_n_tiles(job_in_n_tiles), .job_in_result_addr(job_in_result_addr),

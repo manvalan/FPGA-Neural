@@ -4644,3 +4644,96 @@ disclosed architectural gaps (real activation-fetch engine, N-slot
 scaling beyond 2, board LOC constraints for SPI once the PCB pinout
 is fixed) are the natural next steps once the user is back and can
 weigh in on priority.
+
+EXP-0075 -- real SPI physical-layer bug found+fixed (masked since V1);
+register-file control interface added to spi_host_bridge_v3.v
+(2026-09-19, same autonomous continuation, user's own explicit
+request: "Creiamo un sistema configurabile con dei registri")
+
+CONTEXT: extending spi_host_bridge_v3.v with REG_WRITE/REG_READ
+opcodes (0x30/0x31) and a small register file (0x00 DEVICE_ID,
+0x01 CONTROL, 0x02 STATUS, 0x03 N_SLOTS) for general device control/
+status beyond job submission and raw memory access. Wrote hardware/
+v3/sim/tb_spi_host_bridge_v3.v tests for the new opcodes; the
+DEVICE_ID register (0x4E505601, whose LSB=0x01 has bit0 SET) was the
+first response value in this module's entire test history whose last
+transmitted bit is a real 1 -- every prior multi-byte MISO response
+this project has ever tested (WRITE_JOB/READ_MEM's 0x1234, STATUS's
+various bit patterns) coincidentally had a LAST bit of 0.
+
+ROOT CAUSE (found via a DUT-internal $display, not guessing): the
+physical layer's `assign miso = (cs_active && bit_count==3'd0) ?
+tx_byte[7] : miso_shift_bit` -- present unchanged since hardware/v1/
+rtl/spi_slave.v, carried into every SPI bridge this project has ever
+built -- has a real bug. `bit_count` reads 0 not only right before a
+fresh byte's first bit, but also for the ENTIRE remainder of the bit
+period immediately AFTER a byte's LAST bit was sampled (it doesn't
+advance again until the next byte's own first sampling edge). During
+that whole tail window, the bypass shows tx_byte[7] (context for a
+hypothetical NEW byte) instead of the correctly-prepared
+miso_shift_bit (the OLD byte's real last bit) -- corrupting the last
+bit of every response byte, WHENEVER a real (non-instantaneous) SPI
+master's sample point falls inside that tail window, which is the
+normal case for any real host. This was invisible in every previous
+verified opcode purely because every test's own response data
+happened to have a last bit of 0, matching the substituted tx_byte[7]
+by coincidence, not because the value was actually correct.
+
+FIX: removed the bypass entirely -- `assign miso = miso_shift_bit`.
+Verified this doesn't need it: the special case only matters for a
+genuinely fresh byte with ZERO prior falling edges in the current CS
+session, which never happens for any of this protocol's real response
+bytes (always preceded by the opcode byte and other payload bytes,
+so miso_shift_bit is always already primed by the ordinary falling-
+edge mechanism). Full regression re-run: 38/38 PASS, including a new
+READ_MEM case (0x5679, LSB bit0=1) added specifically to catch this
+class of bug for the memory-read path too, and the original WRITE_
+JOB/STATUS/READ_MEM tests all still pass unchanged.
+
+SCOPE (disclosed, not fixed today): hardware/v1/rtl/spi_slave.v and
+hardware/v2/rtl/spi_host_bridge.v carry the SAME bypass, unchanged --
+V2 is the frozen/archived ECP5 baseline (fork-before-promote
+discipline, not touched this session) and V1 is even older, so
+neither was modified, but BOTH almost certainly have the identical
+real bug, silently corrupting the last bit of any MISO response whose
+value happens to end in a 1. This does not affect any of this
+session's DDR3/P&R work (independent module, no interaction with
+memory timing), but is a real, disclosed correctness gap in the
+V1/V2 SPI bridges for anyone revisiting them.
+
+Also (separate, smaller): a `fork`/`join`-based watchdog was needed
+for the new REG_WRITE test (Test K) -- REG_WRITE applies its effect
+immediately on the last data byte, not after CS rises like RESET
+does, so a watchdog that only starts watching after CS rises misses
+the pulse entirely; fixed by running the watchdog concurrently with
+the triggering spi_byte() call (same fork/join technique as
+tb_sdram_arbiter_n.v's own one-shot-pulse watchers) -- another real,
+now-documented testbench-timing lesson, not an RTL defect.
+
+DECISION: spi_host_bridge_v3.v's physical layer is now genuinely
+correct (not just "correct on the specific bit patterns tested so
+far"). The register file (DEVICE_ID/CONTROL/STATUS/N_SLOTS, opcodes
+0x30/0x31) gives host software a general-purpose control/status path
+beyond job submission, per the user's own request.
+
+Real board-level finding, same session: querying the routed n2_
+system_ddr3_top's real device checkpoint (get_package_pins/get_ports
+on xc7a100tcsg324-2) showed Vivado had auto-placed several of this
+design's own unconstrained ports (job_out_done, two result-data bits)
+directly onto the FPGA's DEDICATED Master-SPI configuration-flash
+pins (FCS_B=L13, RDWR_B=R16, CSI_B=V15) -- a real conflict with any
+future config-flash wiring. New hardware/v3/constraints/n2_system_
+ddr3_top.xdc: (1) PROHIBITs those pins (plus D00_MOSI/D01_DIN/EMCCLK)
+from ever being used by this design's own ports; (2) assigns the
+neural-processor management SPI (sclk/mosi/miso/cs_n) to real,
+verified-free pins A15/B16/B17/A16 (bank 15, package edge column,
+physically adjacent for short PCB traces), chosen per the user's own
+request ("pin più esterni possibile e vicini").
+
+next_action: re-run the real in-context P&R (n2_system_ddr3_top.v +
+new XDC + the register-file/physical-layer fixes) for a final,
+up-to-date timing/resource signoff; write up the FPGA configuration
+(boot) options for the user -- JTAG vs Master SPI with an external
+config flash, using the real dedicated pins found this session
+(PROGRAM_B=P9, INIT_B=P7, DONE=P10, M0=P12/M1=P13/M2=P11, CCLK=E9,
+D00_MOSI=K17, D01_DIN=K18, FCS_B=L13).
