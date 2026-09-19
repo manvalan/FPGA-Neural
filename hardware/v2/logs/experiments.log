@@ -4553,3 +4553,94 @@ next_action: resume the real, in-context Vivado P&R (n2_system_ddr3_top.v
 + the real MIG-generated XDC), the task this fix was a prerequisite
 for -- neural_director_packed.v's `'0`-literal fix must propagate into
 that synthesis run.
+
+EXP-0074 -- MILESTONE: first real, in-context Vivado P&R of the full
+N=2 DDR3-backed system, real MIG XDC constraints, timing closes
+(2026-09-19, same autonomous continuation)
+
+CONTEXT: every P&R run in this project before today (EXP-0059/63/67)
+was OUT-OF-CONTEXT synthesis of an isolated sub-block, without the
+real MIG-generated pin/timing XDC and without the actual DDR3
+controller in the design -- not a trustworthy board-accurate signoff.
+This experiment is the first REAL, in-context run: the actual
+mig_7series_0 IP (public wrapper, real calibration, not the sim-only
+bypass variant) + mig_native_adapter.v + sdram_arbiter_n.v (NUM_REQ=3:
+2 packed_slot instances + host_mem_bridge.v) + neural_director_
+packed.v + spi_host_bridge_v3.v, all wired together in hardware/v3/
+rtl/n2_system_ddr3_top.v, synthesized and implemented against the
+REAL mig_7series_0.xdc (pin locations, DDR3 timing constraints,
+multicycle/false-path exceptions -- all tool-generated, none
+hand-written) plus the project's own xc7a100tcsg324-2 part setting.
+
+METHOD: `vivado -mode batch`, project-mode `launch_runs synth_1` then
+`launch_runs impl_1` (synth_design -> opt_design -> place_design ->
+route_design -> report_timing_summary), all real Vivado commands, no
+shortcuts. Three real failures hit and fixed before this succeeded
+(each a genuine, disclosed finding, not swept aside):
+  1. neural_director_packed.v's `'0` SystemVerilog literal (synth_
+     design has no -sv-equivalent escape hatch) -- fixed, and this
+     surfaced+resolved the real EXP-0073 testbench-race investigation
+     (see that entry -- the RTL itself was never wrong).
+  2. mig_7series_0's real generated stub (mig_7series_0_stub.v, this
+     exact IP configuration) does NOT expose calib_tap_req/load/addr/
+     val/load_done at all -- my first draft's port connections to
+     those (copied from a generic MIG example_design reference)
+     didn't match THIS project's actual generated interface. Removed;
+     that optional temperature-recalibration feature isn't used here.
+  3. REAL, substantive finding: exposing packed_slot.v's activation-
+     fetch stand-in ports (act_addr_a/b, act_data_a/b -- see that
+     module's own disclosed-gap header) as literal top-level chip
+     pins was a genuine design mistake on my part. Combined across 2
+     slots this demanded ~360 I/O (26-bit addr x4 + 64-bit data x4)
+     -- XC7A100T-CSG324 has only 324 pins TOTAL, already ~53 consumed
+     by DDR3 alone. place_design failed outright ("IO Clock Placer
+     failed", 100+ unplaced IBUF errors) -- not a timing problem, a
+     literal pin-count impossibility. Fixed by making the activation
+     interface fully INTERNAL (a free-running counter-pattern stub
+     replaces the real activation-fetch engine, which still does not
+     exist -- this remains an honestly disclosed gap, now correctly
+     scoped as an INTERNAL interface for a future real fetch engine
+     to occupy, never literal board pins).
+
+RESULT (real, routed, trustworthy):
+  - route_design: 100% complete, 0 errors.
+  - Timing: "All user specified timing constraints are met."
+    WNS = +0.040 ns, TNS = 0.000 ns, 0/17306 failing endpoints (setup).
+    WHS = +0.048 ns, THS = 0.000 ns, 0/17303 failing endpoints (hold).
+    sys_clk_i (DDR3 PHY clock, MIG-constrained): 3.225 ns / 310.078 MHz
+      -- meets timing at full speed on the real xc7a100tcsg324-2 part.
+    ui_clk (compute/Director/arbiter/SPI-bridge domain, PLL-derived
+      2:1 from sys_clk_i per this project's own PHYRatio=2:1 MIG
+      config): 155.039 MHz.
+  - Utilization: 5140 LUTs (8.11%), 5952 registers (4.69%), 16 DSP48E1
+    (6.67% -- exactly 8 per packed slot x 2 slots, matching EXP-0059's
+    original per-core DSP count with zero unexplained growth), 0 Block
+    RAM (weight scratchpad uses distributed/LUT RAM, 378 LUTs).
+
+DECISION: this is the first genuinely trustworthy timing/resource
+signoff this project has produced -- real DDR3 controller, real pin
+constraints, real place+route, all in the same design, meeting timing
+with real (if modest, ~0.04ns) positive slack rather than an
+out-of-context number with no board-level meaning. Directly answers
+the user's own explicit request for "un timing reale... un confronto
+affidabile e veritiero."
+
+Two honest caveats, not hidden: (1) SPI pins (sclk/mosi/miso/cs_n) and
+the job/result-monitoring status ports have NO real pin LOC assigned
+yet -- the custom board's pinout for those isn't finalized, so THEIR
+specific I/O timing isn't part of this signoff (only DDR3's real,
+board-accurate pin timing is); Vivado auto-placed them without
+complaint since they're low pin-count and unconstrained-but-legal,
+but a real board LOC constraint for them should be added once the PCB
+pinout is fixed. (2) the positive slack (+0.040ns / +0.048ns) is
+real but thin -- this is a genuinely tight, not loose, timing closure
+at 310MHz/-2; a future increase in logic complexity (e.g. a real
+activation-fetch engine, N_SLOTS>2) should be re-verified with a
+fresh real P&R, not assumed to still close.
+
+next_action: (1) commit n2_system_ddr3_top.v and this log entry;
+(2) update project memory with this real milestone; (3) the remaining
+disclosed architectural gaps (real activation-fetch engine, N-slot
+scaling beyond 2, board LOC constraints for SPI once the PCB pinout
+is fixed) are the natural next steps once the user is back and can
+weigh in on priority.
